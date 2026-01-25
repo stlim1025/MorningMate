@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "237548170950",
+    "project_id": "morningmate-11c87",
+    "storage_bucket": "morningmate-11c87.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237548170950:android:30f5e25176a3ca41dd31c7",
+        "android_client_info": {
+          "package_name": "com.example.morningmate"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "237548170950-749lq9bubbcskqrs1i3nbmajqiqn783t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIl1ObbqcPM56aGWCx8E9J_9EySE1Bm0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "237548170950-749lq9bubbcskqrs1i3nbmajqiqn783t.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "237548170950-gffc6p91frabvtkj5dr4lvicoe3s7s23.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.morningmate"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
