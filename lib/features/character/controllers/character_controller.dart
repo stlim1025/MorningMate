@@ -65,6 +65,12 @@ class CharacterController extends ChangeNotifier {
     await _checkStateTransition(userId);
   }
 
+  // 외부에서 상태 강제 설정 (앱 초기화용)
+  void setAwake(bool awake) {
+    _isAwake = awake;
+    notifyListeners();
+  }
+
   // 포인트 추가
   Future<void> _addPoints(String userId, int points) async {
     if (_currentUser == null) return;

@@ -59,101 +59,107 @@ class _NightSkyBackgroundState extends State<NightSkyBackground>
           ),
         ),
 
-        // 별들 (밤에만 표시)
-        if (!widget.isDayTime) ...[
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: StarsPainter(_controller.value),
-                size: Size.infinite,
-              );
-            },
-          ),
-
-          // 달
-          Positioned(
-            top: 80,
-            right: 40,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 800),
-              opacity: widget.isDayTime ? 0.0 : 1.0,
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFFFF8DC),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFFF8DC).withOpacity(0.5),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // 달 크레이터
-                    Positioned(
-                      top: 15,
-                      left: 20,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFE8DCC0),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 35,
-                      left: 35,
-                      child: Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFE8DCC0),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-
-        // 해 (낮에만 표시)
-        if (widget.isDayTime)
-          Positioned(
-            top: 80,
-            right: 40,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 800),
-              opacity: widget.isDayTime ? 1.0 : 0.0,
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFFFD700),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFFD700).withOpacity(0.6),
-                      blurRadius: 30,
-                      spreadRadius: 10,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+        // 해/달/별 배경 레이어
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 1000),
+          child: widget.isDayTime
+              ? _buildDaylight(key: const ValueKey('day'))
+              : _buildNight(key: const ValueKey('night')),
+        ),
 
         // 자식 위젯
         widget.child,
+      ],
+    );
+  }
+
+  Widget _buildDaylight({required Key key}) {
+    return Stack(
+      key: key,
+      children: [
+        Positioned(
+          top: 80,
+          right: 40,
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFFD700),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+                  blurRadius: 30,
+                  spreadRadius: 10,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNight({required Key key}) {
+    return Stack(
+      key: key,
+      children: [
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return CustomPaint(
+              painter: StarsPainter(_controller.value),
+              size: Size.infinite,
+            );
+          },
+        ),
+        Positioned(
+          top: 80,
+          right: 40,
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFFF8DC),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFF8DC).withValues(alpha: 0.5),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 15,
+                  left: 20,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFE8DCC0),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 35,
+                  left: 35,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFE8DCC0),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

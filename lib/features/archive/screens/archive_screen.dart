@@ -449,41 +449,22 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   }
 
   Future<void> _viewDiaryContent(DiaryModel diary) async {
-    // 생체 인증 확인
-    final authController = context.read<AuthController>();
-    final authenticated = await authController.authenticateWithBiometric();
-
-    if (!authenticated) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('인증에 실패했습니다')),
-        );
-      }
-      return;
-    }
-
     // 복호화
-    _isLoading = true; // 로딩 표시 (필요시)
-    setState(() {});
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final morningController = context.read<MorningController>();
       final decryptedContent = await morningController.loadDiaryContent(
-        diary.userId,
-        diary.date,
+        userId: diary.userId,
+        date: diary.date,
+        encryptedContent: diary.encryptedContent,
       );
 
-      _isLoading = false;
-      setState(() {});
-
-      if (decryptedContent == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('일기 내용을 찾을 수 없거나 복호화에 실패했습니다')),
-          );
-        }
-        return;
-      }
+      setState(() {
+        _isLoading = false;
+      });
 
       if (mounted) {
         showDialog(
@@ -531,6 +512,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         );
       }
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('복호화 오류: $e')),

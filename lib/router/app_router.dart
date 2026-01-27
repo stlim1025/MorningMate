@@ -1,6 +1,8 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
 import '../features/morning/screens/morning_screen.dart';
@@ -19,8 +21,8 @@ class AppRouter {
         GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
     redirect: (context, state) {
       final isLoggedIn = FirebaseAuth.instance.currentUser != null;
-      final isLoggingIn =
-          state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+      final isLoggingIn = state.matchedLocation == '/login' ||
+          state.matchedLocation == '/signup';
 
       if (!isLoggedIn && !isLoggingIn) {
         return '/login';
@@ -100,4 +102,21 @@ class AppRouter {
       ),
     ),
   );
+}
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+          (dynamic _) => notifyListeners(),
+        );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
 }

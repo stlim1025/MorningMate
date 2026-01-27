@@ -69,12 +69,12 @@ class FirestoreService {
   // 특정 날짜의 일기 가져오기
   Future<DiaryModel?> getDiaryByDate(String userId, DateTime date) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    final nextDay = startOfDay.add(const Duration(days: 1));
 
     final query = await _diariesCollection
         .where('userId', isEqualTo: userId)
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
+        .where('date', isLessThan: Timestamp.fromDate(nextDay))
         .limit(1)
         .get();
 

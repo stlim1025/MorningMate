@@ -12,7 +12,7 @@ class MorningController extends ChangeNotifier {
   MorningController(this._firestoreService);
 
   // 상태 변수
-  bool _isLoading = false;
+  bool _isLoading = true; // 초기값을 true로 설정하여 시작 시 밤 배경 깜빡임 방지
   bool _isWriting = false;
   String? _currentQuestion;
   DiaryModel? _todayDiary;
@@ -27,26 +27,72 @@ class MorningController extends ChangeNotifier {
   DiaryModel? get todayDiary => _todayDiary;
   int get writingDuration => _writingDuration;
   int get charCount => _charCount; // Getter 이름 변경
-  bool get hasDiaryToday => _todayDiary?.isCompleted ?? false;
+  bool get hasDiaryToday {
+    if (_todayDiary == null || !_todayDiary!.isCompleted) return false;
+    final now = DateTime.now();
+    final diaryDate = _todayDiary!.date;
+    return diaryDate.year == now.year &&
+        diaryDate.month == now.month &&
+        diaryDate.day == now.day;
+  }
 
   // 오늘의 일기 확인
   Future<void> checkTodayDiary(String userId) async {
+    // 이미 메모리에 오늘의 일기가 있고 완료 상태라면 건너뜀
+    if (hasDiaryToday) {
+      _isLoading = false;
+      Future.microtask(() {
+        notifyListeners();
+      });
+      return;
+    }
+
     _isLoading = true;
     Future.microtask(() {
       notifyListeners();
     });
 
     try {
-      _todayDiary =
+      // 1. 먼저 로컬 파일 확인 (가장 빠름)
+      final directory = await getApplicationDocumentsDirectory();
+      final now = DateTime.now();
+      final month = now.month.toString().padLeft(2, '0');
+      final day = now.day.toString().padLeft(2, '0');
+      final fileName = '${userId}_${now.year}$month$day.enc';
+      final file = File('${directory.path}/$fileName');
+
+      if (await file.exists()) {
+        final encryptedContent = await file.readAsString();
+        // 로컬에 파일이 있으면 일단 작성 완료로 간주 (상세 메타데이터는 null이어도 isCompleted=true)
+        _todayDiary = DiaryModel(
+          id: 'local_temp',
+          userId: userId,
+          date: now,
+          encryptedContent: encryptedContent,
+          isCompleted: true,
+          createdAt: now,
+        );
+        _isLoading = false;
+        Future.microtask(() {
+          notifyListeners();
+        });
+        // 여기서 return하지 않고 서버에서도 최신 메타데이터를 가져오도록 진행
+      }
+
+      // 2. Firestore에서 실제 데이터(메타데이터 포함) 가져오기
+      final diary =
           await _firestoreService.getDiaryByDate(userId, DateTime.now());
+      if (diary != null) {
+        _todayDiary = diary;
+      }
     } catch (e) {
       print('오늘의 일기 확인 오류: $e');
+    } finally {
+      _isLoading = false;
+      Future.microtask(() {
+        notifyListeners();
+      });
     }
-
-    _isLoading = false;
-    Future.microtask(() {
-      notifyListeners();
-    });
   }
 
   // 랜덤 질문 가져오기
@@ -113,7 +159,8 @@ class MorningController extends ChangeNotifier {
 
     try {
       // 1. 일기 내용 암호화
-      final encryptedContent = await EncryptionUtil.encryptText(content);
+      final encryptedContent =
+          await EncryptionUtil.encryptText(content, userId);
 
       // 2. 로컬에 암호화된 일기 저장
       await _saveEncryptedDiaryLocally(userId, encryptedContent);
@@ -158,7 +205,10 @@ class MorningController extends ChangeNotifier {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final date = DateTime.now();
-      final fileName = '${userId}_${date.year}${date.month}${date.day}.enc';
+      // 날짜 패딩 추가 (월, 일 2자리 보장)
+      final month = date.month.toString().padLeft(2, '0');
+      final day = date.day.toString().padLeft(2, '0');
+      final fileName = '${userId}_${date.year}$month$day.enc';
       final file = File('${directory.path}/$fileName');
       await file.writeAsString(encryptedContent);
     } catch (e) {
@@ -166,21 +216,49 @@ class MorningController extends ChangeNotifier {
     }
   }
 
-  // 로컬에서 암호화된 일기 읽기
-  Future<String?> loadDiaryContent(String userId, DateTime date) async {
+  // 일기 내용 읽기 (전달된 데이터 우선 -> Firestore -> 로컬 파일 순)
+  Future<String> loadDiaryContent({
+    required String userId,
+    required DateTime date,
+    String? encryptedContent,
+  }) async {
     try {
+      String? contentToDecrypt = encryptedContent;
+
+      // 1. 전달받은 내용이 없다면 Firestore에서 가져오기
+      if (contentToDecrypt == null) {
+        final diary = await _firestoreService.getDiaryByDate(userId, date);
+        contentToDecrypt = diary?.encryptedContent;
+      }
+
+      if (contentToDecrypt != null) {
+        return await EncryptionUtil.decryptText(contentToDecrypt, userId);
+      }
+
+      // 2. Firestore에 없으면 로컬 파일에서 읽기 (하위 호환성)
       final directory = await getApplicationDocumentsDirectory();
-      final fileName = '${userId}_${date.year}${date.month}${date.day}.enc';
+      final month = date.month.toString().padLeft(2, '0');
+      final day = date.day.toString().padLeft(2, '0');
+      final fileName = '${userId}_${date.year}$month$day.enc';
       final file = File('${directory.path}/$fileName');
 
       if (await file.exists()) {
-        final encryptedContent = await file.readAsString();
-        return await EncryptionUtil.decryptText(encryptedContent);
+        final encryptedFromFile = await file.readAsString();
+        return await EncryptionUtil.decryptText(encryptedFromFile, userId);
       }
-      return null;
+
+      // 이전 버전 파일명 시도 (패딩 없음)
+      final oldFileName = '${userId}_${date.year}${date.month}${date.day}.enc';
+      final oldFile = File('${directory.path}/$oldFileName');
+      if (await oldFile.exists()) {
+        final encryptedFromFile = await oldFile.readAsString();
+        return await EncryptionUtil.decryptText(encryptedFromFile, userId);
+      }
+
+      throw Exception('일기 내용을 찾을 수 없습니다.');
     } catch (e) {
       print('일기 읽기 오류: $e');
-      return null;
+      rethrow; // 에러를 그대로 전달
     }
   }
 
@@ -193,7 +271,7 @@ class MorningController extends ChangeNotifier {
   }
 
   // 목표 달성 여부
-  bool isGoalReached({int targetChars = 100, int targetMinutes = 5}) {
+  bool isGoalReached({int targetChars = 10, int targetMinutes = 5}) {
     return _charCount >= targetChars ||
         _writingDuration >= (targetMinutes * 60);
   }

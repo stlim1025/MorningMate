@@ -32,10 +32,16 @@ class _MorningScreenState extends State<MorningScreen> {
 
     final userId = authController.currentUser?.uid;
     if (userId != null) {
-      await Future.wait([
-        morningController.checkTodayDiary(userId),
-        characterController.loadUserData(userId),
-      ]);
+      // 1. 먼저 일기 확인
+      await morningController.checkTodayDiary(userId);
+
+      // 2. 일기가 있으면 캐릭터를 깨움
+      if (morningController.hasDiaryToday) {
+        characterController.setAwake(true);
+      }
+
+      // 3. 나머지 유저 데이터 로드
+      await characterController.loadUserData(userId);
     }
   }
 

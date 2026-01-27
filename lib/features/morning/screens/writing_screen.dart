@@ -211,10 +211,10 @@ class _WritingScreenState extends State<WritingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildMoodButton('😊', '😊'),
-              _buildMoodButton('😐', '😐'),
-              _buildMoodButton('😢', '😢'),
-              _buildMoodButton('🤩', '🤩'),
+              _buildMoodButton('😊', 'happy'),
+              _buildMoodButton('😐', 'neutral'),
+              _buildMoodButton('😢', 'sad'),
+              _buildMoodButton('🤩', 'excited'),
             ],
           ),
 
