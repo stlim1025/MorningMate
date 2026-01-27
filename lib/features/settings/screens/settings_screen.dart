@@ -78,6 +78,7 @@ class SettingsScreen extends StatelessWidget {
                 
                 // 앱 설정
                 _buildSectionTitle('앱 설정'),
+                _buildWritingBlurTile(context, authController),
                 _buildSettingsTile(
                   icon: Icons.notifications,
                   title: '알림 설정',
@@ -229,6 +230,40 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildWritingBlurTile(
+      BuildContext context, AuthController authController) {
+    final user = authController.userModel;
+    final blurEnabled = user?.writingBlurEnabled ?? true;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: SwitchListTile(
+        secondary: const Icon(Icons.visibility_off, color: AppColors.primary),
+        title: const Text(
+          '글 작성 블러 기본값',
+          style: TextStyle(color: Colors.white),
+        ),
+        subtitle: Text(
+          blurEnabled ? '작성 중인 글을 기본으로 블러 처리합니다' : '작성 중인 글을 기본으로 표시합니다',
+          style: const TextStyle(color: Colors.white54),
+        ),
+        value: blurEnabled,
+        onChanged: user == null
+            ? null
+            : (value) => _updateWritingBlurSetting(
+                  context,
+                  authController,
+                  value,
+                ),
+        activeColor: AppColors.primary,
+      ),
+    );
+  }
+
   Widget _buildLogoutButton(BuildContext context, AuthController authController) {
     return SizedBox(
       width: double.infinity,
@@ -332,6 +367,31 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _updateWritingBlurSetting(
+    BuildContext context,
+    AuthController authController,
+    bool value,
+  ) async {
+    final firestoreService = context.read<FirestoreService>();
+    final userId = authController.currentUser?.uid;
+    final currentUser = authController.userModel;
+
+    if (userId == null || currentUser == null) return;
+
+    try {
+      await firestoreService.updateUser(userId, {
+        'writingBlurEnabled': value,
+      });
+      authController.updateUserModel(
+        currentUser.copyWith(writingBlurEnabled: value),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('설정 저장 중 오류가 발생했습니다: $e')),
+      );
+    }
   }
 
   Future<void> _showLogoutDialog(BuildContext context, AuthController authController) async {
