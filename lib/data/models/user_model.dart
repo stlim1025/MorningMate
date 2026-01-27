@@ -12,6 +12,7 @@ class UserModel {
   final DateTime createdAt;
   final Map<String, dynamic>? characterCustomization;
   final List<String> friendIds;
+  final bool writingBlurEnabled;
 
   UserModel({
     required this.uid,
@@ -25,6 +26,7 @@ class UserModel {
     required this.createdAt,
     this.characterCustomization,
     this.friendIds = const [],
+    this.writingBlurEnabled = true,
   });
 
   // Firestore에서 가져오기
@@ -44,6 +46,7 @@ class UserModel {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       characterCustomization: data['characterCustomization'],
       friendIds: List<String>.from(data['friendIds'] ?? []),
+      writingBlurEnabled: data['writingBlurEnabled'] ?? true,
     );
   }
 
@@ -62,6 +65,7 @@ class UserModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'characterCustomization': characterCustomization ?? {},
       'friendIds': friendIds,
+      'writingBlurEnabled': writingBlurEnabled,
     };
   }
 
@@ -78,6 +82,7 @@ class UserModel {
     DateTime? createdAt,
     Map<String, dynamic>? characterCustomization,
     List<String>? friendIds,
+    bool? writingBlurEnabled,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -91,6 +96,7 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       characterCustomization: characterCustomization ?? this.characterCustomization,
       friendIds: friendIds ?? this.friendIds,
+      writingBlurEnabled: writingBlurEnabled ?? this.writingBlurEnabled,
     );
   }
 }
