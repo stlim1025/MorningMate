@@ -24,6 +24,7 @@ class _WritingScreenState extends State<WritingScreen> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   bool _enableBlur = true;
+  bool _didLoadSettings = false;
   String? _selectedMood;
 
   @override
@@ -35,6 +36,19 @@ class _WritingScreenState extends State<WritingScreen> {
     _textController.addListener(() {
       morningController.updateCharCount(_textController.text);
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didLoadSettings) {
+      final authController = Provider.of<AuthController>(context);
+      final userBlurEnabled = authController.userModel?.writingBlurEnabled;
+      if (userBlurEnabled != null) {
+        _enableBlur = userBlurEnabled;
+        _didLoadSettings = true;
+      }
+    }
   }
 
   @override

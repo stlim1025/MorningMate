@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
 import '../features/morning/screens/morning_screen.dart';
@@ -12,7 +13,23 @@ import '../features/settings/screens/settings_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/login',
+    initialLocation:
+        FirebaseAuth.instance.currentUser == null ? '/login' : '/morning',
+    refreshListenable:
+        GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
+    redirect: (context, state) {
+      final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+      final isLoggingIn =
+          state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+
+      if (!isLoggedIn && !isLoggingIn) {
+        return '/login';
+      }
+      if (isLoggedIn && isLoggingIn) {
+        return '/morning';
+      }
+      return null;
+    },
     routes: [
       // Auth Routes
       GoRoute(
