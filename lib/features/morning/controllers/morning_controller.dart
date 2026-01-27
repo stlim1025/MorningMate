@@ -12,7 +12,8 @@ class MorningController extends ChangeNotifier {
   MorningController(this._firestoreService);
 
   // 상태 변수
-  bool _isLoading = true; // 초기값을 true로 설정하여 시작 시 밤 배경 깜빡임 방지
+  bool _isLoading = false; // 초기값 false로 변경 (stuck 방지)
+  bool _hasInitialized = false; // 초기 데이터 로드 여부
   bool _isWriting = false;
   String? _currentQuestion;
   DiaryModel? _todayDiary;
@@ -22,6 +23,7 @@ class MorningController extends ChangeNotifier {
 
   // Getters
   bool get isLoading => _isLoading;
+  bool get hasInitialized => _hasInitialized;
   bool get isWriting => _isWriting;
   String? get currentQuestion => _currentQuestion;
   DiaryModel? get todayDiary => _todayDiary;
@@ -30,7 +32,7 @@ class MorningController extends ChangeNotifier {
   bool get hasDiaryToday {
     if (_todayDiary == null || !_todayDiary!.isCompleted) return false;
     final now = DateTime.now();
-    final diaryDate = _todayDiary!.date;
+    final diaryDate = _todayDiary!.date.toLocal(); // 로컬 시간으로 변환 후 비교
     return diaryDate.year == now.year &&
         diaryDate.month == now.month &&
         diaryDate.day == now.day;
@@ -41,16 +43,14 @@ class MorningController extends ChangeNotifier {
     // 이미 메모리에 오늘의 일기가 있고 완료 상태라면 건너뜀
     if (hasDiaryToday) {
       _isLoading = false;
-      Future.microtask(() {
-        notifyListeners();
-      });
+      _hasInitialized = true;
+      Future.microtask(() => notifyListeners());
       return;
     }
 
     _isLoading = true;
-    Future.microtask(() {
-      notifyListeners();
-    });
+    // Build 단계에서 호출될 경우를 대비해 처리
+    Future.microtask(() => notifyListeners());
 
     try {
       // 1. 먼저 로컬 파일 확인 (가장 빠름)
@@ -73,9 +73,8 @@ class MorningController extends ChangeNotifier {
           createdAt: now,
         );
         _isLoading = false;
-        Future.microtask(() {
-          notifyListeners();
-        });
+        _hasInitialized = true; // 로컬 파일 있으면 즉시 초기화 완료 처리
+        notifyListeners();
         // 여기서 return하지 않고 서버에서도 최신 메타데이터를 가져오도록 진행
       }
 
@@ -89,10 +88,18 @@ class MorningController extends ChangeNotifier {
       print('오늘의 일기 확인 오류: $e');
     } finally {
       _isLoading = false;
-      Future.microtask(() {
-        notifyListeners();
-      });
+      _hasInitialized = true;
+      Future.microtask(() => notifyListeners());
     }
+  }
+
+  // 강제로 로딩 종료 (예외 발생 대비)
+  void finishLoading() {
+    _isLoading = false;
+    _hasInitialized = true;
+    Future.microtask(() {
+      notifyListeners();
+    });
   }
 
   // 랜덤 질문 가져오기
