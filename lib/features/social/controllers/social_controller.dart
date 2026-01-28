@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import '../../../services/firestore_service.dart';
+import '../../../services/diary_service.dart';
+import '../../../services/friend_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../data/models/user_model.dart';
 
 class SocialController extends ChangeNotifier {
-  final FirestoreService _firestoreService;
+  final FriendService _friendService;
+  final DiaryService _diaryService;
   final NotificationService _notificationService;
 
-  SocialController(this._firestoreService, this._notificationService);
+  SocialController(
+    this._friendService,
+    this._diaryService,
+    this._notificationService,
+  );
 
   List<UserModel> _friends = [];
   bool _isLoading = false;
@@ -24,7 +30,7 @@ class SocialController extends ChangeNotifier {
     });
 
     try {
-      _friends = await _firestoreService.getFriends(userId);
+      _friends = await _friendService.getFriends(userId);
     } catch (e) {
       print('친구 목록 로드 오류: $e');
     }
@@ -38,7 +44,7 @@ class SocialController extends ChangeNotifier {
   // 친구 추가
   Future<void> addFriend(String userId, String friendId) async {
     try {
-      await _firestoreService.createFriendship(userId, friendId);
+      await _friendService.createFriendship(userId, friendId);
     } catch (e) {
       print('친구 추가 오류: $e');
       rethrow;
@@ -48,7 +54,7 @@ class SocialController extends ChangeNotifier {
   // 이미 친구인지 확인
   Future<bool> checkIfAlreadyFriend(String userId, String friendId) async {
     try {
-      return await _firestoreService.checkIfFriends(userId, friendId);
+      return await _friendService.checkIfFriends(userId, friendId);
     } catch (e) {
       print('친구 확인 오류: $e');
       return false;
@@ -58,7 +64,7 @@ class SocialController extends ChangeNotifier {
   // 친구 요청
   Future<void> sendFriendRequest(String userId, String friendId) async {
     try {
-      await _firestoreService.createFriendship(userId, friendId);
+      await _friendService.createFriendship(userId, friendId);
       // TODO: 친구에게 푸시 알림 발송
     } catch (e) {
       print('친구 요청 오류: $e');
@@ -89,7 +95,7 @@ class SocialController extends ChangeNotifier {
   // 친구가 오늘 일기를 작성했는지 확인
   Future<bool> hasFriendWrittenToday(String friendId) async {
     try {
-      final diary = await _firestoreService.getDiaryByDate(
+      final diary = await _diaryService.getDiaryByDate(
         friendId,
         DateTime.now(),
       );
@@ -102,6 +108,6 @@ class SocialController extends ChangeNotifier {
 
   // 실시간 친구 목록 스트림
   Stream<List<UserModel>> getFriendsStream(String userId) {
-    return _firestoreService.getFriendsStream(userId);
+    return _friendService.getFriendsStream(userId);
   }
 }

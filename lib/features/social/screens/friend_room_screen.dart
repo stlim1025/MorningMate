@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../services/firestore_service.dart';
+import '../../../services/user_service.dart';
 import '../../../data/models/user_model.dart';
 import '../../morning/widgets/character_room_widget.dart';
 import '../controllers/social_controller.dart';
@@ -29,10 +29,10 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
   }
 
   Future<void> _loadFriendData() async {
-    final firestoreService = context.read<FirestoreService>();
+    final userService = context.read<UserService>();
 
     try {
-      final friend = await firestoreService.getUser(widget.friendId);
+      final friend = await userService.getUser(widget.friendId);
       setState(() {
         _friend = friend;
         _isLoading = false;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../services/firestore_service.dart';
+import '../../../services/user_service.dart';
 import '../../../data/models/user_model.dart';
 
 // 캐릭터 상태 정의
@@ -12,9 +12,9 @@ enum CharacterState {
 }
 
 class CharacterController extends ChangeNotifier {
-  final FirestoreService _firestoreService;
+  final UserService _userService;
 
-  CharacterController(this._firestoreService);
+  CharacterController(this._userService);
 
   // 상태 변수
   UserModel? _currentUser;
@@ -31,7 +31,7 @@ class CharacterController extends ChangeNotifier {
   // 사용자 정보 로드
   Future<void> loadUserData(String userId) async {
     try {
-      _currentUser = await _firestoreService.getUser(userId);
+      _currentUser = await _userService.getUser(userId);
       Future.microtask(() {
         notifyListeners();
       });
@@ -76,7 +76,7 @@ class CharacterController extends ChangeNotifier {
     if (_currentUser == null) return;
 
     final newPoints = _currentUser!.points + points;
-    await _firestoreService.updateUser(userId, {
+    await _userService.updateUser(userId, {
       'points': newPoints,
     });
 
@@ -109,7 +109,7 @@ class CharacterController extends ChangeNotifier {
       }
     }
 
-    await _firestoreService.updateUser(userId, {
+    await _userService.updateUser(userId, {
       'consecutiveDays': newConsecutiveDays,
       'lastLoginDate': DateTime.now(),
     });
@@ -179,7 +179,7 @@ class CharacterController extends ChangeNotifier {
     await Future.delayed(const Duration(seconds: 3));
 
     final stateString = _getStringFromCharacterState(newState);
-    await _firestoreService.updateUser(userId, {
+    await _userService.updateUser(userId, {
       'characterState': stateString,
       'characterLevel': _currentUser!.characterLevel + 1,
     });

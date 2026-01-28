@@ -7,7 +7,10 @@ import 'core/theme/app_theme.dart';
 import 'router/app_router.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
-import 'services/firestore_service.dart';
+import 'services/user_service.dart';
+import 'services/diary_service.dart';
+import 'services/friend_service.dart';
+import 'services/question_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/morning/controllers/morning_controller.dart';
 import 'features/character/controllers/character_controller.dart';
@@ -51,41 +54,57 @@ class MorningMateApp extends StatelessWidget {
         Provider<NotificationService>(
           create: (_) => NotificationService(),
         ),
-        Provider<FirestoreService>(
-          create: (_) => FirestoreService(),
+        Provider<UserService>(
+          create: (_) => UserService(),
+        ),
+        Provider<DiaryService>(
+          create: (_) => DiaryService(),
+        ),
+        Provider<QuestionService>(
+          create: (_) => QuestionService(),
+        ),
+        Provider<FriendService>(
+          create: (context) => FriendService(context.read<UserService>()),
         ),
 
         // Controllers
         ChangeNotifierProvider<AuthController>(
           create: (context) => AuthController(
             context.read<AuthService>(),
-            context.read<FirestoreService>(),
+            context.read<UserService>(),
             context.read<NotificationService>(),
           ),
         ),
         ChangeNotifierProxyProvider<AuthController, MorningController>(
           create: (context) => MorningController(
-            context.read<FirestoreService>(),
+            context.read<DiaryService>(),
+            context.read<QuestionService>(),
           ),
           update: (context, auth, previous) =>
-              previous ?? MorningController(context.read<FirestoreService>()),
+              previous ??
+              MorningController(
+                context.read<DiaryService>(),
+                context.read<QuestionService>(),
+              ),
         ),
         ChangeNotifierProxyProvider<AuthController, CharacterController>(
           create: (context) => CharacterController(
-            context.read<FirestoreService>(),
+            context.read<UserService>(),
           ),
           update: (context, auth, previous) =>
-              previous ?? CharacterController(context.read<FirestoreService>()),
+              previous ?? CharacterController(context.read<UserService>()),
         ),
         ChangeNotifierProxyProvider<AuthController, SocialController>(
           create: (context) => SocialController(
-            context.read<FirestoreService>(),
+            context.read<FriendService>(),
+            context.read<DiaryService>(),
             context.read<NotificationService>(),
           ),
           update: (context, auth, previous) =>
               previous ??
               SocialController(
-                context.read<FirestoreService>(),
+                context.read<FriendService>(),
+                context.read<DiaryService>(),
                 context.read<NotificationService>(),
               ),
         ),

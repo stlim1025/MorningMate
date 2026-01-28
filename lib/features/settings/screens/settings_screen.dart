@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../../services/firestore_service.dart';
+import '../../../services/user_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -339,12 +339,12 @@ class SettingsScreen extends StatelessWidget {
               }
 
               final authController = context.read<AuthController>();
-              final firestoreService = context.read<FirestoreService>();
+              final userService = context.read<UserService>();
               final userId = authController.currentUser?.uid;
 
               if (userId != null) {
                 try {
-                  await firestoreService.updateUser(userId, {
+                  await userService.updateUser(userId, {
                     'nickname': newNickname,
                   });
                   
@@ -374,14 +374,14 @@ class SettingsScreen extends StatelessWidget {
     AuthController authController,
     bool value,
   ) async {
-    final firestoreService = context.read<FirestoreService>();
+    final userService = context.read<UserService>();
     final userId = authController.currentUser?.uid;
     final currentUser = authController.userModel;
 
     if (userId == null || currentUser == null) return;
 
     try {
-      await firestoreService.updateUser(userId, {
+      await userService.updateUser(userId, {
         'writingBlurEnabled': value,
       });
       authController.updateUserModel(

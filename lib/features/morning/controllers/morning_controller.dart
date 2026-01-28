@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../services/firestore_service.dart';
+import '../../../services/diary_service.dart';
+import '../../../services/question_service.dart';
 import '../../../data/models/diary_model.dart';
 import '../../../utils/encryption.dart';
 import 'dart:async';
@@ -7,9 +8,10 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
 class MorningController extends ChangeNotifier {
-  final FirestoreService _firestoreService;
+  final DiaryService _diaryService;
+  final QuestionService _questionService;
 
-  MorningController(this._firestoreService);
+  MorningController(this._diaryService, this._questionService);
 
   // 상태 변수
   bool _isLoading = false; // 초기값 false로 변경 (stuck 방지)
@@ -79,8 +81,7 @@ class MorningController extends ChangeNotifier {
       }
 
       // 2. Firestore에서 실제 데이터(메타데이터 포함) 가져오기
-      final diary =
-          await _firestoreService.getDiaryByDate(userId, DateTime.now());
+      final diary = await _diaryService.getDiaryByDate(userId, DateTime.now());
       if (diary != null) {
         _todayDiary = diary;
       }
@@ -105,7 +106,7 @@ class MorningController extends ChangeNotifier {
   // 랜덤 질문 가져오기
   Future<void> fetchRandomQuestion() async {
     try {
-      _currentQuestion = await _firestoreService.getRandomQuestion();
+      _currentQuestion = await _questionService.getRandomQuestion();
       Future.microtask(() {
         notifyListeners();
       });
@@ -186,7 +187,7 @@ class MorningController extends ChangeNotifier {
         promptQuestion: _currentQuestion,
       );
 
-      final diaryId = await _firestoreService.createDiary(diary);
+      final diaryId = await _diaryService.createDiary(diary);
       _todayDiary = diary.copyWith(id: diaryId);
 
       _isLoading = false;
@@ -234,7 +235,7 @@ class MorningController extends ChangeNotifier {
 
       // 1. 전달받은 내용이 없다면 Firestore에서 가져오기
       if (contentToDecrypt == null) {
-        final diary = await _firestoreService.getDiaryByDate(userId, date);
+        final diary = await _diaryService.getDiaryByDate(userId, date);
         contentToDecrypt = diary?.encryptedContent;
       }
 
