@@ -5,7 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/user_model.dart';
-import '../../../services/firestore_service.dart';
+import '../../../services/user_service.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -525,7 +525,7 @@ class _SocialScreenState extends State<SocialScreen> {
   Future<void> _addFriendByEmail(BuildContext context, String email) async {
     final authController = context.read<AuthController>();
     final socialController = context.read<SocialController>();
-    final firestoreService = context.read<FirestoreService>();
+    final userService = context.read<UserService>();
     final currentUser = authController.currentUser;
 
     if (currentUser == null) return;
@@ -543,7 +543,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
     try {
       // 이메일로 사용자 찾기
-      final friendUser = await firestoreService.getUserByEmail(email);
+      final friendUser = await userService.getUserByEmail(email);
 
       if (friendUser == null) {
         if (context.mounted) {

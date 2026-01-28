@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/notification_service.dart';
-import '../../../services/firestore_service.dart';
+import '../../../services/user_service.dart';
 import '../../../data/models/user_model.dart';
 
 class AuthController extends ChangeNotifier {
   final AuthService _authService;
-  final FirestoreService _firestoreService;
+  final UserService _userService;
   final NotificationService _notificationService;
 
   AuthController(
-      this._authService, this._firestoreService, this._notificationService) {
+      this._authService, this._userService, this._notificationService) {
     // 인증 상태 변경 리스너
     _authService.authStateChanges.listen(_handleAuthStateChange);
   }
@@ -28,7 +28,7 @@ class AuthController extends ChangeNotifier {
   Future<void> _handleAuthStateChange(User? user) async {
     _currentUser = user;
     if (user != null) {
-      _userModel = await _firestoreService.getUser(user.uid);
+      _userModel = await _userService.getUser(user.uid);
       await _updateFcmToken(user.uid);
     } else {
       _userModel = null;
@@ -47,7 +47,7 @@ class AuthController extends ChangeNotifier {
       await _notificationService.initialize();
       final token = _notificationService.fcmToken;
       if (token != null) {
-        await _firestoreService.updateFcmToken(userId, token);
+        await _userService.updateFcmToken(userId, token);
       }
     } catch (e) {
       print('FCM 토큰 업데이트 실패: $e');
@@ -75,7 +75,7 @@ class AuthController extends ChangeNotifier {
           createdAt: DateTime.now(),
         );
 
-        await _firestoreService.createUser(userModel);
+        await _userService.createUser(userModel);
         _userModel = userModel;
 
         // FCM 토큰 업데이트
@@ -98,7 +98,7 @@ class AuthController extends ChangeNotifier {
 
       if (_currentUser != null) {
         // Firestore에서 사용자 데이터 가져오기
-        _userModel = await _firestoreService.getUser(_currentUser!.uid);
+        _userModel = await _userService.getUser(_currentUser!.uid);
 
         // FCM 토큰 업데이트
         await _updateFcmToken(_currentUser!.uid);

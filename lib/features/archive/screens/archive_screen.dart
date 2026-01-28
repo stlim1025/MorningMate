@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../services/firestore_service.dart';
+import '../../../services/diary_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/diary_model.dart';
 import '../../morning/controllers/morning_controller.dart';
@@ -31,7 +31,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   Future<void> _loadDiaries() async {
     final authController = context.read<AuthController>();
-    final firestoreService = context.read<FirestoreService>();
+    final diaryService = context.read<DiaryService>();
     final userId = authController.currentUser?.uid;
 
     if (userId == null) return;
@@ -41,7 +41,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     });
 
     try {
-      final diaries = await firestoreService.getUserDiaries(userId);
+      final diaries = await diaryService.getUserDiaries(userId);
       setState(() {
         _diaries = diaries;
         _isLoading = false;
