@@ -59,6 +59,8 @@ class _MorningScreenState extends State<MorningScreen>
           characterController.setAwake(true);
         } else {
           characterController.setAwake(false);
+          // 일기가 없으면 랜덤 질문 가져오기
+          await morningController.fetchRandomQuestion();
         }
 
         // 3. 나머지 유저 데이터 로드
@@ -599,34 +601,54 @@ class _MorningScreenState extends State<MorningScreen>
         children: [
           if (!isAwake) ...[
             // 랜덤 질문 표시
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5DC).withOpacity(0.95),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFF8B7355).withOpacity(0.3),
-                  width: 2,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: const [
-                      Icon(Icons.auto_awesome,
-                          color: Color(0xFFFFD700), size: 24),
-                      SizedBox(width: 8),
-                      Text(
-                        '오늘의 일기 질문 완료!',
-                        style: TextStyle(
-                          color: Color(0xFF2C3E50),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
+            GestureDetector(
+              onTap: () => controller.fetchRandomQuestion(),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F5DC).withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF8B7355).withOpacity(0.3),
+                    width: 2,
                   ),
-                ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.auto_awesome,
+                            color: Color(0xFFFFD700), size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          '오늘의 질문',
+                          style: TextStyle(
+                            color: const Color(0xFF2C3E50).withOpacity(0.7),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const Spacer(),
+                        Icon(
+                          Icons.refresh,
+                          color: const Color(0xFF2C3E50).withOpacity(0.5),
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      controller.currentQuestion ?? '오늘의 질문을 불러오는 중...',
+                      style: const TextStyle(
+                        color: Color(0xFF2C3E50),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -638,7 +660,10 @@ class _MorningScreenState extends State<MorningScreen>
               height: 56,
               child: ElevatedButton(
                 onPressed: () async {
-                  await controller.fetchRandomQuestion();
+                  // 이미 화면에 표시된 질문이 있으므로 새로 가져오지 않고 바로 이동
+                  if (controller.currentQuestion == null) {
+                    await controller.fetchRandomQuestion();
+                  }
                   if (context.mounted) {
                     context.push('/writing', extra: controller.currentQuestion);
                   }
