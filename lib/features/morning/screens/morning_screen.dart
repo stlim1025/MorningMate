@@ -671,7 +671,8 @@ class _MorningScreenState extends State<MorningScreen>
           ] else ...[
             // 작성 완료 상태
             Container(
-              padding: const EdgeInsets.all(24),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFF90EE90).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(20),
@@ -680,28 +681,36 @@ class _MorningScreenState extends State<MorningScreen>
                   width: 2,
                 ),
               ),
-              child: Column(
+              child: Row(
                 children: [
                   const Icon(
                     Icons.check_circle,
                     color: Color(0xFF228B22),
-                    size: 48,
+                    size: 32,
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    '오늘의 일기 작성 완료!',
-                    style: TextStyle(
-                      color: Color(0xFF228B22),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '내일 아침에 다시 만나요 😊',
-                    style: TextStyle(
-                      color: Color(0xFF2C3E50),
-                      fontSize: 14,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          '오늘의 일기 작성 완료!',
+                          style: TextStyle(
+                            color: Color(0xFF228B22),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          '내일 아침에 다시 만나요 😊',
+                          style: TextStyle(
+                            color: Color(0xFF2C3E50),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
