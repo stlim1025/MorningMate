@@ -43,6 +43,9 @@ void main() async {
 class MorningMateApp extends StatelessWidget {
   const MorningMateApp({super.key});
 
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -52,7 +55,11 @@ class MorningMateApp extends StatelessWidget {
           create: (_) => AuthService(),
         ),
         Provider<NotificationService>(
-          create: (_) => NotificationService(),
+          create: (_) {
+            final service = NotificationService();
+            service.setScaffoldMessengerKey(scaffoldMessengerKey);
+            return service;
+          },
         ),
         Provider<UserService>(
           create: (_) => UserService(),
@@ -115,6 +122,7 @@ class MorningMateApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.dark, // 기상 직후 시력 보호를 위한 다크모드 기본
+        scaffoldMessengerKey: scaffoldMessengerKey,
         routerConfig: AppRouter.router,
       ),
     );

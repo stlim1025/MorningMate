@@ -1,15 +1,22 @@
 import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   Future<void> Function(String token)? _onTokenRefresh;
   StreamSubscription<String>? _tokenRefreshSubscription;
+  GlobalKey<ScaffoldMessengerState>? _scaffoldMessengerKey;
+  Timer? _foregroundBannerTimer;
 
   // FCM 토큰
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
+
+  void setScaffoldMessengerKey(GlobalKey<ScaffoldMessengerState> key) {
+    _scaffoldMessengerKey = key;
+  }
 
   void setOnTokenRefreshHandler(Future<void> Function(String token)? handler) {
     _onTokenRefresh = handler;
@@ -68,13 +75,19 @@ class NotificationService {
     
     // 앱이 실행 중일 때 메시지를 받으면 여기서 처리
     if (message.notification != null) {
-      // TODO: 인앱 알림 표시 (SnackBar, Dialog 등)
+      _showInAppNotification(
+        title: message.notification!.title,
+        body: message.notification!.body,
+      );
       print('제목: ${message.notification!.title}');
       print('내용: ${message.notification!.body}');
     }
 
     // 데이터 메시지 처리
     if (message.data.isNotEmpty) {
+      if (message.notification == null) {
+        _showInAppNotificationFromData(message.data);
+      }
       _handleDataMessage(message.data);
     }
   }
@@ -120,6 +133,85 @@ class NotificationService {
         // TODO: 진화 애니메이션 트리거
         break;
     }
+  }
+
+  void _showInAppNotificationFromData(Map<String, dynamic> data) {
+    final String? type = data['type'];
+    String? title;
+    String? body;
+
+    switch (type) {
+      case 'wake_up':
+        final String? friendName = data['friendName'];
+        title = '깨우기 알림';
+        body = friendName == null || friendName.isEmpty
+            ? '친구가 당신을 깨우려고 합니다!'
+            : '$friendName님이 당신을 깨우려고 합니다!';
+        break;
+      case 'character_evolved':
+        title = '캐릭터 진화';
+        body = '축하합니다! 캐릭터가 진화했습니다!';
+        break;
+      default:
+        title = '알림';
+        body = data['message']?.toString();
+        break;
+    }
+
+    _showInAppNotification(title: title, body: body);
+  }
+
+  void _showInAppNotification({String? title, String? body}) {
+    final messenger = _scaffoldMessengerKey?.currentState;
+    if (messenger == null) {
+      return;
+    }
+
+    final displayTitle = (title == null || title.isEmpty) ? '알림' : title;
+    final displayBody = (body == null || body.isEmpty) ? null : body;
+
+    messenger.clearMaterialBanners();
+    messenger.showMaterialBanner(
+      MaterialBanner(
+        backgroundColor: Colors.black.withOpacity(0.85),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              displayTitle,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (displayBody != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  displayBody,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: messenger.hideCurrentMaterialBanner,
+            child: const Text(
+              '닫기',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    _foregroundBannerTimer?.cancel();
+    _foregroundBannerTimer = Timer(
+      const Duration(seconds: 3),
+      messenger.hideCurrentMaterialBanner,
+    );
   }
 
   // 특정 주제(Topic) 구독
