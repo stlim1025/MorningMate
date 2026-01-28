@@ -412,6 +412,7 @@ class _MorningScreenState extends State<MorningScreen>
       ),
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
           // 캐릭터 몸
           Container(
@@ -515,22 +516,56 @@ class _MorningScreenState extends State<MorningScreen>
           // Z 표시 (잠잘 때)
           if (!isAwake)
             Positioned(
-              top: -10,
-              right: 10,
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(seconds: 2),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: (value * 2) % 1.0,
-                    child: const Text(
-                      'Z',
-                      style: TextStyle(
-                        fontSize: 30,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.bold,
+              top: -20,
+              right: 0,
+              child: AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Stack(
+                    children: [
+                      // 첫 번째 Z
+                      Transform.translate(
+                        offset: Offset(
+                          10 * (1 - _animationController.value),
+                          -20 * _animationController.value,
+                        ),
+                        child: Opacity(
+                          opacity:
+                              (1 - _animationController.value).clamp(0.0, 1.0),
+                          child: const Text(
+                            'Z',
+                            style: TextStyle(
+                              fontSize: 24,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      // 두 번째 Z (약간의 시차)
+                      Transform.translate(
+                        offset: Offset(
+                          20 * (1 - ((_animationController.value + 0.5) % 1.0)),
+                          -30 * ((_animationController.value + 0.5) % 1.0),
+                        ),
+                        child: Opacity(
+                          opacity:
+                              (1 - ((_animationController.value + 0.5) % 1.0))
+                                  .clamp(0.0, 1.0),
+                          child: const Padding(
+                            padding: EdgeInsets.only(left: 15, top: 10),
+                            child: Text(
+                              'z',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white60,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),

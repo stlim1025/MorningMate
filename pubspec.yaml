@@ -1,7 +1,7 @@
 name: morning_mate
 description: A morning diary app with character growth and social features
 publish_to: 'none'
-version: 1.0.0+1
+version: 0.1.1+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -43,6 +43,7 @@ dependencies:
   shared_preferences: ^2.2.2
   path_provider: ^2.1.1
   table_calendar: ^3.0.9
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:

@@ -5,8 +5,31 @@ import '../../../core/theme/app_colors.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
 
-class SettingsScreen extends StatelessWidget {
+import 'package:package_info_plus/package_info_plus.dart';
+
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _initPackageInfo();
+  }
+
+  Future<void> _initPackageInfo() async {
+    final PackageInfo info = await PackageInfo.fromPlatform();
+    if (!mounted) return;
+    setState(() {
+      _version = 'v${info.version}';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,22 +47,23 @@ class SettingsScreen extends StatelessWidget {
         child: Consumer<AuthController>(
           builder: (context, authController, child) {
             final user = authController.userModel;
-            
+
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 // 프로필 섹션
                 _buildProfileSection(context, user),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // 계정 설정
                 _buildSectionTitle('계정'),
                 _buildSettingsTile(
                   icon: Icons.person,
                   title: '닉네임 변경',
                   subtitle: user?.nickname ?? '',
-                  onTap: () => _showChangeNicknameDialog(context, user?.nickname ?? ''),
+                  onTap: () =>
+                      _showChangeNicknameDialog(context, user?.nickname ?? ''),
                 ),
                 _buildSettingsTile(
                   icon: Icons.email,
@@ -47,9 +71,9 @@ class SettingsScreen extends StatelessWidget {
                   subtitle: user?.email ?? '',
                   onTap: null, // 이메일은 변경 불가
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // 보안 설정
                 _buildSectionTitle('보안'),
                 _buildSettingsTile(
@@ -73,9 +97,9 @@ class SettingsScreen extends StatelessWidget {
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // 앱 설정
                 _buildSectionTitle('앱 설정'),
                 _buildWritingBlurTile(context, authController),
@@ -95,15 +119,15 @@ class SettingsScreen extends StatelessWidget {
                   subtitle: '항상 켜짐',
                   onTap: null,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // 정보
                 _buildSectionTitle('정보'),
                 _buildSettingsTile(
                   icon: Icons.info,
                   title: '버전 정보',
-                  subtitle: 'v1.0.0',
+                  subtitle: _version.isEmpty ? '불러오는 중...' : _version,
                   onTap: null,
                 ),
                 _buildSettingsTile(
@@ -116,14 +140,14 @@ class SettingsScreen extends StatelessWidget {
                   title: '개인정보 처리방침',
                   onTap: () {},
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // 로그아웃 버튼
                 _buildLogoutButton(context, authController),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // 회원탈퇴
                 _buildDeleteAccountButton(context),
               ],
@@ -264,7 +288,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context, AuthController authController) {
+  Widget _buildLogoutButton(
+      BuildContext context, AuthController authController) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
@@ -297,9 +322,10 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showChangeNicknameDialog(BuildContext context, String currentNickname) async {
+  Future<void> _showChangeNicknameDialog(
+      BuildContext context, String currentNickname) async {
     final controller = TextEditingController(text: currentNickname);
-    
+
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -347,7 +373,7 @@ class SettingsScreen extends StatelessWidget {
                   await userService.updateUser(userId, {
                     'nickname': newNickname,
                   });
-                  
+
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -394,7 +420,8 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _showLogoutDialog(BuildContext context, AuthController authController) async {
+  Future<void> _showLogoutDialog(
+      BuildContext context, AuthController authController) async {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
