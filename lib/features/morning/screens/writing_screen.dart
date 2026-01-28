@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -289,7 +290,7 @@ class _WritingScreenState extends State<WritingScreen> {
 
     if (success && context.mounted) {
       // 캐릭터 깨우기
-      await characterController.wakeUpCharacter(userId);
+      unawaited(characterController.wakeUpCharacter(userId));
 
       // 완료 다이얼로그 표시
       await _showCompletionDialog(context);
