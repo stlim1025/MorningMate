@@ -58,6 +58,7 @@ class MorningMateApp extends StatelessWidget {
           create: (_) {
             final service = NotificationService();
             service.setScaffoldMessengerKey(scaffoldMessengerKey);
+            service.setNavigatorKey(AppRouter.navigatorKey);
             return service;
           },
         ),

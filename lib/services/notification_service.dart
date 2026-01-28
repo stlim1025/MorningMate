@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import '../core/widgets/floating_notification.dart';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   Future<void> Function(String token)? _onTokenRefresh;
   StreamSubscription<String>? _tokenRefreshSubscription;
   GlobalKey<ScaffoldMessengerState>? _scaffoldMessengerKey;
+  GlobalKey<NavigatorState>? _navigatorKey;
   Timer? _foregroundBannerTimer;
+  OverlayEntry? _currentOverlayEntry;
 
   // FCM 토큰
   String? _fcmToken;
@@ -16,6 +19,10 @@ class NotificationService {
 
   void setScaffoldMessengerKey(GlobalKey<ScaffoldMessengerState> key) {
     _scaffoldMessengerKey = key;
+  }
+
+  void setNavigatorKey(GlobalKey<NavigatorState> key) {
+    _navigatorKey = key;
   }
 
   void setOnTokenRefreshHandler(Future<void> Function(String token)? handler) {
@@ -34,11 +41,11 @@ class NotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('알림 권한이 허용되었습니다.');
-      
+
       // FCM 토큰 가져오기
       _fcmToken = await _fcm.getToken();
       print('FCM 토큰: $_fcmToken');
-      
+
       // 토큰 갱신 리스너
       await _tokenRefreshSubscription?.cancel();
       _tokenRefreshSubscription = _fcm.onTokenRefresh.listen((newToken) async {
@@ -72,7 +79,7 @@ class NotificationService {
   // 포그라운드 메시지 처리
   void _handleForegroundMessage(RemoteMessage message) {
     print('포그라운드 메시지 수신: ${message.notification?.title}');
-    
+
     // 앱이 실행 중일 때 메시지를 받으면 여기서 처리
     if (message.notification != null) {
       _showInAppNotification(
@@ -95,11 +102,11 @@ class NotificationService {
   // 알림 탭 처리
   void _handleNotificationTap(RemoteMessage message) {
     print('알림 탭: ${message.notification?.title}');
-    
+
     // 알림을 탭했을 때 특정 화면으로 이동
     if (message.data.isNotEmpty) {
       final String? type = message.data['type'];
-      
+
       switch (type) {
         case 'wake_up':
           // 깨우기 알림 - 메인 화면으로 이동
@@ -121,7 +128,7 @@ class NotificationService {
   // 데이터 메시지 처리
   void _handleDataMessage(Map<String, dynamic> data) {
     final String? type = data['type'];
-    
+
     switch (type) {
       case 'wake_up':
         final String? friendName = data['friendName'];
@@ -162,10 +169,57 @@ class NotificationService {
   }
 
   void _showInAppNotification({String? title, String? body}) {
-    final messenger = _scaffoldMessengerKey?.currentState;
-    if (messenger == null) {
+    final overlayState = _navigatorKey?.currentState?.overlay;
+    if (overlayState == null) {
+      // Overlay를 찾을 수 없거나 Navigator가 준비되지 않았을 경우 기존 방식(MaterialBanner)으로 표시
+      _showFallbackNotification(title: title, body: body);
       return;
     }
+
+    // 예전 알림이 남아있다면 제거
+    if (_currentOverlayEntry != null) {
+      try {
+        if (_currentOverlayEntry!.mounted) {
+          _currentOverlayEntry!.remove();
+        }
+      } catch (e) {
+        print('알림 제거 중 오류: $e');
+      }
+      _currentOverlayEntry = null;
+    }
+
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: FloatingNotification(
+          title: title ?? '알림',
+          body: body,
+          onDismiss: () {
+            try {
+              if (entry.mounted) {
+                entry.remove();
+              }
+            } catch (e) {
+              print('알림 해제 중 오류: $e');
+            }
+            if (_currentOverlayEntry == entry) {
+              _currentOverlayEntry = null;
+            }
+          },
+        ),
+      ),
+    );
+
+    _currentOverlayEntry = entry;
+    overlayState.insert(entry);
+  }
+
+  void _showFallbackNotification({String? title, String? body}) {
+    final messenger = _scaffoldMessengerKey?.currentState;
+    if (messenger == null) return;
 
     final displayTitle = (title == null || title.isEmpty) ? '알림' : title;
     final displayBody = (body == null || body.isEmpty) ? null : body;
@@ -198,10 +252,7 @@ class NotificationService {
         actions: [
           TextButton(
             onPressed: messenger.hideCurrentMaterialBanner,
-            child: const Text(
-              '닫기',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('닫기', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

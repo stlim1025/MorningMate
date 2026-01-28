@@ -14,7 +14,11 @@ import '../features/archive/screens/archive_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
 
 class AppRouter {
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   static final GoRouter router = GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation:
         FirebaseAuth.instance.currentUser == null ? '/login' : '/morning',
     refreshListenable:
