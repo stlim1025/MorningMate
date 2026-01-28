@@ -1,11 +1,19 @@
+import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  Future<void> Function(String token)? _onTokenRefresh;
+  StreamSubscription<String>? _tokenRefreshSubscription;
 
   // FCM 토큰
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
+
+  void setOnTokenRefreshHandler(Future<void> Function(String token)? handler) {
+    _onTokenRefresh = handler;
+  }
 
   // 알림 초기화
   Future<void> initialize() async {
@@ -25,10 +33,17 @@ class NotificationService {
       print('FCM 토큰: $_fcmToken');
       
       // 토큰 갱신 리스너
-      _fcm.onTokenRefresh.listen((newToken) {
+      await _tokenRefreshSubscription?.cancel();
+      _tokenRefreshSubscription = _fcm.onTokenRefresh.listen((newToken) async {
         _fcmToken = newToken;
         print('FCM 토큰 갱신: $newToken');
-        // TODO: 새 토큰을 Firestore에 업데이트
+        if (_onTokenRefresh != null) {
+          try {
+            await _onTokenRefresh!(newToken);
+          } catch (e) {
+            print('FCM 토큰 갱신 처리 실패: $e');
+          }
+        }
       });
 
       // 포그라운드 메시지 리스너

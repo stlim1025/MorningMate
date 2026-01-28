@@ -28,9 +28,13 @@ class AuthController extends ChangeNotifier {
   Future<void> _handleAuthStateChange(User? user) async {
     _currentUser = user;
     if (user != null) {
+      _notificationService.setOnTokenRefreshHandler(
+        (token) => _userService.updateFcmToken(user.uid, token),
+      );
       _userModel = await _userService.getUser(user.uid);
       await _updateFcmToken(user.uid);
     } else {
+      _notificationService.setOnTokenRefreshHandler(null);
       _userModel = null;
     }
     notifyListeners();
@@ -44,6 +48,9 @@ class AuthController extends ChangeNotifier {
   // FCM 토큰 업데이트
   Future<void> _updateFcmToken(String userId) async {
     try {
+      _notificationService.setOnTokenRefreshHandler(
+        (token) => _userService.updateFcmToken(userId, token),
+      );
       await _notificationService.initialize();
       final token = _notificationService.fcmToken;
       if (token != null) {
