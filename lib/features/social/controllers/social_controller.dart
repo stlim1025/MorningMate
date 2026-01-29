@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -64,36 +66,39 @@ class SocialController extends ChangeNotifier {
     try {
       final requestId = await _friendService.sendFriendRequest(userId, friendId);
 
-      bool isPushSent = false;
-      final callable = FirebaseFunctions.instance
-          .httpsCallable('sendFriendRequestNotification');
-      try {
-        final result = await callable.call({
-          'userId': userId,
-          'friendId': friendId,
-          'senderNickname': senderNickname,
-        });
-        if (result.data is Map && result.data['success'] == true) {
-          isPushSent = true;
-        }
-      } catch (e) {
-        print('친구 요청 FCM 전송 오류: $e');
-      }
-
+      final notificationRef =
+          FirebaseFirestore.instance.collection('notifications').doc();
       // 친구 요청 알림 생성
-      await FirebaseFirestore.instance.collection('notifications').add({
+      await notificationRef.set({
         'userId': friendId, // 받는 사람
         'senderId': userId, // 보낸 사람
         'senderNickname': senderNickname,
         'type': 'friendRequest',
         'message': '$senderNickname님이 친구 요청을 보냈습니다! 👋',
         'isRead': false,
-        'fcmSent': isPushSent,
+        'fcmSent': false,
         'createdAt': Timestamp.fromDate(DateTime.now()),
         'data': {
           'requestId': requestId,
         },
       });
+
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('sendFriendRequestNotification');
+      unawaited(() async {
+        try {
+          final result = await callable.call({
+            'userId': userId,
+            'friendId': friendId,
+            'senderNickname': senderNickname,
+          });
+          if (result.data is Map && result.data['success'] == true) {
+            await notificationRef.update({'fcmSent': true});
+          }
+        } catch (e) {
+          print('친구 요청 FCM 전송 오류: $e');
+        }
+      }());
     } catch (e) {
       print('친구 요청 오류: $e');
       rethrow;
@@ -106,32 +111,35 @@ class SocialController extends ChangeNotifier {
     try {
       await _friendService.acceptFriendRequest(requestId, userId, friendId);
 
-      bool isPushSent = false;
-      final callable = FirebaseFunctions.instance
-          .httpsCallable('sendFriendAcceptNotification');
-      try {
-        final result = await callable.call({
-          'userId': userId,
-          'friendId': friendId,
-          'senderNickname': userNickname,
-        });
-        if (result.data is Map && result.data['success'] == true) {
-          isPushSent = true;
-        }
-      } catch (e) {
-        print('친구 수락 FCM 전송 오류: $e');
-      }
-
-      await FirebaseFirestore.instance.collection('notifications').add({
+      final notificationRef =
+          FirebaseFirestore.instance.collection('notifications').doc();
+      await notificationRef.set({
         'userId': friendId,
         'senderId': userId,
         'senderNickname': userNickname,
         'type': 'system',
         'message': '$userNickname님이 친구 요청을 수락했어요.',
         'isRead': false,
-        'fcmSent': isPushSent,
+        'fcmSent': false,
         'createdAt': Timestamp.fromDate(DateTime.now()),
       });
+
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('sendFriendAcceptNotification');
+      unawaited(() async {
+        try {
+          final result = await callable.call({
+            'userId': userId,
+            'friendId': friendId,
+            'senderNickname': userNickname,
+          });
+          if (result.data is Map && result.data['success'] == true) {
+            await notificationRef.update({'fcmSent': true});
+          }
+        } catch (e) {
+          print('친구 수락 FCM 전송 오류: $e');
+        }
+      }());
       // 목록 새로고침
       await loadFriends(userId);
     } catch (e) {
@@ -146,32 +154,35 @@ class SocialController extends ChangeNotifier {
     try {
       await _friendService.rejectFriendRequest(requestId);
 
-      bool isPushSent = false;
-      final callable = FirebaseFunctions.instance
-          .httpsCallable('sendFriendRejectNotification');
-      try {
-        final result = await callable.call({
-          'userId': userId,
-          'friendId': friendId,
-          'senderNickname': userNickname,
-        });
-        if (result.data is Map && result.data['success'] == true) {
-          isPushSent = true;
-        }
-      } catch (e) {
-        print('친구 거절 FCM 전송 오류: $e');
-      }
-
-      await FirebaseFirestore.instance.collection('notifications').add({
+      final notificationRef =
+          FirebaseFirestore.instance.collection('notifications').doc();
+      await notificationRef.set({
         'userId': friendId,
         'senderId': userId,
         'senderNickname': userNickname,
         'type': 'system',
         'message': '$userNickname님이 친구 요청을 거절했어요.',
         'isRead': false,
-        'fcmSent': isPushSent,
+        'fcmSent': false,
         'createdAt': Timestamp.fromDate(DateTime.now()),
       });
+
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('sendFriendRejectNotification');
+      unawaited(() async {
+        try {
+          final result = await callable.call({
+            'userId': userId,
+            'friendId': friendId,
+            'senderNickname': userNickname,
+          });
+          if (result.data is Map && result.data['success'] == true) {
+            await notificationRef.update({'fcmSent': true});
+          }
+        } catch (e) {
+          print('친구 거절 FCM 전송 오류: $e');
+        }
+      }());
       // 목록 새로고침
       await loadFriends(userId);
     } catch (e) {
@@ -197,30 +208,34 @@ class SocialController extends ChangeNotifier {
       print('친구($friendId) 깨우기 실행: $friendName');
 
       final callable = FirebaseFunctions.instance.httpsCallable('wakeUpFriend');
-      bool isPushSent = false;
-      try {
-        final result = await callable.call({
-          'userId': userId,
-          'friendId': friendId,
-          'friendName': userNickname,
-        });
-        if (result.data is Map && result.data['success'] == true) {
-          isPushSent = true;
-        }
-      } catch (e) {
-        print('깨우기 FCM 전송 오류: $e');
-      }
       // 깨우기 알림 생성
-      await FirebaseFirestore.instance.collection('notifications').add({
+      final notificationRef =
+          FirebaseFirestore.instance.collection('notifications').doc();
+      await notificationRef.set({
         'userId': friendId, // 받는 사람
         'senderId': userId, // 보낸 사람
         'senderNickname': userNickname,
         'type': 'wakeUp',
         'message': '$userNickname님이 당신을 깨우고 있어요! ⏰',
         'isRead': false,
-        'fcmSent': isPushSent,
+        'fcmSent': false,
         'createdAt': Timestamp.fromDate(DateTime.now()),
       });
+
+      unawaited(() async {
+        try {
+          final result = await callable.call({
+            'userId': userId,
+            'friendId': friendId,
+            'friendName': userNickname,
+          });
+          if (result.data is Map && result.data['success'] == true) {
+            await notificationRef.update({'fcmSent': true});
+          }
+        } catch (e) {
+          print('깨우기 FCM 전송 오류: $e');
+        }
+      }());
 
       print('친구 깨우기 성공!');
     } catch (e) {
