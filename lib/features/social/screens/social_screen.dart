@@ -280,32 +280,69 @@ class _SocialScreenState extends State<SocialScreen> {
                         ],
                       ),
                     ),
-                    Row(
+                    Column(
                       children: [
-                        IconButton(
-                          onPressed: () {
-                            final myId =
-                                context.read<AuthController>().currentUser?.uid;
-                            if (myId != null) {
-                              controller.acceptFriendRequest(
-                                  requestId, myId, user.uid);
-                            }
-                          },
-                          icon: const Icon(Icons.check_circle,
-                              color: AppColors.success),
-                          tooltip: '수락',
+                        SizedBox(
+                          width: 64,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final myId = context
+                                  .read<AuthController>()
+                                  .currentUser
+                                  ?.uid;
+                              final myNickname = context
+                                  .read<AuthController>()
+                                  .userModel
+                                  ?.nickname;
+                              if (myId != null && myNickname != null) {
+                                controller.acceptFriendRequest(
+                                    requestId, myId, myNickname, user.uid);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.success,
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              '수락',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
-                        IconButton(
-                          onPressed: () {
-                            final myId =
-                                context.read<AuthController>().currentUser?.uid;
-                            if (myId != null) {
-                              controller.rejectFriendRequest(requestId, myId);
-                            }
-                          },
-                          icon:
-                              const Icon(Icons.cancel, color: AppColors.error),
-                          tooltip: '거절',
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: 64,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              final myId = context
+                                  .read<AuthController>()
+                                  .currentUser
+                                  ?.uid;
+                              if (myId != null) {
+                                controller.rejectFriendRequest(requestId, myId);
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              side: const BorderSide(color: AppColors.error),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              '거절',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),

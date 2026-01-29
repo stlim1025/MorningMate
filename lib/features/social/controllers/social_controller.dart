@@ -62,7 +62,7 @@ class SocialController extends ChangeNotifier {
   Future<void> sendFriendRequest(
       String userId, String senderNickname, String friendId) async {
     try {
-      await _friendService.sendFriendRequest(userId, friendId);
+      final requestId = await _friendService.sendFriendRequest(userId, friendId);
 
       // 친구 요청 알림 생성
       await FirebaseFirestore.instance.collection('notifications').add({
@@ -73,6 +73,9 @@ class SocialController extends ChangeNotifier {
         'message': '$senderNickname님이 친구 요청을 보냈습니다! 👋',
         'isRead': false,
         'createdAt': Timestamp.fromDate(DateTime.now()),
+        'data': {
+          'requestId': requestId,
+        },
       });
     } catch (e) {
       print('친구 요청 오류: $e');
@@ -81,10 +84,19 @@ class SocialController extends ChangeNotifier {
   }
 
   // 친구 요청 수락
-  Future<void> acceptFriendRequest(
-      String requestId, String userId, String friendId) async {
+  Future<void> acceptFriendRequest(String requestId, String userId,
+      String userNickname, String friendId) async {
     try {
       await _friendService.acceptFriendRequest(requestId, userId, friendId);
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'userId': friendId,
+        'senderId': userId,
+        'senderNickname': userNickname,
+        'type': 'system',
+        'message': '$userNickname님이 친구 요청을 수락했어요.',
+        'isRead': false,
+        'createdAt': Timestamp.fromDate(DateTime.now()),
+      });
       // 목록 새로고침
       await loadFriends(userId);
     } catch (e) {
