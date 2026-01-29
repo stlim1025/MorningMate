@@ -63,7 +63,7 @@ class NotificationScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       const Text(
-                        '아직 알림이 없습니다',
+                        '알림이 없습니다',
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 18,

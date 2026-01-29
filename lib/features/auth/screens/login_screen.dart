@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -87,6 +89,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context)
+                              .requestFocus(_passwordFocusNode);
+                        },
                         style: const TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
                           labelText: '이메일',
@@ -124,8 +131,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: TextFormField(
                         controller: _passwordController,
+                        focusNode: _passwordFocusNode,
                         obscureText: _obscurePassword,
                         style: const TextStyle(color: AppColors.textPrimary),
+                        textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => _handleLogin(),
                         decoration: InputDecoration(
                           labelText: '비밀번호',
@@ -212,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text(
                         '계정이 없으신가요? 회원가입',
                         style: TextStyle(
-                          color: AppColors.textPrimary,
+                          color: AppColors.secondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

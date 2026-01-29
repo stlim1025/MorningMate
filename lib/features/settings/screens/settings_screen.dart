@@ -87,25 +87,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // 보안 설정
                 _buildSectionTitle('보안'),
                 const SizedBox(height: 12),
-                _buildSettingsTile(
-                  icon: Icons.fingerprint,
-                  title: '생체 인증',
-                  subtitle: '앱 잠금 설정',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      _buildSnackBar('생체 인증 설정 기능은 개발 중입니다'),
-                    );
-                  },
-                ),
+                _buildBiometricTile(context, authController),
                 const SizedBox(height: 8),
                 _buildSettingsTile(
                   icon: Icons.lock,
                   title: '비밀번호 변경',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      _buildSnackBar('비밀번호 변경 기능은 개발 중입니다'),
-                    );
-                  },
+                  onTap: () => _showChangePasswordDialog(context),
                 ),
 
                 const SizedBox(height: 24),
@@ -157,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 16),
 
                 // 회원탈퇴
-                _buildDeleteAccountButton(context),
+                _buildDeleteAccountButton(context, authController),
 
                 const SizedBox(height: 40),
               ],
@@ -405,6 +392,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildBiometricTile(
+      BuildContext context, AuthController authController) {
+    final user = authController.userModel;
+    final biometricEnabled = user?.biometricEnabled ?? false;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.smallCardShadow,
+      ),
+      child: SwitchListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        secondary: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.fingerprint,
+            color: AppColors.primary,
+            size: 24,
+          ),
+        ),
+        title: const Text(
+          '생체 인증',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            biometricEnabled
+                ? '앱 실행과 일기 열기에 생체 인증이 필요합니다'
+                : '생체 인증으로 앱을 보호합니다',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        value: biometricEnabled,
+        onChanged: user == null
+            ? null
+            : (value) => _updateBiometricSetting(
+                  context,
+                  authController,
+                  value,
+                ),
+        activeColor: AppColors.primary,
+      ),
+    );
+  }
+
   Widget _buildLogoutButton(
       BuildContext context, AuthController authController) {
     return Container(
@@ -439,10 +484,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildDeleteAccountButton(BuildContext context) {
+  Widget _buildDeleteAccountButton(
+      BuildContext context, AuthController authController) {
     return Center(
       child: TextButton(
-        onPressed: () => _showDeleteAccountDialog(context),
+        onPressed: () => _showDeleteAccountDialog(context, authController),
         child: const Text(
           '회원탈퇴',
           style: TextStyle(
@@ -580,6 +626,182 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _updateBiometricSetting(
+    BuildContext context,
+    AuthController authController,
+    bool value,
+  ) async {
+    final userService = context.read<UserService>();
+    final userId = authController.currentUser?.uid;
+    final currentUser = authController.userModel;
+
+    if (userId == null || currentUser == null) return;
+
+    if (value) {
+      final canUse = await authController.canUseBiometric();
+      if (!canUse) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            _buildSnackBar('이 기기에서는 생체 인증을 사용할 수 없습니다'),
+          );
+        }
+        return;
+      }
+
+      final authenticated = await authController.authenticateWithBiometric();
+      if (!authenticated) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            _buildSnackBar('생체 인증에 실패했습니다'),
+          );
+        }
+        return;
+      }
+    }
+
+    try {
+      await userService.updateUser(userId, {
+        'biometricEnabled': value,
+      });
+      authController.updateUserModel(
+        currentUser.copyWith(biometricEnabled: value),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          _buildSnackBar('생체 인증 설정 저장 중 오류가 발생했습니다: $e'),
+        );
+      }
+    }
+  }
+
+  Future<void> _showChangePasswordDialog(BuildContext context) async {
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    return showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        title: const Text(
+          '비밀번호 변경',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: newPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  hintText: '새 비밀번호 (6자 이상)',
+                  hintStyle: TextStyle(color: AppColors.textHint),
+                  filled: true,
+                  fillColor: AppColors.backgroundLight,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '새 비밀번호를 입력해주세요';
+                  }
+                  if (value.trim().length < 6) {
+                    return '비밀번호는 최소 6자 이상이어야 합니다';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: confirmPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  hintText: '새 비밀번호 확인',
+                  hintStyle: TextStyle(color: AppColors.textHint),
+                  filled: true,
+                  fillColor: AppColors.backgroundLight,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '비밀번호 확인을 입력해주세요';
+                  }
+                  if (value.trim() != newPasswordController.text.trim()) {
+                    return '비밀번호가 일치하지 않습니다';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F0),
+              foregroundColor: AppColors.textSecondary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+
+              final authController = context.read<AuthController>();
+              try {
+                await authController
+                    .changePassword(newPasswordController.text.trim());
+                if (context.mounted) {
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    _buildSnackBar('비밀번호가 변경되었습니다', isSuccess: true),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    _buildSnackBar('비밀번호 변경 실패: $e'),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: AppColors.textPrimary,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              '변경',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showLogoutDialog(
       BuildContext context, AuthController authController) async {
     return showDialog(
@@ -639,7 +861,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _showDeleteAccountDialog(BuildContext context) async {
+  Future<void> _showDeleteAccountDialog(
+    BuildContext context,
+    AuthController authController,
+  ) async {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -672,12 +897,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('취소'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                _buildSnackBar('회원탈퇴 기능은 개발 중입니다'),
-              );
-            },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFFD700),
               foregroundColor: AppColors.textPrimary,
@@ -690,6 +909,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               '탈퇴',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await authController.deleteAccount();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    _buildSnackBar('회원탈퇴 실패: $e'),
+                  );
+                }
+              }
+            },
           ),
         ],
       ),

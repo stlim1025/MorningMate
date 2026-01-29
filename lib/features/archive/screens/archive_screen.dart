@@ -502,6 +502,26 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     final userId = authController.currentUser?.uid;
     if (userId == null) return;
 
+    final userModel = authController.userModel;
+    if (userModel?.biometricEnabled == true) {
+      final authenticated = await authController.authenticateWithBiometric();
+      if (!authenticated) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('생체 인증에 실패했습니다'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     if (mounted) {
       context.push('/diary-detail', extra: {
         'diaries': _diaries,
