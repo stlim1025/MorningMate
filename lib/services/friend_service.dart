@@ -11,7 +11,7 @@ class FriendService {
   CollectionReference get _friendsCollection => _db.collection('friends');
 
   // 친구 요청 보내기
-  Future<void> sendFriendRequest(String userId, String friendId) async {
+  Future<String> sendFriendRequest(String userId, String friendId) async {
     // 이미 친구인지 또는 요청 상태인지 확인
     final existingParams = await _friendsCollection
         .where('userId', isEqualTo: userId)
@@ -23,12 +23,13 @@ class FriendService {
     }
 
     // userId -> friendId (status: pending)
-    await _friendsCollection.add({
+    final requestRef = await _friendsCollection.add({
       'userId': userId,
       'friendId': friendId,
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
     });
+    return requestRef.id;
   }
 
   // 친구 요청 수락

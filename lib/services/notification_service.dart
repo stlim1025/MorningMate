@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../core/widgets/floating_notification.dart';
+import '../router/app_router.dart';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -114,8 +115,10 @@ class NotificationService {
           // TODO: Navigator를 사용해 특정 화면으로 이동
           break;
         case 'friend_request':
-          // 친구 요청 - 소셜 화면으로 이동
+        case 'friendRequest':
+          // 친구 요청 - 알림 화면으로 이동
           print('새로운 친구 요청이 있습니다.');
+          AppRouter.router.go('/notification');
           break;
         case 'morning_reminder':
           // 아침 알림 - 작성 화면으로 이동
@@ -146,6 +149,11 @@ class NotificationService {
         final String? cheerMessage = data['message'];
         print('응원 메시지 수신: $cheerMessage');
         break;
+      case 'friend_request':
+      case 'friendRequest':
+        final String? friendName = data['friendName'];
+        print('$friendName님이 친구 추가를 요청했습니다.');
+        break;
     }
   }
 
@@ -169,6 +177,14 @@ class NotificationService {
       case 'cheer_message':
         title = '친구가 응원 메시지를 보냈어요.';
         body = data['message']?.toString();
+        break;
+      case 'friend_request':
+      case 'friendRequest':
+        final String? friendName = data['friendName'];
+        title = '친구 요청';
+        body = friendName == null || friendName.isEmpty
+            ? '친구 요청이 도착했어요.'
+            : '$friendName 님이 친구 추가를 요청하였습니다.';
         break;
       default:
         title = '알림';

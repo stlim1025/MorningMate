@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../social/controllers/social_controller.dart';
 import '../controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
 
@@ -36,6 +37,7 @@ class NotificationScreen extends StatelessWidget {
           }
 
           final notificationController = context.read<NotificationController>();
+          final socialController = context.read<SocialController>();
 
           return StreamBuilder<List<NotificationModel>>(
             stream: notificationController.getNotificationsStream(userId),
@@ -74,6 +76,12 @@ class NotificationScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final notification = notifications[index];
+                  final requestId =
+                      notification.data?['requestId']?.toString();
+                  final isFriendRequest = notification.type ==
+                          NotificationType.friendRequest &&
+                      requestId != null &&
+                      requestId.isNotEmpty;
                   return Dismissible(
                     key: Key(notification.id),
                     direction: DismissDirection.endToStart,
@@ -150,7 +158,77 @@ class NotificationScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            if (!notification.isRead)
+                            if (isFriendRequest)
+                              Column(
+                                children: [
+                                  SizedBox(
+                                    width: 64,
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        await socialController
+                                            .acceptFriendRequest(
+                                          requestId,
+                                          userId,
+                                          authController.userModel?.nickname ??
+                                              '알 수 없음',
+                                          notification.senderId,
+                                        );
+                                        await notificationController
+                                            .deleteNotification(
+                                                notification.id);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.success,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 6),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        '수락',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  SizedBox(
+                                    width: 64,
+                                    child: OutlinedButton(
+                                      onPressed: () async {
+                                        await socialController
+                                            .rejectFriendRequest(
+                                                requestId, userId);
+                                        await notificationController
+                                            .deleteNotification(
+                                                notification.id);
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 6),
+                                        side: const BorderSide(
+                                            color: AppColors.error),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        '거절',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else if (!notification.isRead)
                               Container(
                                 width: 8,
                                 height: 8,
