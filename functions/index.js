@@ -1,5 +1,6 @@
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 const logger = require("firebase-functions/logger");
 
@@ -7,6 +8,115 @@ admin.initializeApp();
 
 // Set global options
 setGlobalOptions({ maxInstances: 10 });
+
+const normalizeNotificationType = (type) => {
+    switch (type) {
+        case "wakeUp":
+            return "wake_up";
+        case "friendRequest":
+            return "friend_request";
+        case "cheerMessage":
+            return "cheer_message";
+        case "system":
+            return "system";
+        default:
+            return type ?? "system";
+    }
+};
+
+const buildNotificationContent = (type, message, senderNickname) => {
+    switch (type) {
+        case "wake_up":
+            return {
+                title: "깨우기 알림",
+                body: message ?? `${senderNickname ?? "친구"}님이 당신을 깨우고 있어요!`,
+            };
+        case "friend_request":
+            return {
+                title: "친구 요청",
+                body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 보냈습니다! 👋`,
+            };
+        case "cheer_message":
+            return {
+                title: "친구가 응원 메시지를 보냈어요.",
+                body: message ?? "응원 메시지가 도착했어요.",
+            };
+        case "system":
+        default:
+            return {
+                title: "알림",
+                body: message ?? "새로운 알림이 도착했어요.",
+            };
+    }
+};
+
+exports.sendNotificationOnCreate = onDocumentCreated("notifications/{notificationId}", async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) {
+        return;
+    }
+
+    const data = snapshot.data();
+    if (data.fcmSent === true) {
+        return;
+    }
+
+    const userId = data.userId;
+    if (!userId) {
+        logger.info("Notification without userId, skipping.", {
+            notificationId: snapshot.id,
+        });
+        return;
+    }
+
+    const userDoc = await admin.firestore().collection("users").doc(userId).get();
+    const userData = userDoc.data();
+    const fcmToken = userData?.fcmToken;
+
+    if (!fcmToken) {
+        logger.info(`User ${userId} does not have an FCM token.`);
+        return;
+    }
+
+    const normalizedType = normalizeNotificationType(data.type);
+    const { title, body } = buildNotificationContent(
+        normalizedType,
+        data.message,
+        data.senderNickname
+    );
+
+    const message = {
+        token: fcmToken,
+        notification: {
+            title,
+            body,
+        },
+        data: {
+            type: normalizedType,
+            senderId: data.senderId ?? "",
+            senderNickname: data.senderNickname ?? "",
+            message: data.message ?? "",
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+        android: {
+            priority: "high",
+            notification: {
+                channelId: "high_importance_channel",
+            },
+        },
+        apns: {
+            payload: {
+                aps: {
+                    contentAvailable: true,
+                    sound: "default",
+                },
+            },
+        },
+    };
+
+    await admin.messaging().send(message);
+    await snapshot.ref.update({ fcmSent: true });
+});
 
 // 친구 깨우기 함수
 exports.wakeUpFriend = onCall(async (request) => {
@@ -85,6 +195,82 @@ exports.wakeUpFriend = onCall(async (request) => {
     } catch (error) {
         logger.error("Error sending notification:", error);
         throw new HttpsError("internal", "Error sending notification.");
+    }
+});
+
+// 응원 메시지 전송 함수
+exports.sendCheerMessage = onCall(async (request) => {
+    if (!request.auth) {
+        throw new HttpsError(
+            "unauthenticated",
+            "The function must be called while authenticated."
+        );
+    }
+
+    const { userId, friendId, message, senderNickname } = request.data;
+
+    if (!userId || !friendId || !message) {
+        throw new HttpsError(
+            "invalid-argument",
+            "The function must be called with valid arguments."
+        );
+    }
+
+    try {
+        const friendDoc = await admin
+            .firestore()
+            .collection("users")
+            .doc(friendId)
+            .get();
+
+        if (!friendDoc.exists) {
+            throw new HttpsError("not-found", "Friend not found.");
+        }
+
+        const friendData = friendDoc.data();
+        const fcmToken = friendData?.fcmToken;
+
+        if (!fcmToken) {
+            logger.info(`Friend ${friendId} does not have an FCM token.`);
+            return { success: false, message: "Friend not reachable." };
+        }
+
+        const notificationMessage = {
+            token: fcmToken,
+            notification: {
+                title: "친구가 응원 메시지를 보냈어요.",
+                body: message,
+            },
+            data: {
+                type: "cheer_message",
+                senderId: userId,
+                senderNickname: senderNickname ?? "",
+                message: message,
+                click_action: "FLUTTER_NOTIFICATION_CLICK",
+            },
+            android: {
+                priority: "high",
+                notification: {
+                    channelId: "high_importance_channel",
+                },
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        contentAvailable: true,
+                        sound: "default",
+                    },
+                },
+            },
+        };
+
+        await admin.messaging().send(notificationMessage);
+        logger.info(`Cheer message sent to ${friendId} from ${userId}`);
+
+        return { success: true };
+    } catch (error) {
+        logger.error("Error sending cheer message:", error);
+        throw new HttpsError("internal", "Error sending cheer message.");
     }
 });
 
