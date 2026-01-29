@@ -41,7 +41,7 @@ class NotificationController extends ChangeNotifier {
       senderId: senderId,
       senderNickname: senderNickname,
       type: NotificationType.cheerMessage,
-      message: message,
+      message: '친구가 응원 메시지를 보냈어요.\n$message',
       createdAt: DateTime.now(),
       isRead: false,
     );

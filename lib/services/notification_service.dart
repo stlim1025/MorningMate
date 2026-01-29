@@ -121,6 +121,9 @@ class NotificationService {
           // 아침 알림 - 작성 화면으로 이동
           print('아침 일기를 작성할 시간입니다!');
           break;
+        case 'cheer_message':
+          print('친구가 응원 메시지를 보냈습니다!');
+          break;
       }
     }
   }
@@ -138,6 +141,10 @@ class NotificationService {
       case 'character_evolved':
         print('축하합니다! 캐릭터가 진화했습니다!');
         // TODO: 진화 애니메이션 트리거
+        break;
+      case 'cheer_message':
+        final String? cheerMessage = data['message'];
+        print('응원 메시지 수신: $cheerMessage');
         break;
     }
   }
@@ -158,6 +165,10 @@ class NotificationService {
       case 'character_evolved':
         title = '캐릭터 진화';
         body = '축하합니다! 캐릭터가 진화했습니다!';
+        break;
+      case 'cheer_message':
+        title = '친구가 응원 메시지를 보냈어요.';
+        body = data['message']?.toString();
         break;
       default:
         title = '알림';

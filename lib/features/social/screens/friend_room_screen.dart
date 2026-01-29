@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/user_service.dart';
@@ -295,6 +296,19 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
 
               final userModel = context.read<AuthController>().userModel;
               if (userModel != null) {
+                final callable = FirebaseFunctions.instance
+                    .httpsCallable('sendCheerMessage');
+                try {
+                  await callable.call({
+                    'userId': userModel.uid,
+                    'friendId': _friend!.uid,
+                    'message': message,
+                    'senderNickname': userModel.nickname,
+                  });
+                } catch (e) {
+                  print('응원 메시지 FCM 전송 오류: $e');
+                }
+
                 await context.read<NotificationController>().sendCheerMessage(
                       userModel.uid,
                       userModel.nickname,

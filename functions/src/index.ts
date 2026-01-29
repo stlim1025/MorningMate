@@ -96,3 +96,79 @@ export const wakeUpFriend = onCall(async (request) => {
     throw new HttpsError("internal", "Error sending notification.");
   }
 });
+
+// 응원 메시지 전송 함수
+export const sendCheerMessage = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated."
+    );
+  }
+
+  const {userId, friendId, message, senderNickname} = request.data;
+
+  if (!userId || !friendId || !message) {
+    throw new HttpsError(
+      "invalid-argument",
+      "The function must be called with valid arguments."
+    );
+  }
+
+  try {
+    const friendDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(friendId)
+      .get();
+
+    if (!friendDoc.exists) {
+      throw new HttpsError("not-found", "Friend not found.");
+    }
+
+    const friendData = friendDoc.data();
+    const fcmToken = friendData?.fcmToken;
+
+    if (!fcmToken) {
+      logger.info(`Friend ${friendId} does not have an FCM token.`);
+      return {success: false, message: "Friend not reachable."};
+    }
+
+    const notificationMessage = {
+      token: fcmToken,
+      notification: {
+        title: "친구가 응원 메시지를 보냈어요.",
+        body: message,
+      },
+      data: {
+        type: "cheer_message",
+        senderId: userId,
+        senderNickname: senderNickname ?? "",
+        message: message,
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
+      android: {
+        priority: "high" as const,
+        notification: {
+          channelId: "high_importance_channel",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            contentAvailable: true,
+            sound: "default",
+          },
+        },
+      },
+    };
+
+    await admin.messaging().send(notificationMessage);
+    logger.info(`Cheer message sent to ${friendId} from ${userId}`);
+
+    return {success: true};
+  } catch (error) {
+    logger.error("Error sending cheer message:", error);
+    throw new HttpsError("internal", "Error sending cheer message.");
+  }
+});
