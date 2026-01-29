@@ -32,7 +32,8 @@ class NotificationController extends ChangeNotifier {
 
   // 응원 메시지(방명록) 보내기 -> 알림 생성
   Future<void> sendCheerMessage(String senderId, String senderNickname,
-      String receiverId, String message) async {
+      String receiverId, String message,
+      {bool fcmSent = false}) async {
     final notificationRef = _db.collection('notifications').doc();
 
     final notification = NotificationModel(
@@ -44,6 +45,7 @@ class NotificationController extends ChangeNotifier {
       message: '친구가 응원 메시지를 보냈어요.\n$message',
       createdAt: DateTime.now(),
       isRead: false,
+      fcmSent: fcmSent,
     );
 
     await notificationRef.set(notification.toFirestore());
@@ -51,7 +53,8 @@ class NotificationController extends ChangeNotifier {
 
   // 친구 깨우기 알림 보내기 (중복 방지 로직 포함 가능)
   Future<void> sendWakeUpNotification(
-      String senderId, String senderNickname, String receiverId) async {
+      String senderId, String senderNickname, String receiverId,
+      {bool fcmSent = false}) async {
     // 오늘 이미 보낸 깨우기 알림이 있는지 확인? (선택사항)
 
     final notificationRef = _db.collection('notifications').doc();
@@ -64,6 +67,7 @@ class NotificationController extends ChangeNotifier {
       message: '$senderNickname님이 당신을 깨우려고 합니다! ⏰',
       createdAt: DateTime.now(),
       isRead: false,
+      fcmSent: fcmSent,
     );
 
     await notificationRef.set(notification.toFirestore());

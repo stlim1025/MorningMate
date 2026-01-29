@@ -301,13 +301,18 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               if (userModel != null) {
                 final callable = FirebaseFunctions.instance
                     .httpsCallable('sendCheerMessage');
+                bool isPushSent = false;
                 try {
-                  await callable.call({
+                  final result = await callable.call({
                     'userId': userModel.uid,
                     'friendId': _friend!.uid,
                     'message': message,
                     'senderNickname': userModel.nickname,
                   });
+                  if (result.data is Map &&
+                      result.data['success'] == true) {
+                    isPushSent = true;
+                  }
                 } catch (e) {
                   print('응원 메시지 FCM 전송 오류: $e');
                 }
@@ -319,6 +324,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                       userModel.nickname,
                       _friend!.uid,
                       message,
+                      fcmSent: isPushSent,
                     );
 
                 if (parentContext.mounted) {
