@@ -71,7 +71,7 @@ class SocialController extends ChangeNotifier {
         'type': 'friendRequest',
         'message': '$senderNickname님이 친구 요청을 보냈습니다! 👋',
         'isRead': false,
-        'createdAt': FieldValue.serverTimestamp(),
+        'createdAt': Timestamp.fromDate(DateTime.now()),
       });
     } catch (e) {
       print('친구 요청 오류: $e');
@@ -128,7 +128,7 @@ class SocialController extends ChangeNotifier {
         'type': 'wakeUp',
         'message': '$userNickname님이 당신을 깨우고 있어요! ⏰',
         'isRead': false,
-        'createdAt': FieldValue.serverTimestamp(),
+        'createdAt': Timestamp.fromDate(DateTime.now()),
       });
 
       print('친구 깨우기 성공!');

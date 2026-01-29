@@ -129,6 +129,11 @@ class AuthController extends ChangeNotifier {
     return await _authService.authenticateWithBiometric();
   }
 
+  // 생체 인증 가능 여부 확인
+  Future<bool> canUseBiometric() async {
+    return await _authService.canUseBiometric();
+  }
+
   // 비밀번호 재설정 이메일 발송
   Future<void> sendPasswordResetEmail(String email) async {
     await _authService.sendPasswordResetEmail(email);

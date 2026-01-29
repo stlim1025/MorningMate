@@ -128,27 +128,27 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     color: isAwake ? const Color(0xFF2C3E50) : Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
-              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '${_friend!.nickname}',
-                      style: TextStyle(
-                        color: isAwake ? const Color(0xFF2C3E50) : Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: isAwake
+                                ? const Color(0xFF2C3E50)
+                                : Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${_friend!.consecutiveDays}일 연속 기록 중 🔥',
-                      style: TextStyle(
-                        color:
-                            isAwake ? const Color(0xFF5A6C7D) : Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: isAwake
+                                ? const Color(0xFF5A6C7D)
+                                : Colors.white70,
+                          ),
                     ),
                   ],
                 ),
@@ -181,10 +181,17 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(24),
-            ),
+            color: isAwake
+                ? Colors.white.withOpacity(0.9)
+                : Colors.black.withOpacity(0.3),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,17 +200,20 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     '친구에게 한마디',
                     style: TextStyle(
-                      color: Colors.white,
+                      color:
+                          isAwake ? AppColors.textPrimary : Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Icon(
                     Icons.chat_bubble_outline,
-                    color: Colors.white.withOpacity(0.5),
+                    color: isAwake
+                        ? AppColors.textSecondary.withOpacity(0.6)
+                        : Colors.white.withOpacity(0.5),
                   ),
                 ],
               ),

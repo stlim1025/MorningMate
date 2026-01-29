@@ -17,6 +17,8 @@ class MorningScreen extends StatefulWidget {
 
 class _MorningScreenState extends State<MorningScreen>
     with SingleTickerProviderStateMixin {
+  bool _hasCheckedBiometric = false;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +72,7 @@ class _MorningScreenState extends State<MorningScreen>
     return Scaffold(
       body: Consumer2<MorningController, CharacterController>(
         builder: (context, morningController, characterController, child) {
+          _maybeAuthenticateOnLaunch(context);
           // 로딩 중이거나 초기화가 아직 안 된 경우
           if (morningController.isLoading ||
               !morningController.hasInitialized) {
@@ -141,6 +144,95 @@ class _MorningScreenState extends State<MorningScreen>
       ),
       bottomNavigationBar: _buildBottomNavigationBar(context),
     );
+  }
+
+  void _maybeAuthenticateOnLaunch(BuildContext context) {
+    if (_hasCheckedBiometric) return;
+
+    final authController = context.read<AuthController>();
+    final userModel = authController.userModel;
+
+    if (userModel == null) {
+      return;
+    }
+
+    _hasCheckedBiometric = true;
+
+    if (!userModel.biometricEnabled) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final authenticated = await authController.authenticateWithBiometric();
+      if (!authenticated && mounted) {
+        final retry = await _showBiometricRetryDialog(context);
+        if (retry && mounted) {
+          _hasCheckedBiometric = false;
+          _maybeAuthenticateOnLaunch(context);
+        } else if (mounted) {
+          await authController.signOut();
+          if (mounted) {
+            context.go('/login');
+          }
+        }
+      }
+    });
+  }
+
+  Future<bool> _showBiometricRetryDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        title: const Text(
+          '생체 인증 실패',
+          style: TextStyle(
+            color: Color(0xFF2C3E50),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          '생체 인증에 실패했습니다. 다시 시도하거나 로그아웃할 수 있습니다.',
+          style: TextStyle(color: Color(0xFF5A6C7D)),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F0),
+              foregroundColor: const Color(0xFF5A6C7D),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('로그아웃'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: const Color(0xFF2C3E50),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              '다시 시도',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
   }
 
   Widget _buildHeader(BuildContext context, bool isAwake) {
