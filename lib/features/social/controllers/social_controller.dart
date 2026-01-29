@@ -77,6 +77,18 @@ class SocialController extends ChangeNotifier {
           'requestId': requestId,
         },
       });
+
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('sendFriendRequestNotification');
+      try {
+        await callable.call({
+          'userId': userId,
+          'friendId': friendId,
+          'senderNickname': senderNickname,
+        });
+      } catch (e) {
+        print('친구 요청 FCM 전송 오류: $e');
+      }
     } catch (e) {
       print('친구 요청 오류: $e');
       rethrow;
@@ -97,6 +109,18 @@ class SocialController extends ChangeNotifier {
         'isRead': false,
         'createdAt': Timestamp.fromDate(DateTime.now()),
       });
+
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('sendFriendAcceptNotification');
+      try {
+        await callable.call({
+          'userId': userId,
+          'friendId': friendId,
+          'senderNickname': userNickname,
+        });
+      } catch (e) {
+        print('친구 수락 FCM 전송 오류: $e');
+      }
       // 목록 새로고침
       await loadFriends(userId);
     } catch (e) {
@@ -106,9 +130,32 @@ class SocialController extends ChangeNotifier {
   }
 
   // 친구 요청 거절
-  Future<void> rejectFriendRequest(String requestId, String userId) async {
+  Future<void> rejectFriendRequest(String requestId, String userId,
+      String friendId, String userNickname) async {
     try {
       await _friendService.rejectFriendRequest(requestId);
+
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'userId': friendId,
+        'senderId': userId,
+        'senderNickname': userNickname,
+        'type': 'system',
+        'message': '$userNickname님이 친구 요청을 거절했어요.',
+        'isRead': false,
+        'createdAt': Timestamp.fromDate(DateTime.now()),
+      });
+
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('sendFriendRejectNotification');
+      try {
+        await callable.call({
+          'userId': userId,
+          'friendId': friendId,
+          'senderNickname': userNickname,
+        });
+      } catch (e) {
+        print('친구 거절 FCM 전송 오류: $e');
+      }
       // 목록 새로고침
       await loadFriends(userId);
     } catch (e) {

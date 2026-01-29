@@ -200,9 +200,16 @@ class NotificationScreen extends StatelessWidget {
                                     width: 64,
                                     child: OutlinedButton(
                                       onPressed: () async {
+                                        final userNickname =
+                                            authController.userModel?.nickname ??
+                                                '알 수 없음';
                                         await socialController
                                             .rejectFriendRequest(
-                                                requestId, userId);
+                                          requestId,
+                                          userId,
+                                          notification.senderId,
+                                          userNickname,
+                                        );
                                         await notificationController
                                             .deleteNotification(
                                                 notification.id);

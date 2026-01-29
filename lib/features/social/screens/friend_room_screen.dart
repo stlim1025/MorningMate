@@ -242,11 +242,12 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
   }
 
   Future<void> _showGuestbookDialog() async {
+    final parentContext = context;
     final messageController = TextEditingController();
 
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
@@ -276,7 +277,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
         ),
         actions: [
           ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF0F0F0),
               foregroundColor: AppColors.textSecondary,
@@ -292,9 +293,11 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               final message = messageController.text.trim();
               if (message.isEmpty) return;
 
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
 
-              final userModel = context.read<AuthController>().userModel;
+              if (!mounted) return;
+
+              final userModel = parentContext.read<AuthController>().userModel;
               if (userModel != null) {
                 final callable = FirebaseFunctions.instance
                     .httpsCallable('sendCheerMessage');
@@ -309,15 +312,17 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                   print('응원 메시지 FCM 전송 오류: $e');
                 }
 
-                await context.read<NotificationController>().sendCheerMessage(
+                await parentContext
+                    .read<NotificationController>()
+                    .sendCheerMessage(
                       userModel.uid,
                       userModel.nickname,
                       _friend!.uid,
                       message,
                     );
 
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                if (parentContext.mounted) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
                     const SnackBar(
                       content: Text('응원 메시지를 보냈습니다! 💌'),
                       backgroundColor: AppColors.success,

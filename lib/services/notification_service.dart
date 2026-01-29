@@ -47,6 +47,8 @@ class NotificationService {
       _fcmToken = await _fcm.getToken();
       print('FCM 토큰: $_fcmToken');
 
+      await setForegroundNotificationPresentationOptions();
+
       // 토큰 갱신 리스너
       await _tokenRefreshSubscription?.cancel();
       _tokenRefreshSubscription = _fcm.onTokenRefresh.listen((newToken) async {
@@ -120,6 +122,12 @@ class NotificationService {
           print('새로운 친구 요청이 있습니다.');
           AppRouter.router.go('/notification');
           break;
+        case 'friend_accept':
+        case 'friendAccept':
+        case 'friend_reject':
+        case 'friendReject':
+          AppRouter.router.go('/notification');
+          break;
         case 'morning_reminder':
           // 아침 알림 - 작성 화면으로 이동
           print('아침 일기를 작성할 시간입니다!');
@@ -151,8 +159,19 @@ class NotificationService {
         break;
       case 'friend_request':
       case 'friendRequest':
-        final String? friendName = data['friendName'];
+        final String? friendName =
+            data['friendName'] ?? data['senderNickname'];
         print('$friendName님이 친구 추가를 요청했습니다.');
+        break;
+      case 'friend_accept':
+      case 'friendAccept':
+        final String? friendName = data['senderNickname'];
+        print('${friendName ?? '친구'}님이 친구 요청을 수락했습니다.');
+        break;
+      case 'friend_reject':
+      case 'friendReject':
+        final String? friendName = data['senderNickname'];
+        print('${friendName ?? '친구'}님이 친구 요청을 거절했습니다.');
         break;
     }
   }
@@ -180,11 +199,28 @@ class NotificationService {
         break;
       case 'friend_request':
       case 'friendRequest':
-        final String? friendName = data['friendName'];
+        final String? friendName =
+            data['friendName'] ?? data['senderNickname'];
         title = '친구 요청';
         body = friendName == null || friendName.isEmpty
             ? '친구 요청이 도착했어요.'
             : '$friendName 님이 친구 추가를 요청하였습니다.';
+        break;
+      case 'friend_accept':
+      case 'friendAccept':
+        final String? friendName = data['senderNickname'];
+        title = '친구 요청 수락';
+        body = friendName == null || friendName.isEmpty
+            ? '친구 요청이 수락되었어요.'
+            : '$friendName님이 친구 요청을 수락했어요.';
+        break;
+      case 'friend_reject':
+      case 'friendReject':
+        final String? friendName = data['senderNickname'];
+        title = '친구 요청 거절';
+        body = friendName == null || friendName.isEmpty
+            ? '친구 요청이 거절되었어요.'
+            : '$friendName님이 친구 요청을 거절했어요.';
         break;
       default:
         title = '알림';

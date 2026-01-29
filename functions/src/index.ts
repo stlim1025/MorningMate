@@ -172,3 +172,228 @@ export const sendCheerMessage = onCall(async (request) => {
     throw new HttpsError("internal", "Error sending cheer message.");
   }
 });
+
+// 친구 요청 알림 전송 함수
+export const sendFriendRequestNotification = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated."
+    );
+  }
+
+  const {userId, friendId, senderNickname} = request.data;
+
+  if (!userId || !friendId || !senderNickname) {
+    throw new HttpsError(
+      "invalid-argument",
+      "The function must be called with valid arguments."
+    );
+  }
+
+  try {
+    const friendDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(friendId)
+      .get();
+
+    if (!friendDoc.exists) {
+      throw new HttpsError("not-found", "Friend not found.");
+    }
+
+    const friendData = friendDoc.data();
+    const fcmToken = friendData?.fcmToken;
+
+    if (!fcmToken) {
+      logger.info(`Friend ${friendId} does not have an FCM token.`);
+      return {success: false, message: "Friend not reachable."};
+    }
+
+    const notificationMessage = {
+      token: fcmToken,
+      notification: {
+        title: "친구 요청",
+        body: `${senderNickname}님이 친구 요청을 보냈습니다! 👋`,
+      },
+      data: {
+        type: "friend_request",
+        senderId: userId,
+        senderNickname: senderNickname,
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
+      android: {
+        priority: "high" as const,
+        notification: {
+          channelId: "high_importance_channel",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            contentAvailable: true,
+            sound: "default",
+          },
+        },
+      },
+    };
+
+    await admin.messaging().send(notificationMessage);
+    logger.info(`Friend request sent to ${friendId} from ${userId}`);
+
+    return {success: true};
+  } catch (error) {
+    logger.error("Error sending friend request:", error);
+    throw new HttpsError("internal", "Error sending friend request.");
+  }
+});
+
+// 친구 요청 수락 알림 전송 함수
+export const sendFriendAcceptNotification = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated."
+    );
+  }
+
+  const {userId, friendId, senderNickname} = request.data;
+
+  if (!userId || !friendId || !senderNickname) {
+    throw new HttpsError(
+      "invalid-argument",
+      "The function must be called with valid arguments."
+    );
+  }
+
+  try {
+    const friendDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(friendId)
+      .get();
+
+    if (!friendDoc.exists) {
+      throw new HttpsError("not-found", "Friend not found.");
+    }
+
+    const friendData = friendDoc.data();
+    const fcmToken = friendData?.fcmToken;
+
+    if (!fcmToken) {
+      logger.info(`Friend ${friendId} does not have an FCM token.`);
+      return {success: false, message: "Friend not reachable."};
+    }
+
+    const notificationMessage = {
+      token: fcmToken,
+      notification: {
+        title: "친구 요청 수락",
+        body: `${senderNickname}님이 친구 요청을 수락했어요.`,
+      },
+      data: {
+        type: "friend_accept",
+        senderId: userId,
+        senderNickname: senderNickname,
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
+      android: {
+        priority: "high" as const,
+        notification: {
+          channelId: "high_importance_channel",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            contentAvailable: true,
+            sound: "default",
+          },
+        },
+      },
+    };
+
+    await admin.messaging().send(notificationMessage);
+    logger.info(`Friend accept sent to ${friendId} from ${userId}`);
+
+    return {success: true};
+  } catch (error) {
+    logger.error("Error sending friend accept:", error);
+    throw new HttpsError("internal", "Error sending friend accept.");
+  }
+});
+
+// 친구 요청 거절 알림 전송 함수
+export const sendFriendRejectNotification = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated."
+    );
+  }
+
+  const {userId, friendId, senderNickname} = request.data;
+
+  if (!userId || !friendId || !senderNickname) {
+    throw new HttpsError(
+      "invalid-argument",
+      "The function must be called with valid arguments."
+    );
+  }
+
+  try {
+    const friendDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(friendId)
+      .get();
+
+    if (!friendDoc.exists) {
+      throw new HttpsError("not-found", "Friend not found.");
+    }
+
+    const friendData = friendDoc.data();
+    const fcmToken = friendData?.fcmToken;
+
+    if (!fcmToken) {
+      logger.info(`Friend ${friendId} does not have an FCM token.`);
+      return {success: false, message: "Friend not reachable."};
+    }
+
+    const notificationMessage = {
+      token: fcmToken,
+      notification: {
+        title: "친구 요청 거절",
+        body: `${senderNickname}님이 친구 요청을 거절했어요.`,
+      },
+      data: {
+        type: "friend_reject",
+        senderId: userId,
+        senderNickname: senderNickname,
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
+      android: {
+        priority: "high" as const,
+        notification: {
+          channelId: "high_importance_channel",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            contentAvailable: true,
+            sound: "default",
+          },
+        },
+      },
+    };
+
+    await admin.messaging().send(notificationMessage);
+    logger.info(`Friend reject sent to ${friendId} from ${userId}`);
+
+    return {success: true};
+  } catch (error) {
+    logger.error("Error sending friend reject:", error);
+    throw new HttpsError("internal", "Error sending friend reject.");
+  }
+});

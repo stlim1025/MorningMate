@@ -324,8 +324,17 @@ class _SocialScreenState extends State<SocialScreen> {
                                   .read<AuthController>()
                                   .currentUser
                                   ?.uid;
+                              final myNickname = context
+                                  .read<AuthController>()
+                                  .userModel
+                                  ?.nickname;
                               if (myId != null) {
-                                controller.rejectFriendRequest(requestId, myId);
+                                controller.rejectFriendRequest(
+                                  requestId,
+                                  myId,
+                                  user.uid,
+                                  myNickname ?? '알 수 없음',
+                                );
                               }
                             },
                             style: OutlinedButton.styleFrom(
