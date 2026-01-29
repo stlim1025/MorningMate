@@ -1,55 +1,75 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary Colors - 따뜻한 아침 분위기
-  static const Color primary = Color(0xFF6B9AC4); // 차분한 블루
-  static const Color secondary = Color(0xFFF4C2A2); // 따뜻한 파스텔 오렌지
-  static const Color accent = Color(0xFFA8D5BA); // 힐링 그린
-  
-  // Background Colors
-  static const Color backgroundLight = Color(0xFFF8F9FA);
-  static const Color backgroundDark = Color(0xFF1A1D2E);
-  static const Color cardDark = Color(0xFF22283A);
-  
+  // Primary Colors - 따뜻한 다이어리 테마
+  static const Color primary = Color(0xFFD4A574); // 골드/카라멜
+  static const Color secondary = Color(0xFFFFB6C1); // 파스텔 핑크
+  static const Color accent = Color(0xFF95E1D3); // 민트
+
+  // Background Colors - 밝고 따뜻한 베이지 톤
+  static const Color backgroundLight = Color(0xFFFAF3E0); // 따뜻한 베이지
+  static const Color backgroundDark = Color(0xFFFFF8E7); // 크림
+  static const Color cardLight = Color(0xFFFFFFFF); // 흰색 카드
+  static const Color cardDark = Color(0xFFFFF8E7); // 밝은 크림 (어두운 모드용)
+
   // Character States
-  static const Color sleepMode = Color(0xFF7B8AA2); // 수면 상태
-  static const Color awakeMode = Color(0xFFF9D77E); // 기상 상태
-  
-  // Functional Colors
-  static const Color success = Color(0xFF66BB6A);
-  static const Color error = Color(0xFFEF5350);
-  static const Color warning = Color(0xFFFFA726);
-  static const Color info = Color(0xFF42A5F5);
-  
+  static const Color sleepMode = Color(0xFFB8A89E); // 부드러운 회갈색
+  static const Color awakeMode = Color(0xFFFFD93D); // 밝은 노랑
+
+  // Functional Colors - 파스텔 톤
+  static const Color success = Color(0xFF95E1D3); // 민트
+  static const Color error = Color(0xFFFFB6B9); // 연한 핑크
+  static const Color warning = Color(0xFFFFE66D); // 따뜻한 노랑
+  static const Color info = Color(0xFFAEC6CF); // 파스텔 블루
+
   // Text Colors
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF757575);
+  static const Color textPrimary = Color(0xFF5D4E37); // 다크 브라운
+  static const Color textSecondary = Color(0xFF8B7355); // 밝은 브라운
   static const Color textLight = Color(0xFFFFFFFF);
-  
+  static const Color textHint = Color(0xFFD4C4B0); // 연한 브라운
+
   // Streak & Gamification
   static const Color streakGold = Color(0xFFFFD700);
-  static const Color pointStar = Color(0xFFFFEB3B);
-  
+  static const Color pointStar = Color(0xFFFFE66D);
+
   // Social Colors
-  static const Color friendActive = Color(0xFF81C784);
-  static const Color friendSleep = Color(0xFFB0BEC5);
-  
-  // Gradients
+  static const Color friendActive = Color(0xFF95E1D3); // 민트
+  static const Color friendSleep = Color(0xFFD4C4B0); // 베이지 그레이
+
+  // Gradients - 따뜻한 그라데이션
   static const LinearGradient morningGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF6B9AC4),
-      Color(0xFFA8D5BA),
+      Color(0xFFFFF8E7), // 밝은 크림
+      Color(0xFFFFE4E1), // 미스티 로즈
     ],
   );
-  
+
   static const LinearGradient eveningGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF2C3E50),
-      Color(0xFF3E5266),
+      Color(0xFFFFF0E6), // 라이트 피치
+      Color(0xFFFFE4E1), // 미스티 로즈
     ],
   );
+
+  // 카드 그림자
+  static List<BoxShadow> cardShadow = [
+    BoxShadow(
+      color: const Color(0xFFD4A574).withOpacity(0.15),
+      blurRadius: 15,
+      offset: const Offset(0, 5),
+    ),
+  ];
+
+  // 작은 카드 그림자
+  static List<BoxShadow> smallCardShadow = [
+    BoxShadow(
+      color: const Color(0xFFD4A574).withOpacity(0.1),
+      blurRadius: 10,
+      offset: const Offset(0, 4),
+    ),
+  ];
 }

@@ -11,7 +11,9 @@ import '../features/character/screens/character_room_screen.dart';
 import '../features/social/screens/social_screen.dart';
 import '../features/social/screens/friend_room_screen.dart';
 import '../features/archive/screens/archive_screen.dart';
+import '../features/archive/screens/diary_detail_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
+import '../data/models/diary_model.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -91,6 +93,16 @@ class AppRouter {
         path: '/archive',
         name: 'archive',
         builder: (context, state) => const ArchiveScreen(),
+      ),
+      GoRoute(
+        path: '/diary-detail',
+        name: 'diaryDetail',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          final diaries = extra['diaries'] as List<DiaryModel>;
+          final initialDate = extra['initialDate'] as DateTime;
+          return DiaryDetailScreen(diaries: diaries, initialDate: initialDate);
+        },
       ),
 
       // Settings Routes

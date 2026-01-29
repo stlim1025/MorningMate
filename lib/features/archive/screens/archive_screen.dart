@@ -7,7 +7,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../services/diary_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/diary_model.dart';
-import '../../morning/controllers/morning_controller.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -26,6 +25,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedDay = DateTime.now();
     _loadDiaries();
   }
 
@@ -73,11 +73,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.backgroundDark, Color(0xFF0F1419)],
-          ),
+          color: AppColors.backgroundLight,
         ),
         child: SafeArea(
           child: Column(
@@ -119,7 +115,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           Text(
             '아카이브',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),
@@ -147,8 +143,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.smallCardShadow,
       ),
       child: TableCalendar(
         firstDay: DateTime.utc(2020, 1, 1),
@@ -172,16 +169,32 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         },
         // 스타일링
         calendarStyle: CalendarStyle(
-          defaultTextStyle: const TextStyle(color: Colors.white),
-          weekendTextStyle: const TextStyle(color: Colors.white70),
-          outsideTextStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+          defaultTextStyle: const TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w500,
+          ),
+          weekendTextStyle: const TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+          outsideTextStyle: TextStyle(
+            color: AppColors.textHint.withOpacity(0.5),
+          ),
           selectedDecoration: BoxDecoration(
             color: AppColors.primary,
             shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           todayDecoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.5),
+            color: AppColors.primary.withOpacity(0.2),
             shape: BoxShape.circle,
+            border: Border.all(color: AppColors.primary, width: 1.5),
           ),
           markerDecoration: const BoxDecoration(
             color: AppColors.accent,
@@ -192,17 +205,26 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           formatButtonVisible: false,
           titleCentered: true,
           titleTextStyle: const TextStyle(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
-          leftChevronIcon: const Icon(Icons.chevron_left, color: Colors.white),
+          leftChevronIcon:
+              const Icon(Icons.chevron_left, color: AppColors.textPrimary),
           rightChevronIcon:
-              const Icon(Icons.chevron_right, color: Colors.white),
+              const Icon(Icons.chevron_right, color: AppColors.textPrimary),
         ),
-        daysOfWeekStyle: DaysOfWeekStyle(
-          weekdayStyle: const TextStyle(color: Colors.white70),
-          weekendStyle: const TextStyle(color: Colors.white70),
+        daysOfWeekStyle: const DaysOfWeekStyle(
+          weekdayStyle: TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+          weekendStyle: TextStyle(
+            color: AppColors.secondary,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
         ),
         // 일기가 있는 날 표시
         calendarBuilders: CalendarBuilders(
@@ -218,8 +240,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             return Container(
               margin: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: AppColors.primary.withOpacity(0.2),
                 shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary, width: 2),
               ),
               child: Center(
                 child: Text(
@@ -227,8 +250,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       ? _getMoodEmoji(diary.mood ?? '')
                       : '${day.day}',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: diary != null ? Colors.white : AppColors.textPrimary,
                     fontSize: diary != null ? 24 : 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -239,8 +263,13 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             return Container(
               margin: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.5),
+                color: AppColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.5),
+                  width: 1.5,
+                  style: BorderStyle.solid,
+                ),
               ),
               child: Center(
                 child: Text(
@@ -248,7 +277,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       ? _getMoodEmoji(diary.mood ?? '')
                       : '${day.day}',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: diary != null ? Colors.white : AppColors.textPrimary,
                     fontSize: diary != null ? 24 : 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -282,24 +311,26 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
     if (diary == null) {
       return Container(
+        width: double.infinity,
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.cardDark,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: AppColors.smallCardShadow,
         ),
         child: Column(
           children: [
             Icon(
               Icons.event_busy,
               size: 48,
-              color: Colors.white.withOpacity(0.3),
+              color: AppColors.textHint.withOpacity(0.5),
             ),
             const SizedBox(height: 12),
             Text(
               DateFormat('M월 d일').format(_selectedDay!),
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -308,7 +339,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             Text(
               '이 날은 일기를 작성하지 않았습니다',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: AppColors.textSecondary.withOpacity(0.7),
               ),
             ),
           ],
@@ -320,8 +351,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.smallCardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,19 +369,32 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      DateFormat('M월 d일 (E)', 'ko_KR').format(diary.date),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          DateFormat('M월 d일 (E)', 'ko_KR').format(diary.date),
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          DateFormat('HH:mm').format(diary.createdAt),
+                          style: TextStyle(
+                            color: AppColors.textSecondary.withOpacity(0.8),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${diary.wordCount}자 • ${_formatDuration(diary.writingDuration)}',
                       style: const TextStyle(
-                        color: Colors.white54,
+                        color: AppColors.textSecondary,
                         fontSize: 14,
                       ),
                     ),
@@ -410,7 +455,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       type: BottomNavigationBarType.fixed,
       currentIndex: 3,
       selectedItemColor: AppColors.primary,
-      unselectedItemColor: Colors.grey,
+      unselectedItemColor: AppColors.textSecondary.withOpacity(0.5),
+      backgroundColor: Colors.white,
+      elevation: 8,
       onTap: (index) {
         switch (index) {
           case 0:
@@ -449,77 +496,17 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   }
 
   Future<void> _viewDiaryContent(DiaryModel diary) async {
-    // 복호화
-    setState(() {
-      _isLoading = true;
-    });
+    // 전체 화면 로딩 대신 하단 시트나 로딩 다이얼로그를 사용할 수도 있지만,
+    // 여기서는 자연스러운 전환을 위해 탭바나 버튼 상태만 변경하거나 바로 시도합니다.
+    final authController = context.read<AuthController>();
+    final userId = authController.currentUser?.uid;
+    if (userId == null) return;
 
-    try {
-      final morningController = context.read<MorningController>();
-      final decryptedContent = await morningController.loadDiaryContent(
-        userId: diary.userId,
-        date: diary.date,
-        encryptedContent: diary.encryptedContent,
-      );
-
-      setState(() {
-        _isLoading = false;
+    if (mounted) {
+      context.push('/diary-detail', extra: {
+        'diaries': _diaries,
+        'initialDate': _selectedDay ?? DateTime.now(),
       });
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppColors.cardDark,
-            title: Text(
-              DateFormat('M월 d일').format(diary.date),
-              style: const TextStyle(color: Colors.white),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (diary.promptQuestion != null) ...[
-                    Text(
-                      '질문: ${diary.promptQuestion}',
-                      style: const TextStyle(
-                        color: AppColors.accent,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  Text(
-                    decryptedContent,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      height: 1.6,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('닫기'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('복호화 오류: $e')),
-        );
-      }
     }
   }
 
