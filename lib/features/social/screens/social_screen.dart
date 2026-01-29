@@ -82,6 +82,16 @@ class _SocialScreenState extends State<SocialScreen> {
           children: [
             const SizedBox(height: 8),
 
+            // 친구 요청 목록 (있을 경우에만 표시)
+            Consumer<SocialController>(
+              builder: (context, controller, child) {
+                if (controller.friendRequests.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return _buildFriendRequestSection(context, controller);
+              },
+            ),
+
             // 친구 목록
             Expanded(
               child: Consumer<SocialController>(
@@ -182,180 +192,304 @@ class _SocialScreenState extends State<SocialScreen> {
     );
   }
 
-  Widget _buildFriendCard(BuildContext context, UserModel friend) {
-    return FutureBuilder<bool>(
-      future:
-          context.read<SocialController>().hasFriendWrittenToday(friend.uid),
-      builder: (context, snapshot) {
-        final hasWritten = snapshot.data ?? false;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: hasWritten
-                  ? AppColors.success.withOpacity(0.5)
-                  : AppColors.textHint.withOpacity(0.3),
-              width: 2,
-            ),
-            boxShadow: AppColors.cardShadow,
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () {
-                context.push('/friend/${friend.uid}');
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // 친구 캐릭터
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: hasWritten
-                              ? [
-                                  AppColors.success.withOpacity(0.3),
-                                  AppColors.accent.withOpacity(0.3),
-                                ]
-                              : [
-                                  AppColors.textHint.withOpacity(0.2),
-                                  AppColors.backgroundDark,
-                                ],
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: hasWritten
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.success.withOpacity(0.3),
-                                  blurRadius: 15,
-                                  spreadRadius: 3,
-                                ),
-                              ]
-                            : [],
-                      ),
-                      child: Icon(
-                        hasWritten ? Icons.wb_sunny : Icons.bedtime,
-                        color: hasWritten
-                            ? AppColors.awakeMode
-                            : AppColors.sleepMode,
-                        size: 45,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // 친구 닉네임
-                    Text(
-                      friend.nickname,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    // 상태
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: hasWritten
-                            ? AppColors.success.withOpacity(0.15)
-                            : AppColors.friendSleep.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        hasWritten ? '기상 완료' : '수면 중',
-                        style: TextStyle(
-                          color: hasWritten
-                              ? AppColors.success
-                              : AppColors.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // 깨우기 버튼
-                    if (!hasWritten)
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _wakeUpFriend(context, friend),
-                          icon: const Icon(Icons.alarm, size: 18),
-                          label: const Text(
-                            '깨우기',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.warning,
-                            foregroundColor: AppColors.textPrimary,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                            side: BorderSide(
-                              color: AppColors.textPrimary.withOpacity(0.1),
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.check_circle,
-                              color: AppColors.success,
-                              size: 18,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              '작성 완료',
-                              style: TextStyle(
-                                color: AppColors.success,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
+  Widget _buildFriendRequestSection(
+      BuildContext context, SocialController controller) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                '친구 요청',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${controller.friendRequests.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: controller.friendRequests.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final request = controller.friendRequests[index];
+              final user = request['user'] as UserModel;
+              final requestId = request['requestId'] as String;
+
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: AppColors.smallCardShadow,
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: AppColors.primary.withOpacity(0.2),
+                      child: Text(
+                        user.nickname[0],
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.nickname,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Lv.${user.characterLevel}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            final myId =
+                                context.read<AuthController>().currentUser?.uid;
+                            if (myId != null) {
+                              controller.acceptFriendRequest(
+                                  requestId, myId, user.uid);
+                            }
+                          },
+                          icon: const Icon(Icons.check_circle,
+                              color: AppColors.success),
+                          tooltip: '수락',
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            final myId =
+                                context.read<AuthController>().currentUser?.uid;
+                            if (myId != null) {
+                              controller.rejectFriendRequest(requestId, myId);
+                            }
+                          },
+                          icon:
+                              const Icon(Icons.cancel, color: AppColors.error),
+                          tooltip: '거절',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFriendCard(BuildContext context, UserModel friend) {
+    // FutureBuilder 대신 Controller의 상태 사용 (깜빡임 방지)
+    final isAwake = context.read<SocialController>().isFriendAwake(friend.uid);
+    final hasWritten = isAwake;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: hasWritten
+              ? AppColors.success.withOpacity(0.5)
+              : AppColors.textHint.withOpacity(0.3),
+          width: 2,
+        ),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            context.push('/friend/${friend.uid}');
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 친구 캐릭터
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: hasWritten
+                          ? [
+                              AppColors.success.withOpacity(0.3),
+                              AppColors.accent.withOpacity(0.3),
+                            ]
+                          : [
+                              AppColors.textHint.withOpacity(0.2),
+                              AppColors.backgroundDark,
+                            ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: hasWritten
+                        ? [
+                            BoxShadow(
+                              color: AppColors.success.withOpacity(0.3),
+                              blurRadius: 15,
+                              spreadRadius: 3,
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Icon(
+                    hasWritten ? Icons.wb_sunny : Icons.bedtime,
+                    color:
+                        hasWritten ? AppColors.awakeMode : AppColors.sleepMode,
+                    size: 45,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 친구 닉네임
+                Text(
+                  friend.nickname,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 6),
+
+                // 상태
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: hasWritten
+                        ? AppColors.success.withOpacity(0.15)
+                        : AppColors.friendSleep.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    hasWritten ? '기상 완료' : '수면 중',
+                    style: TextStyle(
+                      color: hasWritten
+                          ? AppColors.success
+                          : AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 깨우기 버튼
+                if (!hasWritten)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _wakeUpFriend(context, friend),
+                      icon: const Icon(Icons.alarm, size: 18),
+                      label: const Text(
+                        '깨우기',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.warning,
+                        foregroundColor: AppColors.textPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                        side: BorderSide(
+                          color: AppColors.textPrimary.withOpacity(0.1),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.check_circle,
+                          color: AppColors.success,
+                          size: 18,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          '작성 완료',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -441,8 +575,9 @@ class _SocialScreenState extends State<SocialScreen> {
     try {
       await socialController.wakeUpFriend(
         currentUser.uid,
-        friend.uid,
         currentUser.nickname,
+        friend.uid,
+        friend.nickname,
       );
 
       if (mounted) {
@@ -553,12 +688,17 @@ class _SocialScreenState extends State<SocialScreen> {
           ),
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text(
-              '취소',
-              style: TextStyle(color: AppColors.textSecondary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F0),
+              foregroundColor: AppColors.textSecondary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
+            child: const Text('취소'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -570,12 +710,17 @@ class _SocialScreenState extends State<SocialScreen> {
               await _addFriendByEmail(context, email);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: AppColors.textPrimary,
+              elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('추가'),
+            child: const Text(
+              '추가',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -644,13 +789,16 @@ class _SocialScreenState extends State<SocialScreen> {
         return;
       }
 
-      await socialController.addFriend(currentUser.uid, friendUser.uid);
-      await _loadFriends();
+      final currentUserModel = context.read<AuthController>().userModel;
+      final nickname = currentUserModel?.nickname ?? '알 수 없음';
+
+      await socialController.sendFriendRequest(
+          currentUser.uid, nickname, friendUser.uid);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${friendUser.nickname}님을 친구로 추가했습니다! 🎉'),
+            content: Text('${friendUser.nickname}님에게 친구 요청을 보냈습니다! 📨'),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

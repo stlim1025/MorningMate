@@ -489,12 +489,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           maxLength: 10,
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              '취소',
-              style: TextStyle(color: AppColors.textSecondary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F0),
+              foregroundColor: AppColors.textSecondary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
+            child: const Text('취소'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -516,6 +521,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     'nickname': newNickname,
                   });
 
+                  // 즉시 로컬 모델 업데이트 (반영 속도 향상)
+                  authController.updateUserModel(
+                    authController.userModel?.copyWith(nickname: newNickname),
+                  );
+
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     _buildSnackBar('닉네임이 변경되었습니다', isSuccess: true),
@@ -528,12 +538,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: AppColors.textPrimary,
+              elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('변경'),
+            child: const Text(
+              '변경',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -586,12 +601,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              '취소',
-              style: TextStyle(color: AppColors.textSecondary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F0),
+              foregroundColor: AppColors.textSecondary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
+            child: const Text('취소'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -602,12 +622,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: AppColors.textPrimary,
+              elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('로그아웃'),
+            child: const Text(
+              '로그아웃',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -634,12 +659,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              '취소',
-              style: TextStyle(color: AppColors.textSecondary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F0),
+              foregroundColor: AppColors.textSecondary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
+            child: const Text('취소'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -649,12 +679,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: AppColors.textPrimary,
+              elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('탈퇴'),
+            child: const Text(
+              '탈퇴',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

@@ -133,4 +133,28 @@ class AuthController extends ChangeNotifier {
   Future<void> sendPasswordResetEmail(String email) async {
     await _authService.sendPasswordResetEmail(email);
   }
+
+  // 비밀번호 직접 변경
+  Future<void> changePassword(String newPassword) async {
+    final user = _currentUser;
+    if (user != null) {
+      await user.updatePassword(newPassword);
+    }
+  }
+
+  // 회원 탈퇴
+  Future<void> deleteAccount() async {
+    final user = _currentUser;
+    if (user != null) {
+      final uid = user.uid;
+      // 1. Firestore 데이터 삭제
+      await _userService.deleteUserData(uid);
+      // 2. Auth 유저 삭제
+      await user.delete();
+      // 3. 로그아웃 상태 처리
+      _currentUser = null;
+      _userModel = null;
+      notifyListeners();
+    }
+  }
 }

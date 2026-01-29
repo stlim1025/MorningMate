@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/diary_service.dart';
 import '../../../services/question_service.dart';
 import '../../../data/models/diary_model.dart';
@@ -7,11 +8,15 @@ import 'dart:async';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
+import '../../../services/user_service.dart';
+
 class MorningController extends ChangeNotifier {
   final DiaryService _diaryService;
   final QuestionService _questionService;
+  final UserService _userService;
 
-  MorningController(this._diaryService, this._questionService);
+  MorningController(
+      this._diaryService, this._questionService, this._userService);
 
   // 상태 변수
   bool _isLoading = false; // 초기값 false로 변경 (stuck 방지)
@@ -189,6 +194,12 @@ class MorningController extends ChangeNotifier {
 
       final diaryId = await _diaryService.createDiary(diary);
       _todayDiary = diary.copyWith(id: diaryId);
+
+      // 4. 연속 기록 및 점수 업데이트
+      await _userService.updateConsecutiveDays(userId);
+      await _userService.updateUser(userId, {
+        'points': FieldValue.increment(10), // 일기 작성 시 포인트 지급 예시
+      });
 
       _isLoading = false;
       _isWriting = false;

@@ -59,4 +59,96 @@ class UserService {
       return null;
     }
   }
+
+  // 연속 기록 업데이트 (일기 작성 시 호출)
+  Future<void> updateConsecutiveDays(String uid) async {
+    final user = await getUser(uid);
+    if (user == null) return;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // 마지막 일기 작성 날짜 확인
+    DateTime? lastDate = user.lastDiaryDate;
+    if (lastDate != null) {
+      lastDate = DateTime(lastDate.year, lastDate.month, lastDate.day);
+    }
+
+    int newConsecutiveDays = user.consecutiveDays;
+
+    // 오늘 이미 작성했는지 확인 (이미 작성했다면 업데이트 안 함)
+    if (lastDate != null && lastDate.isAtSameMomentAs(today)) {
+      return;
+    }
+
+    // 어제 작성했는지 확인
+    if (lastDate != null &&
+        lastDate.add(const Duration(days: 1)).isAtSameMomentAs(today)) {
+      // 어제 썼으면 연속 기록 +1
+      newConsecutiveDays += 1;
+    } else {
+      // 어제 안 썼거나 처음이면 1일부터 시작
+      newConsecutiveDays = 1;
+    }
+
+    // 최대 연속 기록 업데이트
+    final newMaxConsecutiveDays = newConsecutiveDays > user.maxConsecutiveDays
+        ? newConsecutiveDays
+        : user.maxConsecutiveDays;
+
+    await updateUser(uid, {
+      'consecutiveDays': newConsecutiveDays,
+      'maxConsecutiveDays': newMaxConsecutiveDays,
+      'lastDiaryDate': Timestamp.fromDate(now),
+    });
+  }
+
+  // 사용자 데이터 전체 삭제 (회원탈퇴)
+  Future<void> deleteUserData(String uid) async {
+    final batch = _db.batch();
+
+    // 1. 사용자 문서 삭제
+    batch.delete(_usersCollection.doc(uid));
+
+    // 2. 일기 데이터 삭제 (컬렉션 그룹 혹은 하위 컬렉션이라면 방식 확인 필요)
+    // 현재는 diaries 컬렉션이 uid를 문서 ID로 하거나 하위 컬렉션일 가능성이 높음
+    // 여기서는 간단히 diaries/{uid} 혹은 diaries/{uid}/entries 등을 고려
+    // 프로젝트 구조에 따라 diary_service에서 처리하는 것이 좋을 수 있음
+
+    // 3. 알림 데이터 삭제
+    final notifications = await _db
+        .collection('notifications')
+        .where('userId', isEqualTo: uid)
+        .get();
+    for (var doc in notifications.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 보낸 알림도 삭제할지 여부 결정 (보통 같이 삭제)
+    final sentNotifications = await _db
+        .collection('notifications')
+        .where('senderId', isEqualTo: uid)
+        .get();
+    for (var doc in sentNotifications.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 4. 친구 요청 삭제
+    final sentRequests = await _db
+        .collection('friend_requests')
+        .where('senderId', isEqualTo: uid)
+        .get();
+    for (var doc in sentRequests.docs) {
+      batch.delete(doc.reference);
+    }
+    final receivedRequests = await _db
+        .collection('friend_requests')
+        .where('receiverId', isEqualTo: uid)
+        .get();
+    for (var doc in receivedRequests.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
 }

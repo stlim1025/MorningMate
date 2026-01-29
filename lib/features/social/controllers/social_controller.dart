@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/diary_service.dart';
 import '../../../services/friend_service.dart';
 import '../../../services/notification_service.dart';
@@ -17,36 +17,89 @@ class SocialController extends ChangeNotifier {
   );
 
   List<UserModel> _friends = [];
+  List<Map<String, dynamic>> _friendRequests = []; // 친구 요청 목록
+  // 친구 기상 상태 캐싱 (friendId -> isAwake)
+  final Map<String, bool> _friendsAwakeStatus = {};
+
   bool _isLoading = false;
 
   List<UserModel> get friends => _friends;
+  List<Map<String, dynamic>> get friendRequests => _friendRequests;
   bool get isLoading => _isLoading;
+
+  // 친구의 기상 상태를 가져오는 메서드 (캐시 사용)
+  bool isFriendAwake(String friendId) {
+    return _friendsAwakeStatus[friendId] ?? false;
+  }
 
   // 친구 목록 로드
   Future<void> loadFriends(String userId) async {
     _isLoading = true;
-    Future.microtask(() {
-      notifyListeners();
-    });
+    Future.microtask(() => notifyListeners());
 
     try {
+      // 1. 친구 목록 가져오기
       _friends = await _friendService.getFriends(userId);
+
+      // 2. 친구 요청 목록 가져오기
+      _friendRequests = await _friendService.getReceivedFriendRequests(userId);
+
+      // 3. 각 친구의 기상 상태(일기 작성 여부) 확인 및 캐싱
+      for (var friend in _friends) {
+        final isAwake = await hasFriendWrittenToday(friend.uid);
+        _friendsAwakeStatus[friend.uid] = isAwake;
+      }
     } catch (e) {
       print('친구 목록 로드 오류: $e');
     }
 
     _isLoading = false;
-    Future.microtask(() {
-      notifyListeners();
-    });
+    Future.microtask(() => notifyListeners());
   }
 
-  // 친구 추가
-  Future<void> addFriend(String userId, String friendId) async {
+  // 친구 요청 보내기
+  Future<void> sendFriendRequest(
+      String userId, String senderNickname, String friendId) async {
     try {
-      await _friendService.createFriendship(userId, friendId);
+      await _friendService.sendFriendRequest(userId, friendId);
+
+      // 친구 요청 알림 생성
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'userId': friendId, // 받는 사람
+        'senderId': userId, // 보낸 사람
+        'senderNickname': senderNickname,
+        'type': 'friendRequest',
+        'message': '$senderNickname님이 친구 요청을 보냈습니다! 👋',
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     } catch (e) {
-      print('친구 추가 오류: $e');
+      print('친구 요청 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 친구 요청 수락
+  Future<void> acceptFriendRequest(
+      String requestId, String userId, String friendId) async {
+    try {
+      await _friendService.acceptFriendRequest(requestId, userId, friendId);
+      // 목록 새로고침
+      await loadFriends(userId);
+    } catch (e) {
+      print('친구 수락 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 친구 요청 거절
+  Future<void> rejectFriendRequest(String requestId, String userId) async {
+    try {
+      await _friendService.rejectFriendRequest(requestId);
+      // 목록 새로고침
+      await loadFriends(userId);
+    } catch (e) {
+      print('친구 거절 오류: $e');
       rethrow;
     }
   }
@@ -61,30 +114,23 @@ class SocialController extends ChangeNotifier {
     }
   }
 
-  // 친구 요청
-  Future<void> sendFriendRequest(String userId, String friendId) async {
-    try {
-      await _friendService.createFriendship(userId, friendId);
-      // TODO: 친구에게 푸시 알림 발송
-    } catch (e) {
-      print('친구 요청 오류: $e');
-      rethrow;
-    }
-  }
-
   // 친구 깨우기
-  Future<void> wakeUpFriend(
-      String userId, String friendId, String friendName) async {
+  Future<void> wakeUpFriend(String userId, String userNickname, String friendId,
+      String friendName) async {
     try {
-      // Cloud Functions 호출
-      final callable = FirebaseFunctions.instance.httpsCallable('wakeUpFriend');
-      await callable.call({
-        'userId': userId,
-        'friendId': friendId,
-        'friendName': friendName,
+      print('친구($friendId) 깨우기 실행: $friendName');
+
+      // 깨우기 알림 생성
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'userId': friendId, // 받는 사람
+        'senderId': userId, // 보낸 사람
+        'senderNickname': userNickname,
+        'type': 'wakeUp',
+        'message': '$userNickname님이 당신을 깨우고 있어요! ⏰',
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // 성공 시 포인트 지급 (+5)
       print('친구 깨우기 성공!');
     } catch (e) {
       print('친구 깨우기 오류: $e');
@@ -97,7 +143,7 @@ class SocialController extends ChangeNotifier {
     try {
       final diary = await _diaryService.getDiaryByDate(
         friendId,
-        DateTime.now(),
+        DateTime.now(), // 로컬 시간 기준
       );
       return diary?.isCompleted ?? false;
     } catch (e) {

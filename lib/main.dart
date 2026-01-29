@@ -15,6 +15,7 @@ import 'features/auth/controllers/auth_controller.dart';
 import 'features/morning/controllers/morning_controller.dart';
 import 'features/character/controllers/character_controller.dart';
 import 'features/social/controllers/social_controller.dart';
+import 'features/notification/controllers/notification_controller.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -87,12 +88,14 @@ class MorningMateApp extends StatelessWidget {
           create: (context) => MorningController(
             context.read<DiaryService>(),
             context.read<QuestionService>(),
+            context.read<UserService>(),
           ),
           update: (context, auth, previous) =>
               previous ??
               MorningController(
                 context.read<DiaryService>(),
                 context.read<QuestionService>(),
+                context.read<UserService>(),
               ),
         ),
         ChangeNotifierProxyProvider<AuthController, CharacterController>(
@@ -115,6 +118,9 @@ class MorningMateApp extends StatelessWidget {
                 context.read<DiaryService>(),
                 context.read<NotificationService>(),
               ),
+        ),
+        ChangeNotifierProvider<NotificationController>(
+          create: (_) => NotificationController(),
         ),
       ],
       child: MaterialApp.router(

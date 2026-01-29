@@ -8,11 +8,14 @@ class UserModel {
   final int characterLevel;
   final String characterState; // 'egg', 'hatchling', 'adult', 'explorer'
   final int consecutiveDays;
+  final int maxConsecutiveDays;
   final DateTime? lastLoginDate;
+  final DateTime? lastDiaryDate;
   final DateTime createdAt;
   final Map<String, dynamic>? characterCustomization;
   final List<String> friendIds;
   final bool writingBlurEnabled;
+  final bool biometricEnabled;
 
   UserModel({
     required this.uid,
@@ -22,11 +25,14 @@ class UserModel {
     this.characterLevel = 1,
     this.characterState = 'egg',
     this.consecutiveDays = 0,
+    this.maxConsecutiveDays = 0,
     this.lastLoginDate,
+    this.lastDiaryDate,
     required this.createdAt,
     this.characterCustomization,
     this.friendIds = const [],
     this.writingBlurEnabled = true,
+    this.biometricEnabled = false,
   });
 
   // Firestore에서 가져오기
@@ -40,13 +46,18 @@ class UserModel {
       characterLevel: data['characterLevel'] ?? 1,
       characterState: data['characterState'] ?? 'egg',
       consecutiveDays: data['consecutiveDays'] ?? 0,
+      maxConsecutiveDays: data['maxConsecutiveDays'] ?? 0,
       lastLoginDate: data['lastLoginDate'] != null
           ? (data['lastLoginDate'] as Timestamp).toDate()
+          : null,
+      lastDiaryDate: data['lastDiaryDate'] != null
+          ? (data['lastDiaryDate'] as Timestamp).toDate()
           : null,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       characterCustomization: data['characterCustomization'],
       friendIds: List<String>.from(data['friendIds'] ?? []),
       writingBlurEnabled: data['writingBlurEnabled'] ?? true,
+      biometricEnabled: data['biometricEnabled'] ?? false,
     );
   }
 
@@ -59,13 +70,16 @@ class UserModel {
       'characterLevel': characterLevel,
       'characterState': characterState,
       'consecutiveDays': consecutiveDays,
-      'lastLoginDate': lastLoginDate != null 
-          ? Timestamp.fromDate(lastLoginDate!) 
-          : null,
+      'maxConsecutiveDays': maxConsecutiveDays,
+      'lastLoginDate':
+          lastLoginDate != null ? Timestamp.fromDate(lastLoginDate!) : null,
+      'lastDiaryDate':
+          lastDiaryDate != null ? Timestamp.fromDate(lastDiaryDate!) : null,
       'createdAt': Timestamp.fromDate(createdAt),
       'characterCustomization': characterCustomization ?? {},
       'friendIds': friendIds,
       'writingBlurEnabled': writingBlurEnabled,
+      'biometricEnabled': biometricEnabled,
     };
   }
 
@@ -78,11 +92,14 @@ class UserModel {
     int? characterLevel,
     String? characterState,
     int? consecutiveDays,
+    int? maxConsecutiveDays,
     DateTime? lastLoginDate,
+    DateTime? lastDiaryDate,
     DateTime? createdAt,
     Map<String, dynamic>? characterCustomization,
     List<String>? friendIds,
     bool? writingBlurEnabled,
+    bool? biometricEnabled,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -92,11 +109,15 @@ class UserModel {
       characterLevel: characterLevel ?? this.characterLevel,
       characterState: characterState ?? this.characterState,
       consecutiveDays: consecutiveDays ?? this.consecutiveDays,
+      maxConsecutiveDays: maxConsecutiveDays ?? this.maxConsecutiveDays,
       lastLoginDate: lastLoginDate ?? this.lastLoginDate,
+      lastDiaryDate: lastDiaryDate ?? this.lastDiaryDate,
       createdAt: createdAt ?? this.createdAt,
-      characterCustomization: characterCustomization ?? this.characterCustomization,
+      characterCustomization:
+          characterCustomization ?? this.characterCustomization,
       friendIds: friendIds ?? this.friendIds,
       writingBlurEnabled: writingBlurEnabled ?? this.writingBlurEnabled,
+      biometricEnabled: biometricEnabled ?? this.biometricEnabled,
     );
   }
 }

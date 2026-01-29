@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
 import '../controllers/morning_controller.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -67,7 +66,12 @@ class _WritingScreenState extends State<WritingScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Color(0xFF8B7355)),
-          onPressed: () => _showExitConfirmation(context),
+          onPressed: () async {
+            final confirmed = await _showExitConfirmation(context);
+            if (confirmed == true && context.mounted) {
+              context.pop();
+            }
+          },
         ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -112,32 +116,43 @@ class _WritingScreenState extends State<WritingScreen> {
           ),
         ),
         child: SafeArea(
-          child: Consumer<MorningController>(
-            builder: (context, controller, child) {
-              return Column(
-                children: [
-                  const SizedBox(height: 8),
-
-                  // 날짜와 진행률을 함께 표시
-                  _buildDateAndProgress(controller),
-
-                  const SizedBox(height: 16),
-
-                  // 질문 표시 (다이어리 스티커 느낌)
-                  if (widget.initialQuestion != null) _buildQuestionCard(),
-
-                  const SizedBox(height: 16),
-
-                  // 작성 영역 (노트북 스타일)
-                  Expanded(
-                    child: _buildWritingArea(),
-                  ),
-
-                  // 하단 액션 버튼
-                  _buildBottomActions(context, controller),
-                ],
-              );
+          child: PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, result) async {
+              if (didPop) return;
+              final confirmed = await _showExitConfirmation(context);
+              if (confirmed == true && context.mounted) {
+                // canPop이 false인 상태에서 강제 종료를 위해 Navigator 사용
+                Navigator.of(context).pop();
+              }
             },
+            child: Consumer<MorningController>(
+              builder: (context, controller, child) {
+                return SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+
+                      // 날짜와 진행률을 함께 표시
+                      _buildDateAndProgress(controller),
+
+                      const SizedBox(height: 16),
+
+                      // 질문 표시 (다이어리 스티커 느낌)
+                      if (widget.initialQuestion != null) _buildQuestionCard(),
+
+                      const SizedBox(height: 16),
+
+                      // 작성 영역 (노트북 스타일)
+                      _buildWritingArea(context),
+
+                      // 하단 액션 버튼
+                      _buildBottomActions(context, controller),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -319,8 +334,11 @@ class _WritingScreenState extends State<WritingScreen> {
     );
   }
 
-  Widget _buildWritingArea() {
+  Widget _buildWritingArea(BuildContext context) {
     return Container(
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height * 0.45,
+      ),
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -338,9 +356,10 @@ class _WritingScreenState extends State<WritingScreen> {
         child: Stack(
           children: [
             // 노트북 줄 무늬 배경
-            CustomPaint(
-              painter: LinedPaperPainter(),
-              size: Size.infinite,
+            Positioned.fill(
+              child: CustomPaint(
+                painter: LinedPaperPainter(),
+              ),
             ),
 
             // 텍스트 입력 영역
@@ -653,16 +672,17 @@ class _WritingScreenState extends State<WritingScreen> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD4A574),
+                backgroundColor: const Color(0xFFFFD700), // 노란색 버튼
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 2,
               ),
               child: const Text(
                 '확인',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Color(0xFF5D4E37),
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -674,8 +694,8 @@ class _WritingScreenState extends State<WritingScreen> {
     );
   }
 
-  Future<void> _showExitConfirmation(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
+  Future<bool?> _showExitConfirmation(BuildContext context) async {
+    return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
@@ -696,33 +716,39 @@ class _WritingScreenState extends State<WritingScreen> {
           ),
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              '계속 작성',
-              style: TextStyle(
-                color: Color(0xFFD4A574),
-                fontWeight: FontWeight.w600,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F0), // 연한 회색 배경
+              foregroundColor: const Color(0xFF8B7355),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
+            child: const Text(
+              '계속 작성',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD700), // 노란색 배경
+              foregroundColor: const Color(0xFF5D4E37),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text(
               '중단',
-              style: TextStyle(
-                color: Color(0xFFFFB6B9),
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
       ),
     );
-
-    if (confirmed == true && context.mounted) {
-      context.pop();
-    }
   }
 
   String _formatDuration(int seconds) {

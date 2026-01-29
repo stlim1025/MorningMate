@@ -126,6 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         style: const TextStyle(color: AppColors.textPrimary),
+                        onFieldSubmitted: (_) => _handleLogin(),
                         decoration: InputDecoration(
                           labelText: '비밀번호',
                           labelStyle:

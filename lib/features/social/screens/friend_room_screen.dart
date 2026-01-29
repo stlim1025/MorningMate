@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/user_service.dart';
 import '../../../data/models/user_model.dart';
-import '../../morning/widgets/character_room_widget.dart';
+import '../../morning/widgets/enhanced_character_room_widget.dart';
 import '../controllers/social_controller.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../notification/controllers/notification_controller.dart';
 
 class FriendRoomScreen extends StatefulWidget {
   final String friendId;
@@ -48,21 +50,39 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF4A5568), Color(0xFF2D3748)],
-          ),
-        ),
-        child: SafeArea(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _friend == null
-                  ? _buildErrorState()
-                  : _buildFriendRoom(),
-        ),
+      body: Consumer<SocialController>(
+        builder: (context, socialController, child) {
+          final isAwake = _friend != null
+              ? socialController.isFriendAwake(_friend!.uid)
+              : false;
+
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isAwake
+                    ? [
+                        const Color(0xFF87CEEB), // 하늘색
+                        const Color(0xFFB0E0E6), // 파우더 블루
+                        const Color(0xFFFFF8DC), // 코니실크
+                      ]
+                    : [
+                        const Color(0xFF0F2027), // 어두운 밤
+                        const Color(0xFF203A43),
+                        const Color(0xFF2C5364),
+                      ],
+              ),
+            ),
+            child: SafeArea(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _friend == null
+                      ? _buildErrorState()
+                      : _buildFriendRoom(isAwake),
+            ),
+          );
+        },
       ),
     );
   }
@@ -95,7 +115,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
     );
   }
 
-  Widget _buildFriendRoom() {
+  Widget _buildFriendRoom(bool isAwake) {
     return Column(
       children: [
         // 헤더
@@ -104,16 +124,33 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: Icon(Icons.arrow_back,
+                    color: isAwake ? const Color(0xFF2C3E50) : Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
               const SizedBox(width: 8),
-              Text(
-                '${_friend!.nickname}님의 방',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_friend!.nickname}',
+                      style: TextStyle(
+                        color: isAwake ? const Color(0xFF2C3E50) : Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_friend!.consecutiveDays}일 연속 기록 중 🔥',
+                      style: TextStyle(
+                        color:
+                            isAwake ? const Color(0xFF5A6C7D) : Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -122,27 +159,20 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
 
         // 캐릭터 영역 (방 모양)
         Expanded(
-          child: Center(
-            child: FutureBuilder<bool>(
-              future: context
-                  .read<SocialController>()
-                  .hasFriendWrittenToday(_friend!.uid),
-              builder: (context, snapshot) {
-                final isAwake = snapshot.data ?? false;
-                return SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CharacterRoomWidget(
-                        isAwake: isAwake,
-                        characterState: _friend!.characterState,
-                      ),
-                      const SizedBox(height: 24),
-                      _buildFriendStats(),
-                    ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  child: EnhancedCharacterRoomWidget(
+                    isAwake: isAwake,
+                    characterLevel: _friend!.characterLevel,
+                    consecutiveDays: _friend!.consecutiveDays,
                   ),
-                );
-              },
+                ),
+                // 기존 스탯 위젯 제거 (메인 화면과 동일하게 맞춤)
+              ],
             ),
           ),
         ),
@@ -200,98 +230,90 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
     );
   }
 
-  Widget _buildFriendStats() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem('레벨', 'Lv.${_friend!.characterLevel}'),
-          Container(
-            width: 1,
-            height: 40,
-            color: Colors.white.withOpacity(0.2),
-          ),
-          _buildStatItem(
-              '연속', '${_friend!.consecutiveDays}일 🔥', AppColors.streakGold),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, [Color? valueColor]) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor ?? Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
   Future<void> _showGuestbookDialog() async {
     final messageController = TextEditingController();
 
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cardDark,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
         title: const Text(
           '응원 메시지',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: TextField(
           controller: messageController,
           maxLines: 3,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: '친구에게 응원의 메시지를 남겨주세요',
-            hintStyle: const TextStyle(color: Colors.white30),
+            hintStyle:
+                TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
             filled: true,
-            fillColor: AppColors.backgroundDark,
+            fillColor: AppColors.backgroundLight,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
           ),
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF0F0F0),
+              foregroundColor: AppColors.textSecondary,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('취소'),
           ),
           ElevatedButton(
-            onPressed: () {
-              // TODO: 방명록 저장 로직 구현
+            onPressed: () async {
+              final message = messageController.text.trim();
+              if (message.isEmpty) return;
+
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('방명록 기능은 개발 중입니다'),
-                ),
-              );
+
+              final userModel = context.read<AuthController>().userModel;
+              if (userModel != null) {
+                await context.read<NotificationController>().sendCheerMessage(
+                      userModel.uid,
+                      userModel.nickname,
+                      _friend!.uid,
+                      message,
+                    );
+
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('응원 메시지를 보냈습니다! 💌'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              }
             },
-            child: const Text('남기기'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD700),
+              foregroundColor: AppColors.textPrimary,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              '남기기',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
