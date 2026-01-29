@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
@@ -26,8 +27,38 @@ class NotificationScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+              return;
+            }
+            context.go('/morning');
+          },
         ),
+        actions: [
+          Consumer<AuthController>(
+            builder: (context, authController, child) {
+              final userId = authController.currentUser?.uid;
+              if (userId == null) {
+                return const SizedBox.shrink();
+              }
+              return TextButton(
+                onPressed: () async {
+                  final notificationController =
+                      context.read<NotificationController>();
+                  await notificationController.markAllAsRead(userId);
+                },
+                child: const Text(
+                  '모두 읽음',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<AuthController>(
         builder: (context, authController, child) {

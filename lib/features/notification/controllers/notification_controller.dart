@@ -30,6 +30,24 @@ class NotificationController extends ChangeNotifier {
     await _db.collection('notifications').doc(notificationId).delete();
   }
 
+  Future<void> markAllAsRead(String userId) async {
+    final unreadSnapshot = await _db
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .where('isRead', isEqualTo: false)
+        .get();
+
+    if (unreadSnapshot.docs.isEmpty) {
+      return;
+    }
+
+    final batch = _db.batch();
+    for (final doc in unreadSnapshot.docs) {
+      batch.update(doc.reference, {'isRead': true});
+    }
+    await batch.commit();
+  }
+
   // 응원 메시지(방명록) 보내기 -> 알림 생성
   Future<void> sendCheerMessage(String senderId, String senderNickname,
       String receiverId, String message,

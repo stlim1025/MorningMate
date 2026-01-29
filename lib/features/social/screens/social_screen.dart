@@ -33,6 +33,12 @@ class _SocialScreenState extends State<SocialScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authController = context.read<AuthController>();
+    final socialController = context.read<SocialController>();
+    final userId = authController.currentUser?.uid;
+    final friendsStream =
+        userId == null ? null : socialController.getFriendsStream(userId);
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
@@ -54,27 +60,30 @@ class _SocialScreenState extends State<SocialScreen> {
         ),
         centerTitle: true,
         actions: [
-          Consumer<SocialController>(
-            builder: (context, controller, child) {
-              return Container(
-                margin: const EdgeInsets.only(right: 16),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${controller.friends.length}명',
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+          if (friendsStream != null)
+            StreamBuilder<List<UserModel>>(
+              stream: friendsStream,
+              builder: (context, snapshot) {
+                final count = snapshot.data?.length ?? 0;
+                return Container(
+                  margin: const EdgeInsets.only(right: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-              );
-            },
-          ),
+                  child: Text(
+                    '$count명',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                );
+              },
+            ),
         ],
       ),
       body: SafeArea(
@@ -94,43 +103,52 @@ class _SocialScreenState extends State<SocialScreen> {
 
             // 친구 목록
             Expanded(
-              child: Consumer<SocialController>(
-                builder: (context, controller, child) {
-                  if (controller.isLoading) {
-                    return Center(
+              child: friendsStream == null
+                  ? Center(
                       child: CircularProgressIndicator(
                         color: AppColors.primary,
                       ),
-                    );
-                  }
+                    )
+                  : StreamBuilder<List<UserModel>>(
+                      stream: friendsStream,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          );
+                        }
 
-                  if (controller.friends.isEmpty) {
-                    return _buildEmptyState();
-                  }
+                        final friends = snapshot.data ?? [];
+                        if (friends.isEmpty) {
+                          return _buildEmptyState();
+                        }
 
-                  return RefreshIndicator(
-                    onRefresh: _loadFriends,
-                    color: AppColors.primary,
-                    child: GridView.builder(
-                      padding: const EdgeInsets.all(20),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.68,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                      ),
-                      itemCount: controller.friends.length,
-                      itemBuilder: (context, index) {
-                        return _buildFriendCard(
-                          context,
-                          controller.friends[index],
+                        return RefreshIndicator(
+                          onRefresh: _loadFriends,
+                          color: AppColors.primary,
+                          child: GridView.builder(
+                            padding: const EdgeInsets.all(20),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.68,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                            itemCount: friends.length,
+                            itemBuilder: (context, index) {
+                              return _buildFriendCard(
+                                context,
+                                friends[index],
+                              );
+                            },
+                          ),
                         );
                       },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
