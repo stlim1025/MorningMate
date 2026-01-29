@@ -274,7 +274,7 @@ class _MorningScreenState extends State<MorningScreen>
                 icon: Icon(Icons.notifications_outlined,
                     color: isAwake ? const Color(0xFF2C3E50) : Colors.white),
                 onPressed: () {
-                  context.push('/notification');
+                  context.pushNamed('notification');
                 },
               ),
               IconButton(

@@ -10,6 +10,7 @@ import '../features/morning/screens/writing_screen.dart';
 import '../features/character/screens/character_room_screen.dart';
 import '../features/social/screens/social_screen.dart';
 import '../features/social/screens/friend_room_screen.dart';
+import '../features/notification/screens/notification_screen.dart';
 import '../features/archive/screens/archive_screen.dart';
 import '../features/archive/screens/diary_detail_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
@@ -78,6 +79,11 @@ class AppRouter {
         path: '/social',
         name: 'social',
         builder: (context, state) => const SocialScreen(),
+      ),
+      GoRoute(
+        path: '/notification',
+        name: 'notification',
+        builder: (context, state) => const NotificationScreen(),
       ),
       GoRoute(
         path: '/friend/:friendId',
