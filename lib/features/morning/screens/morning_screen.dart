@@ -6,6 +6,8 @@ import '../controllers/morning_controller.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../settings/screens/settings_screen.dart';
+import '../../notification/controllers/notification_controller.dart';
+import '../../../data/models/notification_model.dart';
 import '../widgets/enhanced_character_room_widget.dart';
 
 class MorningScreen extends StatefulWidget {
@@ -236,6 +238,9 @@ class _MorningScreenState extends State<MorningScreen>
   }
 
   Widget _buildHeader(BuildContext context, bool isAwake) {
+    final authController = context.read<AuthController>();
+    final userId =
+        authController.userModel?.uid ?? authController.currentUser?.uid;
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -270,11 +275,44 @@ class _MorningScreenState extends State<MorningScreen>
           ),
           Row(
             children: [
-              IconButton(
-                icon: Icon(Icons.notifications_outlined,
-                    color: isAwake ? const Color(0xFF2C3E50) : Colors.white),
-                onPressed: () {
-                  context.pushNamed('notification');
+              StreamBuilder<List<NotificationModel>>(
+                stream: userId == null
+                    ? const Stream.empty()
+                    : context
+                        .read<NotificationController>()
+                        .getNotificationsStream(userId),
+                builder: (context, snapshot) {
+                  final notifications = snapshot.data ?? [];
+                  final hasUnread =
+                      notifications.any((notification) => !notification.isRead);
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.notifications_outlined,
+                          color:
+                              isAwake ? const Color(0xFF2C3E50) : Colors.white,
+                        ),
+                        onPressed: () {
+                          context.pushNamed('notification');
+                        },
+                      ),
+                      if (hasUnread)
+                        Positioned(
+                          right: 12,
+                          top: 10,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
                 },
               ),
               IconButton(
