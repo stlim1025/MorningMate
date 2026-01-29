@@ -39,51 +39,33 @@ class NotificationScreen extends StatelessWidget {
 
           return StreamBuilder<List<NotificationModel>>(
             stream: notificationController.getNotificationsStream(userId),
+            initialData: const [],
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return _buildEmptyState(
+                  context,
+                  title: '알림을 불러오는 중이에요',
+                  subtitle: '잠시만 기다려주세요',
+                );
               }
-
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.notifications_none_rounded,
-                          size: 64,
-                          color: AppColors.primary.withOpacity(0.5),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        '알림이 없습니다',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '새로운 소식이 생기면 이곳에 알려드릴게요',
-                        style: TextStyle(
-                          color: AppColors.textSecondary.withOpacity(0.7),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
+              if (snapshot.hasError) {
+                return _buildEmptyState(
+                  context,
+                  title: '알림을 불러오는 중 오류가 발생했습니다',
+                  subtitle: '잠시 후 다시 시도해주세요',
                 );
               }
 
-              final notifications = snapshot.data!;
+              final notifications = snapshot.data ?? [];
+
+              if (notifications.isEmpty) {
+                return _buildEmptyState(
+                  context,
+                  title: '알림이 없습니다',
+                  subtitle: '새로운 소식이 생기면 이곳에 알려드릴게요',
+                );
+              }
 
               return ListView.separated(
                 padding: const EdgeInsets.all(16),
@@ -221,6 +203,49 @@ class NotificationScreen extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: Icon(iconData, color: color, size: 24),
+    );
+  }
+
+  Widget _buildEmptyState(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+  }) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.notifications_none_rounded,
+              size: 64,
+              color: AppColors.primary.withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            title,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: AppColors.textSecondary.withOpacity(0.7),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

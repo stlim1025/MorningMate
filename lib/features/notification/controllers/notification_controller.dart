@@ -9,12 +9,13 @@ class NotificationController extends ChangeNotifier {
     return _db
         .collection('notifications')
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
+      final notifications = snapshot.docs
           .map((doc) => NotificationModel.fromFirestore(doc))
           .toList();
+      notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return notifications;
     });
   }
 
