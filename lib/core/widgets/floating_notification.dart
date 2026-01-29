@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import '../theme/app_colors.dart';
 
 class FloatingNotification extends StatefulWidget {
   final String title;
@@ -88,22 +89,16 @@ class _FloatingNotificationState extends State<FloatingNotification>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF6B9AC4).withOpacity(0.9),
-                      const Color(0xFFA8D5BA).withOpacity(0.9),
+                      AppColors.cardLight.withOpacity(0.98),
+                      AppColors.backgroundLight.withOpacity(0.98),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  boxShadow: AppColors.cardShadow,
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
+                    color: AppColors.primary.withOpacity(0.25),
                     width: 1.5,
                   ),
                 ),
@@ -114,12 +109,12 @@ class _FloatingNotificationState extends State<FloatingNotification>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: AppColors.primary.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.notifications_active,
-                        color: Colors.white,
+                        color: AppColors.primary,
                         size: 24,
                       ),
                     ),
@@ -132,7 +127,7 @@ class _FloatingNotificationState extends State<FloatingNotification>
                           Text(
                             widget.title,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
@@ -140,8 +135,8 @@ class _FloatingNotificationState extends State<FloatingNotification>
                           if (widget.body != null)
                             Text(
                               widget.body!,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
                                 fontSize: 14,
                               ),
                             ),
@@ -149,8 +144,11 @@ class _FloatingNotificationState extends State<FloatingNotification>
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close,
-                          color: Colors.white70, size: 20),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
                       onPressed: _dismiss,
                     ),
                   ],

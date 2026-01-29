@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../../services/diary_service.dart';
 import '../../../services/friend_service.dart';
 import '../../../services/notification_service.dart';
@@ -120,6 +121,12 @@ class SocialController extends ChangeNotifier {
     try {
       print('친구($friendId) 깨우기 실행: $friendName');
 
+      final callable = FirebaseFunctions.instance.httpsCallable('wakeUpFriend');
+      await callable.call({
+        'userId': userId,
+        'friendId': friendId,
+        'friendName': userNickname,
+      });
       // 깨우기 알림 생성
       await FirebaseFirestore.instance.collection('notifications').add({
         'userId': friendId, // 받는 사람
