@@ -36,10 +36,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     // 해당 날짜의 일기가 있는지 확인
     try {
       _currentDiary = widget.diaries.firstWhere(
-        (d) =>
-            d.date.year == _currentDate.year &&
-            d.date.month == _currentDate.month &&
-            d.date.day == _currentDate.day,
+        (d) => d.dateKey == DiaryModel.buildDateKey(_currentDate),
       );
     } catch (_) {
       _currentDiary = null;
@@ -67,7 +64,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
 
       final content = await morningController.loadDiaryContent(
         userId: _currentDiary!.userId,
-        date: _currentDiary!.date,
+        date: _currentDiary!.dateOnly,
         encryptedContent: _currentDiary!.encryptedContent,
       );
 

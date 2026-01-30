@@ -58,10 +58,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   DiaryModel? _getDiaryForDay(DateTime day) {
     try {
       return _diaries.firstWhere(
-        (diary) =>
-            diary.date.year == day.year &&
-            diary.date.month == day.month &&
-            diary.date.day == day.day,
+        (diary) => diary.dateKey == DiaryModel.buildDateKey(day),
       );
     } catch (_) {
       return null;
@@ -372,7 +369,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     Row(
                       children: [
                         Text(
-                          DateFormat('M월 d일 (E)', 'ko_KR').format(diary.date),
+                          DateFormat('M월 d일 (E)', 'ko_KR')
+                              .format(diary.dateOnly),
                           style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 18,

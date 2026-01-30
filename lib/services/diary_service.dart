@@ -23,6 +23,18 @@ class DiaryService {
 
   // 특정 날짜의 일기 가져오기
   Future<DiaryModel?> getDiaryByDate(String userId, DateTime date) async {
+    final dateKey = DiaryModel.buildDateKey(date);
+
+    final queryByKey = await _diariesCollection
+        .where('userId', isEqualTo: userId)
+        .where('dateKey', isEqualTo: dateKey)
+        .limit(1)
+        .get();
+
+    if (queryByKey.docs.isNotEmpty) {
+      return DiaryModel.fromFirestore(queryByKey.docs.first);
+    }
+
     final startOfDay = DateTime(date.year, date.month, date.day);
     final nextDay = startOfDay.add(const Duration(days: 1));
 
