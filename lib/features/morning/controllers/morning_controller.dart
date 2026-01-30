@@ -38,16 +38,11 @@ class MorningController extends ChangeNotifier {
   int get charCount => _charCount; // Getter 이름 변경
   bool get hasDiaryToday {
     if (_todayDiary == null || !_todayDiary!.isCompleted) return false;
-    final now = DateTime.now();
-    final diaryDate = _todayDiary!.date.toLocal(); // 로컬 시간으로 변환 후 비교
-    return diaryDate.year == now.year &&
-        diaryDate.month == now.month &&
-        diaryDate.day == now.day;
+    return _todayDiary!.dateKey == DiaryModel.buildDateKey(DateTime.now());
   }
 
   String _dateKey(DateTime date) {
-    final local = date.toLocal();
-    return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+    return DiaryModel.buildDateKey(date);
   }
 
   // 오늘 기준 연속 기록 동기화
@@ -59,7 +54,7 @@ class MorningController extends ChangeNotifier {
       final diaries = await _diaryService.getUserDiaries(userId);
       final completedDates = diaries
           .where((diary) => diary.isCompleted)
-          .map((diary) => _dateKey(diary.date))
+          .map((diary) => diary.dateKey)
           .toSet();
 
       final now = DateTime.now();
@@ -121,6 +116,7 @@ class MorningController extends ChangeNotifier {
           id: 'local_temp',
           userId: userId,
           date: now,
+          dateKey: _dateKey(now),
           encryptedContent: encryptedContent,
           isCompleted: true,
           createdAt: now,
@@ -225,16 +221,19 @@ class MorningController extends ChangeNotifier {
       await _saveEncryptedDiaryLocally(userId, encryptedContent);
 
       // 3. Firestore에 메타데이터만 저장
+      final now = DateTime.now();
+      final diaryDate = DateTime(now.year, now.month, now.day);
       final diary = DiaryModel(
         id: '',
         userId: userId,
-        date: DateTime.now(),
+        date: diaryDate,
+        dateKey: _dateKey(now),
         encryptedContent: encryptedContent, // 암호화된 내용 포함
         wordCount: _charCount, // 글자 수 저장
         writingDuration: _writingDuration,
         mood: mood,
         isCompleted: true,
-        createdAt: DateTime.now(),
+        createdAt: now,
         promptQuestion: _currentQuestion,
       );
 
