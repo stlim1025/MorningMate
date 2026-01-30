@@ -13,6 +13,8 @@ class SocialController extends ChangeNotifier {
   final DiaryService _diaryService;
   final NotificationService _notificationService;
 
+  static const Duration _wakeUpCooldown = Duration(seconds: 30);
+
   SocialController(
     this._friendService,
     this._diaryService,
@@ -23,6 +25,7 @@ class SocialController extends ChangeNotifier {
   List<Map<String, dynamic>> _friendRequests = []; // 친구 요청 목록
   // 친구 기상 상태 캐싱 (friendId -> isAwake)
   final Map<String, bool> _friendsAwakeStatus = {};
+  final Map<String, DateTime> _wakeUpCooldowns = {};
 
   bool _isLoading = false;
 
@@ -33,6 +36,31 @@ class SocialController extends ChangeNotifier {
   // 친구의 기상 상태를 가져오는 메서드 (캐시 사용)
   bool isFriendAwake(String friendId) {
     return _friendsAwakeStatus[friendId] ?? false;
+  }
+
+  bool canSendWakeUp(String friendId) {
+    final now = DateTime.now();
+    final lastSentAt = _wakeUpCooldowns[friendId];
+    if (lastSentAt == null) {
+      _wakeUpCooldowns[friendId] = now;
+      return true;
+    }
+
+    if (now.difference(lastSentAt) >= _wakeUpCooldown) {
+      _wakeUpCooldowns[friendId] = now;
+      return true;
+    }
+
+    return false;
+  }
+
+  Duration wakeUpCooldownRemaining(String friendId) {
+    final lastSentAt = _wakeUpCooldowns[friendId];
+    if (lastSentAt == null) return Duration.zero;
+
+    final elapsed = DateTime.now().difference(lastSentAt);
+    if (elapsed >= _wakeUpCooldown) return Duration.zero;
+    return _wakeUpCooldown - elapsed;
   }
 
   // 친구 목록 로드

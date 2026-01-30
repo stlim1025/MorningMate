@@ -45,6 +45,52 @@ class MorningController extends ChangeNotifier {
         diaryDate.day == now.day;
   }
 
+  String _dateKey(DateTime date) {
+    final local = date.toLocal();
+    return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+  }
+
+  // 오늘 기준 연속 기록 동기화
+  Future<void> syncConsecutiveDays(String userId) async {
+    try {
+      final user = await _userService.getUser(userId);
+      if (user == null) return;
+
+      final diaries = await _diaryService.getUserDiaries(userId);
+      final completedDates = diaries
+          .where((diary) => diary.isCompleted)
+          .map((diary) => _dateKey(diary.date))
+          .toSet();
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final todayKey = _dateKey(today);
+
+      int consecutiveDays = 0;
+      if (completedDates.contains(todayKey)) {
+        DateTime cursor = today;
+        while (completedDates.contains(_dateKey(cursor))) {
+          consecutiveDays += 1;
+          cursor = cursor.subtract(const Duration(days: 1));
+        }
+      }
+
+      final maxConsecutiveDays = consecutiveDays > user.maxConsecutiveDays
+          ? consecutiveDays
+          : user.maxConsecutiveDays;
+
+      if (consecutiveDays != user.consecutiveDays ||
+          maxConsecutiveDays != user.maxConsecutiveDays) {
+        await _userService.updateUser(userId, {
+          'consecutiveDays': consecutiveDays,
+          'maxConsecutiveDays': maxConsecutiveDays,
+        });
+      }
+    } catch (e) {
+      print('연속 기록 동기화 오류: $e');
+    }
+  }
+
   // 오늘의 일기 확인
   Future<void> checkTodayDiary(String userId) async {
     // 이미 메모리에 오늘의 일기가 있고 완료 상태라면 건너뜀

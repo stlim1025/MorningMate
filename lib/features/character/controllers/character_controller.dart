@@ -58,8 +58,8 @@ class CharacterController extends ChangeNotifier {
     // 포인트 지급 (+10)
     await _addPoints(userId, 10);
 
-    // 연속 일수 체크 및 업데이트
-    await _updateConsecutiveDays(userId);
+    // 일기 작성 후 최신 사용자 정보 동기화
+    await _syncUserData(userId);
 
     // 상태 전이 체크
     await _checkStateTransition(userId);
@@ -86,38 +86,12 @@ class CharacterController extends ChangeNotifier {
     });
   }
 
-  // 연속 일수 업데이트
-  Future<void> _updateConsecutiveDays(String userId) async {
-    if (_currentUser == null) return;
+  // 일기 작성 후 최신 사용자 정보 동기화
+  Future<void> _syncUserData(String userId) async {
+    final user = await _userService.getUser(userId);
+    if (user == null) return;
 
-    final lastLogin = _currentUser!.lastLoginDate;
-    final today = DateTime.now();
-    int newConsecutiveDays = _currentUser!.consecutiveDays;
-
-    if (lastLogin == null) {
-      newConsecutiveDays = 1;
-    } else {
-      final difference = today.difference(lastLogin).inDays;
-      if (difference == 1) {
-        // 연속
-        newConsecutiveDays++;
-        // 연속 보너스 포인트 (+20)
-        await _addPoints(userId, 20);
-      } else if (difference > 1) {
-        // 연속 끊김
-        newConsecutiveDays = 1;
-      }
-    }
-
-    await _userService.updateUser(userId, {
-      'consecutiveDays': newConsecutiveDays,
-      'lastLoginDate': DateTime.now(),
-    });
-
-    _currentUser = _currentUser!.copyWith(
-      consecutiveDays: newConsecutiveDays,
-      lastLoginDate: today,
-    );
+    _currentUser = user;
     Future.microtask(() {
       notifyListeners();
     });

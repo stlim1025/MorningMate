@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -387,7 +388,8 @@ class _SocialScreenState extends State<SocialScreen> {
 
   Widget _buildFriendCard(BuildContext context, UserModel friend) {
     // FutureBuilder 대신 Controller의 상태 사용 (깜빡임 방지)
-    final isAwake = context.read<SocialController>().isFriendAwake(friend.uid);
+    final isAwake = context.select<SocialController, bool>(
+        (controller) => controller.isFriendAwake(friend.uid));
     final hasWritten = isAwake;
 
     return Container(
@@ -610,6 +612,22 @@ class _SocialScreenState extends State<SocialScreen> {
     if (currentUser == null) return;
 
     final messenger = ScaffoldMessenger.of(context);
+    if (!socialController.canSendWakeUp(friend.uid)) {
+      final remaining = socialController.wakeUpCooldownRemaining(friend.uid);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            '너무 많은 요청을 보냈어요. ${remaining.inSeconds}초 후에 다시 시도해주세요.',
+          ),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
@@ -665,6 +683,33 @@ class _SocialScreenState extends State<SocialScreen> {
           ),
         );
       }
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      if (e.code == 'resource-exhausted') {
+        messenger.showSnackBar(
+          SnackBar(
+            content: const Text('너무 많은 요청을 보냈어요. 잠시 후 다시 시도해주세요.'),
+            backgroundColor: AppColors.warning,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        return;
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('깨우기 실패: 잠시 후 다시 시도해주세요.'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
     } catch (_) {
       if (mounted) {
         messenger.hideCurrentSnackBar();

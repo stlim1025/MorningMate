@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'core/theme/app_theme.dart';
 import 'router/app_router.dart';
@@ -34,6 +36,10 @@ void main() async {
 
   // Firebase 초기화
   await Firebase.initializeApp();
+  if (kIsWeb) {
+    await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+  }
+  await FirebaseAuth.instance.authStateChanges().first;
 
   // FCM 백그라운드 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
