@@ -26,6 +26,7 @@ class FriendRoomScreen extends StatefulWidget {
 class _FriendRoomScreenState extends State<FriendRoomScreen> {
   UserModel? _friend;
   bool _isLoading = true;
+  bool? _friendAwakeStatus;
   DateTime? _lastCheerSentAt;
 
   static const Duration _cheerCooldown = Duration(seconds: 30);
@@ -38,15 +39,32 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
 
   Future<void> _loadFriendData() async {
     final userService = context.read<UserService>();
+    final socialController = context.read<SocialController>();
 
     try {
       final friend = await userService.getUser(widget.friendId);
+      if (!mounted) return;
+
+      if (friend == null) {
+        setState(() {
+          _friend = null;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final isAwake =
+          await socialController.refreshFriendAwakeStatus(friend.uid);
+      if (!mounted) return;
+
       setState(() {
         _friend = friend;
+        _friendAwakeStatus = isAwake;
         _isLoading = false;
       });
     } catch (e) {
       print('친구 데이터 로드 오류: $e');
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -58,9 +76,10 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
     return Scaffold(
       body: Consumer<SocialController>(
         builder: (context, socialController, child) {
-          final isAwake = _friend != null
-              ? socialController.isFriendAwake(_friend!.uid)
-              : false;
+          final isAwake = _friendAwakeStatus ??
+              (_friend != null
+                  ? socialController.isFriendAwake(_friend!.uid)
+                  : false);
 
           return Container(
             decoration: BoxDecoration(

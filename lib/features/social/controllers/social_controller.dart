@@ -38,6 +38,13 @@ class SocialController extends ChangeNotifier {
     return _friendsAwakeStatus[friendId] ?? false;
   }
 
+  Future<bool> refreshFriendAwakeStatus(String friendId) async {
+    final isAwake = await hasFriendWrittenToday(friendId);
+    _friendsAwakeStatus[friendId] = isAwake;
+    notifyListeners();
+    return isAwake;
+  }
+
   bool canSendWakeUp(String friendId) {
     final now = DateTime.now();
     final lastSentAt = _wakeUpCooldowns[friendId];
