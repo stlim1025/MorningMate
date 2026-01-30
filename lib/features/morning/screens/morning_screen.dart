@@ -99,7 +99,7 @@ class _MorningScreenState extends State<MorningScreen>
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: (isAwake && !morningController.isDarkMode(context))
+                    colors: isAwake
                         ? [
                             const Color(0xFF87CEEB),
                             const Color(0xFFB0E0E6),
@@ -115,8 +115,7 @@ class _MorningScreenState extends State<MorningScreen>
               ),
 
               // 2. Stars (Night only)
-              if (!isAwake || morningController.isDarkMode(context))
-                const Positioned.fill(child: TwinklingStars()),
+              if (!isAwake) const Positioned.fill(child: TwinklingStars()),
 
               // 3. Sun/Moon (Background Element)
               Positioned(
@@ -395,13 +394,12 @@ class _MorningScreenState extends State<MorningScreen>
     MorningController controller,
     bool isAwake,
   ) {
+    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
     // 따뜻한 느낌의 앱 테마 색상 적용 (AppColors.backgroundLight)
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: BoxDecoration(
-        color: Provider.of<ThemeController>(context).isDarkMode
-            ? Theme.of(context).cardColor
-            : AppColors.backgroundLight.withOpacity(0.98),
+        color: Theme.of(context).cardColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
@@ -519,18 +517,24 @@ class _MorningScreenState extends State<MorningScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF90EE90).withOpacity(0.2),
+                  color: isDarkMode
+                      ? const Color(0xFF81C784).withOpacity(0.1)
+                      : const Color(0xFF90EE90).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFF90EE90).withOpacity(0.5),
+                    color: isDarkMode
+                        ? const Color(0xFF81C784).withOpacity(0.5)
+                        : const Color(0xFF90EE90).withOpacity(0.5),
                     width: 2,
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.check_circle,
-                      color: Color(0xFF228B22),
+                      color: isDarkMode
+                          ? const Color(0xFF81C784)
+                          : const Color(0xFF228B22),
                       size: 32,
                     ),
                     const SizedBox(width: 16),
@@ -538,20 +542,24 @@ class _MorningScreenState extends State<MorningScreen>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             '오늘의 일기 작성 완료!',
                             style: TextStyle(
-                              color: Color(0xFF228B22),
+                              color: isDarkMode
+                                  ? const Color(0xFF81C784)
+                                  : const Color(0xFF228B22),
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             '내일 아침에 다시 만나요 😊',
                             style: TextStyle(
-                              color: AppColors.textPrimary,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : AppColors.textPrimary,
                               fontSize: 13,
                             ),
                           ),
