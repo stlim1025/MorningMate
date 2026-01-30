@@ -394,31 +394,34 @@ class _WritingScreenState extends State<WritingScreen> {
             // 블러 효과
             if (_enableBlur && _textController.text.isNotEmpty)
               Positioned.fill(
-                child: ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                    child: Container(
-                      color: const Color(0xFFFFF8E7)
-                          .withOpacity(0.7), // 밝은 베이지색으로 변경
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.visibility_off,
-                              color: const Color(0xFFD4A574).withOpacity(0.8),
-                              size: 48,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '글 가리기 활성화됨',
-                              style: TextStyle(
-                                color: const Color(0xFF8B7355).withOpacity(0.9),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                child: IgnorePointer(
+                  child: ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                      child: Container(
+                        color: const Color(0xFFFFF8E7)
+                            .withOpacity(0.7), // 밝은 베이지색으로 변경
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.visibility_off,
+                                color: const Color(0xFFD4A574).withOpacity(0.8),
+                                size: 48,
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              Text(
+                                '글 가리기 활성화됨',
+                                style: TextStyle(
+                                  color:
+                                      const Color(0xFF8B7355).withOpacity(0.9),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

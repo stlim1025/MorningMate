@@ -9,6 +9,41 @@ admin.initializeApp();
 // Set global options
 setGlobalOptions({ maxInstances: 10 });
 
+const RATE_LIMIT_WINDOW_MS = 30 * 1000;
+
+const enforceRateLimit = async (userId, friendId, type) => {
+    const rateLimitRef = admin
+        .firestore()
+        .collection("rate_limits")
+        .doc(`${userId}_${friendId}_${type}`);
+
+    await admin.firestore().runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(rateLimitRef);
+        const now = Date.now();
+        if (snapshot.exists) {
+            const lastSentAt = snapshot.data()?.lastSentAt;
+            const lastMillis = lastSentAt?.toMillis ? lastSentAt.toMillis() : null;
+            if (lastMillis && now - lastMillis < RATE_LIMIT_WINDOW_MS) {
+                throw new HttpsError(
+                    "resource-exhausted",
+                    "Too many requests. Please try again later."
+                );
+            }
+        }
+
+        transaction.set(
+            rateLimitRef,
+            {
+                userId,
+                friendId,
+                type,
+                lastSentAt: admin.firestore.Timestamp.fromMillis(now),
+            },
+            { merge: true }
+        );
+    });
+};
+
 const normalizeNotificationType = (type) => {
     switch (type) {
         case "wakeUp":
@@ -140,6 +175,8 @@ exports.wakeUpFriend = onCall(async (request) => {
 
     // 친구의 FCM 토큰 가져오기
     try {
+        await enforceRateLimit(userId, friendId, "wake_up");
+
         const friendDoc = await admin
             .firestore()
             .collection("users")
@@ -217,6 +254,8 @@ exports.sendCheerMessage = onCall(async (request) => {
     }
 
     try {
+        await enforceRateLimit(userId, friendId, "cheer_message");
+
         const friendDoc = await admin
             .firestore()
             .collection("users")

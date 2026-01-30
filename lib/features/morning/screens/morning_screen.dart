@@ -43,6 +43,7 @@ class _MorningScreenState extends State<MorningScreen>
       if (userId != null) {
         // 1. 오늘의 일기 여부 먼저 확인
         await morningController.checkTodayDiary(userId);
+        await morningController.syncConsecutiveDays(userId);
 
         // 2. 일기가 있으면 캐릭터 상태 동기화
         if (morningController.hasDiaryToday) {

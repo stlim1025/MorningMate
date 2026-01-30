@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
@@ -24,6 +26,9 @@ class FriendRoomScreen extends StatefulWidget {
 class _FriendRoomScreenState extends State<FriendRoomScreen> {
   UserModel? _friend;
   bool _isLoading = true;
+  DateTime? _lastCheerSentAt;
+
+  static const Duration _cheerCooldown = Duration(seconds: 30);
 
   @override
   void initState() {
@@ -172,7 +177,8 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     consecutiveDays: _friend!.consecutiveDays,
                   ),
                 ),
-                // 기존 스탯 위젯 제거 (메인 화면과 동일하게 맞춤)
+                const SizedBox(height: 16),
+                _buildFriendStats(isAwake),
               ],
             ),
           ),
@@ -241,6 +247,77 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
     );
   }
 
+  Widget _buildFriendStats(bool isAwake) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isAwake
+            ? Colors.white.withOpacity(0.85)
+            : Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isAwake
+              ? Colors.white.withOpacity(0.6)
+              : Colors.white.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildStatChip(
+            label: '레벨',
+            value: 'Lv.${_friend!.characterLevel}',
+            isAwake: isAwake,
+          ),
+          _buildStatChip(
+            label: '연속 기록',
+            value: '${_friend!.consecutiveDays}일',
+            isAwake: isAwake,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatChip({
+    required String label,
+    required String value,
+    required bool isAwake,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: isAwake ? AppColors.textSecondary : Colors.white70,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isAwake
+                ? AppColors.primary.withOpacity(0.12)
+                : Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            value,
+            style: TextStyle(
+              color: isAwake ? AppColors.textPrimary : Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _showGuestbookDialog() async {
     final parentContext = context;
     final messageController = TextEditingController();
@@ -293,48 +370,95 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               final message = messageController.text.trim();
               if (message.isEmpty) return;
 
+              final now = DateTime.now();
+              if (_lastCheerSentAt != null &&
+                  now.difference(_lastCheerSentAt!) < _cheerCooldown) {
+                final remaining =
+                    _cheerCooldown - now.difference(_lastCheerSentAt!);
+                ScaffoldMessenger.of(parentContext).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '너무 많은 요청을 보냈어요. ${remaining.inSeconds}초 후에 다시 시도해주세요.',
+                    ),
+                    backgroundColor: AppColors.warning,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                );
+                return;
+              }
+
+              _lastCheerSentAt = now;
+
               Navigator.pop(dialogContext);
 
               if (!mounted) return;
 
+              final messenger = ScaffoldMessenger.of(parentContext);
+              messenger.showSnackBar(
+                const SnackBar(
+                  content: Text('응원 메시지를 보냈습니다! 💌'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+
               final userModel = parentContext.read<AuthController>().userModel;
               if (userModel != null) {
-                final callable = FirebaseFunctions.instance
-                    .httpsCallable('sendCheerMessage');
-                bool isPushSent = false;
-                try {
-                  final result = await callable.call({
-                    'userId': userModel.uid,
-                    'friendId': _friend!.uid,
-                    'message': message,
-                    'senderNickname': userModel.nickname,
-                  });
-                  if (result.data is Map &&
-                      result.data['success'] == true) {
-                    isPushSent = true;
+                unawaited(() async {
+                  final callable = FirebaseFunctions.instance
+                      .httpsCallable('sendCheerMessage');
+                  bool isPushSent = false;
+                  try {
+                    final result = await callable.call({
+                      'userId': userModel.uid,
+                      'friendId': _friend!.uid,
+                      'message': message,
+                      'senderNickname': userModel.nickname,
+                    });
+                    if (result.data is Map &&
+                        result.data['success'] == true) {
+                      isPushSent = true;
+                    }
+                  } on FirebaseFunctionsException catch (e) {
+                    if (e.code == 'resource-exhausted' &&
+                        parentContext.mounted) {
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              '너무 많은 요청을 보냈어요. 잠시 후 다시 시도해주세요.'),
+                          backgroundColor: AppColors.warning,
+                        ),
+                      );
+                      return;
+                    }
+                    print('응원 메시지 FCM 전송 오류: $e');
+                  } catch (e) {
+                    print('응원 메시지 FCM 전송 오류: $e');
                   }
-                } catch (e) {
-                  print('응원 메시지 FCM 전송 오류: $e');
-                }
 
-                await parentContext
-                    .read<NotificationController>()
-                    .sendCheerMessage(
-                      userModel.uid,
-                      userModel.nickname,
-                      _friend!.uid,
-                      message,
-                      fcmSent: isPushSent,
-                    );
-
-                if (parentContext.mounted) {
-                  ScaffoldMessenger.of(parentContext).showSnackBar(
-                    const SnackBar(
-                      content: Text('응원 메시지를 보냈습니다! 💌'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                }
+                  try {
+                    await parentContext
+                        .read<NotificationController>()
+                        .sendCheerMessage(
+                          userModel.uid,
+                          userModel.nickname,
+                          _friend!.uid,
+                          message,
+                          fcmSent: isPushSent,
+                        );
+                  } catch (e) {
+                    if (parentContext.mounted) {
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('응원 메시지 전송에 실패했습니다.'),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                    }
+                  }
+                }());
               }
             },
             style: ElevatedButton.styleFrom(
