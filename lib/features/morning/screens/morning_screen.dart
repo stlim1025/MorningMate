@@ -583,7 +583,9 @@ class _MorningScreenState extends State<MorningScreen>
       backgroundColor:
           Theme.of(context).bottomNavigationBarTheme.backgroundColor,
       selectedItemColor: AppColors.primary,
-      unselectedItemColor: Colors.grey,
+      unselectedItemColor: Provider.of<ThemeController>(context).isDarkMode
+          ? const Color(0xFF3E3224)
+          : Colors.grey,
       elevation: 10,
       onTap: (index) {
         switch (index) {

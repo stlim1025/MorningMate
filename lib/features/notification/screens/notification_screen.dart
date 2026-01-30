@@ -214,19 +214,25 @@ class NotificationScreen extends StatelessWidget {
                                                 notification.id);
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.success,
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? const Color(0xFF5D4E37)
+                                                : Colors.white,
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 6),
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(8),
                                         ),
+                                        elevation: 0,
                                       ),
                                       child: const Text(
                                         '수락',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
@@ -253,18 +259,25 @@ class NotificationScreen extends StatelessWidget {
                                       style: OutlinedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 6),
-                                        side: const BorderSide(
-                                            color: AppColors.error),
+                                        side: BorderSide(
+                                            color:
+                                                Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? Colors.white24
+                                                    : AppColors.error),
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(8),
                                         ),
                                       ),
-                                      child: const Text(
+                                      child: Text(
                                         '거절',
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: AppColors.error,
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Colors.white54
+                                              : AppColors.error,
                                         ),
                                       ),
                                     ),

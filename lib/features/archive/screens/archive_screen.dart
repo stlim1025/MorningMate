@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/diary_service.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/diary_model.dart';
 
@@ -460,7 +461,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       type: BottomNavigationBarType.fixed,
       currentIndex: 3,
       selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.textSecondary.withOpacity(0.5),
+      unselectedItemColor: Provider.of<ThemeController>(context).isDarkMode
+          ? const Color(0xFF3E3224)
+          : Colors.grey,
       backgroundColor:
           Theme.of(context).bottomNavigationBarTheme.backgroundColor,
       elevation: 8,

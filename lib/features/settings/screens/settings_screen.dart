@@ -851,58 +851,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
       BuildContext context, AuthController authController) async {
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: const Text(
-          '로그아웃',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+      builder: (context) {
+        final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-        ),
-        content: const Text(
-          '정말 로그아웃 하시겠습니까?',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF0F0F0),
-              foregroundColor: AppColors.textSecondary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          title: Text(
+            '로그아웃',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            '정말 로그아웃 하시겠습니까?',
+            style:
+                TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                foregroundColor: isDarkMode ? Colors.white70 : Colors.black87,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await authController.signOut();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  context.go('/login');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor:
+                    isDarkMode ? const Color(0xFF5D4E37) : Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                '로그아웃',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await authController.signOut();
-              if (context.mounted) {
-                Navigator.pop(context);
-                context.go('/login');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700),
-              foregroundColor: AppColors.textPrimary,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              '로그아웃',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
@@ -912,66 +918,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ) async {
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: const Text(
-          '회원탈퇴',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+      builder: (context) {
+        final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-        ),
-        content: const Text(
-          '정말 회원탈퇴 하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF0F0F0),
-              foregroundColor: AppColors.textSecondary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          title: Text(
+            '회원탈퇴',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            '정말 회원탈퇴 하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.',
+            style:
+                TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                foregroundColor: isDarkMode ? Colors.white70 : Colors.black87,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
+              child: const Text('취소'),
             ),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700),
-              foregroundColor: AppColors.textPrimary,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor:
+                    isDarkMode ? const Color(0xFF5D4E37) : Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
-            child: const Text(
-              '탈퇴',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await authController.deleteAccount();
-                if (context.mounted) {
-                  context.go('/login');
+              child: const Text(
+                '탈퇴',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              onPressed: () async {
+                Navigator.pop(context);
+                try {
+                  await authController.deleteAccount();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      _buildSnackBar('회원탈퇴 실패: $e'),
+                    );
+                  }
                 }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    _buildSnackBar('회원탈퇴 실패: $e'),
-                  );
-                }
-              }
-            },
-          ),
-        ],
-      ),
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -434,6 +434,9 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     bool isRight = false,
   }) {
     final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
+    final buttonColor =
+        isDarkMode ? const Color(0xFF8B7355) : const Color(0xFFD4A574);
+
     return Opacity(
       opacity: enabled ? 1.0 : 0.3,
       child: InkWell(
@@ -443,7 +446,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: isDarkMode
-                ? AppColors.backgroundLight
+                ? const Color(0xFF3E3224) // 다크 브라운 배경
                 : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             boxShadow: AppColors.smallCardShadow,
@@ -454,32 +457,20 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                     Text(
                       label,
                       style: TextStyle(
-                        color: isDarkMode
-                            ? AppColors.textPrimary
-                            : AppColors.primary,
+                        color: buttonColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(icon,
-                        size: 16,
-                        color: isDarkMode
-                            ? AppColors.textPrimary
-                            : AppColors.primary),
+                    Icon(icon, size: 16, color: buttonColor),
                   ]
                 : [
-                    Icon(icon,
-                        size: 16,
-                        color: isDarkMode
-                            ? AppColors.textPrimary
-                            : const Color(0xFFD4A574)),
+                    Icon(icon, size: 16, color: buttonColor),
                     const SizedBox(width: 8),
                     Text(
                       label,
                       style: TextStyle(
-                        color: isDarkMode
-                            ? AppColors.textPrimary
-                            : const Color(0xFFD4A574),
+                        color: buttonColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

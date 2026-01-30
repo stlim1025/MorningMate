@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import '../../../services/user_service.dart';
 import '../../../data/models/user_model.dart';
 
-// 캐릭터 상태 정의
+// 캐릭터 상태 정의 - 6단계로 확장
 enum CharacterState {
-  egg, // 알 (초기)
-  hatchling, // 부화 (7일 연속)
-  adult, // 성체 (친구 깨우기 5회)
-  explorer, // 탐험가 (특별 조건)
-  sleeping, // 수면 (3일 미활동)
+  egg, // 1레벨: 알
+  cracking, // 2레벨: 알에 금이 감
+  hatching, // 3레벨: 알에서 얼굴이 보임
+  baby, // 4레벨: 새가 완전히 나옴
+  young, // 5레벨: 새가 조금 성숙해짐
+  adult, // 6레벨: 완전히 성숙한 귀여운 새
+  sleeping, // 수면 중 (3일 미활동)
 }
 
 class CharacterController extends ChangeNotifier {
@@ -26,7 +28,7 @@ class CharacterController extends ChangeNotifier {
   bool get isAwake => _isAwake;
   String get currentAnimation => _currentAnimation;
   CharacterState get characterState =>
-      _getCharacterStateFromString(_currentUser?.characterState ?? 'egg');
+      _getCharacterStateFromLevel(_currentUser?.characterLevel ?? 1);
 
   // 사용자 정보 로드
   Future<void> loadUserData(String userId) async {
@@ -37,6 +39,26 @@ class CharacterController extends ChangeNotifier {
       });
     } catch (e) {
       print('사용자 데이터 로드 오류: $e');
+    }
+  }
+
+  // 레벨에서 캐릭터 상태 결정
+  CharacterState _getCharacterStateFromLevel(int level) {
+    switch (level) {
+      case 1:
+        return CharacterState.egg;
+      case 2:
+        return CharacterState.cracking;
+      case 3:
+        return CharacterState.hatching;
+      case 4:
+        return CharacterState.baby;
+      case 5:
+        return CharacterState.young;
+      case 6:
+        return CharacterState.adult;
+      default:
+        return CharacterState.egg;
     }
   }
 
@@ -55,14 +77,14 @@ class CharacterController extends ChangeNotifier {
       notifyListeners();
     });
 
-    // 포인트 지급 (+10)
-    await _addPoints(userId, 10);
+    // 포인트 및 경험치 지급
+    await _addPointsAndExp(userId, 10, 10);
 
     // 일기 작성 후 최신 사용자 정보 동기화
     await _syncUserData(userId);
 
-    // 상태 전이 체크
-    await _checkStateTransition(userId);
+    // 레벨업 체크
+    await _checkLevelUp(userId);
   }
 
   // 외부에서 상태 강제 설정 (앱 초기화용)
@@ -71,16 +93,22 @@ class CharacterController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 포인트 추가
-  Future<void> _addPoints(String userId, int points) async {
+  // 포인트 및 경험치 추가
+  Future<void> _addPointsAndExp(String userId, int points, int exp) async {
     if (_currentUser == null) return;
 
     final newPoints = _currentUser!.points + points;
+    final newExp = _currentUser!.experience + exp;
+
     await _userService.updateUser(userId, {
       'points': newPoints,
+      'experience': newExp,
     });
 
-    _currentUser = _currentUser!.copyWith(points: newPoints);
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      experience: newExp,
+    );
     Future.microtask(() {
       notifyListeners();
     });
@@ -97,54 +125,27 @@ class CharacterController extends ChangeNotifier {
     });
   }
 
-  // 캐릭터 상태 전이 체크
-  Future<void> _checkStateTransition(String userId) async {
+  // 레벨업 체크
+  Future<void> _checkLevelUp(String userId) async {
     if (_currentUser == null) return;
 
-    CharacterState newState = characterState;
-    bool shouldEvolve = false;
+    final currentLevel = _currentUser!.characterLevel;
+    final currentExp = _currentUser!.experience;
 
-    // 상태 전이 규칙
-    switch (characterState) {
-      case CharacterState.egg:
-        // 7일 연속 작성 시 부화
-        if (_currentUser!.consecutiveDays >= 7) {
-          newState = CharacterState.hatchling;
-          shouldEvolve = true;
-        }
-        break;
+    // 최대 레벨 체크
+    if (currentLevel >= 6) return;
 
-      case CharacterState.hatchling:
-        // 친구로부터 깨우기 5회 이상 수신 시 성체
-        // (이 부분은 SocialController에서 처리)
-        break;
+    // 다음 레벨 필요 경험치
+    final requiredExp = UserModel.getRequiredExpForLevel(currentLevel);
 
-      case CharacterState.adult:
-        // 특정 조건 달성 시 탐험가
-        if (_currentUser!.points >= 1000) {
-          newState = CharacterState.explorer;
-          shouldEvolve = true;
-        }
-        break;
-
-      case CharacterState.sleeping:
-        // 일기 작성으로 다시 활성화
-        newState = CharacterState.hatchling;
-        shouldEvolve = true;
-        break;
-
-      default:
-        break;
-    }
-
-    // 진화 실행
-    if (shouldEvolve) {
-      await _evolveCharacter(userId, newState);
+    // 레벨업 조건 충족 확인
+    if (currentExp >= requiredExp) {
+      await _levelUp(userId, currentLevel + 1);
     }
   }
 
-  // 캐릭터 진화
-  Future<void> _evolveCharacter(String userId, CharacterState newState) async {
+  // 레벨업 실행
+  Future<void> _levelUp(String userId, int newLevel) async {
     _currentAnimation = 'evolve';
     Future.microtask(() {
       notifyListeners();
@@ -152,15 +153,14 @@ class CharacterController extends ChangeNotifier {
 
     await Future.delayed(const Duration(seconds: 3));
 
-    final stateString = _getStringFromCharacterState(newState);
     await _userService.updateUser(userId, {
-      'characterState': stateString,
-      'characterLevel': _currentUser!.characterLevel + 1,
+      'characterLevel': newLevel,
+      'experience': 0, // 레벨업 후 경험치 초기화
     });
 
     _currentUser = _currentUser!.copyWith(
-      characterState: stateString,
-      characterLevel: _currentUser!.characterLevel + 1,
+      characterLevel: newLevel,
+      experience: 0,
     );
 
     _currentAnimation = 'idle';
@@ -181,29 +181,6 @@ class CharacterController extends ChangeNotifier {
     Future.microtask(() {
       notifyListeners();
     });
-  }
-
-  // Helper: String -> CharacterState
-  CharacterState _getCharacterStateFromString(String state) {
-    switch (state) {
-      case 'egg':
-        return CharacterState.egg;
-      case 'hatchling':
-        return CharacterState.hatchling;
-      case 'adult':
-        return CharacterState.adult;
-      case 'explorer':
-        return CharacterState.explorer;
-      case 'sleeping':
-        return CharacterState.sleeping;
-      default:
-        return CharacterState.egg;
-    }
-  }
-
-  // Helper: CharacterState -> String
-  String _getStringFromCharacterState(CharacterState state) {
-    return state.toString().split('.').last;
   }
 
   // 캐릭터 이미지 경로 가져오기

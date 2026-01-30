@@ -7,6 +7,7 @@ import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/user_service.dart';
+import '../../../core/theme/theme_controller.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -226,6 +227,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
   Widget _buildFriendRequestSection(
       BuildContext context, SocialController controller) {
+    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Column(
@@ -245,13 +247,13 @@ class _SocialScreenState extends State<SocialScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.error,
+                  color: isDarkMode ? AppColors.primary : AppColors.error,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   '${controller.friendRequests.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: isDarkMode ? const Color(0xFF5D4E37) : Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -333,17 +335,21 @@ class _SocialScreenState extends State<SocialScreen> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.success,
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: isDarkMode
+                                  ? const Color(0xFF5D4E37)
+                                  : Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
+                              elevation: 0,
                             ),
                             child: const Text(
                               '수락',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -372,16 +378,22 @@ class _SocialScreenState extends State<SocialScreen> {
                             },
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 6),
-                              side: const BorderSide(color: AppColors.error),
+                              side: BorderSide(
+                                color: isDarkMode
+                                    ? Colors.white24
+                                    : AppColors.error,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            child: const Text(
+                            child: Text(
                               '거절',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.error,
+                                color: isDarkMode
+                                    ? Colors.white54
+                                    : AppColors.error,
                               ),
                             ),
                           ),
@@ -590,7 +602,9 @@ class _SocialScreenState extends State<SocialScreen> {
         type: BottomNavigationBarType.fixed,
         currentIndex: 2,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary.withOpacity(0.5),
+        unselectedItemColor: Provider.of<ThemeController>(context).isDarkMode
+            ? const Color(0xFF3E3224) // 훨씬 어두운 브라운
+            : Colors.grey,
         backgroundColor: Colors.transparent,
         elevation: 0,
         onTap: (index) {
@@ -817,8 +831,16 @@ class _SocialScreenState extends State<SocialScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF0F0F0),
-              foregroundColor: AppColors.textSecondary,
+              backgroundColor:
+                  Provider.of<ThemeController>(context, listen: false)
+                          .isDarkMode
+                      ? Colors.grey[800]
+                      : Colors.grey[200],
+              foregroundColor:
+                  Provider.of<ThemeController>(context, listen: false)
+                          .isDarkMode
+                      ? Colors.white70
+                      : Colors.black87,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -836,8 +858,12 @@ class _SocialScreenState extends State<SocialScreen> {
               await _addFriendByEmail(context, email);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700),
-              foregroundColor: AppColors.textPrimary,
+              backgroundColor: AppColors.primary,
+              foregroundColor:
+                  Provider.of<ThemeController>(context, listen: false)
+                          .isDarkMode
+                      ? const Color(0xFF5D4E37)
+                      : Colors.white,
               elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
