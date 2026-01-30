@@ -13,7 +13,7 @@ class SocialController extends ChangeNotifier {
   final DiaryService _diaryService;
   final NotificationService _notificationService;
 
-  static const Duration _wakeUpCooldown = Duration(seconds: 30);
+  static const Duration _wakeUpCooldown = Duration(seconds: 10);
 
   SocialController(
     this._friendService,
@@ -34,8 +34,22 @@ class SocialController extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   // 친구의 기상 상태를 가져오는 메서드 (캐시 사용)
-  bool isFriendAwake(String friendId) {
-    return _friendsAwakeStatus[friendId] ?? false;
+  bool isFriendAwake(String friendId, [DateTime? lastDiaryDate]) {
+    // 1. 확인된 상태가 있으면 우선 사용
+    if (_friendsAwakeStatus.containsKey(friendId)) {
+      return _friendsAwakeStatus[friendId]!;
+    }
+
+    // 2. 확인 중일 때의 임시 상태 (UserModel 정보 활용)
+    if (lastDiaryDate != null) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final diaryDate =
+          DateTime(lastDiaryDate.year, lastDiaryDate.month, lastDiaryDate.day);
+      return diaryDate.isAtSameMomentAs(today);
+    }
+
+    return false;
   }
 
   Future<bool> refreshFriendAwakeStatus(String friendId) async {
@@ -99,7 +113,8 @@ class SocialController extends ChangeNotifier {
   Future<void> sendFriendRequest(
       String userId, String senderNickname, String friendId) async {
     try {
-      final requestId = await _friendService.sendFriendRequest(userId, friendId);
+      final requestId =
+          await _friendService.sendFriendRequest(userId, friendId);
 
       final notificationRef =
           FirebaseFirestore.instance.collection('notifications').doc();

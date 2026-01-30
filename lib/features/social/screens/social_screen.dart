@@ -144,11 +144,12 @@ class _SocialScreenState extends State<SocialScreen> {
                               return Builder(
                                 builder: (context) {
                                   final friend = friends[index];
-                                  final isAwake = context
-                                      .select<SocialController, bool>(
+                                  final isAwake =
+                                      context.select<SocialController, bool>(
                                           (controller) =>
                                               controller.isFriendAwake(
                                                 friend.uid,
+                                                friend.lastDiaryDate,
                                               ));
                                   return _buildFriendCard(
                                     context,

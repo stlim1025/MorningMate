@@ -244,6 +244,7 @@ class MorningController extends ChangeNotifier {
       await _userService.updateConsecutiveDays(userId);
       await _userService.updateUser(userId, {
         'points': FieldValue.increment(10), // 일기 작성 시 포인트 지급 예시
+        'lastDiaryDate': Timestamp.fromDate(now),
       });
 
       _isLoading = false;
