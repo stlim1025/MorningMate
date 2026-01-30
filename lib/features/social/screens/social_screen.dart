@@ -141,9 +141,21 @@ class _SocialScreenState extends State<SocialScreen> {
                             ),
                             itemCount: friends.length,
                             itemBuilder: (context, index) {
-                              return _buildFriendCard(
-                                context,
-                                friends[index],
+                              return Builder(
+                                builder: (context) {
+                                  final friend = friends[index];
+                                  final isAwake = context
+                                      .select<SocialController, bool>(
+                                          (controller) =>
+                                              controller.isFriendAwake(
+                                                friend.uid,
+                                              ));
+                                  return _buildFriendCard(
+                                    context,
+                                    friend,
+                                    isAwake: isAwake,
+                                  );
+                                },
                               );
                             },
                           ),
@@ -386,10 +398,11 @@ class _SocialScreenState extends State<SocialScreen> {
     );
   }
 
-  Widget _buildFriendCard(BuildContext context, UserModel friend) {
-    // FutureBuilder 대신 Controller의 상태 사용 (깜빡임 방지)
-    final isAwake = context.select<SocialController, bool>(
-        (controller) => controller.isFriendAwake(friend.uid));
+  Widget _buildFriendCard(
+    BuildContext context,
+    UserModel friend, {
+    required bool isAwake,
+  }) {
     final hasWritten = isAwake;
 
     return Container(
