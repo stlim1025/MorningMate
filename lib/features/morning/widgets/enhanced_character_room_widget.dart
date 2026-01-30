@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 class EnhancedCharacterRoomWidget extends StatefulWidget {
@@ -24,6 +25,23 @@ class _EnhancedCharacterRoomWidgetState
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _bounceAnimation;
+  bool _isTapped = false;
+  Timer? _tapTimer;
+
+  void _handleTap() {
+    if (_isTapped) return;
+    setState(() {
+      _isTapped = true;
+    });
+    _tapTimer?.cancel();
+    _tapTimer = Timer(const Duration(milliseconds: 1000), () {
+      if (mounted) {
+        setState(() {
+          _isTapped = false;
+        });
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -41,6 +59,7 @@ class _EnhancedCharacterRoomWidgetState
   @override
   void dispose() {
     _animationController.dispose();
+    _tapTimer?.cancel();
     super.dispose();
   }
 
@@ -177,18 +196,27 @@ class _EnhancedCharacterRoomWidgetState
             duration: const Duration(milliseconds: 800),
             curve: Curves.easeInOut,
             // 잠잘 때는 침대 위(top: 40), 깨어나면 바닥 중앙(top: 100)
-            top: isAwake ? 80 : 30,
+            top: widget.isAwake ? 80 : 30,
             left: 0,
             right: 0,
             child: Center(
-              child: AnimatedBuilder(
-                animation: _bounceAnimation,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(0, isAwake ? -_bounceAnimation.value : 0),
-                    child: _buildCharacter(isAwake),
-                  );
-                },
+              child: GestureDetector(
+                onTap: _handleTap,
+                child: AnimatedBuilder(
+                  animation: _bounceAnimation,
+                  builder: (context, child) {
+                    double verticalOffset =
+                        widget.isAwake ? -_bounceAnimation.value : 0;
+                    if (_isTapped) verticalOffset -= 20; // 추가 점프
+
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      transform:
+                          Matrix4.translationValues(0, verticalOffset, 0),
+                      child: _buildCharacter(widget.isAwake),
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -240,27 +268,55 @@ class _EnhancedCharacterRoomWidgetState
                       // 눈
                       Positioned(
                         top: 25,
-                        left: 20,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.black,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
+                        left: 18,
+                        child: _isTapped
+                            ? const Text('>',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16))
+                            : isAwake
+                                ? Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  )
+                                : Container(
+                                    width: 12,
+                                    height: 2,
+                                    margin: const EdgeInsets.only(top: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.4),
+                                      borderRadius: BorderRadius.circular(1),
+                                    ),
+                                  ),
                       ),
                       Positioned(
                         top: 25,
-                        right: 20,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.black,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
+                        right: 18,
+                        child: _isTapped
+                            ? const Text('<',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16))
+                            : isAwake
+                                ? Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  )
+                                : Container(
+                                    width: 12,
+                                    height: 2,
+                                    margin: const EdgeInsets.only(top: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.4),
+                                      borderRadius: BorderRadius.circular(1),
+                                    ),
+                                  ),
                       ),
                       // 부리
                       Positioned(
@@ -268,15 +324,20 @@ class _EnhancedCharacterRoomWidgetState
                         left: 0,
                         right: 0,
                         child: Center(
-                          child: Container(
-                            width: 12,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFFF8C00),
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(8),
-                                bottomRight: Radius.circular(8),
-                              ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: _isTapped ? 16 : 12,
+                            height: isAwake ? 10 : 6,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF8C00),
+                              borderRadius: isAwake
+                                  ? const BorderRadius.only(
+                                      bottomLeft: Radius.circular(8),
+                                      bottomRight: Radius.circular(8),
+                                      topLeft: Radius.circular(2),
+                                      topRight: Radius.circular(2),
+                                    )
+                                  : BorderRadius.circular(2),
                             ),
                           ),
                         ),

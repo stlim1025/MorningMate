@@ -87,8 +87,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: (isAwake &&
-                        !Provider.of<ThemeController>(context).isDarkMode)
+                colors: isAwake
                     ? [
                         const Color(0xFF87CEEB), // 하늘색
                         const Color(0xFFB0E0E6), // 파우더 블루
@@ -152,10 +151,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
             children: [
               IconButton(
                 icon: Icon(Icons.arrow_back,
-                    color: (isAwake &&
-                            !Provider.of<ThemeController>(context).isDarkMode)
-                        ? const Color(0xFF2C3E50)
-                        : Colors.white),
+                    color: isAwake ? const Color(0xFF2C3E50) : Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
               Expanded(
@@ -165,9 +161,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     Text(
                       '${_friend!.nickname}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: (isAwake &&
-                                    !Provider.of<ThemeController>(context)
-                                        .isDarkMode)
+                            color: isAwake
                                 ? const Color(0xFF2C3E50)
                                 : Colors.white,
                             fontWeight: FontWeight.bold,
@@ -177,9 +171,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     Text(
                       '${_friend!.consecutiveDays}일 연속 기록 중 🔥',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: (isAwake &&
-                                    !Provider.of<ThemeController>(context)
-                                        .isDarkMode)
+                            color: isAwake
                                 ? const Color(0xFF5A6C7D)
                                 : Colors.white70,
                           ),
@@ -216,10 +208,9 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color:
-                (isAwake && !Provider.of<ThemeController>(context).isDarkMode)
-                    ? Colors.white.withOpacity(0.9)
-                    : Colors.black.withOpacity(0.3),
+            color: Provider.of<ThemeController>(context).isDarkMode
+                ? Theme.of(context).cardColor
+                : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
@@ -239,10 +230,9 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                   Text(
                     '친구에게 한마디',
                     style: TextStyle(
-                      color: (isAwake &&
-                              !Provider.of<ThemeController>(context).isDarkMode)
-                          ? AppColors.textPrimary
-                          : Colors.white,
+                      color: Provider.of<ThemeController>(context).isDarkMode
+                          ? Colors.white
+                          : AppColors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -283,7 +273,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: (isAwake && !Provider.of<ThemeController>(context).isDarkMode)
+        color: isAwake
             ? Colors.white.withOpacity(0.85)
             : Colors.white.withOpacity(0.12),
         borderRadius: BorderRadius.circular(16),
@@ -322,7 +312,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
         Text(
           label,
           style: TextStyle(
-            color: isAwake ? AppColors.textSecondary : Colors.white70,
+            color: isAwake ? const Color(0xFF5A6C7D) : Colors.white70,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -339,7 +329,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
           child: Text(
             value,
             style: TextStyle(
-              color: isAwake ? AppColors.textPrimary : Colors.white,
+              color: isAwake ? const Color(0xFF2C3E50) : Colors.white,
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
@@ -388,10 +378,16 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.grey[800]
-                  : const Color(0xFFF0F0F0),
-              foregroundColor: AppColors.textSecondary,
+              backgroundColor:
+                  Provider.of<ThemeController>(context, listen: false)
+                          .isDarkMode
+                      ? Colors.grey[800]
+                      : Colors.grey[200],
+              foregroundColor:
+                  Provider.of<ThemeController>(context, listen: false)
+                          .isDarkMode
+                      ? Colors.white70
+                      : Colors.black87,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -494,8 +490,12 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700),
-              foregroundColor: AppColors.textPrimary,
+              backgroundColor: AppColors.primary,
+              foregroundColor:
+                  Provider.of<ThemeController>(context, listen: false)
+                          .isDarkMode
+                      ? const Color(0xFF5D4E37)
+                      : Colors.white,
               elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
