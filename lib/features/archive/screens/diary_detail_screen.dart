@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../data/models/diary_model.dart';
 import '../../morning/controllers/morning_controller.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_controller.dart';
 
 class DiaryDetailScreen extends StatefulWidget {
   final List<DiaryModel> diaries;
@@ -109,24 +110,25 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     final hasNext = !isTodayOrFuture;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF3E0),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFF8E7),
+        iconTheme: Theme.of(context).iconTheme,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              color: Color(0xFF8B7355), size: 20),
+          icon: Icon(Icons.arrow_back_ios_new,
+              color: Theme.of(context).iconTheme.color, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.menu_book, color: Color(0xFFD4A574), size: 24),
-            SizedBox(width: 8),
+          children: [
+            const Icon(Icons.menu_book, color: AppColors.primary, size: 24),
+            const SizedBox(width: 8),
             Text(
               '기록 보기',
               style: TextStyle(
-                color: Color(0xFF5D4E37),
+                color: Theme.of(context).textTheme.titleLarge?.color,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -136,15 +138,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
         centerTitle: true,
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFF8E7),
-              Color(0xFFFAF3E0),
-            ],
-          ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
         ),
         child: SafeArea(
           child: Column(
@@ -172,7 +167,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.smallCardShadow,
       ),
@@ -184,12 +179,12 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8E7),
+                  color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.calendar_today,
-                  color: Color(0xFFD4A574),
+                  color: AppColors.primary,
                   size: 20,
                 ),
               ),
@@ -201,8 +196,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                     children: [
                       Text(
                         DateFormat('yyyy년 M월 d일').format(_currentDate),
-                        style: const TextStyle(
-                          color: Color(0xFF5D4E37),
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -242,24 +237,34 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   }
 
   Widget _buildQuestionCard() {
+    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFFFE4E1),
-            Color(0xFFFFF0F0),
-          ],
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [
+                  const Color(0xFF2C2C2C),
+                  const Color(0xFF1E1E1E),
+                ]
+              : [
+                  const Color(0xFFFFE4E1),
+                  const Color(0xFFFFF0F0),
+                ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFFB6C1).withOpacity(0.3),
+          color: isDarkMode
+              ? Colors.white10
+              : const Color(0xFFFFB6C1).withOpacity(0.3),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFB6C1).withOpacity(0.2),
+            color: isDarkMode
+                ? Colors.black26
+                : const Color(0xFFFFB6C1).withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -269,8 +274,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.white,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -284,10 +289,11 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '오늘의 질문',
                   style: TextStyle(
-                    color: Color(0xFFFF69B4),
+                    color:
+                        isDarkMode ? Colors.white70 : const Color(0xFFFF69B4),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -295,8 +301,9 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                 const SizedBox(height: 4),
                 Text(
                   _currentDiary?.promptQuestion ?? '',
-                  style: const TextStyle(
-                    color: Color(0xFF8B4C6B),
+                  style: TextStyle(
+                    color:
+                        isDarkMode ? Colors.white70 : const Color(0xFF8B4C6B),
                     fontSize: 15,
                     height: 1.4,
                     fontWeight: FontWeight.w500,
@@ -314,7 +321,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppColors.cardShadow,
       ),
@@ -323,7 +330,9 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
         child: Stack(
           children: [
             CustomPaint(
-              painter: LinedPaperPainter(),
+              painter: LinedPaperPainter(
+                isDarkMode: Provider.of<ThemeController>(context).isDarkMode,
+              ),
               size: Size.infinite,
             ),
             if (_isLoading)
@@ -359,8 +368,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                   duration: const Duration(milliseconds: 300),
                   child: Text(
                     _decryptedContent,
-                    style: const TextStyle(
-                      color: Color(0xFF3E2723),
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       fontSize: 17,
                       height: 1.8,
                       letterSpacing: 0.3,
@@ -424,6 +433,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     required bool enabled,
     bool isRight = false,
   }) {
+    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
     return Opacity(
       opacity: enabled ? 1.0 : 0.3,
       child: InkWell(
@@ -432,7 +442,9 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDarkMode
+                ? AppColors.backgroundLight
+                : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             boxShadow: AppColors.smallCardShadow,
           ),
@@ -441,21 +453,33 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                 ? [
                     Text(
                       label,
-                      style: const TextStyle(
-                        color: Color(0xFFD4A574),
+                      style: TextStyle(
+                        color: isDarkMode
+                            ? AppColors.textPrimary
+                            : AppColors.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(icon, size: 16, color: const Color(0xFFD4A574)),
+                    Icon(icon,
+                        size: 16,
+                        color: isDarkMode
+                            ? AppColors.textPrimary
+                            : AppColors.primary),
                   ]
                 : [
-                    Icon(icon, size: 16, color: const Color(0xFFD4A574)),
+                    Icon(icon,
+                        size: 16,
+                        color: isDarkMode
+                            ? AppColors.textPrimary
+                            : const Color(0xFFD4A574)),
                     const SizedBox(width: 8),
                     Text(
                       label,
-                      style: const TextStyle(
-                        color: Color(0xFFD4A574),
+                      style: TextStyle(
+                        color: isDarkMode
+                            ? AppColors.textPrimary
+                            : const Color(0xFFD4A574),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -470,9 +494,9 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8DCC0)),
+        border: Border.all(color: AppColors.primary.withOpacity(0.5)),
       ),
       child: Row(
         children: [
@@ -481,7 +505,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
           Text(
             label,
             style: const TextStyle(
-              color: Color(0xFF8B7355),
+              color: AppColors.primary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -508,10 +532,16 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
 }
 
 class LinedPaperPainter extends CustomPainter {
+  final bool isDarkMode;
+
+  LinedPaperPainter({this.isDarkMode = false});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFE8DCC0).withOpacity(0.3)
+      ..color = isDarkMode
+          ? Colors.white.withOpacity(0.1)
+          : const Color(0xFFE8DCC0).withOpacity(0.3)
       ..strokeWidth = 1;
 
     final lineSpacing = 32.0;
@@ -528,7 +558,9 @@ class LinedPaperPainter extends CustomPainter {
     }
 
     final marginPaint = Paint()
-      ..color = const Color(0xFFFFB6C1).withOpacity(0.2)
+      ..color = isDarkMode
+          ? Colors.white.withOpacity(0.05)
+          : const Color(0xFFFFB6C1).withOpacity(0.2)
       ..strokeWidth = 2;
     canvas.drawLine(
       const Offset(40, 0),
@@ -538,5 +570,6 @@ class LinedPaperPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant LinedPaperPainter oldDelegate) =>
+      oldDelegate.isDarkMode != isDarkMode;
 }

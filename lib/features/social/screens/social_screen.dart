@@ -41,19 +41,19 @@ class _SocialScreenState extends State<SocialScreen> {
         userId == null ? null : socialController.getFriendsStream(userId);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Icon(Icons.people, color: AppColors.primary, size: 28),
             SizedBox(width: 8),
             Text(
               '친구',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: Theme.of(context).textTheme.titleLarge?.color,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -202,10 +202,10 @@ class _SocialScreenState extends State<SocialScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             '아직 친구가 없습니다',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.titleLarge?.color,
               fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
@@ -233,10 +233,10 @@ class _SocialScreenState extends State<SocialScreen> {
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 '친구 요청',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -274,7 +274,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: AppColors.smallCardShadow,
                 ),
@@ -297,9 +297,10 @@ class _SocialScreenState extends State<SocialScreen> {
                         children: [
                           Text(
                             user.nickname,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
                           Text(
@@ -408,7 +409,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: hasWritten
@@ -443,7 +444,7 @@ class _SocialScreenState extends State<SocialScreen> {
                             ]
                           : [
                               AppColors.textHint.withOpacity(0.2),
-                              AppColors.backgroundDark,
+                              Colors.grey[300]!,
                             ],
                     ),
                     shape: BoxShape.circle,
@@ -470,8 +471,8 @@ class _SocialScreenState extends State<SocialScreen> {
                 // 친구 닉네임
                 Text(
                   friend.nickname,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -547,7 +548,7 @@ class _SocialScreenState extends State<SocialScreen> {
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Icon(
                           Icons.check_circle,
                           color: AppColors.success,
@@ -576,7 +577,7 @@ class _SocialScreenState extends State<SocialScreen> {
   Widget _buildBottomNavigationBar(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
         boxShadow: [
           BoxShadow(
             color: AppColors.textHint.withOpacity(0.1),
@@ -646,7 +647,7 @@ class _SocialScreenState extends State<SocialScreen> {
     messenger.showSnackBar(
       SnackBar(
         content: Row(
-          children: const [
+          children: [
             SizedBox(
               width: 18,
               height: 18,
@@ -748,18 +749,18 @@ class _SocialScreenState extends State<SocialScreen> {
     return showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
         title: Row(
-          children: const [
+          children: [
             Icon(Icons.person_add, color: AppColors.primary),
             SizedBox(width: 12),
             Text(
               '친구 추가',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: Theme.of(context).textTheme.titleLarge?.color,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -782,7 +783,8 @@ class _SocialScreenState extends State<SocialScreen> {
               TextFormField(
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color),
                 decoration: InputDecoration(
                   hintText: 'friend@example.com',
                   hintStyle: TextStyle(color: AppColors.textHint),
@@ -791,7 +793,8 @@ class _SocialScreenState extends State<SocialScreen> {
                     color: AppColors.primary,
                   ),
                   filled: true,
-                  fillColor: AppColors.backgroundLight,
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                      AppColors.backgroundLight,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,

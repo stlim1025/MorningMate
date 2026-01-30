@@ -9,6 +9,9 @@ import '../../settings/screens/settings_screen.dart';
 import '../../notification/controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
 import '../widgets/enhanced_character_room_widget.dart';
+import '../widgets/twinkling_stars.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_controller.dart';
 
 class MorningScreen extends StatefulWidget {
   const MorningScreen({super.key});
@@ -76,7 +79,6 @@ class _MorningScreenState extends State<MorningScreen>
       body: Consumer2<MorningController, CharacterController>(
         builder: (context, morningController, characterController, child) {
           _maybeAuthenticateOnLaunch(context);
-          // 로딩 중이거나 초기화가 아직 안 된 경우
           if (morningController.isLoading ||
               !morningController.hasInitialized) {
             return const Center(
@@ -87,65 +89,96 @@ class _MorningScreenState extends State<MorningScreen>
           }
 
           final hasDiary = morningController.hasDiaryToday;
-          // 일기가 있으면 무조건 깨어있는 상태(isAwake=true)가 되도록 강제
           final isAwake = hasDiary || characterController.isAwake;
 
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isAwake
-                    ? [
-                        const Color(0xFF87CEEB), // 하늘색
-                        const Color(0xFFB0E0E6), // 파우더 블루
-                        const Color(0xFFFFF8DC), // 코니실크
-                      ]
-                    : [
-                        const Color(0xFF0F2027), // 어두운 밤
-                        const Color(0xFF203A43),
-                        const Color(0xFF2C5364),
-                      ],
+          return Stack(
+            children: [
+              // 1. Background Gradient
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: (isAwake && !morningController.isDarkMode(context))
+                        ? [
+                            const Color(0xFF87CEEB),
+                            const Color(0xFFB0E0E6),
+                            const Color(0xFFFFF8DC),
+                          ]
+                        : [
+                            const Color(0xFF0F2027),
+                            const Color(0xFF203A43),
+                            const Color(0xFF2C5364),
+                          ],
+                  ),
+                ),
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  // 헤더
-                  _buildHeader(context, isAwake),
 
-                  const SizedBox(height: 8),
+              // 2. Stars (Night only)
+              if (!isAwake || morningController.isDarkMode(context))
+                const Positioned.fill(child: TwinklingStars()),
 
-                  // 캐릭터 방 (메인 콘텐츠)
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          _buildEnhancedCharacterRoom(
-                            context,
-                            isAwake,
-                            characterController,
-                          ),
-                          const SizedBox(height: 20),
-                        ],
+              // 3. Sun/Moon (Background Element)
+              Positioned(
+                top: 90,
+                right: 30,
+                child: _buildSunMoon(isAwake),
+              ),
+
+              // 4. Main Content
+              SafeArea(
+                child: Column(
+                  children: [
+                    _buildHeader(context, isAwake),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            const SizedBox(
+                                height:
+                                    60), // Adjusted space since moon is moved/resized
+                            _buildEnhancedCharacterRoom(
+                              context,
+                              isAwake,
+                              characterController,
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-
-                  // 하단 버튼 영역
-                  _buildBottomSection(
-                    context,
-                    morningController,
-                    isAwake,
-                  ),
-                ],
+                    _buildBottomSection(
+                      context,
+                      morningController,
+                      isAwake,
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           );
         },
       ),
       bottomNavigationBar: _buildBottomNavigationBar(context),
+    );
+  }
+
+  Widget _buildSunMoon(bool isAwake) {
+    return Container(
+      width: 60, // Reduced from 100
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isAwake ? const Color(0xFFFFD700) : const Color(0xFFFFF8DC),
+        boxShadow: [
+          BoxShadow(
+            color: (isAwake ? const Color(0xFFFFD700) : const Color(0xFFFFF8DC))
+                .withOpacity(0.6),
+            blurRadius: 30, // Reduced blur proportional to size
+            spreadRadius: 8,
+          ),
+        ],
+      ),
     );
   }
 
@@ -254,7 +287,11 @@ class _MorningScreenState extends State<MorningScreen>
                 Text(
                   _getGreeting(),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: isAwake ? const Color(0xFF2C3E50) : Colors.white,
+                        color: (isAwake &&
+                                !Provider.of<ThemeController>(context)
+                                    .isDarkMode)
+                            ? const Color(0xFF2C3E50)
+                            : Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
@@ -264,7 +301,9 @@ class _MorningScreenState extends State<MorningScreen>
                     return Text(
                       '${controller.currentUser?.consecutiveDays ?? 0}일 연속 기록 중 🔥',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: isAwake
+                            color: (isAwake &&
+                                    !Provider.of<ThemeController>(context)
+                                        .isDarkMode)
                                 ? const Color(0xFF5A6C7D)
                                 : Colors.white70,
                           ),
@@ -356,36 +395,38 @@ class _MorningScreenState extends State<MorningScreen>
     MorningController controller,
     bool isAwake,
   ) {
+    // 따뜻한 느낌의 앱 테마 색상 적용 (AppColors.backgroundLight)
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: BoxDecoration(
-        color: isAwake
-            ? Colors.white.withOpacity(0.9)
-            : Colors.black.withOpacity(0.3),
+        color: Provider.of<ThemeController>(context).isDarkMode
+            ? Theme.of(context).cardColor
+            : AppColors.backgroundLight.withOpacity(0.98),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: const Color(0xFFD4A574).withOpacity(0.15),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!isAwake) ...[
-            // 랜덤 질문 표시
-            GestureDetector(
-              onTap: () => controller.fetchRandomQuestion(),
-              child: Container(
-                padding: const EdgeInsets.all(16),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isAwake) ...[
+              // 질문 표시 영역
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5DC).withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(16),
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFF8B7355).withOpacity(0.3),
-                    width: 2,
+                    color: AppColors.primary.withOpacity(0.2),
+                    width: 1.5,
                   ),
                 ),
                 child: Column(
@@ -394,29 +435,32 @@ class _MorningScreenState extends State<MorningScreen>
                     Row(
                       children: [
                         const Icon(Icons.auto_awesome,
-                            color: Color(0xFFFFD700), size: 20),
+                            color: AppColors.awakeMode, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           '오늘의 질문',
                           style: TextStyle(
-                            color: const Color(0xFF2C3E50).withOpacity(0.7),
+                            color: AppColors.textPrimary.withOpacity(0.7),
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
                         ),
                         const Spacer(),
-                        Icon(
-                          Icons.refresh,
-                          color: const Color(0xFF2C3E50).withOpacity(0.5),
-                          size: 16,
+                        GestureDetector(
+                          onTap: () => controller.fetchRandomQuestion(),
+                          child: Icon(
+                            Icons.refresh,
+                            color: AppColors.textSecondary.withOpacity(0.5),
+                            size: 18,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Text(
                       controller.currentQuestion ?? '오늘의 질문을 불러오는 중...',
-                      style: const TextStyle(
-                        color: Color(0xFF2C3E50),
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                         height: 1.4,
@@ -425,99 +469,101 @@ class _MorningScreenState extends State<MorningScreen>
                   ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // 작성 시작 버튼
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () async {
-                  // 이미 화면에 표시된 질문이 있으므로 새로 가져오지 않고 바로 이동
-                  if (controller.currentQuestion == null) {
-                    await controller.fetchRandomQuestion();
-                  }
-                  if (context.mounted) {
-                    context.push('/writing', extra: controller.currentQuestion);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: const Color(0xFF6B9AC4),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+              // 크고 눈에 띄는 작성 버튼
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (controller.currentQuestion == null) {
+                      await controller.fetchRandomQuestion();
+                    }
+                    if (context.mounted) {
+                      context.push('/writing',
+                          extra: controller.currentQuestion);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary, // 따뜻한 골드/카라멜 색상
+                    foregroundColor: Colors.white,
+                    elevation: 4,
+                    shadowColor: AppColors.primary.withOpacity(0.4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  elevation: 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.edit_note, size: 24),
+                      SizedBox(width: 8),
+                      Text(
+                        '오늘의 일기 작성하기',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ] else ...[
+              // 작성 완료 상태
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF90EE90).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF90EE90).withOpacity(0.5),
+                    width: 2,
+                  ),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.edit_note, size: 24),
-                    SizedBox(width: 8),
-                    Text(
-                      '오늘의 일기 작성하기',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: Color(0xFF228B22),
+                      size: 32,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            '오늘의 일기 작성 완료!',
+                            style: TextStyle(
+                              color: Color(0xFF228B22),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            '내일 아침에 다시 만나요 😊',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ] else ...[
-            // 작성 완료 상태
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF90EE90).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFF90EE90).withOpacity(0.5),
-                  width: 2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: Color(0xFF228B22),
-                    size: 32,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          '오늘의 일기 작성 완료!',
-                          style: TextStyle(
-                            color: Color(0xFF228B22),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          '내일 아침에 다시 만나요 😊',
-                          style: TextStyle(
-                            color: Color(0xFF2C3E50),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -526,8 +572,9 @@ class _MorningScreenState extends State<MorningScreen>
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       currentIndex: 0,
-      backgroundColor: Colors.white,
-      selectedItemColor: const Color(0xFF6B9AC4),
+      backgroundColor:
+          Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+      selectedItemColor: AppColors.primary,
       unselectedItemColor: Colors.grey,
       elevation: 10,
       onTap: (index) {
@@ -576,5 +623,11 @@ class _MorningScreenState extends State<MorningScreen>
     } else {
       return '좋은 저녁이에요!';
     }
+  }
+}
+
+extension MorningControllerExt on MorningController {
+  bool isDarkMode(BuildContext context) {
+    return Provider.of<ThemeController>(context, listen: false).isDarkMode;
   }
 }

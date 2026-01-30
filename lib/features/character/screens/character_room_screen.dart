@@ -10,19 +10,19 @@ class CharacterRoomScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Icon(Icons.pets, color: AppColors.primary, size: 28),
             SizedBox(width: 8),
             Text(
               '내 캐릭터',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: Theme.of(context).textTheme.titleLarge?.color,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -47,8 +47,8 @@ class CharacterRoomScreen extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       '${controller.currentUser?.points ?? 0}',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -73,12 +73,12 @@ class CharacterRoomScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         // 캐릭터
-                        _buildCharacter(controller),
+                        _buildCharacter(context, controller),
 
                         const SizedBox(height: 32),
 
                         // 캐릭터 정보
-                        _buildCharacterInfo(controller),
+                        _buildCharacterInfo(context, controller),
 
                         const SizedBox(height: 20),
                       ],
@@ -97,12 +97,13 @@ class CharacterRoomScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCharacter(CharacterController controller) {
+  Widget _buildCharacter(BuildContext context, CharacterController controller) {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(32),
         boxShadow: AppColors.cardShadow,
       ),
@@ -140,7 +141,11 @@ class CharacterRoomScreen extends StatelessWidget {
           Text(
             controller.currentAnimation,
             style: TextStyle(
-              color: AppColors.textSecondary.withOpacity(0.7),
+              color: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.color
+                  ?.withOpacity(0.7),
               fontSize: 13,
             ),
           ),
@@ -149,12 +154,13 @@ class CharacterRoomScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCharacterInfo(CharacterController controller) {
+  Widget _buildCharacterInfo(
+      BuildContext context, CharacterController controller) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppColors.smallCardShadow,
       ),
@@ -184,8 +190,8 @@ class CharacterRoomScreen extends StatelessWidget {
                 ),
                 child: Text(
                   'Lv. ${controller.currentUser?.characterLevel ?? 1}',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -233,7 +239,7 @@ class CharacterRoomScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
@@ -307,7 +313,7 @@ class CharacterRoomScreen extends StatelessWidget {
   Widget _buildBottomNavigationBar(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
         boxShadow: [
           BoxShadow(
             color: AppColors.textHint.withOpacity(0.1),

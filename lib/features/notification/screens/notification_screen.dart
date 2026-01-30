@@ -14,19 +14,20 @@ class NotificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           '알림',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: Theme.of(context).textTheme.titleLarge?.color,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -107,12 +108,11 @@ class NotificationScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final notification = notifications[index];
-                  final requestId =
-                      notification.data?['requestId']?.toString();
-                  final isFriendRequest = notification.type ==
-                          NotificationType.friendRequest &&
-                      requestId != null &&
-                      requestId.isNotEmpty;
+                  final requestId = notification.data?['requestId']?.toString();
+                  final isFriendRequest =
+                      notification.type == NotificationType.friendRequest &&
+                          requestId != null &&
+                          requestId.isNotEmpty;
                   return Dismissible(
                     key: Key(notification.id),
                     direction: DismissDirection.endToStart,
@@ -140,8 +140,10 @@ class NotificationScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: notification.isRead
-                              ? Colors.white
-                              : const Color(0xFFFFF9C4), // 읽지 않은 알림: 연한 노란색
+                              ? Theme.of(context).cardColor
+                              : (Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.primary.withOpacity(0.15)
+                                  : const Color(0xFFFFF9C4)),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -170,7 +172,10 @@ class NotificationScreen extends StatelessWidget {
                                   Text(
                                     notification.message,
                                     style: TextStyle(
-                                      color: AppColors.textPrimary,
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color,
                                       fontSize: 14,
                                       fontWeight: notification.isRead
                                           ? FontWeight.normal
@@ -231,9 +236,9 @@ class NotificationScreen extends StatelessWidget {
                                     width: 64,
                                     child: OutlinedButton(
                                       onPressed: () async {
-                                        final userNickname =
-                                            authController.userModel?.nickname ??
-                                                '알 수 없음';
+                                        final userNickname = authController
+                                                .userModel?.nickname ??
+                                            '알 수 없음';
                                         await socialController
                                             .rejectFriendRequest(
                                           requestId,
@@ -346,8 +351,8 @@ class NotificationScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),

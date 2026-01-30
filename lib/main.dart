@@ -18,6 +18,7 @@ import 'features/morning/controllers/morning_controller.dart';
 import 'features/character/controllers/character_controller.dart';
 import 'features/social/controllers/social_controller.dart';
 import 'features/notification/controllers/notification_controller.dart';
+import 'core/theme/theme_controller.dart';
 
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -128,15 +129,22 @@ class MorningMateApp extends StatelessWidget {
         ChangeNotifierProvider<NotificationController>(
           create: (_) => NotificationController(),
         ),
+        ChangeNotifierProvider<ThemeController>(
+          create: (_) => ThemeController(),
+        ),
       ],
-      child: MaterialApp.router(
-        title: 'Morning Mate',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.dark, // 기상 직후 시력 보호를 위한 다크모드 기본
-        scaffoldMessengerKey: scaffoldMessengerKey,
-        routerConfig: AppRouter.router,
+      child: Consumer<ThemeController>(
+        builder: (context, themeController, child) {
+          return MaterialApp.router(
+            title: 'Morning Mate',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeController.themeMode,
+            scaffoldMessengerKey: scaffoldMessengerKey,
+            routerConfig: AppRouter.router,
+          );
+        },
       ),
     );
   }

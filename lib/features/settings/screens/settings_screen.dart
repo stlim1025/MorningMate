@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
 
@@ -34,20 +35,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           '설정',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         centerTitle: true,
       ),
@@ -100,6 +99,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // 앱 설정
                 _buildSectionTitle('앱 설정'),
                 const SizedBox(height: 12),
+                _buildDarkModeTile(context),
+                const SizedBox(height: 8),
                 _buildWritingBlurTile(context, authController),
                 const SizedBox(height: 8),
                 _buildSettingsTile(
@@ -159,7 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppColors.cardShadow,
       ),
@@ -202,11 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   user?.nickname ?? '사용자',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 6),
                 Row(
@@ -291,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.smallCardShadow,
       ),
@@ -307,11 +304,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
         ),
         subtitle: subtitle != null
             ? Padding(
@@ -343,7 +338,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.smallCardShadow,
       ),
@@ -361,13 +356,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             size: 24,
           ),
         ),
-        title: const Text(
+        title: Text(
           '글 작성 블러 기본값',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -399,7 +392,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.smallCardShadow,
       ),
@@ -417,20 +410,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             size: 24,
           ),
         ),
-        title: const Text(
+        title: Text(
           '생체 인증',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
-            biometricEnabled
-                ? '앱 실행과 일기 열기에 생체 인증이 필요합니다'
-                : '생체 인증으로 앱을 보호합니다',
+            biometricEnabled ? '앱 실행과 일기 열기에 생체 인증이 필요합니다' : '생체 인증으로 앱을 보호합니다',
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
@@ -445,6 +434,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   authController,
                   value,
                 ),
+        activeColor: AppColors.primary,
+      ),
+    );
+  }
+
+  Widget _buildDarkModeTile(BuildContext context) {
+    final themeController = context.watch<ThemeController>();
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.smallCardShadow,
+      ),
+      child: SwitchListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        secondary: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.dark_mode,
+            color: AppColors.primary,
+            size: 24,
+          ),
+        ),
+        title: Text(
+          '다크 모드',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        subtitle: const Padding(
+          padding: EdgeInsets.only(top: 4),
+          child: Text(
+            '어두운 테마를 사용합니다',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        value: themeController.isDarkMode,
+        onChanged: (value) => themeController.toggleTheme(value),
         activeColor: AppColors.primary,
       ),
     );
@@ -468,7 +502,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).cardColor,
           foregroundColor: AppColors.error,
           padding: const EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(
@@ -508,25 +542,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
-        title: const Text(
+        title: Text(
           '닉네임 변경',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: Theme.of(context).textTheme.titleLarge?.color,
             fontWeight: FontWeight.bold,
           ),
         ),
         content: TextField(
           controller: controller,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
           decoration: InputDecoration(
             hintText: '새 닉네임 입력',
             hintStyle: TextStyle(color: AppColors.textHint),
             filled: true,
-            fillColor: AppColors.backgroundLight,
+            fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                AppColors.backgroundLight,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -538,7 +573,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF0F0F0),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[800]
+                  : const Color(0xFFF0F0F0),
               foregroundColor: AppColors.textSecondary,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -683,14 +720,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
-        title: const Text(
+        title: Text(
           '비밀번호 변경',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: Theme.of(context).textTheme.titleLarge?.color,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -702,11 +739,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextFormField(
                 controller: newPasswordController,
                 obscureText: true,
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color),
                 decoration: InputDecoration(
                   hintText: '새 비밀번호 (6자 이상)',
                   hintStyle: TextStyle(color: AppColors.textHint),
                   filled: true,
-                  fillColor: AppColors.backgroundLight,
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                      AppColors.backgroundLight,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -726,11 +766,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextFormField(
                 controller: confirmPasswordController,
                 obscureText: true,
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color),
                 decoration: InputDecoration(
                   hintText: '새 비밀번호 확인',
                   hintStyle: TextStyle(color: AppColors.textHint),
                   filled: true,
-                  fillColor: AppColors.backgroundLight,
+                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                      AppColors.backgroundLight,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -753,7 +796,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF0F0F0),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[800]
+                  : const Color(0xFFF0F0F0),
               foregroundColor: AppColors.textSecondary,
               elevation: 0,
               shape: RoundedRectangleBorder(

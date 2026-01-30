@@ -7,10 +7,12 @@ class AppColors {
   static const Color accent = Color(0xFF95E1D3); // 민트
 
   // Background Colors - 밝고 따뜻한 베이지 톤
+  // Background Colors - 밝고 따뜻한 베이지 톤
   static const Color backgroundLight = Color(0xFFFAF3E0); // 따뜻한 베이지
-  static const Color backgroundDark = Color(0xFFFFF8E7); // 크림
+  static const Color backgroundDark = Color(0xFF121212); // 리얼 다크
+
   static const Color cardLight = Color(0xFFFFFFFF); // 흰색 카드
-  static const Color cardDark = Color(0xFFFFF8E7); // 밝은 크림 (어두운 모드용)
+  static const Color cardDark = Color(0xFF1E1E1E); // 다크 모드 카드
 
   // Character States
   static const Color sleepMode = Color(0xFFB8A89E); // 부드러운 회갈색

@@ -69,8 +69,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.backgroundLight,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
         ),
         child: SafeArea(
           child: Column(
@@ -140,7 +140,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.smallCardShadow,
       ),
@@ -166,8 +166,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         },
         // 스타일링
         calendarStyle: CalendarStyle(
-          defaultTextStyle: const TextStyle(
-            color: AppColors.textPrimary,
+          defaultTextStyle: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontWeight: FontWeight.w500,
           ),
           weekendTextStyle: const TextStyle(
@@ -201,15 +201,15 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         headerStyle: HeaderStyle(
           formatButtonVisible: false,
           titleCentered: true,
-          titleTextStyle: const TextStyle(
-            color: AppColors.textPrimary,
+          titleTextStyle: TextStyle(
+            color: Theme.of(context).textTheme.titleLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
-          leftChevronIcon:
-              const Icon(Icons.chevron_left, color: AppColors.textPrimary),
-          rightChevronIcon:
-              const Icon(Icons.chevron_right, color: AppColors.textPrimary),
+          leftChevronIcon: Icon(Icons.chevron_left,
+              color: Theme.of(context).iconTheme.color),
+          rightChevronIcon: Icon(Icons.chevron_right,
+              color: Theme.of(context).iconTheme.color),
         ),
         daysOfWeekStyle: const DaysOfWeekStyle(
           weekdayStyle: TextStyle(
@@ -274,7 +274,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       ? _getMoodEmoji(diary.mood ?? '')
                       : '${day.day}',
                   style: TextStyle(
-                    color: diary != null ? Colors.white : AppColors.textPrimary,
+                    color: diary != null
+                        ? Colors.white
+                        : Theme.of(context).textTheme.bodyLarge?.color,
                     fontSize: diary != null ? 24 : 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -312,7 +314,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: AppColors.smallCardShadow,
         ),
@@ -326,8 +328,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             const SizedBox(height: 12),
             Text(
               DateFormat('M월 d일').format(_selectedDay!),
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.titleLarge?.color,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -336,7 +338,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             Text(
               '이 날은 일기를 작성하지 않았습니다',
               style: TextStyle(
-                color: AppColors.textSecondary.withOpacity(0.7),
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.color
+                    ?.withOpacity(0.7),
               ),
             ),
           ],
@@ -348,7 +354,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.smallCardShadow,
       ),
@@ -371,8 +377,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                         Text(
                           DateFormat('M월 d일 (E)', 'ko_KR')
                               .format(diary.dateOnly),
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.titleLarge?.color,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -454,7 +461,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       currentIndex: 3,
       selectedItemColor: AppColors.primary,
       unselectedItemColor: AppColors.textSecondary.withOpacity(0.5),
-      backgroundColor: Colors.white,
+      backgroundColor:
+          Theme.of(context).bottomNavigationBarTheme.backgroundColor,
       elevation: 8,
       onTap: (index) {
         switch (index) {

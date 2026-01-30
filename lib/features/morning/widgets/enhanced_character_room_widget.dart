@@ -48,34 +48,9 @@ class _EnhancedCharacterRoomWidgetState
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // 태양/달
-        Align(
-          alignment: Alignment.topRight,
-          child: _buildSunMoon(widget.isAwake),
-        ),
-        const SizedBox(height: 20),
-        // 방 내부
+        // 방 내부 (태양/달 제거됨 - 상위 스크린에서 처리)
         _buildRoomInterior(widget.isAwake),
       ],
-    );
-  }
-
-  Widget _buildSunMoon(bool isAwake) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isAwake ? const Color(0xFFFFD700) : const Color(0xFFFFF8DC),
-        boxShadow: [
-          BoxShadow(
-            color: (isAwake ? const Color(0xFFFFD700) : const Color(0xFFFFF8DC))
-                .withOpacity(0.6),
-            blurRadius: 30,
-            spreadRadius: 10,
-          ),
-        ],
-      ),
     );
   }
 

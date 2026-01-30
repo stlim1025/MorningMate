@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../controllers/morning_controller.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/theme/theme_controller.dart';
+import '../../../core/theme/app_colors.dart';
 
 class WritingScreen extends StatefulWidget {
   final String? initialQuestion;
@@ -60,12 +62,12 @@ class _WritingScreenState extends State<WritingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF3E0), // 따뜻한 베이지색 배경
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFF8E7),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Color(0xFF8B7355)),
+          icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
           onPressed: () async {
             final confirmed = await _showExitConfirmation(context);
             if (confirmed == true && context.mounted) {
@@ -75,13 +77,13 @@ class _WritingScreenState extends State<WritingScreen> {
         ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Icon(Icons.edit_note, color: Color(0xFFD4A574), size: 28),
             SizedBox(width: 8),
             Text(
               '오늘의 일기',
               style: TextStyle(
-                color: Color(0xFF5D4E37),
+                color: Theme.of(context).textTheme.titleLarge?.color,
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
@@ -94,7 +96,7 @@ class _WritingScreenState extends State<WritingScreen> {
           IconButton(
             icon: Icon(
               _enableBlur ? Icons.visibility_off : Icons.visibility,
-              color: const Color(0xFF8B7355),
+              color: Theme.of(context).iconTheme.color,
             ),
             onPressed: () {
               setState(() {
@@ -106,14 +108,7 @@ class _WritingScreenState extends State<WritingScreen> {
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFFFFF8E7),
-              const Color(0xFFFAF3E0),
-            ],
-          ),
+          color: Theme.of(context).scaffoldBackgroundColor,
         ),
         child: SafeArea(
           child: PopScope(
@@ -164,11 +159,13 @@ class _WritingScreenState extends State<WritingScreen> {
     final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
     final weekday = weekdays[now.weekday - 1];
 
+    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -188,12 +185,14 @@ class _WritingScreenState extends State<WritingScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF8E7),
+                      color: isDarkMode
+                          ? AppColors.primary.withOpacity(0.1)
+                          : const Color(0xFFFFF8E7),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.calendar_today,
-                      color: Color(0xFFD4A574),
+                      color: AppColors.primary,
                       size: 20,
                     ),
                   ),
@@ -203,8 +202,8 @@ class _WritingScreenState extends State<WritingScreen> {
                     children: [
                       Text(
                         '${now.year}년 ${now.month}월 ${now.day}일',
-                        style: const TextStyle(
-                          color: Color(0xFF5D4E37),
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -224,13 +223,16 @@ class _WritingScreenState extends State<WritingScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFE4B5).withOpacity(0.5),
+                  color: isDarkMode
+                      ? Colors.grey[800]
+                      : const Color(0xFFFFE4B5).withOpacity(0.5),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '${controller.charCount}자 • ${_formatDuration(controller.writingDuration)}',
-                  style: const TextStyle(
-                    color: Color(0xFF8B7355),
+                  style: TextStyle(
+                    color:
+                        isDarkMode ? Colors.white70 : const Color(0xFF8B7355),
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -244,7 +246,8 @@ class _WritingScreenState extends State<WritingScreen> {
             child: LinearProgressIndicator(
               value: controller.getProgress(),
               minHeight: 6,
-              backgroundColor: const Color(0xFFFFF8E7),
+              backgroundColor:
+                  isDarkMode ? Colors.grey[700] : const Color(0xFFFFF8E7),
               valueColor: AlwaysStoppedAnimation<Color>(
                 _getProgressColor(controller.getProgress()),
               ),
@@ -266,24 +269,34 @@ class _WritingScreenState extends State<WritingScreen> {
   }
 
   Widget _buildQuestionCard() {
+    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            const Color(0xFFFFE4E1),
-            const Color(0xFFFFF0F0),
-          ],
+          colors: isDarkMode
+              ? [
+                  const Color(0xFF2C2C2C),
+                  const Color(0xFF1E1E1E),
+                ]
+              : [
+                  const Color(0xFFFFE4E1),
+                  const Color(0xFFFFF0F0),
+                ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFFB6C1).withOpacity(0.3),
+          color: isDarkMode
+              ? Colors.white10
+              : const Color(0xFFFFB6C1).withOpacity(0.3),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFB6C1).withOpacity(0.2),
+            color: isDarkMode
+                ? Colors.black26
+                : const Color(0xFFFFB6C1).withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -294,7 +307,7 @@ class _WritingScreenState extends State<WritingScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.white,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -308,10 +321,11 @@ class _WritingScreenState extends State<WritingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '오늘의 질문',
                   style: TextStyle(
-                    color: Color(0xFFFF69B4),
+                    color:
+                        isDarkMode ? Colors.white70 : const Color(0xFFFF69B4),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -319,8 +333,9 @@ class _WritingScreenState extends State<WritingScreen> {
                 const SizedBox(height: 4),
                 Text(
                   widget.initialQuestion!,
-                  style: const TextStyle(
-                    color: Color(0xFF8B4C6B),
+                  style: TextStyle(
+                    color:
+                        isDarkMode ? Colors.white70 : const Color(0xFF8B4C6B),
                     fontSize: 15,
                     height: 1.4,
                     fontWeight: FontWeight.w500,
@@ -341,7 +356,7 @@ class _WritingScreenState extends State<WritingScreen> {
       ),
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -358,7 +373,9 @@ class _WritingScreenState extends State<WritingScreen> {
             // 노트북 줄 무늬 배경
             Positioned.fill(
               child: CustomPaint(
-                painter: LinedPaperPainter(),
+                painter: LinedPaperPainter(
+                  isDarkMode: Provider.of<ThemeController>(context).isDarkMode,
+                ),
               ),
             ),
 
@@ -370,8 +387,9 @@ class _WritingScreenState extends State<WritingScreen> {
                 focusNode: _focusNode,
                 maxLines: null,
                 autofocus: true,
-                style: const TextStyle(
-                  color: Color(0xFF3E2723), // 다크 브라운 텍스트
+                style: TextStyle(
+                  color:
+                      Theme.of(context).textTheme.bodyLarge?.color, // 테마 텍스트 색상
                   fontSize: 17,
                   height: 1.8,
                   letterSpacing: 0.3,
@@ -439,7 +457,7 @@ class _WritingScreenState extends State<WritingScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
@@ -456,7 +474,7 @@ class _WritingScreenState extends State<WritingScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF8E7),
+              color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -552,7 +570,9 @@ class _WritingScreenState extends State<WritingScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFE4B5) : Colors.white,
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.2)
+              : Theme.of(context).cardColor,
           shape: BoxShape.circle,
           border: Border.all(
             color:
@@ -609,148 +629,163 @@ class _WritingScreenState extends State<WritingScreen> {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: const Text(
-          '🎉 작성 완료!',
-          style: TextStyle(
-            color: Color(0xFF5D4E37),
-            fontWeight: FontWeight.bold,
+      builder: (context) {
+        final isDarkMode =
+            Provider.of<ThemeController>(context, listen: false).isDarkMode;
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-          textAlign: TextAlign.center,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF8E7),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_circle,
-                color: Color(0xFF95E1D3),
-                size: 80,
-              ),
+          title: Text(
+            '🎉 작성 완료!',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 16),
-            const Text(
-              '캐릭터가 깨어났어요!',
-              style: TextStyle(
-                color: Color(0xFF8B7355),
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Consumer<CharacterController>(
-              builder: (context, controller, child) {
-                return Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFE4B5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '+${10 + (controller.currentUser?.consecutiveDays ?? 0) * 2} 포인트 획득',
-                    style: const TextStyle(
-                      color: Color(0xFFD4A574),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFD700), // 노란색 버튼
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            textAlign: TextAlign.center,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? AppColors.primary.withOpacity(0.2)
+                      : const Color(0xFFFFF8E7),
+                  shape: BoxShape.circle,
                 ),
-                elevation: 2,
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Color(0xFF95E1D3),
+                  size: 80,
+                ),
               ),
-              child: const Text(
-                '확인',
+              const SizedBox(height: 16),
+              Text(
+                '캐릭터가 깨어났어요!',
                 style: TextStyle(
-                  color: Color(0xFF5D4E37),
-                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.color, // titleMedium으로 변경하여 가독성 확보
                   fontSize: 16,
                 ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Consumer<CharacterController>(
+                builder: (context, controller, child) {
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE4B5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '+${10 + (controller.currentUser?.consecutiveDays ?? 0) * 2} 포인트 획득',
+                      style: const TextStyle(
+                        color: Color(0xFFD4A574),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary, // 테마 색상 사용
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+                child: Text(
+                  '확인',
+                  style: TextStyle(
+                    color: isDarkMode ? const Color(0xFF5D4E37) : Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
   Future<bool?> _showExitConfirmation(BuildContext context) async {
     return showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: const Text(
-          '작성을 중단하시겠어요?',
-          style: TextStyle(
-            color: Color(0xFF5D4E37),
-            fontWeight: FontWeight.bold,
+      builder: (context) {
+        final isDarkMode =
+            Provider.of<ThemeController>(context, listen: false).isDarkMode;
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-        ),
-        content: const Text(
-          '작성 중인 내용은 저장되지 않습니다.',
-          style: TextStyle(
-            color: Color(0xFF8B7355),
+          title: Text(
+            '작성을 중단하시겠어요?',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.titleLarge?.color,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF0F0F0), // 연한 회색 배경
-              foregroundColor: const Color(0xFF8B7355),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          content: Text(
+            '작성 중인 내용은 저장되지 않습니다.',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                foregroundColor: isDarkMode ? Colors.white70 : Colors.black87,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                '계속 작성',
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
-            child: const Text(
-              '계속 작성',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700), // 노란색 배경
-              foregroundColor: const Color(0xFF5D4E37),
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary, // 테마 색상 사용
+                foregroundColor:
+                    isDarkMode ? const Color(0xFF5D4E37) : Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                '중단',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-            child: const Text(
-              '중단',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
@@ -763,14 +798,20 @@ class _WritingScreenState extends State<WritingScreen> {
 
 // 노트북 줄 무늬를 그리는 커스텀 페인터
 class LinedPaperPainter extends CustomPainter {
+  final bool isDarkMode;
+
+  LinedPaperPainter({this.isDarkMode = false});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFE8DCC0).withOpacity(0.3)
+      ..color = isDarkMode
+          ? Colors.white.withOpacity(0.1)
+          : const Color(0xFFE8DCC0).withOpacity(0.3)
       ..strokeWidth = 1;
 
-    final lineSpacing = 32.0; // 줄 간격 (1.8 line height * 17px font size ≈ 30.6)
-    final topPadding = 20.0; // 상단 패딩과 일치
+    final lineSpacing = 32.0;
+    final topPadding = 20.0;
 
     for (double y = topPadding + lineSpacing;
         y < size.height;
@@ -782,9 +823,10 @@ class LinedPaperPainter extends CustomPainter {
       );
     }
 
-    // 왼쪽 마진 라인 (옵션)
     final marginPaint = Paint()
-      ..color = const Color(0xFFFFB6C1).withOpacity(0.2)
+      ..color = isDarkMode
+          ? Colors.white.withOpacity(0.05)
+          : const Color(0xFFFFB6C1).withOpacity(0.2)
       ..strokeWidth = 2;
     canvas.drawLine(
       const Offset(60, 0),
@@ -794,5 +836,6 @@ class LinedPaperPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant LinedPaperPainter oldDelegate) =>
+      oldDelegate.isDarkMode != isDarkMode;
 }
