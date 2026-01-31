@@ -46,6 +46,17 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     dialogHighlightForeground: AppColors.textPrimary,
   );
 
+  static const sky = AppColorScheme(
+    dialogTitle: AppColors.skyTextPrimary,
+    dialogBody: AppColors.skyTextSecondary,
+    dialogCancelBackground: Color(0xFFE3EFFB),
+    dialogCancelForeground: AppColors.skyTextSecondary,
+    dialogConfirmBackground: AppColors.skyPrimary,
+    dialogConfirmForeground: Colors.white,
+    dialogHighlightBackground: AppColors.skySecondary,
+    dialogHighlightForeground: AppColors.skyTextPrimary,
+  );
+
   @override
   AppColorScheme copyWith({
     Color? dialogTitle,

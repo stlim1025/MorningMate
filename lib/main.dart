@@ -138,9 +138,7 @@ class MorningMateApp extends StatelessWidget {
           return MaterialApp.router(
             title: 'Morning Mate',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeController.themeMode,
+            theme: themeController.themeData,
             scaffoldMessengerKey: scaffoldMessengerKey,
             routerConfig: AppRouter.router,
           );

@@ -1,114 +1,138 @@
 import 'package:flutter/material.dart';
+
 import 'app_color_scheme.dart';
 import 'app_colors.dart';
+import 'app_theme_type.dart';
+
+class AppThemePalette {
+  const AppThemePalette({
+    required this.brightness,
+    required this.primary,
+    required this.secondary,
+    required this.background,
+    required this.card,
+    required this.textPrimary,
+    required this.iconColor,
+    required this.inputFill,
+    required this.bottomNavBackground,
+    required this.unselectedNavItemColor,
+    required this.appColorScheme,
+    this.inputBorder,
+    this.inputHint,
+  });
+
+  final Brightness brightness;
+  final Color primary;
+  final Color secondary;
+  final Color background;
+  final Color card;
+  final Color textPrimary;
+  final Color iconColor;
+  final Color inputFill;
+  final Color bottomNavBackground;
+  final Color unselectedNavItemColor;
+  final AppColorScheme appColorScheme;
+  final Color? inputBorder;
+  final Color? inputHint;
+}
 
 class AppTheme {
-  static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      fontFamily: 'Pretendard',
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        surface: AppColors.backgroundLight,
-        error: AppColors.error,
-      ),
-      scaffoldBackgroundColor: AppColors.backgroundLight,
-      cardColor: Colors.white,
-      dialogBackgroundColor: Colors.white,
-      textTheme: _textTheme(Colors.black87),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.backgroundLight,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.black87),
-        titleTextStyle: TextStyle(
-          fontFamily: 'Pretendard',
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.grey[100],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      ),
-      switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return AppColors.primary;
-          }
-          return Colors.white;
-        }),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return AppColors.primary.withOpacity(0.5);
-          }
-          return Colors.grey[300];
-        }),
-        trackOutlineColor: MaterialStateProperty.all(Colors.transparent),
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.white,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
-        elevation: 0,
-      ),
-      extensions: const [
-        AppColorScheme.light,
-      ],
-    );
+  static const AppThemePalette _lightPalette = AppThemePalette(
+    brightness: Brightness.light,
+    primary: AppColors.primary,
+    secondary: AppColors.secondary,
+    background: AppColors.backgroundLight,
+    card: Colors.white,
+    textPrimary: Colors.black87,
+    iconColor: Colors.black87,
+    inputFill: Color(0xFFF5F2EC),
+    bottomNavBackground: Colors.white,
+    unselectedNavItemColor: Colors.grey,
+    appColorScheme: AppColorScheme.light,
+  );
+
+  static const AppThemePalette _darkPalette = AppThemePalette(
+    brightness: Brightness.dark,
+    primary: AppColors.primary,
+    secondary: AppColors.secondary,
+    background: AppColors.backgroundDark,
+    card: AppColors.cardDark,
+    textPrimary: Color(0xFFE0E0E0),
+    iconColor: Colors.white70,
+    inputFill: AppColors.cardDark,
+    bottomNavBackground: AppColors.cardDark,
+    unselectedNavItemColor: Colors.grey,
+    appColorScheme: AppColorScheme.dark,
+    inputBorder: Color(0xFF424242),
+    inputHint: Color(0xFF9E9E9E),
+  );
+
+  static const AppThemePalette _skyPalette = AppThemePalette(
+    brightness: Brightness.light,
+    primary: AppColors.skyPrimary,
+    secondary: AppColors.skySecondary,
+    background: AppColors.skyBackground,
+    card: AppColors.skyCard,
+    textPrimary: AppColors.skyTextPrimary,
+    iconColor: AppColors.skyTextPrimary,
+    inputFill: Color(0xFFF4F9FF),
+    bottomNavBackground: Colors.white,
+    unselectedNavItemColor: Color(0xFF7F9FC9),
+    appColorScheme: AppColorScheme.sky,
+  );
+
+  static final Map<AppThemeType, AppThemePalette> _palettes = {
+    AppThemeType.light: _lightPalette,
+    AppThemeType.dark: _darkPalette,
+    AppThemeType.sky: _skyPalette,
+  };
+
+  static ThemeData themeFor(AppThemeType type) {
+    return _buildTheme(_palettes[type] ?? _lightPalette);
   }
 
-  static ThemeData get darkTheme {
+  static ThemeData get lightTheme => themeFor(AppThemeType.light);
+  static ThemeData get darkTheme => themeFor(AppThemeType.dark);
+  static ThemeData get skyTheme => themeFor(AppThemeType.sky);
+
+  static ThemeData _buildTheme(AppThemePalette palette) {
+    final isDark = palette.brightness == Brightness.dark;
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: palette.brightness,
       fontFamily: 'Pretendard',
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        surface: AppColors.cardDark,
-        background: AppColors.backgroundDark,
+      colorScheme: ColorScheme(
+        brightness: palette.brightness,
+        primary: palette.primary,
+        onPrimary: Colors.white,
+        secondary: palette.secondary,
+        onSecondary: Colors.white,
+        surface: palette.card,
+        onSurface: palette.textPrimary,
+        background: palette.background,
+        onBackground: palette.textPrimary,
         error: AppColors.error,
+        onError: Colors.white,
       ),
-      scaffoldBackgroundColor: AppColors.backgroundDark,
-      cardColor: AppColors.cardDark,
-      dialogBackgroundColor: AppColors.cardDark,
-      textTheme: _textTheme(const Color(0xFFE0E0E0)),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.backgroundDark,
+      scaffoldBackgroundColor: palette.background,
+      cardColor: palette.card,
+      dialogBackgroundColor: palette.card,
+      textTheme: _textTheme(palette.textPrimary),
+      appBarTheme: AppBarTheme(
+        backgroundColor: palette.background,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: palette.iconColor),
         titleTextStyle: TextStyle(
           fontFamily: 'Pretendard',
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: palette.textPrimary,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: palette.primary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
@@ -119,47 +143,51 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.cardDark,
+        fillColor: palette.inputFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[800]!),
-        ),
+        enabledBorder: palette.inputBorder == null
+            ? null
+            : OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: palette.inputBorder!),
+              ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        hintStyle: TextStyle(color: Colors.grey[600]),
+        hintStyle:
+            palette.inputHint == null ? null : TextStyle(color: palette.inputHint),
       ),
-      iconTheme: const IconThemeData(color: Colors.white70),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.cardDark,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
+      iconTheme: IconThemeData(color: palette.iconColor),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: palette.bottomNavBackground,
+        selectedItemColor: palette.primary,
+        unselectedItemColor: palette.unselectedNavItemColor,
+        elevation: isDark ? null : 0,
       ),
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) {
           if (states.contains(MaterialState.selected)) {
-            return AppColors.primary;
+            return palette.primary;
           }
-          return Colors.grey[400];
+          return isDark ? Colors.grey[400] : Colors.white;
         }),
         trackColor: MaterialStateProperty.resolveWith((states) {
           if (states.contains(MaterialState.selected)) {
-            return AppColors.primary.withOpacity(0.3);
+            return palette.primary.withOpacity(isDark ? 0.3 : 0.5);
           }
-          return Colors.grey[700];
+          return isDark ? Colors.grey[700] : Colors.grey[300];
         }),
         trackOutlineColor: MaterialStateProperty.resolveWith((states) {
           if (states.contains(MaterialState.selected)) {
-            return AppColors.primary;
+            return palette.primary;
           }
-          return Colors.grey[600];
+          return isDark ? Colors.grey[600] : Colors.transparent;
         }),
       ),
-      extensions: const [
-        AppColorScheme.dark,
+      extensions: [
+        palette.appColorScheme,
       ],
     );
   }

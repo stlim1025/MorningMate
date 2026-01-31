@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app_theme.dart';
+import 'app_theme_type.dart';
+
 class ThemeController extends ChangeNotifier {
-  static const String _themeKey = 'isDarkMode';
-  bool _isDarkMode = false;
+  static const String _themeKey = 'themeType';
+  static const String _legacyDarkKey = 'isDarkMode';
+  AppThemeType _themeType = AppThemeType.light;
 
-  bool get isDarkMode => _isDarkMode;
+  AppThemeType get themeType => _themeType;
 
-  ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
+  bool get isDarkMode => _themeType == AppThemeType.dark;
+
+  ThemeData get themeData => AppTheme.themeFor(_themeType);
 
   ThemeController() {
     _loadTheme();
@@ -15,14 +21,24 @@ class ThemeController extends ChangeNotifier {
 
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    _isDarkMode = prefs.getBool(_themeKey) ?? false;
+    final storedTheme = prefs.getString(_themeKey);
+    if (storedTheme != null) {
+      _themeType = AppThemeType.values.firstWhere(
+        (type) => type.name == storedTheme,
+        orElse: () => AppThemeType.light,
+      );
+    } else {
+      final isDarkMode = prefs.getBool(_legacyDarkKey) ?? false;
+      _themeType = isDarkMode ? AppThemeType.dark : AppThemeType.light;
+    }
     notifyListeners();
   }
 
-  Future<void> toggleTheme(bool isDark) async {
-    _isDarkMode = isDark;
+  Future<void> setTheme(AppThemeType themeType) async {
+    _themeType = themeType;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_themeKey, isDark);
+    await prefs.setString(_themeKey, themeType.name);
+    await prefs.setBool(_legacyDarkKey, themeType == AppThemeType.dark);
     notifyListeners();
   }
 }

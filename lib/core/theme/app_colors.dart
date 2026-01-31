@@ -6,6 +6,14 @@ class AppColors {
   static const Color secondary = Color(0xFFFFB6C1); // 파스텔 핑크
   static const Color accent = Color(0xFF95E1D3); // 민트
 
+  // Sky Theme Colors - 맑은 하늘 톤
+  static const Color skyPrimary = Color(0xFF5AA9E6); // 청량한 하늘색
+  static const Color skySecondary = Color(0xFFBEE3F8); // 파스텔 블루
+  static const Color skyBackground = Color(0xFFEFF7FF); // 연한 하늘 배경
+  static const Color skyCard = Color(0xFFFFFFFF); // 밝은 카드
+  static const Color skyTextPrimary = Color(0xFF2B4C7E); // 딥 블루
+  static const Color skyTextSecondary = Color(0xFF4A6FA5); // 미디엄 블루
+
   // Background Colors - 밝고 따뜻한 베이지 톤
   // Background Colors - 밝고 따뜻한 베이지 톤
   static const Color backgroundLight = Color(0xFFFAF3E0); // 따뜻한 베이지
