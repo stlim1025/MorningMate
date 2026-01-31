@@ -8,6 +8,7 @@ import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 class WritingScreen extends StatefulWidget {
   final String? initialQuestion;
@@ -727,65 +728,21 @@ class _WritingScreenState extends State<WritingScreen> {
   }
 
   Future<bool?> _showExitConfirmation(BuildContext context) async {
-    return showDialog<bool>(
+    return AppDialog.show<bool>(
       context: context,
-      builder: (context) {
-        final isDarkMode =
-            Provider.of<ThemeController>(context, listen: false).isDarkMode;
-        return AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Text(
-            '작성을 중단하시겠어요?',
-            style: TextStyle(
-              color: Theme.of(context).textTheme.titleLarge?.color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            '작성 중인 내용은 저장되지 않습니다.',
-            style: TextStyle(
-              color: Theme.of(context).textTheme.bodyMedium?.color,
-            ),
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                foregroundColor: isDarkMode ? Colors.white70 : Colors.black87,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                '계속 작성',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary, // 테마 색상 사용
-                foregroundColor:
-                    isDarkMode ? const Color(0xFF5D4E37) : Colors.white,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                '중단',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        );
-      },
+      key: AppDialogKey.exitWriting,
+      content: const Text('작성 중인 내용은 저장되지 않습니다.'),
+      actions: [
+        AppDialogAction(
+          label: '계속 작성',
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        AppDialogAction(
+          label: '중단',
+          isPrimary: true,
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+      ],
     );
   }
 

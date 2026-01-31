@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_color_scheme.dart';
 import 'app_colors.dart';
 
 class AppTheme {
@@ -71,6 +72,9 @@ class AppTheme {
         unselectedItemColor: Colors.grey,
         elevation: 0,
       ),
+      extensions: const [
+        AppColorScheme.light,
+      ],
     );
   }
 
@@ -154,6 +158,9 @@ class AppTheme {
           return Colors.grey[600];
         }),
       ),
+      extensions: const [
+        AppColorScheme.dark,
+      ],
     );
   }
 
