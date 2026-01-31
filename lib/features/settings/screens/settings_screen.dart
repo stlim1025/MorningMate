@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme_type.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -100,7 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // 앱 설정
                 _buildSectionTitle('앱 설정'),
                 const SizedBox(height: 12),
-                _buildDarkModeTile(context),
+                _buildThemeSelectionTile(context),
                 const SizedBox(height: 8),
                 _buildWritingBlurTile(context, authController),
                 const SizedBox(height: 8),
@@ -440,47 +441,91 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildDarkModeTile(BuildContext context) {
+  Widget _buildThemeSelectionTile(BuildContext context) {
     final themeController = context.watch<ThemeController>();
+    final themeOptions = [
+      const _ThemeOption(
+        type: AppThemeType.light,
+        icon: Icons.wb_sunny_outlined,
+        title: '기본 테마',
+        subtitle: '따뜻한 베이지 톤',
+      ),
+      const _ThemeOption(
+        type: AppThemeType.dark,
+        icon: Icons.dark_mode,
+        title: '다크 테마',
+        subtitle: '눈의 피로를 줄이는 어두운 테마',
+      ),
+      const _ThemeOption(
+        type: AppThemeType.sky,
+        icon: Icons.cloud_outlined,
+        title: '하늘 테마',
+        subtitle: '맑고 청량한 하늘색 테마',
+      ),
+    ];
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.smallCardShadow,
       ),
-      child: SwitchListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        secondary: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(
-            Icons.dark_mode,
-            color: AppColors.primary,
-            size: 24,
-          ),
-        ),
-        title: Text(
-          '다크 모드',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
+      child: Column(
+        children: List.generate(themeOptions.length, (index) {
+          final option = themeOptions[index];
+          return Column(
+            children: [
+              if (index > 0)
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                ),
+              RadioListTile<AppThemeType>(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                value: option.type,
+                groupValue: themeController.themeType,
+                onChanged: (value) {
+                  if (value != null) {
+                    themeController.setTheme(value);
+                  }
+                },
+                secondary: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    option.icon,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                title: Text(
+                  option.title,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    option.subtitle,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                activeColor: Theme.of(context).colorScheme.primary,
               ),
-        ),
-        subtitle: const Padding(
-          padding: EdgeInsets.only(top: 4),
-          child: Text(
-            '어두운 테마를 사용합니다',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        value: themeController.isDarkMode,
-        onChanged: (value) => themeController.toggleTheme(value),
-        activeColor: AppColors.primary,
+            ],
+          );
+        }),
       ),
     );
   }
@@ -855,4 +900,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       margin: const EdgeInsets.all(16),
     );
   }
+}
+
+class _ThemeOption {
+  const _ThemeOption({
+    required this.type,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final AppThemeType type;
+  final IconData icon;
+  final String title;
+  final String subtitle;
 }
