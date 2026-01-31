@@ -31,9 +31,6 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
   UserModel? _friend;
   bool _isLoading = true;
   bool? _friendAwakeStatus;
-  DateTime? _lastCheerSentAt;
-
-  static const Duration _cheerCooldown = Duration(seconds: 30);
 
   @override
   void initState() {
@@ -268,41 +265,68 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
-                    colors: [
-                      colorScheme.primaryButton,
-                      colorScheme.primaryButton.withOpacity(0.85),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.primaryButton.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton.icon(
-                  onPressed: () => _showGuestbookDialog(colorScheme),
-                  icon: const Icon(Icons.send_rounded, size: 20),
-                  label: const Text(
-                    '친구에게 응원 메시지 보내기',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: colorScheme.primaryButtonForeground,
-                    shadowColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
+              Consumer<SocialController>(
+                builder: (context, socialController, child) {
+                  final remaining = _friend != null
+                      ? socialController.cheerCooldownRemaining(_friend!.uid)
+                      : Duration.zero;
+                  final seconds = (remaining.inMilliseconds / 1000).ceil();
+                  final isCooldown = seconds > 0;
+
+                  return Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: isCooldown
+                            ? [
+                                colorScheme.textHint.withOpacity(0.3),
+                                colorScheme.textHint.withOpacity(0.2),
+                              ]
+                            : [
+                                colorScheme.primaryButton,
+                                colorScheme.primaryButton.withOpacity(0.85),
+                              ],
+                      ),
+                      boxShadow: [
+                        if (!isCooldown)
+                          BoxShadow(
+                            color: colorScheme.primaryButton.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                      ],
                     ),
-                  ),
-                ),
+                    child: ElevatedButton.icon(
+                      onPressed: isCooldown
+                          ? null
+                          : () => _showGuestbookDialog(colorScheme),
+                      icon: Icon(
+                        isCooldown ? Icons.timer_outlined : Icons.send_rounded,
+                        size: 20,
+                      ),
+                      label: Text(
+                        isCooldown
+                            ? '$seconds초 후에 다시 보낼 수 있어요'
+                            : '친구에게 응원 메시지 보내기',
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: isCooldown
+                            ? colorScheme.textSecondary
+                            : colorScheme.primaryButtonForeground,
+                        disabledForegroundColor: colorScheme.textSecondary,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -388,24 +412,41 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
   Future<void> _showGuestbookDialog(AppColorScheme colorScheme) async {
     final parentContext = context;
     final messageController = TextEditingController();
+    final errorNotifier = ValueNotifier<String?>(null);
 
     return AppDialog.show(
       context: context,
       key: AppDialogKey.guestbook,
-      content: TextField(
-        controller: messageController,
-        maxLines: 3,
-        style: TextStyle(color: colorScheme.textPrimary),
-        decoration: InputDecoration(
-          hintText: '친구에게 응원의 메시지를 남겨주세요',
-          hintStyle: TextStyle(color: colorScheme.textHint),
-          filled: true,
-          fillColor: Theme.of(context).scaffoldBackgroundColor,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
+      content: ValueListenableBuilder<String?>(
+        valueListenable: errorNotifier,
+        builder: (context, errorText, child) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: messageController,
+                maxLines: 3,
+                style: TextStyle(color: colorScheme.textPrimary),
+                decoration: InputDecoration(
+                  hintText: '친구에게 응원의 메시지를 남겨주세요',
+                  hintStyle: TextStyle(color: colorScheme.textHint),
+                  filled: true,
+                  fillColor: Theme.of(context).scaffoldBackgroundColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  errorText: errorText,
+                ),
+                onChanged: (_) {
+                  if (errorNotifier.value != null) {
+                    errorNotifier.value = null;
+                  }
+                },
+              ),
+            ],
+          );
+        },
       ),
       actions: [
         AppDialogAction(
@@ -419,23 +460,11 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
             final message = messageController.text.trim();
             if (message.isEmpty) return;
 
-            final now = DateTime.now();
-            if (_lastCheerSentAt != null &&
-                now.difference(_lastCheerSentAt!) < _cheerCooldown) {
-              final remaining =
-                  _cheerCooldown - now.difference(_lastCheerSentAt!);
-              ScaffoldMessenger.of(parentContext).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      '너무 많은 요청을 보냈어요. ${remaining.inSeconds}초 후에 다시 시도해주세요.'),
-                  backgroundColor: colorScheme.warning,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+            final socialController = parentContext.read<SocialController>();
+            if (!socialController.canSendCheer(_friend!.uid)) {
               return;
             }
 
-            _lastCheerSentAt = now;
             Navigator.pop(context);
             if (!mounted) return;
 
@@ -452,17 +481,13 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               unawaited(() async {
                 final callable = FirebaseFunctions.instance
                     .httpsCallable('sendCheerMessage');
-                bool isPushSent = false;
                 try {
-                  final result = await callable.call({
+                  await callable.call({
                     'userId': userModel.uid,
                     'friendId': _friend!.uid,
                     'message': message,
                     'senderNickname': userModel.nickname,
                   });
-                  if (result.data is Map && result.data['success'] == true) {
-                    isPushSent = true;
-                  }
                 } catch (e) {
                   debugPrint('응원 메시지 FCM 전송 오류: $e');
                 }
@@ -475,7 +500,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                         userModel.nickname,
                         _friend!.uid,
                         message,
-                        fcmSent: isPushSent,
+                        fcmSent: false,
                       );
                 } catch (e) {
                   if (parentContext.mounted) {
@@ -547,15 +572,20 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
+                    color: msg.isRead
+                        ? colorScheme.secondary.withOpacity(0.08)
+                        : colorScheme.primaryButton.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: colorScheme.shadowColor.withOpacity(0.08),
+                      color: msg.isRead
+                          ? colorScheme.secondary.withOpacity(0.2)
+                          : colorScheme.primaryButton.withOpacity(0.1),
+                      width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.shadowColor.withOpacity(0.03),
-                        blurRadius: 8,
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -577,7 +607,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                               ),
                             ),
                           ),
-                          if (msg.isReplied) ...[
+                          if (msg.isRead) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.all(4),

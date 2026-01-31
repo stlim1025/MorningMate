@@ -136,4 +136,28 @@ class FriendService {
       return friends;
     });
   }
+
+  // 받은 친구 요청 실시간 스트림
+  Stream<List<Map<String, dynamic>>> getReceivedFriendRequestsStream(
+      String userId) {
+    return _friendsCollection
+        .where('friendId', isEqualTo: userId)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .asyncMap((snapshot) async {
+      List<Map<String, dynamic>> requests = [];
+      for (var doc in snapshot.docs) {
+        final senderId = doc['userId'] as String;
+        final sender = await _userService.getUser(senderId);
+        if (sender != null) {
+          requests.add({
+            'requestId': doc.id,
+            'user': sender,
+            'createdAt': (doc['createdAt'] as Timestamp?)?.toDate(),
+          });
+        }
+      }
+      return requests;
+    });
+  }
 }

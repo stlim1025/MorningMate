@@ -109,7 +109,15 @@ class _WritingScreenState extends State<WritingScreen> {
       ),
       body: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              colorScheme.awakeGradientStart,
+              colorScheme.awakeGradientMid,
+              colorScheme.awakeGradientEnd,
+            ],
+          ),
         ),
         child: SafeArea(
           child: PopScope(
@@ -351,7 +359,7 @@ class _WritingScreenState extends State<WritingScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(16, 16, 24, 20),
               child: TextField(
                 controller: _textController,
                 focusNode: _focusNode,
@@ -373,6 +381,7 @@ class _WritingScreenState extends State<WritingScreen> {
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
+                  filled: false,
                 ),
               ),
             ),
@@ -717,7 +726,7 @@ class LinedPaperPainter extends CustomPainter {
       ..strokeWidth = 1;
 
     final lineSpacing = 32.0;
-    final topPadding = 20.0;
+    final topPadding = 16.0;
 
     for (double y = topPadding + lineSpacing;
         y < size.height;
@@ -728,7 +737,7 @@ class LinedPaperPainter extends CustomPainter {
     final marginPaint = Paint()
       ..color = marginColor
       ..strokeWidth = 2;
-    canvas.drawLine(const Offset(60, 0), Offset(60, size.height), marginPaint);
+    canvas.drawLine(const Offset(32, 0), Offset(32, size.height), marginPaint);
   }
 
   @override

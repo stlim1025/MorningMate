@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_color_scheme.dart';
@@ -20,12 +21,14 @@ class AppDialogAction {
     required this.onPressed,
     this.isPrimary = false,
     this.useHighlight = false,
+    this.isEnabled,
   });
 
   final String label;
-  final VoidCallback onPressed;
+  final dynamic onPressed;
   final bool isPrimary;
   final bool useHighlight;
+  final ValueListenable<bool>? isEnabled;
 }
 
 class AppDialogConfig {
@@ -45,6 +48,11 @@ class AppDialogConfig {
 class AppDialog {
   const AppDialog._();
 
+  static void showError(BuildContext context, String? message) {
+    final scope = context.findAncestorWidgetOfExactType<_AppDialogErrorScope>();
+    scope?.setError(message);
+  }
+
   static AppDialogConfig buildConfig({
     required AppDialogKey key,
     required BuildContext context,
@@ -52,6 +60,7 @@ class AppDialog {
     Widget? leading,
     List<AppDialogAction>? actions,
   }) {
+    // ... (rest of buildConfig stays same)
     switch (key) {
       case AppDialogKey.biometricRetry:
         return AppDialogConfig(
@@ -135,42 +144,71 @@ class AppDialog {
     return showDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Theme.of(dialogContext).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: Row(
-          children: [
-            if (config.leading != null) ...[
-              config.leading!,
-              const SizedBox(width: 12),
-            ],
-            Expanded(
-              child: Text(
-                config.title,
-                style: TextStyle(
-                  color: colors?.dialogTitle ??
-                      Theme.of(dialogContext).textTheme.titleLarge?.color,
-                  fontWeight: FontWeight.bold,
+      builder: (dialogContext) {
+        String? errorMessage;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return _AppDialogErrorScope(
+              setError: (msg) => setState(() => errorMessage = msg),
+              child: AlertDialog(
+                backgroundColor: Theme.of(context).cardColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
+                title: Row(
+                  children: [
+                    if (config.leading != null) ...[
+                      config.leading!,
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: Text(
+                        config.title,
+                        style: TextStyle(
+                          color: colors?.dialogTitle ??
+                              Theme.of(context).textTheme.titleLarge?.color,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (config.content != null)
+                      DefaultTextStyle.merge(
+                        style: TextStyle(
+                          color: colors?.dialogBody ??
+                              Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                        child: config.content!,
+                      ),
+                    if (errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          errorMessage!,
+                          style: TextStyle(
+                            color: colors?.error ?? Colors.red,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                actions: config.actions
+                    .map(
+                        (action) => _buildActionButton(context, action, colors))
+                    .toList(),
               ),
-            ),
-          ],
-        ),
-        content: config.content != null
-            ? DefaultTextStyle.merge(
-                style: TextStyle(
-                  color: colors?.dialogBody ??
-                      Theme.of(dialogContext).textTheme.bodyMedium?.color,
-                ),
-                child: config.content!,
-              )
-            : null,
-        actions: config.actions
-            .map((action) => _buildActionButton(dialogContext, action, colors))
-            .toList(),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -179,8 +217,8 @@ class AppDialog {
     AppDialogAction action,
     AppColorScheme? colors,
   ) {
-    final Color backgroundColor;
-    final Color foregroundColor;
+    Color backgroundColor;
+    Color foregroundColor;
 
     if (action.useHighlight) {
       backgroundColor =
@@ -191,25 +229,60 @@ class AppDialog {
       backgroundColor =
           colors?.dialogConfirmBackground ?? Theme.of(context).primaryColor;
       foregroundColor = colors?.dialogConfirmForeground ?? Colors.white;
+    } else if (action.label == '탈퇴') {
+      backgroundColor = colors?.error ?? Colors.red;
+      foregroundColor = Colors.white;
     } else {
       backgroundColor = colors?.dialogCancelBackground ?? Colors.grey.shade200;
       foregroundColor = colors?.dialogCancelForeground ?? Colors.grey.shade800;
     }
 
-    return ElevatedButton(
-      onPressed: action.onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor,
-        foregroundColor: foregroundColor,
-        elevation: action.isPrimary || action.useHighlight ? 2 : 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      child: Text(
-        action.label,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: action.isEnabled ?? const AlwaysStoppedAnimation(true),
+      builder: (context, isEnabled, child) {
+        return ElevatedButton(
+          onPressed: isEnabled
+              ? () {
+                  if (action.onPressed is Function(BuildContext)) {
+                    action.onPressed(context);
+                  } else {
+                    action.onPressed?.call();
+                  }
+                }
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isEnabled
+                ? backgroundColor
+                : colors?.textHint.withOpacity(0.2) ?? Colors.grey.shade300,
+            foregroundColor: foregroundColor,
+            elevation: isEnabled &&
+                    (action.isPrimary ||
+                        action.useHighlight ||
+                        action.label == '탈퇴')
+                ? 2
+                : 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Text(
+            action.label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        );
+      },
     );
   }
+}
+
+class _AppDialogErrorScope extends InheritedWidget {
+  const _AppDialogErrorScope({
+    required this.setError,
+    required super.child,
+  });
+
+  final Function(String?) setError;
+
+  @override
+  bool updateShouldNotify(_AppDialogErrorScope oldWidget) => false;
 }

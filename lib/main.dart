@@ -109,8 +109,12 @@ class MorningMateApp extends StatelessWidget {
           create: (context) => CharacterController(
             context.read<UserService>(),
           ),
-          update: (context, auth, previous) =>
-              previous ?? CharacterController(context.read<UserService>()),
+          update: (context, auth, previous) {
+            final controller =
+                previous ?? CharacterController(context.read<UserService>());
+            controller.updateFromUser(auth.userModel);
+            return controller;
+          },
         ),
         ChangeNotifierProxyProvider<AuthController, SocialController>(
           create: (context) => SocialController(
@@ -129,8 +133,15 @@ class MorningMateApp extends StatelessWidget {
         ChangeNotifierProvider<NotificationController>(
           create: (_) => NotificationController(),
         ),
-        ChangeNotifierProvider<ThemeController>(
+        ChangeNotifierProxyProvider<AuthController, ThemeController>(
           create: (_) => ThemeController(),
+          update: (context, auth, previous) {
+            final controller = previous ?? ThemeController();
+            if (auth.userModel != null) {
+              controller.syncWithUserTheme(auth.userModel!.currentThemeId);
+            }
+            return controller;
+          },
         ),
       ],
       child: Consumer<ThemeController>(

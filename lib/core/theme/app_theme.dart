@@ -81,10 +81,40 @@ class AppTheme {
     appColorScheme: AppColorScheme.sky,
   );
 
+  static const AppThemePalette _purplePalette = AppThemePalette(
+    brightness: Brightness.light,
+    primary: AppColors.purplePrimary,
+    secondary: AppColors.purpleSecondary,
+    background: AppColors.purpleBackground,
+    card: Color(0xFFFCFAFF), // 연한 보라 틴트
+    textPrimary: AppColors.purpleTextPrimary,
+    iconColor: AppColors.purpleTextPrimary,
+    inputFill: Color(0xFFF1F0FF),
+    bottomNavBackground: Color(0xFFFCFAFF),
+    unselectedNavItemColor: Color(0xFFB4A5D1),
+    appColorScheme: AppColorScheme.purple,
+  );
+
+  static const AppThemePalette _pinkPalette = AppThemePalette(
+    brightness: Brightness.light,
+    primary: AppColors.pinkPrimary,
+    secondary: AppColors.pinkSecondary,
+    background: AppColors.pinkBackground,
+    card: Color(0xFFFFF9FB), // 연한 핑크 틴트
+    textPrimary: AppColors.pinkTextPrimary,
+    iconColor: AppColors.pinkTextPrimary,
+    inputFill: Color(0xFFFFF0F5),
+    bottomNavBackground: Color(0xFFFFF9FB),
+    unselectedNavItemColor: Color(0xFFD4A5B1),
+    appColorScheme: AppColorScheme.pink,
+  );
+
   static final Map<AppThemeType, AppThemePalette> _palettes = {
     AppThemeType.light: _lightPalette,
     AppThemeType.dark: _darkPalette,
     AppThemeType.sky: _skyPalette,
+    AppThemeType.purple: _purplePalette,
+    AppThemeType.pink: _pinkPalette,
   };
 
   static ThemeData themeFor(AppThemeType type) {

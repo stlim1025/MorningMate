@@ -78,17 +78,13 @@ class ReplyDialog {
                   // FCM 발송 (Functions 호출)
                   final callable = FirebaseFunctions.instance
                       .httpsCallable('sendCheerMessage');
-                  bool isPushSent = false;
                   try {
-                    final result = await callable.call({
+                    await callable.call({
                       'userId': userModel.uid,
                       'friendId': receiverId,
                       'message': message,
                       'senderNickname': userModel.nickname,
                     });
-                    if (result.data is Map && result.data['success'] == true) {
-                      isPushSent = true;
-                    }
                   } catch (e) {
                     debugPrint('답장 FCM 전송 오류: $e');
                   }
@@ -99,7 +95,7 @@ class ReplyDialog {
                     userModel.nickname,
                     receiverId,
                     message,
-                    fcmSent: isPushSent,
+                    fcmSent: false,
                   );
                 } catch (e) {
                   debugPrint('답장 백그라운드 작업 오류: $e');

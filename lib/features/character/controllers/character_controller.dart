@@ -30,15 +30,23 @@ class CharacterController extends ChangeNotifier {
   CharacterState get characterState =>
       _getCharacterStateFromLevel(_currentUser?.characterLevel ?? 1);
 
-  // 사용자 정보 로드
-  Future<void> loadUserData(String userId) async {
-    try {
-      _currentUser = await _userService.getUser(userId);
-      Future.microtask(() {
-        notifyListeners();
-      });
-    } catch (e) {
-      print('사용자 데이터 로드 오류: $e');
+  // 사용자 정보 업데이트 (AuthController로부터)
+  void updateFromUser(UserModel? user) {
+    if (user == null) {
+      _currentUser = null;
+      notifyListeners();
+      return;
+    }
+
+    if (_currentUser?.uid != user.uid ||
+        _currentUser?.points != user.points ||
+        _currentUser?.characterLevel != user.characterLevel ||
+        _currentUser?.experience != user.experience ||
+        _currentUser?.currentThemeId != user.currentThemeId ||
+        _currentUser?.purchasedThemeIds.length !=
+            user.purchasedThemeIds.length) {
+      _currentUser = user;
+      notifyListeners();
     }
   }
 
@@ -181,6 +189,45 @@ class CharacterController extends ChangeNotifier {
     Future.microtask(() {
       notifyListeners();
     });
+  }
+
+  // 테마 구매
+  Future<void> purchaseTheme(String userId, String themeId, int price) async {
+    if (_currentUser == null) return;
+    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+    if (_currentUser!.purchasedThemeIds.contains(themeId)) {
+      throw Exception('이미 구매한 테마입니다');
+    }
+
+    final newPurchasedThemes =
+        List<String>.from(_currentUser!.purchasedThemeIds)..add(themeId);
+    final newPoints = _currentUser!.points - price;
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+      'purchasedThemeIds': newPurchasedThemes,
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      purchasedThemeIds: newPurchasedThemes,
+    );
+    notifyListeners();
+  }
+
+  // 테마 설정
+  Future<void> setTheme(String userId, String themeId) async {
+    if (_currentUser == null) return;
+    if (!_currentUser!.purchasedThemeIds.contains(themeId)) {
+      throw Exception('구매하지 않은 테마입니다');
+    }
+
+    await _userService.updateUser(userId, {
+      'currentThemeId': themeId,
+    });
+
+    _currentUser = _currentUser!.copyWith(currentThemeId: themeId);
+    notifyListeners();
   }
 
   // 캐릭터 이미지 경로 가져오기

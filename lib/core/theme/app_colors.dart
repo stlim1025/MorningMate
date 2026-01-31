@@ -14,6 +14,18 @@ class AppColors {
   static const Color skyTextPrimary = Color(0xFF2B4C7E); // 딥 블루
   static const Color skyTextSecondary = Color(0xFF4A6FA5); // 미디엄 블루
 
+  // Purple Theme Colors
+  static const Color purplePrimary = Color(0xFF9B6BFF); // 선명한 보라
+  static const Color purpleSecondary = Color(0xFFEBE2FF); // 연한 보라
+  static const Color purpleBackground = Color(0xFFF8F5FF); // 보라 배경
+  static const Color purpleTextPrimary = Color(0xFF4A3A75); // 딥 퍼플
+
+  // Pink Theme Colors
+  static const Color pinkPrimary = Color(0xFFFF7EB3); // 화사한 핑크
+  static const Color pinkSecondary = Color(0xFFFFE3EE); // 연한 핑크
+  static const Color pinkBackground = Color(0xFFFFF5F8); // 핑크 배경
+  static const Color pinkTextPrimary = Color(0xFF7D3C58); // 딥 핑크
+
   // Background Colors - 밝고 따뜻한 베이지 톤
   // Background Colors - 밝고 따뜻한 베이지 톤
   static const Color backgroundLight = Color(0xFFFAF3E0); // 따뜻한 베이지

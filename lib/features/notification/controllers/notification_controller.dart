@@ -55,6 +55,27 @@ class NotificationController extends ChangeNotifier {
     await _db.collection('notifications').doc(notificationId).delete();
   }
 
+  Future<void> updateFriendRequestNotification(
+      String requestId, String newMessage) async {
+    final snapshot = await _db
+        .collection('notifications')
+        .where('type', isEqualTo: 'friendRequest')
+        .where('data.requestId', isEqualTo: requestId)
+        .get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = _db.batch();
+    for (var doc in snapshot.docs) {
+      batch.update(doc.reference, {
+        'message': newMessage,
+        'isRead': true,
+        'type': 'system', // 수락/거절 후엔 일반 알림으로 전환하거나 타입을 유지하되 UI에서 버튼을 숨길 수 있음
+      });
+    }
+    await batch.commit();
+  }
+
   Future<void> markAllAsRead(String userId) async {
     final unreadSnapshot = await _db
         .collection('notifications')
@@ -85,7 +106,7 @@ class NotificationController extends ChangeNotifier {
       senderId: senderId,
       senderNickname: senderNickname,
       type: NotificationType.cheerMessage,
-      message: '친구가 응원 메시지를 보냈어요.\n$message',
+      message: message,
       createdAt: DateTime.now(),
       isRead: false,
       fcmSent: fcmSent,

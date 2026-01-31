@@ -100,38 +100,65 @@ class _SocialScreenState extends State<SocialScreen> {
                 return Container(
                   margin:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryButton.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border:
-                        Border.all(color: colorScheme.primaryButton, width: 1),
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: colorScheme.accent.withOpacity(0.3),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.accent.withOpacity(0.1),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.person_add,
-                              color: colorScheme.primaryButton, size: 20),
-                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: colorScheme.accent.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.person_add_rounded,
+                                color: colorScheme.accent, size: 20),
+                          ),
+                          const SizedBox(width: 12),
                           Text(
                             '새로운 친구 요청',
                             style: TextStyle(
-                              color: colorScheme.primaryButton,
+                              color: colorScheme.textPrimary,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const Spacer(),
-                          Text(
-                            '${controller.friendRequests.length}개',
-                            style: TextStyle(
-                              color: colorScheme.primaryButton,
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: colorScheme.accent,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${controller.friendRequests.length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const Divider(height: 24),
+                      const SizedBox(height: 16),
                       ...controller.friendRequests
                           .map((req) => _buildRequestItem(req, colorScheme)),
                     ],
@@ -202,14 +229,25 @@ class _SocialScreenState extends State<SocialScreen> {
   Widget _buildRequestItem(
       Map<String, dynamic> req, AppColorScheme colorScheme) {
     final user = req['user'] as UserModel;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Row(
         children: [
           CircleAvatar(
+            radius: 20,
             backgroundColor: colorScheme.secondary.withOpacity(0.2),
-            child: Text(user.nickname[0],
-                style: TextStyle(color: colorScheme.secondary)),
+            child: Text(
+              user.nickname[0],
+              style: TextStyle(
+                color: colorScheme.secondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -218,18 +256,52 @@ class _SocialScreenState extends State<SocialScreen> {
               style: TextStyle(
                 color: colorScheme.textPrimary,
                 fontWeight: FontWeight.bold,
+                fontSize: 15,
               ),
             ),
           ),
-          IconButton(
-            onPressed: () =>
-                _acceptRequest(req['requestId'], user.uid, user.nickname),
-            icon: Icon(Icons.check_circle, color: colorScheme.success),
+          const SizedBox(width: 8),
+          // 거절 버튼
+          SizedBox(
+            height: 32,
+            child: TextButton(
+              onPressed: () =>
+                  _rejectRequest(req['requestId'], user.uid, user.nickname),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                foregroundColor: colorScheme.textSecondary,
+                backgroundColor: colorScheme.textHint.withOpacity(0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                '거절',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
-          IconButton(
-            onPressed: () =>
-                _rejectRequest(req['requestId'], user.uid, user.nickname),
-            icon: Icon(Icons.cancel, color: colorScheme.error),
+          const SizedBox(width: 8),
+          // 수락 버튼
+          SizedBox(
+            height: 32,
+            child: ElevatedButton(
+              onPressed: () =>
+                  _acceptRequest(req['requestId'], user.uid, user.nickname),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                backgroundColor: colorScheme.accent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                '수락',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
         ],
       ),
@@ -248,6 +320,7 @@ class _SocialScreenState extends State<SocialScreen> {
         authController.currentUser!.uid,
         authController.userModel!.nickname,
         friendId,
+        friendNickname,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -279,6 +352,7 @@ class _SocialScreenState extends State<SocialScreen> {
         authController.currentUser!.uid,
         friendId,
         authController.userModel!.nickname,
+        friendNickname,
       );
     } catch (e) {
       if (mounted) {
@@ -510,7 +584,7 @@ class _SocialScreenState extends State<SocialScreen> {
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
           child: Text(
-            isCooldown ? '${seconds}s' : '깨우기',
+            isCooldown ? '${seconds}초' : '깨우기',
             key: ValueKey(isCooldown ? seconds : -1),
             style: TextStyle(
               fontSize: 14,
@@ -638,7 +712,7 @@ class _SocialScreenState extends State<SocialScreen> {
         AppDialogAction(
           label: '요청',
           isPrimary: true,
-          onPressed: () async {
+          onPressed: (BuildContext context) async {
             final nickname = controller.text.trim();
             if (nickname.isEmpty) return;
 
@@ -651,24 +725,14 @@ class _SocialScreenState extends State<SocialScreen> {
               final user = await userService.getUserByNickname(nickname);
               if (user == null) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('해당 닉네임의 사용자를 찾을 수 없습니다.'),
-                      backgroundColor: colorScheme.error,
-                    ),
-                  );
+                  AppDialog.showError(context, '해당 닉네임의 사용자를 찾을 수 없습니다.');
                 }
                 return;
               }
 
               if (user.uid == myId) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('자신에게는 친구 요청을 보낼 수 없습니다.'),
-                      backgroundColor: colorScheme.error,
-                    ),
-                  );
+                  AppDialog.showError(context, '자신에게는 친구 요청을 보낼 수 없습니다.');
                 }
                 return;
               }
@@ -690,12 +754,7 @@ class _SocialScreenState extends State<SocialScreen> {
               }
             } catch (e) {
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(e.toString()),
-                    backgroundColor: colorScheme.error,
-                  ),
-                );
+                AppDialog.showError(context, e.toString());
               }
             }
           },

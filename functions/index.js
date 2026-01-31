@@ -50,8 +50,15 @@ const normalizeNotificationType = (type) => {
             return "wake_up";
         case "friendRequest":
             return "friend_request";
+        case "friendAccept":
+            return "friend_accept";
+        case "friendReject":
+            return "friend_reject";
         case "cheerMessage":
             return "cheer_message";
+        case "morning_diary":
+        case "morning_reminder":
+            return "morning_diary";
         case "system":
             return "system";
         default:
@@ -73,8 +80,23 @@ const buildNotificationContent = (type, message, senderNickname) => {
             };
         case "cheer_message":
             return {
-                title: "친구가 응원 메시지를 보냈어요.",
+                title: `${senderNickname ?? "친구"}님이 응원 메시지를 보냈어요.`,
                 body: message ?? "응원 메시지가 도착했어요.",
+            };
+        case "friend_accept":
+            return {
+                title: "친구 요청 수락",
+                body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 수락했어요.`,
+            };
+        case "friend_reject":
+            return {
+                title: "친구 요청 거절",
+                body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 거절했어요.`,
+            };
+        case "morning_diary":
+            return {
+                title: "아침 일성",
+                body: message ?? "일기를 작성할 시간입니다!",
             };
         case "system":
         default:
@@ -218,39 +240,8 @@ exports.wakeUpFriend = onCall(async (request) => {
             return { success: false, message: "Friend not reachable." };
         }
 
-        // 알림 페이로드
-        const message = {
-            token: fcmToken,
-            notification: {
-                title: "일어나세요! ☀️",
-                body: `${friendName}님이 당신을 깨우고 있어요!`,
-            },
-            data: {
-                type: "wake_up",
-                friendId: userId,
-                friendName: friendName,
-                click_action: "FLUTTER_NOTIFICATION_CLICK",
-            },
-            android: {
-                priority: "high",
-                notification: {
-                    channelId: "high_importance_channel",
-                },
-            },
-            apns: {
-                payload: {
-                    aps: {
-                        contentAvailable: true,
-                        sound: "default",
-                    },
-                },
-            },
-        };
-
-        // 알림 전송
-        await admin.messaging().send(message);
-        logger.info(`Wake up notification sent to ${friendId} from ${userId}`);
-
+        // 알림 전송은 Firestore Trigger에서 처리하므로 여기서는 성공만 반환
+        logger.info(`Wake up request validated for ${friendId} from ${userId}`);
         return { success: true };
     } catch (error) {
         logger.error("Error sending notification:", error);
@@ -304,38 +295,8 @@ exports.sendCheerMessage = onCall(async (request) => {
             return { success: false, message: "Friend not reachable." };
         }
 
-        const notificationMessage = {
-            token: fcmToken,
-            notification: {
-                title: "친구가 응원 메시지를 보냈어요.",
-                body: message,
-            },
-            data: {
-                type: "cheer_message",
-                senderId: userId,
-                senderNickname: senderNickname ?? "",
-                message: message,
-                click_action: "FLUTTER_NOTIFICATION_CLICK",
-            },
-            android: {
-                priority: "high",
-                notification: {
-                    channelId: "high_importance_channel",
-                },
-            },
-            apns: {
-                payload: {
-                    aps: {
-                        contentAvailable: true,
-                        sound: "default",
-                    },
-                },
-            },
-        };
-
-        await admin.messaging().send(notificationMessage);
-        logger.info(`Cheer message sent to ${friendId} from ${userId}`);
-
+        // 알림 전송은 Firestore Trigger에서 처리하므로 여기서는 성공만 반환
+        logger.info(`Cheer message request validated for ${friendId} from ${userId}`);
         return { success: true };
     } catch (error) {
         logger.error("Error sending cheer message:", error);
@@ -387,37 +348,8 @@ exports.sendFriendRequestNotification = onCall(async (request) => {
             return { success: false, message: "Friend not reachable." };
         }
 
-        const notificationMessage = {
-            token: fcmToken,
-            notification: {
-                title: "친구 요청",
-                body: `${senderNickname}님이 친구 요청을 보냈습니다! 👋`,
-            },
-            data: {
-                type: "friend_request",
-                senderId: userId,
-                senderNickname: senderNickname,
-                click_action: "FLUTTER_NOTIFICATION_CLICK",
-            },
-            android: {
-                priority: "high",
-                notification: {
-                    channelId: "high_importance_channel",
-                },
-            },
-            apns: {
-                payload: {
-                    aps: {
-                        contentAvailable: true,
-                        sound: "default",
-                    },
-                },
-            },
-        };
-
-        await admin.messaging().send(notificationMessage);
-        logger.info(`Friend request sent to ${friendId} from ${userId}`);
-
+        // 알림 전송은 Firestore Trigger에서 처리하므로 여기서는 성공만 반환
+        logger.info(`Friend request validated for ${friendId} from ${userId}`);
         return { success: true };
     } catch (error) {
         logger.error("Error sending friend request:", error);
@@ -469,37 +401,8 @@ exports.sendFriendAcceptNotification = onCall(async (request) => {
             return { success: false, message: "Friend not reachable." };
         }
 
-        const notificationMessage = {
-            token: fcmToken,
-            notification: {
-                title: "친구 요청 수락",
-                body: `${senderNickname}님이 친구 요청을 수락했어요.`,
-            },
-            data: {
-                type: "friend_accept",
-                senderId: userId,
-                senderNickname: senderNickname,
-                click_action: "FLUTTER_NOTIFICATION_CLICK",
-            },
-            android: {
-                priority: "high",
-                notification: {
-                    channelId: "high_importance_channel",
-                },
-            },
-            apns: {
-                payload: {
-                    aps: {
-                        contentAvailable: true,
-                        sound: "default",
-                    },
-                },
-            },
-        };
-
-        await admin.messaging().send(notificationMessage);
-        logger.info(`Friend accept sent to ${friendId} from ${userId}`);
-
+        // 알림 전송은 Firestore Trigger에서 처리하므로 여기서는 성공만 반환
+        logger.info(`Friend accept request validated for ${friendId} from ${userId}`);
         return { success: true };
     } catch (error) {
         logger.error("Error sending friend accept:", error);
@@ -551,37 +454,8 @@ exports.sendFriendRejectNotification = onCall(async (request) => {
             return { success: false, message: "Friend not reachable." };
         }
 
-        const notificationMessage = {
-            token: fcmToken,
-            notification: {
-                title: "친구 요청 거절",
-                body: `${senderNickname}님이 친구 요청을 거절했어요.`,
-            },
-            data: {
-                type: "friend_reject",
-                senderId: userId,
-                senderNickname: senderNickname,
-                click_action: "FLUTTER_NOTIFICATION_CLICK",
-            },
-            android: {
-                priority: "high",
-                notification: {
-                    channelId: "high_importance_channel",
-                },
-            },
-            apns: {
-                payload: {
-                    aps: {
-                        contentAvailable: true,
-                        sound: "default",
-                    },
-                },
-            },
-        };
-
-        await admin.messaging().send(notificationMessage);
-        logger.info(`Friend reject sent to ${friendId} from ${userId}`);
-
+        // 알림 전송은 Firestore Trigger에서 처리하므로 여기서는 성공만 반환
+        logger.info(`Friend reject request validated for ${friendId} from ${userId}`);
         return { success: true };
     } catch (error) {
         logger.error("Error sending friend reject:", error);

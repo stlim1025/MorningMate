@@ -34,7 +34,6 @@ class _MorningScreenState extends State<MorningScreen>
   Future<void> _initializeScreen() async {
     final authController = context.read<AuthController>();
     final morningController = context.read<MorningController>();
-    final characterController = context.read<CharacterController>();
 
     try {
       String? userId = authController.currentUser?.uid;
@@ -46,7 +45,6 @@ class _MorningScreenState extends State<MorningScreen>
         // 병렬로 데이터 로드
         await Future.wait([
           morningController.checkTodayDiary(userId),
-          characterController.loadUserData(userId),
           if (morningController.currentQuestion == null)
             morningController.fetchRandomQuestion(),
         ]);
@@ -81,14 +79,14 @@ class _MorningScreenState extends State<MorningScreen>
                     end: Alignment.bottomCenter,
                     colors: isAwake
                         ? [
-                            const Color(0xFF87CEEB),
-                            const Color(0xFFB0E0E6),
-                            const Color(0xFFFFF8DC),
+                            colorScheme.awakeGradientStart,
+                            colorScheme.awakeGradientMid,
+                            colorScheme.awakeGradientEnd,
                           ]
                         : [
-                            const Color(0xFF0F2027),
-                            const Color(0xFF203A43),
-                            const Color(0xFF2C5364),
+                            colorScheme.sleepGradientStart,
+                            colorScheme.sleepGradientMid,
+                            colorScheme.sleepGradientEnd,
                           ],
                   ),
                 ),

@@ -23,6 +23,8 @@ class UserModel {
   final bool friendRequestNoti;
   final bool friendAcceptNoti;
   final bool friendRejectNoti;
+  final List<String> purchasedThemeIds; // 구매한 테마 ID 목록
+  final String currentThemeId; // 현재 선택된 테마 ID
 
   UserModel({
     required this.uid,
@@ -47,6 +49,8 @@ class UserModel {
     this.friendRequestNoti = true,
     this.friendAcceptNoti = true,
     this.friendRejectNoti = true,
+    this.purchasedThemeIds = const ['light'],
+    this.currentThemeId = 'light',
   });
 
   // Firestore에서 가져오기
@@ -79,6 +83,9 @@ class UserModel {
       friendRequestNoti: data['friendRequestNoti'] ?? true,
       friendAcceptNoti: data['friendAcceptNoti'] ?? true,
       friendRejectNoti: data['friendRejectNoti'] ?? true,
+      purchasedThemeIds:
+          List<String>.from(data['purchasedThemeIds'] ?? ['light']),
+      currentThemeId: data['currentThemeId'] ?? 'light',
     );
   }
 
@@ -108,6 +115,8 @@ class UserModel {
       'friendRequestNoti': friendRequestNoti,
       'friendAcceptNoti': friendAcceptNoti,
       'friendRejectNoti': friendRejectNoti,
+      'purchasedThemeIds': purchasedThemeIds,
+      'currentThemeId': currentThemeId,
     };
   }
 
@@ -135,6 +144,8 @@ class UserModel {
     bool? friendRequestNoti,
     bool? friendAcceptNoti,
     bool? friendRejectNoti,
+    List<String>? purchasedThemeIds,
+    String? currentThemeId,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -160,6 +171,8 @@ class UserModel {
       friendRequestNoti: friendRequestNoti ?? this.friendRequestNoti,
       friendAcceptNoti: friendAcceptNoti ?? this.friendAcceptNoti,
       friendRejectNoti: friendRejectNoti ?? this.friendRejectNoti,
+      purchasedThemeIds: purchasedThemeIds ?? this.purchasedThemeIds,
+      currentThemeId: currentThemeId ?? this.currentThemeId,
     );
   }
 

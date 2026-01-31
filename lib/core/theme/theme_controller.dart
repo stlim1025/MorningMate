@@ -35,10 +35,24 @@ class ThemeController extends ChangeNotifier {
   }
 
   Future<void> setTheme(AppThemeType themeType) async {
+    if (_themeType == themeType) return;
     _themeType = themeType;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeKey, themeType.name);
     await prefs.setBool(_legacyDarkKey, themeType == AppThemeType.dark);
     notifyListeners();
+  }
+
+  Future<void> syncWithUserTheme(String? themeId) async {
+    if (themeId == null) return;
+
+    final themeType = AppThemeType.values.firstWhere(
+      (type) => type.name == themeId,
+      orElse: () => AppThemeType.light,
+    );
+
+    if (_themeType != themeType) {
+      await setTheme(themeType);
+    }
   }
 }

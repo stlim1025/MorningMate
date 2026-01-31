@@ -44,6 +44,12 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.pointStar,
     required this.info,
     required this.shadowColor,
+    required this.awakeGradientStart,
+    required this.awakeGradientMid,
+    required this.awakeGradientEnd,
+    required this.sleepGradientStart,
+    required this.sleepGradientMid,
+    required this.sleepGradientEnd,
   });
 
   final Color dialogTitle;
@@ -92,6 +98,12 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
 
   final Color info;
   final Color shadowColor;
+  final Color awakeGradientStart;
+  final Color awakeGradientMid;
+  final Color awakeGradientEnd;
+  final Color sleepGradientStart;
+  final Color sleepGradientMid;
+  final Color sleepGradientEnd;
 
   static const light = AppColorScheme(
     dialogTitle: AppColors.textPrimary,
@@ -132,7 +144,13 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     friendSleep: AppColors.friendSleep,
     pointStar: AppColors.pointStar,
     info: AppColors.info,
-    shadowColor: Color(0xFFD4A574),
+    shadowColor: Color(0x26D4A574),
+    awakeGradientStart: Color(0xFFFFF8E7),
+    awakeGradientMid: Color(0xFFFFE4E1),
+    awakeGradientEnd: Color(0xFFFAF3E0),
+    sleepGradientStart: Color(0xFF2D241E),
+    sleepGradientMid: Color(0xFF1F1A16),
+    sleepGradientEnd: Color(0xFF12100E),
   );
 
   static const dark = AppColorScheme(
@@ -168,13 +186,19 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     textHint: Color(0xFF757575),
     backgroundLight: Color(0xFF2C2C2C),
     backgroundDark: Color(0xFF1E1E1E),
-    accent: Color(0xFF81C784),
+    accent: AppColors.primary,
     secondary: AppColors.secondary,
     friendAwake: AppColors.friendActive,
     friendSleep: AppColors.friendSleep,
     pointStar: AppColors.pointStar,
     info: AppColors.info,
-    shadowColor: Colors.black,
+    shadowColor: Colors.black45,
+    awakeGradientStart: Color(0xFF1A1A1A),
+    awakeGradientMid: Color(0xFF0F0F0F),
+    awakeGradientEnd: Color(0xFF000000),
+    sleepGradientStart: Color(0xFF0F2027),
+    sleepGradientMid: Color(0xFF203A43),
+    sleepGradientEnd: Color(0xFF2C5364),
   );
 
   static const sky = AppColorScheme(
@@ -217,6 +241,108 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     pointStar: Color(0xFFFFD97D),
     info: Color(0xFFAEC6CF),
     shadowColor: Color(0xFF7F9FC9),
+    awakeGradientStart: Color(0xFF87CEEB),
+    awakeGradientMid: Color(0xFFB0E0E6),
+    awakeGradientEnd: Color(0xFFFFF8DC),
+    sleepGradientStart: Color(0xFF0F2027),
+    sleepGradientMid: Color(0xFF203A43),
+    sleepGradientEnd: Color(0xFF2C5364),
+  );
+
+  static const purple = AppColorScheme(
+    dialogTitle: AppColors.purpleTextPrimary,
+    dialogBody: AppColors.purpleTextPrimary,
+    dialogCancelBackground: Color(0xFFF1EDFF),
+    dialogCancelForeground: AppColors.purpleTextPrimary,
+    dialogConfirmBackground: AppColors.purplePrimary,
+    dialogConfirmForeground: Colors.white,
+    dialogHighlightBackground: AppColors.purpleSecondary,
+    dialogHighlightForeground: AppColors.purpleTextPrimary,
+    primaryButton: AppColors.purplePrimary,
+    primaryButtonForeground: Colors.white,
+    secondaryButton: Color(0xFFF1EDFF),
+    secondaryButtonForeground: AppColors.purpleTextPrimary,
+    iconPrimary: AppColors.purplePrimary,
+    iconSecondary: AppColors.purpleTextPrimary,
+    gaugeActive: AppColors.purplePrimary,
+    gaugeInactive: Color(0xFFF1EDFF),
+    calendarSelected: AppColors.purplePrimary,
+    calendarToday: AppColors.purpleSecondary,
+    calendarDefault: AppColors.purpleTextPrimary,
+    tabSelected: AppColors.purplePrimary,
+    tabUnselected: Color(0xFFB4A5D1),
+    cardAccent: AppColors.purplePrimary,
+    progressBar: AppColors.purplePrimary,
+    streakGold: Color(0xFFFFD700),
+    success: Color(0xFFB5EAD7),
+    error: Color(0xFFFF9AA2),
+    warning: Color(0xFFFFDAC1),
+    textPrimary: AppColors.purpleTextPrimary,
+    textSecondary: Color(0xFF6C5A9A),
+    textHint: Color(0xFFB4A5D1),
+    backgroundLight: Color(0xFFF8F5FF),
+    backgroundDark: Color(0xFFF1EDFF),
+    accent: AppColors.purplePrimary,
+    secondary: AppColors.purpleSecondary,
+    friendAwake: Color(0xFFB5EAD7),
+    friendSleep: Color(0xFFD4C4B0),
+    pointStar: Color(0xFFFFD700),
+    info: Color(0xFFAEC6CF),
+    shadowColor: Color(0x339B6BFF),
+    awakeGradientStart: Color(0xFFF1EDFF),
+    awakeGradientMid: Color(0xFFE2D9FF),
+    awakeGradientEnd: Color(0xFFF8F5FF),
+    sleepGradientStart: Color(0xFF1A0B2E),
+    sleepGradientMid: Color(0xFF10071C),
+    sleepGradientEnd: Color(0xFF08040E),
+  );
+
+  static const pink = AppColorScheme(
+    dialogTitle: AppColors.pinkTextPrimary,
+    dialogBody: AppColors.pinkTextPrimary,
+    dialogCancelBackground: Color(0xFFFFEDF5),
+    dialogCancelForeground: AppColors.pinkTextPrimary,
+    dialogConfirmBackground: AppColors.pinkPrimary,
+    dialogConfirmForeground: Colors.white,
+    dialogHighlightBackground: AppColors.pinkSecondary,
+    dialogHighlightForeground: AppColors.pinkTextPrimary,
+    primaryButton: AppColors.pinkPrimary,
+    primaryButtonForeground: Colors.white,
+    secondaryButton: Color(0xFFFFEDF5),
+    secondaryButtonForeground: AppColors.pinkTextPrimary,
+    iconPrimary: AppColors.pinkPrimary,
+    iconSecondary: AppColors.pinkTextPrimary,
+    gaugeActive: AppColors.pinkPrimary,
+    gaugeInactive: Color(0xFFFFEDF5),
+    calendarSelected: AppColors.pinkPrimary,
+    calendarToday: AppColors.pinkSecondary,
+    calendarDefault: AppColors.pinkTextPrimary,
+    tabSelected: AppColors.pinkPrimary,
+    tabUnselected: Color(0xFFD4A5B1),
+    cardAccent: AppColors.pinkPrimary,
+    progressBar: AppColors.pinkPrimary,
+    streakGold: Color(0xFFFFD700),
+    success: Color(0xFFB5EAD7),
+    error: Color(0xFFFF9AA2),
+    warning: Color(0xFFFFDAC1),
+    textPrimary: AppColors.pinkTextPrimary,
+    textSecondary: Color(0xFFA65C7C),
+    textHint: Color(0xFFD4A5B1),
+    backgroundLight: Color(0xFFFFF5F8),
+    backgroundDark: Color(0xFFFFEDF5),
+    accent: AppColors.pinkPrimary,
+    secondary: AppColors.pinkSecondary,
+    friendAwake: Color(0xFFB5EAD7),
+    friendSleep: Color(0xFFD4C4B0),
+    pointStar: Color(0xFFFFD700),
+    info: Color(0xFFAEC6CF),
+    shadowColor: Color(0x33FF7EB3),
+    awakeGradientStart: Color(0xFFFFEDF5),
+    awakeGradientMid: Color(0xFFFFD1E1),
+    awakeGradientEnd: Color(0xFFFFF5F8),
+    sleepGradientStart: Color(0xFF2E0B1A),
+    sleepGradientMid: Color(0xFF1C0710),
+    sleepGradientEnd: Color(0xFF0E0408),
   );
 
   @override
@@ -260,6 +386,12 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? pointStar,
     Color? info,
     Color? shadowColor,
+    Color? awakeGradientStart,
+    Color? awakeGradientMid,
+    Color? awakeGradientEnd,
+    Color? sleepGradientStart,
+    Color? sleepGradientMid,
+    Color? sleepGradientEnd,
   }) {
     return AppColorScheme(
       dialogTitle: dialogTitle ?? this.dialogTitle,
@@ -309,6 +441,12 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       pointStar: pointStar ?? this.pointStar,
       info: info ?? this.info,
       shadowColor: shadowColor ?? this.shadowColor,
+      awakeGradientStart: awakeGradientStart ?? this.awakeGradientStart,
+      awakeGradientMid: awakeGradientMid ?? this.awakeGradientMid,
+      awakeGradientEnd: awakeGradientEnd ?? this.awakeGradientEnd,
+      sleepGradientStart: sleepGradientStart ?? this.sleepGradientStart,
+      sleepGradientMid: sleepGradientMid ?? this.sleepGradientMid,
+      sleepGradientEnd: sleepGradientEnd ?? this.sleepGradientEnd,
     );
   }
 
@@ -380,9 +518,21 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       secondary: Color.lerp(secondary, other.secondary, t) ?? secondary,
       friendAwake: Color.lerp(friendAwake, other.friendAwake, t) ?? friendAwake,
       friendSleep: Color.lerp(friendSleep, other.friendSleep, t) ?? friendSleep,
-      pointStar: Color.lerp(pointStar, other.pointStar, t) ?? pointStar,
-      info: Color.lerp(info, other.info, t) ?? info,
-      shadowColor: Color.lerp(shadowColor, other.shadowColor, t) ?? shadowColor,
+      pointStar: Color.lerp(pointStar, other.pointStar, t)!,
+      info: Color.lerp(info, other.info, t)!,
+      shadowColor: Color.lerp(shadowColor, other.shadowColor, t)!,
+      awakeGradientStart:
+          Color.lerp(awakeGradientStart, other.awakeGradientStart, t)!,
+      awakeGradientMid:
+          Color.lerp(awakeGradientMid, other.awakeGradientMid, t)!,
+      awakeGradientEnd:
+          Color.lerp(awakeGradientEnd, other.awakeGradientEnd, t)!,
+      sleepGradientStart:
+          Color.lerp(sleepGradientStart, other.sleepGradientStart, t)!,
+      sleepGradientMid:
+          Color.lerp(sleepGradientMid, other.sleepGradientMid, t)!,
+      sleepGradientEnd:
+          Color.lerp(sleepGradientEnd, other.sleepGradientEnd, t)!,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
@@ -645,7 +646,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _showChangeNicknameDialog(BuildContext context,
       String currentNickname, AppColorScheme colorScheme) async {
     final controller = TextEditingController(text: currentNickname);
-    final errorMessageNotifier = ValueNotifier<String?>(null);
     final isCheckingNotifier = ValueNotifier<bool>(false);
 
     return AppDialog.show(
@@ -655,32 +655,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ValueListenableBuilder<String?>(
-            valueListenable: errorMessageNotifier,
-            builder: (context, errorMessage, child) {
-              return TextField(
-                controller: controller,
-                style: TextStyle(color: colorScheme.textPrimary),
-                decoration: InputDecoration(
-                  hintText: '새 닉네임 입력',
-                  hintStyle: TextStyle(color: colorScheme.textHint),
-                  filled: true,
-                  fillColor: Theme.of(context).cardColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.primaryButton.withOpacity(0.5)),
-                  ),
-                  errorText: errorMessage,
-                ),
-                maxLength: 10,
-                onChanged: (_) {
-                  if (errorMessageNotifier.value != null) {
-                    errorMessageNotifier.value = null;
-                  }
-                },
-              );
-            },
+          TextField(
+            controller: controller,
+            style: TextStyle(color: colorScheme.textPrimary),
+            decoration: InputDecoration(
+              hintText: '새 닉네임 입력',
+              hintStyle: TextStyle(color: colorScheme.textHint),
+              filled: true,
+              fillColor: Theme.of(context).cardColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                    color: colorScheme.primaryButton.withOpacity(0.5)),
+              ),
+            ),
+            maxLength: 10,
           ),
           ValueListenableBuilder<bool>(
             valueListenable: isCheckingNotifier,
@@ -711,12 +700,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         AppDialogAction(
           label: '변경',
           isPrimary: true,
-          onPressed: () async {
+          onPressed: (BuildContext context) async {
             final newNickname = controller.text.trim();
-            errorMessageNotifier.value = null;
+            AppDialog.showError(context, null); // Clear prev error
 
             if (newNickname.isEmpty || newNickname.length < 2) {
-              errorMessageNotifier.value = '닉네임은 2자 이상이어야 합니다';
+              AppDialog.showError(context, '닉네임은 2자 이상이어야 합니다');
               return;
             }
 
@@ -733,7 +722,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   isCheckingNotifier.value = false;
 
                   if (!isAvailable) {
-                    errorMessageNotifier.value = '이미 사용 중인 닉네임입니다';
+                    AppDialog.showError(context, '이미 사용 중인 닉네임입니다');
                     return;
                   }
                 }
@@ -754,8 +743,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                 }
               } catch (e) {
-                isCheckingNotifier.value = false;
-                errorMessageNotifier.value = '오류: $e';
+                if (context.mounted) {
+                  isCheckingNotifier.value = false;
+                  AppDialog.showError(context, '오류: $e');
+                }
               }
             }
           },
@@ -842,6 +833,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _showChangePasswordDialog(
       BuildContext context, AppColorScheme colorScheme) async {
+    final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -854,6 +846,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            TextFormField(
+              controller: currentPasswordController,
+              obscureText: true,
+              style: TextStyle(color: colorScheme.textPrimary),
+              decoration: InputDecoration(
+                hintText: '현재 비밀번호',
+                hintStyle: TextStyle(color: colorScheme.textHint),
+                filled: true,
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return '현재 비밀번호를 입력해주세요';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
             TextFormField(
               controller: newPasswordController,
               obscureText: true,
@@ -914,12 +928,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         AppDialogAction(
           label: '변경',
           isPrimary: true,
-          onPressed: () async {
+          onPressed: (BuildContext context) async {
+            AppDialog.showError(context, null);
             if (formKey.currentState?.validate() ?? false) {
               final authController = context.read<AuthController>();
               try {
-                await authController
-                    .changePassword(newPasswordController.text.trim());
+                await authController.changePassword(
+                  currentPasswordController.text.trim(),
+                  newPasswordController.text.trim(),
+                );
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -929,9 +946,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    _buildSnackBar('오류: $e', colorScheme),
-                  );
+                  String errorMessage = '오류가 발생했습니다';
+                  if (e is FirebaseAuthException) {
+                    switch (e.code) {
+                      case 'wrong-password':
+                      case 'invalid-credential':
+                        errorMessage = '현재 비밀번호가 일치하지 않습니다';
+                        break;
+                      case 'requires-recent-login':
+                        errorMessage = '보안을 위해 다시 로그인 후 시도해주세요';
+                        break;
+                      default:
+                        errorMessage = e.message ?? errorMessage;
+                    }
+                  } else {
+                    errorMessage = e.toString();
+                  }
+                  AppDialog.showError(context, errorMessage);
                 }
               }
             }
@@ -946,7 +977,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return AppDialog.show(
       context: context,
       key: AppDialogKey.logout,
-      content: const Text('로그아웃 하시겠습니까?'),
       actions: [
         AppDialogAction(
           label: '취소',
@@ -954,7 +984,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         AppDialogAction(
           label: '로그아웃',
-          useHighlight: true,
+          isPrimary: true,
           onPressed: () async {
             await authController.signOut();
             if (context.mounted) {
@@ -969,12 +999,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _showDeleteAccountDialog(BuildContext context,
       AuthController authController, AppColorScheme colorScheme) async {
     final passwordController = TextEditingController();
+    final isCheckedNotifier = ValueNotifier<bool>(false);
 
     return AppDialog.show(
       context: context,
       key: AppDialogKey.deleteAccount,
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('정말로 탈퇴하시겠습니까?\n모든 데이터가 영구적으로 삭제됩니다.'),
           const SizedBox(height: 16),
@@ -986,12 +1018,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
               hintText: '비밀번호 확인',
               hintStyle: TextStyle(color: colorScheme.textHint),
               filled: true,
-              fillColor: Theme.of(context).scaffoldBackgroundColor,
+              fillColor: Theme.of(context).cardColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(
+                  color: colorScheme.primaryButton.withOpacity(0.1),
+                ),
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          ValueListenableBuilder<bool>(
+            valueListenable: isCheckedNotifier,
+            builder: (context, isChecked, child) {
+              return InkWell(
+                onTap: () => isCheckedNotifier.value = !isChecked,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: isChecked,
+                        onChanged: (value) =>
+                            isCheckedNotifier.value = value ?? false,
+                        activeColor: colorScheme.error,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '안내 사항을 모두 확인하였으며, 탈퇴에 동의합니다.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colorScheme.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -1002,27 +1069,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         AppDialogAction(
           label: '탈퇴',
-          isPrimary: true, // 에러 강조 색상
-          onPressed: () async {
+          isEnabled: isCheckedNotifier,
+          onPressed: (BuildContext context) async {
             final password = passwordController.text.trim();
+            AppDialog.showError(context, null);
+
             if (password.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                _buildSnackBar('비밀번호를 입력해주세요', colorScheme),
-              );
+              AppDialog.showError(context, '비밀번호를 입력해주세요');
               return;
             }
 
             try {
-              await authController.deleteAccount();
+              await authController.deleteAccount(password);
               if (context.mounted) {
                 context.go('/login');
               }
+            } on FirebaseAuthException catch (e) {
+              if (context.mounted) {
+                if (e.code == 'wrong-password' ||
+                    e.code == 'invalid-credential') {
+                  AppDialog.showError(context, '비밀번호가 틀렸습니다.');
+                } else if (e.code == 'too-many-requests') {
+                  AppDialog.showError(
+                      context, '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.');
+                } else {
+                  AppDialog.showError(context, '인증 오류: ${e.message}');
+                }
+              }
             } catch (e) {
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  _buildSnackBar('오류: $e', colorScheme),
-                );
+                AppDialog.showError(context, '탈퇴 중 오류가 발생했습니다.');
               }
+              debugPrint('Account deletion error: $e');
             }
           },
         ),
@@ -1039,6 +1117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      duration: const Duration(seconds: 2),
     );
   }
 }

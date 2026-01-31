@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../services/auth_service.dart';
@@ -13,31 +14,57 @@ class AuthController extends ChangeNotifier {
   AuthController(
       this._authService, this._userService, this._notificationService) {
     // 인증 상태 변경 리스너
-    _authService.authStateChanges.listen(_handleAuthStateChange);
+    _authSubscription =
+        _authService.authStateChanges.listen(_handleAuthStateChange);
   }
 
   User? _currentUser;
   UserModel? _userModel;
   bool _isLoading = false;
+  bool _isDeletingAccount = false;
+  StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<UserModel?>? _userStreamSubscription;
 
   User? get currentUser => _currentUser;
   UserModel? get userModel => _userModel;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _currentUser != null;
 
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    _userStreamSubscription?.cancel();
+    super.dispose();
+  }
+
   Future<void> _handleAuthStateChange(User? user) async {
     _currentUser = user;
+    _userStreamSubscription?.cancel();
+
     if (user != null) {
       _notificationService.setOnTokenRefreshHandler(
         (token) => _userService.updateFcmToken(user.uid, token),
       );
-      _userModel = await _userService.getUser(user.uid);
+
+      // 사용자 데이터 실시간 감시
+      _userStreamSubscription =
+          _userService.getUserStream(user.uid).listen((model) {
+        if (model == null && _currentUser != null && !_isDeletingAccount) {
+          // 문서가 삭제되었다면 (즉, 계정이 삭제되었다면) 강제 로그아웃
+          // 직접 탈퇴 중인 경우에는 수동으로 처리하므로 건너뜁니다.
+          signOut();
+        } else {
+          _userModel = model;
+          notifyListeners();
+        }
+      });
+
       await _updateFcmToken(user.uid);
     } else {
       _notificationService.setOnTokenRefreshHandler(null);
       _userModel = null;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   void updateUserModel(UserModel? userModel) {
@@ -140,26 +167,42 @@ class AuthController extends ChangeNotifier {
   }
 
   // 비밀번호 직접 변경
-  Future<void> changePassword(String newPassword) async {
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
     final user = _currentUser;
-    if (user != null) {
+    final email = _userModel?.email;
+
+    if (user != null && email != null) {
+      // 0. 재인증 (최근 로그인 확인)
+      await _authService.reauthenticate(email, currentPassword);
+      // 1. 비밀번호 업데이트
       await user.updatePassword(newPassword);
     }
   }
 
   // 회원 탈퇴
-  Future<void> deleteAccount() async {
+  Future<void> deleteAccount(String password) async {
     final user = _currentUser;
-    if (user != null) {
-      final uid = user.uid;
-      // 1. Firestore 데이터 삭제
-      await _userService.deleteUserData(uid);
-      // 2. Auth 유저 삭제
-      await user.delete();
-      // 3. 로그아웃 상태 처리
-      _currentUser = null;
-      _userModel = null;
-      notifyListeners();
+    final email = _userModel?.email;
+
+    if (user != null && email != null) {
+      _isDeletingAccount = true;
+      try {
+        // 0. 재인증 (최근 로그인 확인)
+        await _authService.reauthenticate(email, password);
+
+        final uid = user.uid;
+        // 1. Firestore 데이터 삭제
+        await _userService.deleteUserData(uid);
+        // 2. Auth 유저 삭제
+        await user.delete();
+        // 3. 로그아웃 상태 처리
+        _currentUser = null;
+        _userModel = null;
+        notifyListeners();
+      } finally {
+        _isDeletingAccount = false;
+      }
     }
   }
 }

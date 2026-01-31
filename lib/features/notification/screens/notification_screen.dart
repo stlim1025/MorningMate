@@ -138,17 +138,6 @@ class NotificationScreen extends StatelessWidget {
                         if (!notification.isRead) {
                           notificationController.markAsRead(notification.id);
                         }
-                        // 응원 메시지인 경우 탭했을 때 바로 답장 팝업 띄우기 (이미 답장한 경우는 제외)
-                        if (notification.type ==
-                                NotificationType.cheerMessage &&
-                            !notification.isReplied) {
-                          ReplyDialog.show(
-                            context,
-                            receiverId: notification.senderId,
-                            receiverNickname: notification.senderNickname,
-                            notificationId: notification.id,
-                          );
-                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.all(16),
@@ -183,6 +172,25 @@ class NotificationScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
+                                    notification.type ==
+                                            NotificationType.cheerMessage
+                                        ? '${notification.senderNickname}님의 응원'
+                                        : (notification.type ==
+                                                NotificationType.wakeUp
+                                            ? '깨우기 알림'
+                                            : (notification.type ==
+                                                    NotificationType
+                                                        .friendRequest
+                                                ? '친구 요청'
+                                                : '알림')),
+                                    style: TextStyle(
+                                      color: colorScheme.textSecondary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
                                     notification.message,
                                     style: TextStyle(
                                       color: colorScheme.textPrimary,
@@ -204,7 +212,8 @@ class NotificationScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            if (isFriendRequest)
+                            if (isFriendRequest) ...[
+                              const SizedBox(width: 16),
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -219,10 +228,8 @@ class NotificationScreen extends StatelessWidget {
                                           authController.userModel?.nickname ??
                                               '알 수 없음',
                                           notification.senderId,
+                                          notification.senderNickname,
                                         );
-                                        await notificationController
-                                            .deleteNotification(
-                                                notification.id);
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor:
@@ -260,10 +267,8 @@ class NotificationScreen extends StatelessWidget {
                                           userId,
                                           notification.senderId,
                                           userNickname,
+                                          notification.senderNickname,
                                         );
-                                        await notificationController
-                                            .deleteNotification(
-                                                notification.id);
                                       },
                                       style: OutlinedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
@@ -286,11 +291,11 @@ class NotificationScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ],
-                              )
-                            else if (notification.type ==
+                              ),
+                            ] else if (notification.type ==
                                 NotificationType.cheerMessage)
                               Padding(
-                                padding: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.only(left: 12),
                                 child: notification.isReplied
                                     ? Container(
                                         padding: const EdgeInsets.symmetric(

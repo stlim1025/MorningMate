@@ -4,7 +4,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../core/widgets/floating_notification.dart';
 import '../router/app_router.dart';
-import '../features/social/widgets/reply_dialog.dart';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -89,25 +88,11 @@ class NotificationService {
       _showInAppNotification(
         title: message.notification!.title,
         body: message.notification!.body,
+        data: message.data, // data를 함께 넘겨서 한 번만 처리
       );
-      print('제목: ${message.notification!.title}');
-      print('내용: ${message.notification!.body}');
-    }
-
-    // 데이터 메시지 처리
-    if (message.data.isNotEmpty) {
-      if (message.notification == null) {
-        _showInAppNotificationFromData(message.data);
-      } else {
-        // 이미 노티가 있어서 _showInAppNotification이 호출된 경우라도
-        // 데이터에 따른 클릭 이벤트를 위해 정보 업데이트가 필요할 수 있음
-        // 지금은 _showInAppNotification 호출 시 data를 넘기도록 수정
-        _showInAppNotification(
-          title: message.notification!.title,
-          body: message.notification!.body,
-          data: message.data,
-        );
-      }
+    } else if (message.data.isNotEmpty) {
+      // notification이 없고 data만 있는 경우
+      _showInAppNotificationFromData(message.data);
       _handleDataMessage(message.data);
     }
   }
@@ -203,7 +188,10 @@ class NotificationService {
         body = '축하합니다! 캐릭터가 진화했습니다!';
         break;
       case 'cheer_message':
-        title = '친구가 응원 메시지를 보냈어요.';
+        final String? senderNickname = data['senderNickname'];
+        title = senderNickname != null && senderNickname.isNotEmpty
+            ? '$senderNickname님이 응원 메시지를 보냈어요.'
+            : '친구가 응원 메시지를 보냈어요.';
         body = data['message']?.toString();
         break;
       case 'friend_request':
@@ -236,11 +224,11 @@ class NotificationService {
         break;
     }
 
-    _showInAppNotification(title: title, body: body, data: data);
+    _showInAppNotification(title: title, body: body, type: type, data: data);
   }
 
   void _showInAppNotification(
-      {String? title, String? body, Map<String, dynamic>? data}) {
+      {String? title, String? body, String? type, Map<String, dynamic>? data}) {
     final overlayState = _navigatorKey?.currentState?.overlay;
     if (overlayState == null) {
       _showFallbackNotification(title: title, body: body);
@@ -268,20 +256,9 @@ class NotificationService {
         child: FloatingNotification(
           title: title ?? '알림',
           body: body,
+          type: type,
           onTap: () {
-            if (data != null && data['type'] == 'cheer_message') {
-              final senderId = data['senderId'];
-              final senderNickname = data['senderNickname'] ?? '친구';
-              if (senderId != null) {
-                ReplyDialog.show(
-                  _navigatorKey!.currentState!.context,
-                  receiverId: senderId,
-                  receiverNickname: senderNickname,
-                );
-              }
-            } else {
-              _handleNotificationTapFromData(data);
-            }
+            _handleNotificationTapFromData(data);
           },
           onDismiss: () {
             try {
@@ -316,7 +293,14 @@ class NotificationService {
         type == 'friend_accept' ||
         type == 'friendAccept' ||
         type == 'friend_reject' ||
-        type == 'friendReject') {
+        type == 'friendReject' ||
+        type == 'cheer_message' ||
+        type == 'cheerMessage' ||
+        type == 'wake_up' ||
+        type == 'wakeUp' ||
+        type == 'morning_diary' ||
+        type == 'morningDiary' ||
+        type == 'morning_reminder') {
       AppRouter.router.go('/notification');
     }
   }

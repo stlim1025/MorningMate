@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../controllers/character_controller.dart';
+import 'shop_screen.dart';
+import 'decoration_screen.dart';
 
 class CharacterRoomScreen extends StatelessWidget {
   const CharacterRoomScreen({super.key});
@@ -297,12 +299,9 @@ class CharacterRoomScreen extends StatelessWidget {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('상점 기능은 개발 중입니다'),
-                    backgroundColor: colorScheme.info,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ShopScreen()),
                 );
               },
               icon: const Icon(Icons.shopping_bag),
@@ -321,12 +320,10 @@ class CharacterRoomScreen extends StatelessWidget {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('커스터마이징 기능은 개발 중입니다'),
-                    backgroundColor: colorScheme.info,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const DecorationScreen()),
                 );
               },
               icon: const Icon(Icons.edit),

@@ -14,9 +14,12 @@ class SocialController extends ChangeNotifier {
   final NotificationService _notificationService;
 
   static const Duration _wakeUpCooldown = Duration(seconds: 10);
+  static const Duration _cheerCooldown = Duration(seconds: 30);
 
   final Map<String, DateTime> _wakeUpCooldowns = {};
+  final Map<String, DateTime> _cheerCooldowns = {};
   Timer? _cooldownTimer;
+  StreamSubscription<List<Map<String, dynamic>>>? _friendRequestSubscription;
 
   SocialController(
     this._friendService,
@@ -27,13 +30,14 @@ class SocialController extends ChangeNotifier {
   @override
   void dispose() {
     _cooldownTimer?.cancel();
+    _friendRequestSubscription?.cancel();
     super.dispose();
   }
 
   void _startCooldownTimer() {
     if (_cooldownTimer != null && _cooldownTimer!.isActive) return;
     _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_wakeUpCooldowns.isEmpty) {
+      if (_wakeUpCooldowns.isEmpty && _cheerCooldowns.isEmpty) {
         timer.cancel();
         return;
       }
@@ -42,10 +46,12 @@ class SocialController extends ChangeNotifier {
       // 만료된 쿨다운 제거
       _wakeUpCooldowns
           .removeWhere((id, time) => now.difference(time) >= _wakeUpCooldown);
+      _cheerCooldowns
+          .removeWhere((id, time) => now.difference(time) >= _cheerCooldown);
 
       notifyListeners();
 
-      if (_wakeUpCooldowns.isEmpty) {
+      if (_wakeUpCooldowns.isEmpty && _cheerCooldowns.isEmpty) {
         timer.cancel();
       }
     });
@@ -118,17 +124,55 @@ class SocialController extends ChangeNotifier {
     return _wakeUpCooldown - elapsed;
   }
 
+  bool canSendCheer(String friendId) {
+    final now = DateTime.now();
+    final lastSentAt = _cheerCooldowns[friendId];
+    if (lastSentAt == null) {
+      _cheerCooldowns[friendId] = now;
+      _startCooldownTimer();
+      notifyListeners();
+      return true;
+    }
+
+    if (now.difference(lastSentAt) >= _cheerCooldown) {
+      _cheerCooldowns[friendId] = now;
+      _startCooldownTimer();
+      notifyListeners();
+      return true;
+    }
+
+    return false;
+  }
+
+  Duration cheerCooldownRemaining(String friendId) {
+    final lastSentAt = _cheerCooldowns[friendId];
+    if (lastSentAt == null) return Duration.zero;
+
+    final elapsed = DateTime.now().difference(lastSentAt);
+    if (elapsed >= _cheerCooldown) return Duration.zero;
+
+    return _cheerCooldown - elapsed;
+  }
+
   // 친구 목록 로드
   Future<void> loadFriends(String userId) async {
     _isLoading = true;
     Future.microtask(() => notifyListeners());
 
+    // 기존 스트림 구독 취소
+    await _friendRequestSubscription?.cancel();
+
     try {
       // 1. 친구 목록 가져오기
       _friends = await _friendService.getFriends(userId);
 
-      // 2. 친구 요청 목록 가져오기
-      _friendRequests = await _friendService.getReceivedFriendRequests(userId);
+      // 2. 친구 요청 실시간 구독 시작
+      _friendRequestSubscription = _friendService
+          .getReceivedFriendRequestsStream(userId)
+          .listen((requests) {
+        _friendRequests = requests;
+        notifyListeners();
+      });
 
       // 3. 각 친구의 기상 상태(일기 작성 여부) 확인 및 캐싱
       for (var friend in _friends) {
@@ -171,14 +215,11 @@ class SocialController extends ChangeNotifier {
           .httpsCallable('sendFriendRequestNotification');
       unawaited(() async {
         try {
-          final result = await callable.call({
+          await callable.call({
             'userId': userId,
             'friendId': friendId,
             'senderNickname': senderNickname,
           });
-          if (result.data is Map && result.data['success'] == true) {
-            await notificationRef.update({'fcmSent': true});
-          }
         } catch (e) {
           print('친구 요청 FCM 전송 오류: $e');
         }
@@ -191,7 +232,7 @@ class SocialController extends ChangeNotifier {
 
   // 친구 요청 수락
   Future<void> acceptFriendRequest(String requestId, String userId,
-      String userNickname, String friendId) async {
+      String userNickname, String friendId, String friendNickname) async {
     try {
       await _friendService.acceptFriendRequest(requestId, userId, friendId);
 
@@ -201,7 +242,7 @@ class SocialController extends ChangeNotifier {
         'userId': friendId,
         'senderId': userId,
         'senderNickname': userNickname,
-        'type': 'system',
+        'type': 'friendAccept',
         'message': '$userNickname님이 친구 요청을 수락했어요.',
         'isRead': false,
         'fcmSent': false,
@@ -212,18 +253,32 @@ class SocialController extends ChangeNotifier {
           .httpsCallable('sendFriendAcceptNotification');
       unawaited(() async {
         try {
-          final result = await callable.call({
+          await callable.call({
             'userId': userId,
             'friendId': friendId,
             'senderNickname': userNickname,
           });
-          if (result.data is Map && result.data['success'] == true) {
-            await notificationRef.update({'fcmSent': true});
-          }
         } catch (e) {
           print('친구 수락 FCM 전송 오류: $e');
         }
       }());
+
+      // 친구 요청 알림 업데이트 (동기화)
+      final notificationsSnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('data.requestId', isEqualTo: requestId)
+          .get();
+
+      final b = FirebaseFirestore.instance.batch();
+      for (var doc in notificationsSnapshot.docs) {
+        b.update(doc.reference, {
+          'message': '$friendNickname님과 친구가 되었습니다!',
+          'type': 'system',
+          'isRead': true,
+        });
+      }
+      await b.commit();
+
       // 목록 새로고침
       await loadFriends(userId);
     } catch (e) {
@@ -234,7 +289,7 @@ class SocialController extends ChangeNotifier {
 
   // 친구 요청 거절
   Future<void> rejectFriendRequest(String requestId, String userId,
-      String friendId, String userNickname) async {
+      String friendId, String userNickname, String friendNickname) async {
     try {
       await _friendService.rejectFriendRequest(requestId);
 
@@ -244,7 +299,7 @@ class SocialController extends ChangeNotifier {
         'userId': friendId,
         'senderId': userId,
         'senderNickname': userNickname,
-        'type': 'system',
+        'type': 'friendReject',
         'message': '$userNickname님이 친구 요청을 거절했어요.',
         'isRead': false,
         'fcmSent': false,
@@ -255,18 +310,36 @@ class SocialController extends ChangeNotifier {
           .httpsCallable('sendFriendRejectNotification');
       unawaited(() async {
         try {
-          final result = await callable.call({
+          await callable.call({
             'userId': userId,
             'friendId': friendId,
             'senderNickname': userNickname,
           });
-          if (result.data is Map && result.data['success'] == true) {
-            await notificationRef.update({'fcmSent': true});
-          }
         } catch (e) {
           print('친구 거절 FCM 전송 오류: $e');
         }
       }());
+
+      // 친구 요청 알림 업데이트 (동기화)
+      final notificationsSnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('data.requestId', isEqualTo: requestId)
+          .get();
+
+      final b = FirebaseFirestore.instance.batch();
+      for (var doc in notificationsSnapshot.docs) {
+        final docData = doc.data();
+        final isRecipient = docData['userId'] == userId;
+        b.update(doc.reference, {
+          'message': isRecipient
+              ? '$friendNickname님의 친구 요청을 거절했습니다.'
+              : '$userNickname님이 친구 요청을 거절하셨습니다.',
+          'type': 'system',
+          'isRead': true,
+        });
+      }
+      await b.commit();
+
       // 목록 새로고침
       await loadFriends(userId);
     } catch (e) {
@@ -308,14 +381,11 @@ class SocialController extends ChangeNotifier {
 
       unawaited(() async {
         try {
-          final result = await callable.call({
+          await callable.call({
             'userId': userId,
             'friendId': friendId,
             'friendName': userNickname,
           });
-          if (result.data is Map && result.data['success'] == true) {
-            await notificationRef.update({'fcmSent': true});
-          }
         } catch (e) {
           print('깨우기 FCM 전송 오류: $e');
         }

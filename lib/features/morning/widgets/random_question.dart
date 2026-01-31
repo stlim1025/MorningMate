@@ -18,10 +18,10 @@ class RandomQuestionWidget extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colorScheme.secondary.withOpacity(0.2),
+              color: colorScheme.accent.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: colorScheme.secondary.withOpacity(0.3),
+                color: colorScheme.accent.withOpacity(0.3),
                 width: 1,
               ),
             ),
