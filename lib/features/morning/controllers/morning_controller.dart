@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/diary_service.dart';
 import '../../../services/question_service.dart';
@@ -16,7 +17,31 @@ class MorningController extends ChangeNotifier {
   final UserService _userService;
 
   MorningController(
-      this._diaryService, this._questionService, this._userService);
+      this._diaryService, this._questionService, this._userService) {
+    _loadCachedQuestion();
+  }
+
+  Future<void> _loadCachedQuestion() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString('cached_question');
+      if (cached != null && _currentQuestion == null) {
+        _currentQuestion = cached;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('질문 캐시 로드 오류: $e');
+    }
+  }
+
+  Future<void> _saveQuestionToCache(String question) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_question', question);
+    } catch (e) {
+      debugPrint('질문 캐시 저장 오류: $e');
+    }
+  }
 
   // 상태 변수
   bool _isLoading = false; // 초기값 false로 변경 (stuck 방지)
@@ -154,12 +179,13 @@ class MorningController extends ChangeNotifier {
   Future<void> fetchRandomQuestion() async {
     try {
       _currentQuestion = await _questionService.getRandomQuestion();
+      _saveQuestionToCache(_currentQuestion!);
       Future.microtask(() {
         notifyListeners();
       });
     } catch (e) {
       print('랜덤 질문 가져오기 오류: $e');
-      _currentQuestion = '오늘 하루는 어땠나요?';
+      _currentQuestion = _currentQuestion ?? '오늘 하루는 어땠나요?';
       Future.microtask(() {
         notifyListeners();
       });

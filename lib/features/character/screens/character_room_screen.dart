@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/theme_controller.dart';
+import '../../../core/theme/app_color_scheme.dart';
 import '../controllers/character_controller.dart';
 
 class CharacterRoomScreen extends StatelessWidget {
@@ -10,6 +9,7 @@ class CharacterRoomScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -18,12 +18,12 @@ class CharacterRoomScreen extends StatelessWidget {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.pets, color: AppColors.primary, size: 28),
-            SizedBox(width: 8),
+            Icon(Icons.pets, color: colorScheme.iconPrimary, size: 28),
+            const SizedBox(width: 8),
             Text(
               '내 캐릭터',
               style: TextStyle(
-                color: Theme.of(context).textTheme.titleLarge?.color,
+                color: colorScheme.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -38,18 +38,17 @@ class CharacterRoomScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.pointStar.withOpacity(0.2),
+                  color: colorScheme.pointStar.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.stars,
-                        color: AppColors.pointStar, size: 18),
+                    Icon(Icons.stars, color: colorScheme.pointStar, size: 18),
                     const SizedBox(width: 6),
                     Text(
                       '${controller.currentUser?.points ?? 0}',
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        color: colorScheme.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -65,22 +64,15 @@ class CharacterRoomScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
-
-            // 캐릭터 표시 영역
             Expanded(
               child: Consumer<CharacterController>(
                 builder: (context, controller, child) {
                   return SingleChildScrollView(
                     child: Column(
                       children: [
-                        // 캐릭터
-                        _buildCharacter(context, controller),
-
+                        _buildCharacter(context, controller, colorScheme),
                         const SizedBox(height: 32),
-
-                        // 캐릭터 정보 및 경험치 바
-                        _buildCharacterInfo(context, controller),
-
+                        _buildCharacterInfo(context, controller, colorScheme),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -88,17 +80,16 @@ class CharacterRoomScreen extends StatelessWidget {
                 },
               ),
             ),
-
-            // 하단 커스터마이징 버튼
-            _buildBottomActions(context),
+            _buildBottomActions(context, colorScheme),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(context),
+      bottomNavigationBar: _buildBottomNavigationBar(context, colorScheme),
     );
   }
 
-  Widget _buildCharacter(BuildContext context, CharacterController controller) {
+  Widget _buildCharacter(BuildContext context, CharacterController controller,
+      AppColorScheme colorScheme) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -106,25 +97,30 @@ class CharacterRoomScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          // 캐릭터 아이콘
           Container(
             width: 200,
             height: 200,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primary.withOpacity(0.2),
-                  AppColors.secondary.withOpacity(0.2),
+                  colorScheme.primaryButton.withOpacity(0.2),
+                  colorScheme.secondary.withOpacity(0.2),
                 ],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: colorScheme.primaryButton.withOpacity(0.2),
                   blurRadius: 30,
                   spreadRadius: 5,
                 ),
@@ -134,7 +130,7 @@ class CharacterRoomScreen extends StatelessWidget {
               child: Icon(
                 _getCharacterIcon(controller.characterState),
                 size: 100,
-                color: AppColors.primary,
+                color: colorScheme.primaryButton,
               ),
             ),
           ),
@@ -142,11 +138,7 @@ class CharacterRoomScreen extends StatelessWidget {
           Text(
             controller.currentAnimation,
             style: TextStyle(
-              color: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.color
-                  ?.withOpacity(0.7),
+              color: colorScheme.textSecondary,
               fontSize: 13,
             ),
           ),
@@ -155,8 +147,8 @@ class CharacterRoomScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCharacterInfo(
-      BuildContext context, CharacterController controller) {
+  Widget _buildCharacterInfo(BuildContext context,
+      CharacterController controller, AppColorScheme colorScheme) {
     final currentLevel = controller.currentUser?.characterLevel ?? 1;
     final currentExp = controller.currentUser?.experience ?? 0;
     final requiredExp = controller.currentUser?.requiredExpForNextLevel ?? 10;
@@ -168,20 +160,23 @@ class CharacterRoomScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: AppColors.smallCardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          // 레벨 정보
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 '레벨',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 15,
-                ),
+                style:
+                    TextStyle(color: colorScheme.textSecondary, fontSize: 15),
               ),
               Container(
                 padding:
@@ -189,8 +184,8 @@ class CharacterRoomScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withOpacity(0.2),
-                      AppColors.secondary.withOpacity(0.2),
+                      colorScheme.primaryButton.withOpacity(0.2),
+                      colorScheme.secondary.withOpacity(0.2),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -198,7 +193,7 @@ class CharacterRoomScreen extends StatelessWidget {
                 child: Text(
                   'Lv. $currentLevel',
                   style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                    color: colorScheme.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -207,18 +202,16 @@ class CharacterRoomScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-
-          // 경험치 바
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     '경험치',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: colorScheme.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -227,8 +220,8 @@ class CharacterRoomScreen extends StatelessWidget {
                     currentLevel >= 6
                         ? 'MAX'
                         : '$currentExp / $requiredExp EXP',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: colorScheme.primaryButton,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -241,41 +234,38 @@ class CharacterRoomScreen extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 12,
-                  backgroundColor: AppColors.textHint.withOpacity(0.2),
+                  backgroundColor: colorScheme.textHint.withOpacity(0.2),
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    currentLevel >= 6 ? AppColors.success : AppColors.primary,
+                    currentLevel >= 6
+                        ? colorScheme.success
+                        : colorScheme.primaryButton,
                   ),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-          Divider(color: AppColors.textHint.withOpacity(0.3)),
+          Divider(color: colorScheme.textHint.withOpacity(0.3)),
           const SizedBox(height: 16),
-
-          // 상태 정보
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 '상태',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 15,
-                ),
+                style:
+                    TextStyle(color: colorScheme.textSecondary, fontSize: 15),
               ),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.2),
+                  color: colorScheme.accent.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   _getStateName(controller.characterState),
-                  style: const TextStyle(
-                    color: AppColors.accent,
+                  style: TextStyle(
+                    color: colorScheme.accent,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
@@ -288,7 +278,7 @@ class CharacterRoomScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomActions(BuildContext context) {
+  Widget _buildBottomActions(BuildContext context, AppColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -296,7 +286,7 @@ class CharacterRoomScreen extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textHint.withOpacity(0.1),
+            color: colorScheme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -310,23 +300,20 @@ class CharacterRoomScreen extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: const Text('상점 기능은 개발 중입니다'),
-                    backgroundColor: AppColors.info,
+                    backgroundColor: colorScheme.info,
                     behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                   ),
                 );
               },
               icon: const Icon(Icons.shopping_bag),
               label: const Text('상점'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+                foregroundColor: colorScheme.primaryButton,
+                side: BorderSide(
+                    color: colorScheme.primaryButton.withOpacity(0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                    borderRadius: BorderRadius.circular(16)),
               ),
             ),
           ),
@@ -337,24 +324,20 @@ class CharacterRoomScreen extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: const Text('커스터마이징 기능은 개발 중입니다'),
-                    backgroundColor: AppColors.info,
+                    backgroundColor: colorScheme.info,
                     behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                   ),
                 );
               },
               icon: const Icon(Icons.edit),
               label: const Text('꾸미기'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: colorScheme.primaryButton,
+                foregroundColor: colorScheme.primaryButtonForeground,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 2,
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
               ),
             ),
           ),
@@ -363,13 +346,14 @@ class CharacterRoomScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomNavigationBar(BuildContext context) {
+  Widget _buildBottomNavigationBar(
+      BuildContext context, AppColorScheme colorScheme) {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
         boxShadow: [
           BoxShadow(
-            color: AppColors.textHint.withOpacity(0.1),
+            color: colorScheme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -378,10 +362,8 @@ class CharacterRoomScreen extends StatelessWidget {
       child: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: 1,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Provider.of<ThemeController>(context).isDarkMode
-            ? const Color(0xFF3E3224)
-            : Colors.grey,
+        selectedItemColor: colorScheme.tabSelected,
+        unselectedItemColor: colorScheme.tabUnselected,
         backgroundColor: Colors.transparent,
         elevation: 0,
         onTap: (index) {

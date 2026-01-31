@@ -16,6 +16,7 @@ class NotificationModel {
   final String message;
   final bool isRead;
   final bool fcmSent;
+  final bool isReplied; // 답장 완료 여부
   final DateTime createdAt;
   final Map<String, dynamic>? data; // 추가 데이터 (친구 요청 ID 등)
 
@@ -28,6 +29,7 @@ class NotificationModel {
     required this.message,
     this.isRead = false,
     this.fcmSent = false,
+    this.isReplied = false,
     required this.createdAt,
     this.data,
   });
@@ -46,6 +48,7 @@ class NotificationModel {
       message: data['message'] ?? '',
       isRead: data['isRead'] ?? false,
       fcmSent: data['fcmSent'] ?? false,
+      isReplied: data['isReplied'] ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       data: data['data'],
     );
@@ -60,6 +63,7 @@ class NotificationModel {
       'message': message,
       'isRead': isRead,
       'fcmSent': fcmSent,
+      'isReplied': isReplied,
       'createdAt': Timestamp.fromDate(createdAt),
       'data': data,
     };

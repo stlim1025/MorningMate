@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../core/widgets/floating_notification.dart';
 import '../router/app_router.dart';
+import '../features/social/widgets/reply_dialog.dart';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -97,6 +98,15 @@ class NotificationService {
     if (message.data.isNotEmpty) {
       if (message.notification == null) {
         _showInAppNotificationFromData(message.data);
+      } else {
+        // 이미 노티가 있어서 _showInAppNotification이 호출된 경우라도
+        // 데이터에 따른 클릭 이벤트를 위해 정보 업데이트가 필요할 수 있음
+        // 지금은 _showInAppNotification 호출 시 data를 넘기도록 수정
+        _showInAppNotification(
+          title: message.notification!.title,
+          body: message.notification!.body,
+          data: message.data,
+        );
       }
       _handleDataMessage(message.data);
     }
@@ -159,8 +169,7 @@ class NotificationService {
         break;
       case 'friend_request':
       case 'friendRequest':
-        final String? friendName =
-            data['friendName'] ?? data['senderNickname'];
+        final String? friendName = data['friendName'] ?? data['senderNickname'];
         print('$friendName님이 친구 추가를 요청했습니다.');
         break;
       case 'friend_accept':
@@ -199,8 +208,7 @@ class NotificationService {
         break;
       case 'friend_request':
       case 'friendRequest':
-        final String? friendName =
-            data['friendName'] ?? data['senderNickname'];
+        final String? friendName = data['friendName'] ?? data['senderNickname'];
         title = '친구 요청';
         body = friendName == null || friendName.isEmpty
             ? '친구 요청이 도착했어요.'
@@ -228,13 +236,13 @@ class NotificationService {
         break;
     }
 
-    _showInAppNotification(title: title, body: body);
+    _showInAppNotification(title: title, body: body, data: data);
   }
 
-  void _showInAppNotification({String? title, String? body}) {
+  void _showInAppNotification(
+      {String? title, String? body, Map<String, dynamic>? data}) {
     final overlayState = _navigatorKey?.currentState?.overlay;
     if (overlayState == null) {
-      // Overlay를 찾을 수 없거나 Navigator가 준비되지 않았을 경우 기존 방식(MaterialBanner)으로 표시
       _showFallbackNotification(title: title, body: body);
       return;
     }
@@ -260,6 +268,21 @@ class NotificationService {
         child: FloatingNotification(
           title: title ?? '알림',
           body: body,
+          onTap: () {
+            if (data != null && data['type'] == 'cheer_message') {
+              final senderId = data['senderId'];
+              final senderNickname = data['senderNickname'] ?? '친구';
+              if (senderId != null) {
+                ReplyDialog.show(
+                  _navigatorKey!.currentState!.context,
+                  receiverId: senderId,
+                  receiverNickname: senderNickname,
+                );
+              }
+            } else {
+              _handleNotificationTapFromData(data);
+            }
+          },
           onDismiss: () {
             try {
               if (entry.mounted) {
@@ -278,6 +301,24 @@ class NotificationService {
 
     _currentOverlayEntry = entry;
     overlayState.insert(entry);
+  }
+
+  // 데이터 기반 탭 처리 (내부용)
+  void _handleNotificationTapFromData(Map<String, dynamic>? data) {
+    if (data == null) return;
+    final String? type = data['type'];
+
+    // 깨우기 알림(wakeUp)은 FloatingNotification.onTap에서 이미 _dismiss()를 호출하므로
+    // 추가적인 navigation 없이 알림만 지워지는 효과를 냅니다.
+
+    if (type == 'friend_request' ||
+        type == 'friendRequest' ||
+        type == 'friend_accept' ||
+        type == 'friendAccept' ||
+        type == 'friend_reject' ||
+        type == 'friendReject') {
+      AppRouter.router.go('/notification');
+    }
   }
 
   void _showFallbackNotification({String? title, String? body}) {

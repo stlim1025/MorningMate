@@ -17,6 +17,12 @@ class UserModel {
   final List<String> friendIds;
   final bool writingBlurEnabled;
   final bool biometricEnabled;
+  final bool morningDiaryNoti;
+  final bool wakeUpNoti;
+  final bool cheerMessageNoti;
+  final bool friendRequestNoti;
+  final bool friendAcceptNoti;
+  final bool friendRejectNoti;
 
   UserModel({
     required this.uid,
@@ -35,6 +41,12 @@ class UserModel {
     this.friendIds = const [],
     this.writingBlurEnabled = true,
     this.biometricEnabled = false,
+    this.morningDiaryNoti = true,
+    this.wakeUpNoti = true,
+    this.cheerMessageNoti = true,
+    this.friendRequestNoti = true,
+    this.friendAcceptNoti = true,
+    this.friendRejectNoti = true,
   });
 
   // Firestore에서 가져오기
@@ -61,6 +73,12 @@ class UserModel {
       friendIds: List<String>.from(data['friendIds'] ?? []),
       writingBlurEnabled: data['writingBlurEnabled'] ?? true,
       biometricEnabled: data['biometricEnabled'] ?? false,
+      morningDiaryNoti: data['morningDiaryNoti'] ?? true,
+      wakeUpNoti: data['wakeUpNoti'] ?? true,
+      cheerMessageNoti: data['cheerMessageNoti'] ?? true,
+      friendRequestNoti: data['friendRequestNoti'] ?? true,
+      friendAcceptNoti: data['friendAcceptNoti'] ?? true,
+      friendRejectNoti: data['friendRejectNoti'] ?? true,
     );
   }
 
@@ -84,6 +102,12 @@ class UserModel {
       'friendIds': friendIds,
       'writingBlurEnabled': writingBlurEnabled,
       'biometricEnabled': biometricEnabled,
+      'morningDiaryNoti': morningDiaryNoti,
+      'wakeUpNoti': wakeUpNoti,
+      'cheerMessageNoti': cheerMessageNoti,
+      'friendRequestNoti': friendRequestNoti,
+      'friendAcceptNoti': friendAcceptNoti,
+      'friendRejectNoti': friendRejectNoti,
     };
   }
 
@@ -105,6 +129,12 @@ class UserModel {
     List<String>? friendIds,
     bool? writingBlurEnabled,
     bool? biometricEnabled,
+    bool? morningDiaryNoti,
+    bool? wakeUpNoti,
+    bool? cheerMessageNoti,
+    bool? friendRequestNoti,
+    bool? friendAcceptNoti,
+    bool? friendRejectNoti,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -124,6 +154,12 @@ class UserModel {
       friendIds: friendIds ?? this.friendIds,
       writingBlurEnabled: writingBlurEnabled ?? this.writingBlurEnabled,
       biometricEnabled: biometricEnabled ?? this.biometricEnabled,
+      morningDiaryNoti: morningDiaryNoti ?? this.morningDiaryNoti,
+      wakeUpNoti: wakeUpNoti ?? this.wakeUpNoti,
+      cheerMessageNoti: cheerMessageNoti ?? this.cheerMessageNoti,
+      friendRequestNoti: friendRequestNoti ?? this.friendRequestNoti,
+      friendAcceptNoti: friendAcceptNoti ?? this.friendAcceptNoti,
+      friendRejectNoti: friendRejectNoti ?? this.friendRejectNoti,
     );
   }
 

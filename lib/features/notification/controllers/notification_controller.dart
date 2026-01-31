@@ -19,11 +19,36 @@ class NotificationController extends ChangeNotifier {
     });
   }
 
+  // 특정 친구에게 보낸 응원 메시지 목록 가져오기
+  Stream<List<NotificationModel>> getSentMessagesStream(
+      String senderId, String receiverId) {
+    return _db
+        .collection('notifications')
+        .where('senderId', isEqualTo: senderId)
+        .where('userId', isEqualTo: receiverId)
+        .where('type', isEqualTo: 'cheerMessage')
+        .snapshots()
+        .map((snapshot) {
+      final messages = snapshot.docs
+          .map((doc) => NotificationModel.fromFirestore(doc))
+          .toList();
+      messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return messages;
+    });
+  }
+
   Future<void> markAsRead(String notificationId) async {
     await _db
         .collection('notifications')
         .doc(notificationId)
         .update({'isRead': true});
+  }
+
+  Future<void> markAsReplied(String notificationId) async {
+    await _db
+        .collection('notifications')
+        .doc(notificationId)
+        .update({'isReplied': true, 'isRead': true});
   }
 
   Future<void> deleteNotification(String notificationId) async {
@@ -49,8 +74,8 @@ class NotificationController extends ChangeNotifier {
   }
 
   // 응원 메시지(방명록) 보내기 -> 알림 생성
-  Future<void> sendCheerMessage(String senderId, String senderNickname,
-      String receiverId, String message,
+  Future<void> sendCheerMessage(
+      String senderId, String senderNickname, String receiverId, String message,
       {bool fcmSent = false}) async {
     final notificationRef = _db.collection('notifications').doc();
 

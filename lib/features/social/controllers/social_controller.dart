@@ -15,22 +15,50 @@ class SocialController extends ChangeNotifier {
 
   static const Duration _wakeUpCooldown = Duration(seconds: 10);
 
+  final Map<String, DateTime> _wakeUpCooldowns = {};
+  Timer? _cooldownTimer;
+
   SocialController(
     this._friendService,
     this._diaryService,
     this._notificationService,
   );
 
+  @override
+  void dispose() {
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startCooldownTimer() {
+    if (_cooldownTimer != null && _cooldownTimer!.isActive) return;
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_wakeUpCooldowns.isEmpty) {
+        timer.cancel();
+        return;
+      }
+
+      final now = DateTime.now();
+      // 만료된 쿨다운 제거
+      _wakeUpCooldowns
+          .removeWhere((id, time) => now.difference(time) >= _wakeUpCooldown);
+
+      notifyListeners();
+
+      if (_wakeUpCooldowns.isEmpty) {
+        timer.cancel();
+      }
+    });
+  }
+
   List<UserModel> _friends = [];
   List<Map<String, dynamic>> _friendRequests = []; // 친구 요청 목록
   // 친구 기상 상태 캐싱 (friendId -> isAwake)
   final Map<String, bool> _friendsAwakeStatus = {};
-  final Map<String, DateTime> _wakeUpCooldowns = {};
-
-  bool _isLoading = false;
 
   List<UserModel> get friends => _friends;
   List<Map<String, dynamic>> get friendRequests => _friendRequests;
+  bool _isLoading = false;
   bool get isLoading => _isLoading;
 
   // 친구의 기상 상태를 가져오는 메서드 (캐시 사용)
@@ -64,11 +92,15 @@ class SocialController extends ChangeNotifier {
     final lastSentAt = _wakeUpCooldowns[friendId];
     if (lastSentAt == null) {
       _wakeUpCooldowns[friendId] = now;
+      _startCooldownTimer();
+      notifyListeners(); // 즉시 UI 반영
       return true;
     }
 
     if (now.difference(lastSentAt) >= _wakeUpCooldown) {
       _wakeUpCooldowns[friendId] = now;
+      _startCooldownTimer();
+      notifyListeners(); // 즉시 UI 반영
       return true;
     }
 
@@ -81,6 +113,8 @@ class SocialController extends ChangeNotifier {
 
     final elapsed = DateTime.now().difference(lastSentAt);
     if (elapsed >= _wakeUpCooldown) return Duration.zero;
+
+    // 10.0초에서 시작하도록 올림 처리
     return _wakeUpCooldown - elapsed;
   }
 

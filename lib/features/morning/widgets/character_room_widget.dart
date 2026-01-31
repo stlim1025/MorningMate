@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_color_scheme.dart';
 
 class CharacterRoomWidget extends StatelessWidget {
   final bool isAwake;
@@ -13,20 +13,22 @@ class CharacterRoomWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: colorScheme.backgroundLight.withOpacity(0.1),
         borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: Colors.white.withOpacity(0.15),
+          color: colorScheme.textHint.withOpacity(0.3),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: colorScheme.shadowColor.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -35,61 +37,52 @@ class CharacterRoomWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 방 상단 (창문)
-          _buildWindow(),
-
+          _buildWindow(isAwake, colorScheme),
           const SizedBox(height: 24),
-
-          // 캐릭터 영역 (가운데)
-          _buildCharacterArea(),
-
+          _buildCharacterArea(isAwake, colorScheme),
           const SizedBox(height: 24),
-
-          // 방 하단 (가구)
-          _buildFurniture(),
+          _buildFurniture(isAwake, colorScheme),
         ],
       ),
     );
   }
 
-  Widget _buildWindow() {
+  Widget _buildWindow(bool isAwake, AppColorScheme colorScheme) {
     return Container(
       height: 100,
       decoration: BoxDecoration(
         color: isAwake
-            ? const Color(0xFF87CEEB).withOpacity(0.4)
-            : const Color(0xFF1a1a2e).withOpacity(0.6),
+            ? colorScheme.success.withOpacity(0.2)
+            : colorScheme.backgroundDark.withOpacity(0.4),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.white.withOpacity(0.3),
+          color: colorScheme.textHint.withOpacity(0.3),
           width: 3,
         ),
       ),
       child: Stack(
         children: [
-          // 창틀
           Center(
             child: Container(
               width: 3,
               height: 100,
-              color: Colors.white.withOpacity(0.4),
+              color: colorScheme.textHint.withOpacity(0.2),
             ),
           ),
           Center(
             child: Container(
               width: double.infinity,
               height: 3,
-              color: Colors.white.withOpacity(0.4),
+              color: colorScheme.textHint.withOpacity(0.2),
             ),
           ),
-          // 하늘/밤 풍경
           if (!isAwake) ...[
             Positioned(
               top: 20,
               right: 30,
               child: Icon(
                 Icons.star,
-                color: Colors.yellow.withOpacity(0.8),
+                color: colorScheme.pointStar.withOpacity(0.8),
                 size: 20,
               ),
             ),
@@ -98,7 +91,7 @@ class CharacterRoomWidget extends StatelessWidget {
               right: 50,
               child: Icon(
                 Icons.star,
-                color: Colors.yellow.withOpacity(0.6),
+                color: colorScheme.pointStar.withOpacity(0.6),
                 size: 14,
               ),
             ),
@@ -108,27 +101,24 @@ class CharacterRoomWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCharacterArea() {
+  Widget _buildCharacterArea(bool isAwake, AppColorScheme colorScheme) {
     return SizedBox(
       height: 200,
       child: Stack(
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
-          // 캐릭터 그림자
           Positioned(
             bottom: 0,
             child: Container(
               width: 120,
               height: 20,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.2),
+                color: colorScheme.shadowColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(60),
               ),
             ),
           ),
-
-          // 캐릭터 메인
           AnimatedPositioned(
             duration: const Duration(milliseconds: 800),
             curve: Curves.easeOutBack,
@@ -144,14 +134,15 @@ class CharacterRoomWidget extends StatelessWidget {
                     width: 140,
                     height: 140,
                     decoration: BoxDecoration(
-                      color:
-                          isAwake ? AppColors.awakeMode : AppColors.sleepMode,
+                      color: isAwake
+                          ? colorScheme.pointStar
+                          : colorScheme.textHint,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
                           color: (isAwake
-                                  ? AppColors.awakeMode
-                                  : AppColors.sleepMode)
+                                  ? colorScheme.pointStar
+                                  : colorScheme.textHint)
                               .withOpacity(0.5),
                           blurRadius: 30,
                           spreadRadius: 5,
@@ -168,121 +159,52 @@ class CharacterRoomWidget extends StatelessWidget {
               },
             ),
           ),
-
-          // 깨어났을 때 반짝임 이펙트
-          if (isAwake)
-            Positioned(
-              top: 20,
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 1000),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: 1.0 - value,
-                    child: Transform.scale(
-                      scale: 1.0 + value,
-                      child: Icon(
-                        Icons.auto_awesome,
-                        color: AppColors.pointStar,
-                        size: 40 + (value * 20),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          // 잠잘 때 Z 표시
-          if (!isAwake)
-            Positioned(
-              top: 30,
-              right: 80,
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(seconds: 2),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: (value * 2) % 1.0,
-                    child: const Text(
-                      'Z',
-                      style: TextStyle(
-                        fontSize: 40,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _buildFurniture() {
+  Widget _buildFurniture(bool isAwake, AppColorScheme colorScheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        // 책상
-        _buildDesk(),
-        // 화분
-        _buildPlant(),
+        _buildDesk(isAwake, colorScheme),
+        _buildPlant(colorScheme),
       ],
     );
   }
 
-  Widget _buildDesk() {
-    return Container(
+  Widget _buildDesk(bool isAwake, AppColorScheme colorScheme) {
+    return SizedBox(
       width: 70,
       height: 50,
-      decoration: BoxDecoration(
-        color: const Color(0xFF8B7355).withOpacity(0.6),
-        borderRadius: BorderRadius.circular(8),
-      ),
       child: Stack(
         children: [
-          // 책상 다리
           Positioned(
             left: 8,
             bottom: 0,
-            child: Container(
-              width: 5,
-              height: 40,
-              color: const Color(0xFF654321),
-            ),
+            child: Container(width: 5, height: 40, color: Colors.brown),
           ),
           Positioned(
             right: 8,
             bottom: 0,
+            child: Container(width: 5, height: 40, color: Colors.brown),
+          ),
+          Positioned(
+            top: 20,
             child: Container(
-              width: 5,
-              height: 40,
-              color: const Color(0xFF654321),
+              width: 70,
+              height: 10,
+              color: Colors.brown.withOpacity(0.8),
             ),
           ),
-          // 램프
           Positioned(
-            top: -12,
+            top: 0,
             right: 15,
-            child: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: isAwake
-                    ? Colors.yellow.withOpacity(0.8)
-                    : Colors.grey.withOpacity(0.4),
-                shape: BoxShape.circle,
-                boxShadow: isAwake
-                    ? [
-                        BoxShadow(
-                          color: Colors.yellow.withOpacity(0.5),
-                          blurRadius: 15,
-                          spreadRadius: 3,
-                        ),
-                      ]
-                    : [],
-              ),
+            child: Icon(
+              Icons.lightbulb,
+              size: 20,
+              color: isAwake ? colorScheme.pointStar : colorScheme.textHint,
             ),
           ),
         ],
@@ -290,35 +212,17 @@ class CharacterRoomWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildPlant() {
-    return SizedBox(
-      width: 40,
-      height: 50,
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          // 화분
-          Container(
-            width: 40,
-            height: 25,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD2691E).withOpacity(0.7),
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(6),
-              ),
-            ),
-          ),
-          // 식물
-          Positioned(
-            bottom: 20,
-            child: Icon(
-              Icons.spa,
-              color: AppColors.accent.withOpacity(0.8),
-              size: 30,
-            ),
-          ),
-        ],
-      ),
+  Widget _buildPlant(AppColorScheme colorScheme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.spa, color: colorScheme.accent, size: 30),
+        Container(
+          width: 40,
+          height: 15,
+          color: Colors.brown.withOpacity(0.7),
+        ),
+      ],
     );
   }
 }

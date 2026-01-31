@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_color_scheme.dart';
 import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/user_service.dart';
-import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 
 class SocialScreen extends StatefulWidget {
@@ -36,6 +34,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final authController = context.read<AuthController>();
     final socialController = context.read<SocialController>();
     final userId = authController.currentUser?.uid;
@@ -50,12 +49,12 @@ class _SocialScreenState extends State<SocialScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.people, color: AppColors.primary, size: 28),
-            SizedBox(width: 8),
+            Icon(Icons.people, color: colorScheme.iconPrimary, size: 28),
+            const SizedBox(width: 8),
             Text(
               '친구',
               style: TextStyle(
-                color: Theme.of(context).textTheme.titleLarge?.color,
+                color: colorScheme.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -73,13 +72,13 @@ class _SocialScreenState extends State<SocialScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.15),
+                    color: colorScheme.cardAccent.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '$count명',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: colorScheme.cardAccent,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -93,493 +92,432 @@ class _SocialScreenState extends State<SocialScreen> {
         child: Column(
           children: [
             const SizedBox(height: 8),
-
-            // 친구 요청 목록 (있을 경우에만 표시)
             Consumer<SocialController>(
               builder: (context, controller, child) {
                 if (controller.friendRequests.isEmpty) {
                   return const SizedBox.shrink();
                 }
-                return _buildFriendRequestSection(context, controller);
+                return Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryButton.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border:
+                        Border.all(color: colorScheme.primaryButton, width: 1),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.person_add,
+                              color: colorScheme.primaryButton, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            '새로운 친구 요청',
+                            style: TextStyle(
+                              color: colorScheme.primaryButton,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${controller.friendRequests.length}개',
+                            style: TextStyle(
+                              color: colorScheme.primaryButton,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      ...controller.friendRequests
+                          .map((req) => _buildRequestItem(req, colorScheme)),
+                    ],
+                  ),
+                );
               },
             ),
-
-            // 친구 목록
             Expanded(
-              child: friendsStream == null
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    )
-                  : StreamBuilder<List<UserModel>>(
-                      stream: friendsStream,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.primary,
-                            ),
-                          );
-                        }
+              child: StreamBuilder<List<UserModel>>(
+                stream: friendsStream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                        final friends = snapshot.data ?? [];
-                        if (friends.isEmpty) {
-                          return _buildEmptyState();
-                        }
-
-                        return RefreshIndicator(
-                          onRefresh: _loadFriends,
-                          color: AppColors.primary,
-                          child: GridView.builder(
-                            padding: const EdgeInsets.all(20),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.68,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.people_outline,
+                              size: 80, color: colorScheme.textHint),
+                          const SizedBox(height: 16),
+                          Text(
+                            '아직 친구가 없어요',
+                            style: TextStyle(
+                              color: colorScheme.textSecondary,
+                              fontSize: 16,
                             ),
-                            itemCount: friends.length,
-                            itemBuilder: (context, index) {
-                              return Builder(
-                                builder: (context) {
-                                  final friend = friends[index];
-                                  final isAwake =
-                                      context.select<SocialController, bool>(
-                                          (controller) =>
-                                              controller.isFriendAwake(
-                                                friend.uid,
-                                                friend.lastDiaryDate,
-                                              ));
-                                  return _buildFriendCard(
-                                    context,
-                                    friend,
-                                    isAwake: isAwake,
-                                  );
-                                },
-                              );
-                            },
                           ),
-                        );
-                      },
+                        ],
+                      ),
+                    );
+                  }
+
+                  final friends = snapshot.data!;
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 0.8,
                     ),
+                    itemCount: friends.length,
+                    itemBuilder: (context, index) {
+                      return _buildFriendCard(friends[index], colorScheme);
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(context),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddFriendDialog(context),
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.person_add, color: Colors.white),
-        label: const Text(
-          '친구 추가',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        elevation: 4,
+        onPressed: () => _showAddFriendDialog(context, colorScheme),
+        backgroundColor: colorScheme.primaryButton,
+        foregroundColor: colorScheme.primaryButtonForeground,
+        icon: const Icon(Icons.add),
+        label: const Text('친구 추가'),
       ),
+      bottomNavigationBar: _buildBottomNavigationBar(context, colorScheme),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildRequestItem(
+      Map<String, dynamic> req, AppColorScheme colorScheme) {
+    final user = req['user'] as UserModel;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundDark,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.people_outline,
-              size: 80,
-              color: AppColors.textSecondary.withOpacity(0.5),
+          CircleAvatar(
+            backgroundColor: colorScheme.secondary.withOpacity(0.2),
+            child: Text(user.nickname[0],
+                style: TextStyle(color: colorScheme.secondary)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              user.nickname,
+              style: TextStyle(
+                color: colorScheme.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            '아직 친구가 없습니다',
-            style: TextStyle(
-              color: Theme.of(context).textTheme.titleLarge?.color,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
+          IconButton(
+            onPressed: () =>
+                _acceptRequest(req['requestId'], user.uid, user.nickname),
+            icon: Icon(Icons.check_circle, color: colorScheme.success),
           ),
-          const SizedBox(height: 12),
-          Text(
-            '친구 추가 버튼을 눌러\n친구를 추가해보세요',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.textSecondary.withOpacity(0.7),
-              fontSize: 15,
-            ),
+          IconButton(
+            onPressed: () =>
+                _rejectRequest(req['requestId'], user.uid, user.nickname),
+            icon: Icon(Icons.cancel, color: colorScheme.error),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFriendRequestSection(
-      BuildContext context, SocialController controller) {
-    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Future<void> _acceptRequest(
+      String requestId, String friendId, String friendNickname) async {
+    final socialController = context.read<SocialController>();
+    final authController = context.read<AuthController>();
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+
+    try {
+      await socialController.acceptFriendRequest(
+        requestId,
+        authController.currentUser!.uid,
+        authController.userModel!.nickname,
+        friendId,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$friendNickname님과 친구가 되었습니다!'),
+            backgroundColor: colorScheme.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _rejectRequest(
+      String requestId, String friendId, String friendNickname) async {
+    final socialController = context.read<SocialController>();
+    final authController = context.read<AuthController>();
+    try {
+      await socialController.rejectFriendRequest(
+        requestId,
+        authController.currentUser!.uid,
+        friendId,
+        authController.userModel!.nickname,
+      );
+    } catch (e) {
+      if (mounted) {
+        final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildFriendCard(UserModel friend, AppColorScheme colorScheme) {
+    return Consumer<SocialController>(
+      builder: (context, controller, child) {
+        final isAwakeRequested =
+            controller.isFriendAwake(friend.uid, friend.lastDiaryDate);
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isAwakeRequested
+                  ? colorScheme.success // 불투명하게 변경하여 더 뚜렷하게
+                  : colorScheme.shadowColor.withOpacity(0.1),
+              width: isAwakeRequested ? 3.5 : 1.5,
+            ),
+            boxShadow: [
+              if (isAwakeRequested)
+                BoxShadow(
+                  color: colorScheme.success.withOpacity(0.3), // 그림자 농도 강화
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 6),
+                )
+              else
+                BoxShadow(
+                  color: colorScheme.shadowColor.withOpacity(0.08),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+            ],
+          ),
+          child: Stack(
             children: [
-              Text(
-                '친구 요청',
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.titleLarge?.color,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              // 작성 완료 상태 시 구석에 큼직한 체크 아이콘 배경
+              if (isAwakeRequested)
+                Positioned(
+                  right: -10,
+                  top: -10,
+                  child: Icon(
+                    Icons.check_circle,
+                    size: 85,
+                    color: colorScheme.success.withOpacity(0.15), // 약간 더 선명하게
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? AppColors.primary : AppColors.error,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${controller.friendRequests.length}',
-                  style: TextStyle(
-                    color: isDarkMode ? const Color(0xFF5D4E37) : Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: () => context.push('/friend/${friend.uid}'),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // 기상/취침 상태에 따른 아바타 배경색 변화
+                            CircleAvatar(
+                              radius: 36,
+                              backgroundColor: isAwakeRequested
+                                  ? colorScheme.success.withOpacity(0.2)
+                                  : colorScheme.primaryButton.withOpacity(0.1),
+                              child: Text(
+                                friend.nickname[0],
+                                style: TextStyle(
+                                  color: isAwakeRequested
+                                      ? colorScheme.success
+                                      : colorScheme.primaryButton,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isAwakeRequested
+                                        ? colorScheme.success.withOpacity(0.2)
+                                        : Colors.white,
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 4,
+                                    )
+                                  ],
+                                ),
+                                child: Icon(
+                                  isAwakeRequested
+                                      ? Icons.wb_sunny
+                                      : Icons.bedtime,
+                                  size: 16,
+                                  color: isAwakeRequested
+                                      ? colorScheme.pointStar
+                                      : colorScheme.textHint,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          friend.nickname,
+                          style: TextStyle(
+                            color: colorScheme.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        // 연속 일수 뱃지 스타일
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: colorScheme.accent.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.local_fire_department,
+                                  color: colorScheme.accent, size: 14),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${friend.consecutiveDays}일',
+                                style: TextStyle(
+                                  color: colorScheme.textSecondary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (isAwakeRequested)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: colorScheme.success.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: colorScheme.success.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle,
+                                    color: colorScheme.success, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '작성 완료',
+                                  style: TextStyle(
+                                    color: colorScheme.success,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          _buildWakeUpButton(friend, controller, colorScheme),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: controller.friendRequests.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final request = controller.friendRequests[index];
-              final user = request['user'] as UserModel;
-              final requestId = request['requestId'] as String;
-
-              return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: AppColors.smallCardShadow,
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: AppColors.primary.withOpacity(0.2),
-                      child: Text(
-                        user.nickname[0],
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user.nickname,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  Theme.of(context).textTheme.bodyLarge?.color,
-                            ),
-                          ),
-                          Text(
-                            'Lv.${user.characterLevel}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Column(
-                      children: [
-                        SizedBox(
-                          width: 64,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              final myId = context
-                                  .read<AuthController>()
-                                  .currentUser
-                                  ?.uid;
-                              final myNickname = context
-                                  .read<AuthController>()
-                                  .userModel
-                                  ?.nickname;
-                              if (myId != null && myNickname != null) {
-                                controller.acceptFriendRequest(
-                                    requestId, myId, myNickname, user.uid);
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: isDarkMode
-                                  ? const Color(0xFF5D4E37)
-                                  : Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              '수락',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        SizedBox(
-                          width: 64,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              final myId = context
-                                  .read<AuthController>()
-                                  .currentUser
-                                  ?.uid;
-                              final myNickname = context
-                                  .read<AuthController>()
-                                  .userModel
-                                  ?.nickname;
-                              if (myId != null) {
-                                controller.rejectFriendRequest(
-                                  requestId,
-                                  myId,
-                                  user.uid,
-                                  myNickname ?? '알 수 없음',
-                                );
-                              }
-                            },
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              side: BorderSide(
-                                color: isDarkMode
-                                    ? Colors.white24
-                                    : AppColors.error,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: Text(
-                              '거절',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDarkMode
-                                    ? Colors.white54
-                                    : AppColors.error,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          const Divider(height: 1),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildFriendCard(
-    BuildContext context,
-    UserModel friend, {
-    required bool isAwake,
-  }) {
-    final hasWritten = isAwake;
+  Widget _buildWakeUpButton(UserModel friend, SocialController controller,
+      AppColorScheme colorScheme) {
+    final remaining = controller.wakeUpCooldownRemaining(friend.uid);
+    final seconds = (remaining.inMilliseconds / 1000).ceil();
+    final isCooldown = seconds > 0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: hasWritten
-              ? AppColors.success.withOpacity(0.5)
-              : AppColors.textHint.withOpacity(0.3),
-          width: 2,
+    return SizedBox(
+      width: double.infinity,
+      height: 36,
+      child: ElevatedButton(
+        onPressed: isCooldown
+            ? null
+            : () => _wakeUpFriend(friend, controller, colorScheme),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colorScheme.primaryButton,
+          foregroundColor: colorScheme.primaryButtonForeground,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+          disabledBackgroundColor: colorScheme.textHint.withOpacity(0.2),
         ),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            context.push('/friend/${friend.uid}');
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 친구 캐릭터
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: hasWritten
-                          ? [
-                              AppColors.success.withOpacity(0.3),
-                              AppColors.accent.withOpacity(0.3),
-                            ]
-                          : [
-                              AppColors.textHint.withOpacity(0.2),
-                              Colors.grey[300]!,
-                            ],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: hasWritten
-                        ? [
-                            BoxShadow(
-                              color: AppColors.success.withOpacity(0.3),
-                              blurRadius: 15,
-                              spreadRadius: 3,
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Icon(
-                    hasWritten ? Icons.wb_sunny : Icons.bedtime,
-                    color:
-                        hasWritten ? AppColors.awakeMode : AppColors.sleepMode,
-                    size: 45,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // 친구 닉네임
-                Text(
-                  friend.nickname,
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 6),
-
-                // 상태
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: hasWritten
-                        ? AppColors.success.withOpacity(0.15)
-                        : AppColors.friendSleep.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    hasWritten ? '기상 완료' : '수면 중',
-                    style: TextStyle(
-                      color: hasWritten
-                          ? AppColors.success
-                          : AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // 깨우기 버튼
-                if (!hasWritten)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _wakeUpFriend(context, friend),
-                      icon: const Icon(Icons.alarm, size: 18),
-                      label: const Text(
-                        '깨우기',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.warning,
-                        foregroundColor: AppColors.textPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                        side: BorderSide(
-                          color: AppColors.textPrimary.withOpacity(0.1),
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: AppColors.success,
-                          size: 18,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          '작성 완료',
-                          style: TextStyle(
-                            color: AppColors.success,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Text(
+            isCooldown ? '${seconds}s' : '깨우기',
+            key: ValueKey(isCooldown ? seconds : -1),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: isCooldown
+                  ? colorScheme.textSecondary
+                  : colorScheme.primaryButtonForeground,
             ),
           ),
         ),
@@ -587,13 +525,50 @@ class _SocialScreenState extends State<SocialScreen> {
     );
   }
 
-  Widget _buildBottomNavigationBar(BuildContext context) {
+  Future<void> _wakeUpFriend(UserModel friend, SocialController controller,
+      AppColorScheme colorScheme) async {
+    final authController = context.read<AuthController>();
+
+    // 즉시 쿨다운 시작 및 중복 클릭 방지
+    if (!controller.canSendWakeUp(friend.uid)) return;
+
+    try {
+      await controller.wakeUpFriend(
+        authController.currentUser!.uid,
+        authController.userModel!.nickname,
+        friend.uid,
+        friend.nickname,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${friend.nickname}님을 깨웠습니다! ⏰'),
+            backgroundColor: colorScheme.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('깨우기 요청 실패'),
+            backgroundColor: colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildBottomNavigationBar(
+      BuildContext context, AppColorScheme colorScheme) {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
         boxShadow: [
           BoxShadow(
-            color: AppColors.textHint.withOpacity(0.1),
+            color: colorScheme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -602,10 +577,8 @@ class _SocialScreenState extends State<SocialScreen> {
       child: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: 2,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Provider.of<ThemeController>(context).isDarkMode
-            ? const Color(0xFF3E3224) // 훨씬 어두운 브라운
-            : Colors.grey,
+        selectedItemColor: colorScheme.tabSelected,
+        unselectedItemColor: colorScheme.tabUnselected,
         backgroundColor: Colors.transparent,
         elevation: 0,
         onTap: (index) {
@@ -634,182 +607,27 @@ class _SocialScreenState extends State<SocialScreen> {
     );
   }
 
-  Future<void> _wakeUpFriend(BuildContext context, UserModel friend) async {
-    final authController = context.read<AuthController>();
+  Future<void> _showAddFriendDialog(
+      BuildContext context, AppColorScheme colorScheme) async {
+    final controller = TextEditingController();
     final socialController = context.read<SocialController>();
-    final currentUser = authController.userModel;
-
-    if (currentUser == null) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    if (!socialController.canSendWakeUp(friend.uid)) {
-      final remaining = socialController.wakeUpCooldownRemaining(friend.uid);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            '너무 많은 요청을 보냈어요. ${remaining.inSeconds}초 후에 다시 시도해주세요.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      return;
-    }
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(child: Text('깨우는 중입니다...')),
-          ],
-        ),
-        backgroundColor: AppColors.warning,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 30),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-
-    try {
-      await socialController.wakeUpFriend(
-        currentUser.uid,
-        currentUser.nickname,
-        friend.uid,
-        friend.nickname,
-      );
-
-      if (mounted) {
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.alarm, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('${friend.nickname}님을 깨웠습니다! ⏰'),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    } on FirebaseFunctionsException catch (e) {
-      if (!mounted) return;
-      messenger.hideCurrentSnackBar();
-      if (e.code == 'resource-exhausted') {
-        messenger.showSnackBar(
-          SnackBar(
-            content: const Text('너무 많은 요청을 보냈어요. 잠시 후 다시 시도해주세요.'),
-            backgroundColor: AppColors.warning,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-        return;
-      }
-      messenger.showSnackBar(
-        SnackBar(
-          content: const Text('깨우기 실패: 잠시 후 다시 시도해주세요.'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      return;
-    } catch (_) {
-      if (mounted) {
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(
-          SnackBar(
-            content: const Text('깨우기 실패: 잠시 후 다시 시도해주세요.'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _showAddFriendDialog(BuildContext context) async {
-    final emailController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
+    final authController = context.read<AuthController>();
 
     return AppDialog.show(
       context: context,
       key: AppDialogKey.addFriend,
-      leading: const Icon(Icons.person_add, color: AppColors.primary),
-      content: Form(
-        key: formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '친구의 이메일 주소를 입력하세요',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              style:
-                  TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
-              decoration: InputDecoration(
-                hintText: 'friend@example.com',
-                hintStyle: TextStyle(color: AppColors.textHint),
-                prefixIcon: const Icon(
-                  Icons.email,
-                  color: AppColors.primary,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-                    AppColors.backgroundLight,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '이메일을 입력해주세요';
-                }
-                if (!value.contains('@')) {
-                  return '올바른 이메일 형식이 아닙니다';
-                }
-                return null;
-              },
-            ),
-          ],
+      content: TextField(
+        controller: controller,
+        style: TextStyle(color: colorScheme.textPrimary),
+        decoration: InputDecoration(
+          hintText: '친구 닉네임 입력',
+          hintStyle: TextStyle(color: colorScheme.textHint),
+          filled: true,
+          fillColor: Theme.of(context).scaffoldBackgroundColor,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
       actions: [
@@ -818,114 +636,71 @@ class _SocialScreenState extends State<SocialScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: '추가',
+          label: '요청',
           isPrimary: true,
           onPressed: () async {
-            if (!formKey.currentState!.validate()) return;
+            final nickname = controller.text.trim();
+            if (nickname.isEmpty) return;
 
-            final email = emailController.text.trim();
-            Navigator.pop(context);
+            final myId = authController.currentUser?.uid;
+            final myNickname = authController.userModel?.nickname;
+            if (myId == null || myNickname == null) return;
 
-            await _addFriendByEmail(context, email);
+            final userService = context.read<UserService>();
+            try {
+              final user = await userService.getUserByNickname(nickname);
+              if (user == null) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('해당 닉네임의 사용자를 찾을 수 없습니다.'),
+                      backgroundColor: colorScheme.error,
+                    ),
+                  );
+                }
+                return;
+              }
+
+              if (user.uid == myId) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('자신에게는 친구 요청을 보낼 수 없습니다.'),
+                      backgroundColor: colorScheme.error,
+                    ),
+                  );
+                }
+                return;
+              }
+
+              await socialController.sendFriendRequest(
+                myId,
+                myNickname,
+                user.uid,
+              );
+
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${user.nickname}님께 친구 요청을 보냈습니다!'),
+                    backgroundColor: colorScheme.success,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: colorScheme.error,
+                  ),
+                );
+              }
+            }
           },
         ),
       ],
     );
-  }
-
-  Future<void> _addFriendByEmail(BuildContext context, String email) async {
-    final authController = context.read<AuthController>();
-    final socialController = context.read<SocialController>();
-    final userService = context.read<UserService>();
-    final currentUser = authController.currentUser;
-
-    if (currentUser == null) return;
-
-    if (email == currentUser.email) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('자기 자신은 친구로 추가할 수 없습니다'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      return;
-    }
-
-    try {
-      final friendUser = await userService.getUserByEmail(email);
-
-      if (friendUser == null) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('해당 이메일의 사용자를 찾을 수 없습니다'),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-        }
-        return;
-      }
-
-      final isFriend = await socialController.checkIfAlreadyFriend(
-        currentUser.uid,
-        friendUser.uid,
-      );
-
-      if (isFriend) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('이미 친구로 등록된 사용자입니다'),
-              backgroundColor: AppColors.warning,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-        }
-        return;
-      }
-
-      final currentUserModel = context.read<AuthController>().userModel;
-      final nickname = currentUserModel?.nickname ?? '알 수 없음';
-
-      await socialController.sendFriendRequest(
-          currentUser.uid, nickname, friendUser.uid);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${friendUser.nickname}님에게 친구 요청을 보냈습니다! 📨'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('친구 추가 실패: $e'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    }
   }
 }

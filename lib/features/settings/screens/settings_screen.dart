@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/theme/app_theme_type.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
@@ -36,19 +36,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon:
-              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
+          icon: Icon(Icons.arrow_back, color: colorScheme.iconPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           '설정',
-          style: Theme.of(context).appBarTheme.titleTextStyle,
+          style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
+                color: colorScheme.textPrimary,
+              ),
         ),
         centerTitle: true,
       ),
@@ -61,22 +63,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(20),
               children: [
                 // 프로필 섹션
-                _buildProfileSection(context, user),
+                _buildProfileSection(context, user, colorScheme),
 
                 const SizedBox(height: 24),
 
                 // 계정 설정
-                _buildSectionTitle('계정'),
+                _buildSectionTitle('계정', colorScheme),
                 const SizedBox(height: 12),
                 _buildSettingsTile(
+                  context,
+                  colorScheme,
                   icon: Icons.person,
                   title: '닉네임 변경',
                   subtitle: user?.nickname ?? '',
-                  onTap: () =>
-                      _showChangeNicknameDialog(context, user?.nickname ?? ''),
+                  onTap: () => _showChangeNicknameDialog(
+                      context, user?.nickname ?? '', colorScheme),
                 ),
                 const SizedBox(height: 8),
                 _buildSettingsTile(
+                  context,
+                  colorScheme,
                   icon: Icons.email,
                   title: '이메일',
                   subtitle: user?.email ?? '',
@@ -86,41 +92,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 24),
 
                 // 보안 설정
-                _buildSectionTitle('보안'),
+                _buildSectionTitle('보안', colorScheme),
                 const SizedBox(height: 12),
-                _buildBiometricTile(context, authController),
+                _buildBiometricTile(context, authController, colorScheme),
                 const SizedBox(height: 8),
                 _buildSettingsTile(
+                  context,
+                  colorScheme,
                   icon: Icons.lock,
                   title: '비밀번호 변경',
-                  onTap: () => _showChangePasswordDialog(context),
+                  onTap: () => _showChangePasswordDialog(context, colorScheme),
                 ),
 
                 const SizedBox(height: 24),
 
                 // 앱 설정
-                _buildSectionTitle('앱 설정'),
+                _buildSectionTitle('앱 설정', colorScheme),
                 const SizedBox(height: 12),
-                _buildThemeSelectionTile(context),
+                _buildThemeSelectionTile(context, colorScheme),
                 const SizedBox(height: 8),
-                _buildWritingBlurTile(context, authController),
+                _buildWritingBlurTile(context, authController, colorScheme),
                 const SizedBox(height: 8),
                 _buildSettingsTile(
+                  context,
+                  colorScheme,
                   icon: Icons.notifications,
                   title: '알림 설정',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      _buildSnackBar('알림 설정 기능은 개발 중입니다'),
-                    );
+                    context.push('/settings/notifications');
                   },
                 ),
 
                 const SizedBox(height: 24),
 
                 // 정보
-                _buildSectionTitle('정보'),
+                _buildSectionTitle('정보', colorScheme),
                 const SizedBox(height: 12),
                 _buildSettingsTile(
+                  context,
+                  colorScheme,
                   icon: Icons.info,
                   title: '버전 정보',
                   subtitle: _version.isEmpty ? '불러오는 중...' : _version,
@@ -128,12 +138,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 8),
                 _buildSettingsTile(
+                  context,
+                  colorScheme,
                   icon: Icons.description,
                   title: '이용약관',
                   onTap: () {},
                 ),
                 const SizedBox(height: 8),
                 _buildSettingsTile(
+                  context,
+                  colorScheme,
                   icon: Icons.privacy_tip,
                   title: '개인정보 처리방침',
                   onTap: () {},
@@ -142,12 +156,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 32),
 
                 // 로그아웃 버튼
-                _buildLogoutButton(context, authController),
+                _buildLogoutButton(context, authController, colorScheme),
 
                 const SizedBox(height: 16),
 
                 // 회원탈퇴
-                _buildDeleteAccountButton(context, authController),
+                _buildDeleteAccountButton(context, authController, colorScheme),
 
                 const SizedBox(height: 40),
               ],
@@ -158,13 +172,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildProfileSection(BuildContext context, user) {
+  Widget _buildProfileSection(
+      BuildContext context, user, AppColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: AppColors.cardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -174,14 +195,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primary.withOpacity(0.8),
-                  AppColors.secondary.withOpacity(0.8),
+                  colorScheme.cardAccent.withOpacity(0.8),
+                  colorScheme.secondaryButton.withOpacity(0.8),
                 ],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: colorScheme.cardAccent.withOpacity(0.3),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -205,7 +226,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   user?.nickname ?? '사용자',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: colorScheme.textPrimary,
+                      ),
                 ),
                 const SizedBox(height: 6),
                 Row(
@@ -216,13 +239,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.15),
+                        color: colorScheme.cardAccent.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'Lv. ${user?.characterLevel ?? 1}',
-                        style: const TextStyle(
-                          color: AppColors.primary,
+                        style: TextStyle(
+                          color: colorScheme.cardAccent,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -235,21 +258,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.pointStar.withOpacity(0.15),
+                        color: colorScheme.pointStar.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.star,
-                            color: AppColors.pointStar,
+                            color: colorScheme.pointStar,
                             size: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${user?.points ?? 0}',
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
+                            style: TextStyle(
+                              color: colorScheme.textPrimary,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
@@ -267,13 +290,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, AppColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Text(
         title,
-        style: const TextStyle(
-          color: AppColors.textSecondary,
+        style: TextStyle(
+          color: colorScheme.textSecondary,
           fontSize: 14,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
@@ -282,7 +305,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingsTile({
+  Widget _buildSettingsTile(
+    BuildContext context,
+    AppColorScheme colorScheme, {
     required IconData icon,
     required String title,
     String? subtitle,
@@ -292,22 +317,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: AppColors.smallCardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: colorScheme.iconPrimary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 24),
+          child: Icon(icon, color: colorScheme.iconPrimary, size: 24),
         ),
         title: Text(
           title,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
+                color: colorScheme.textPrimary,
               ),
         ),
         subtitle: subtitle != null
@@ -315,8 +347,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: colorScheme.textSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -325,7 +357,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         trailing: onTap != null
             ? Icon(
                 Icons.chevron_right,
-                color: AppColors.textSecondary.withOpacity(0.5),
+                color: colorScheme.textSecondary.withOpacity(0.5),
               )
             : null,
         onTap: onTap,
@@ -333,8 +365,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildWritingBlurTile(
-      BuildContext context, AuthController authController) {
+  Widget _buildWritingBlurTile(BuildContext context,
+      AuthController authController, AppColorScheme colorScheme) {
     final user = authController.userModel;
     final blurEnabled = user?.writingBlurEnabled ?? true;
 
@@ -342,19 +374,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: AppColors.smallCardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: SwitchListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         secondary: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: colorScheme.iconPrimary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.visibility_off,
-            color: AppColors.primary,
+            color: colorScheme.iconPrimary,
             size: 24,
           ),
         ),
@@ -362,14 +400,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           '글 작성 블러 기본값',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
+                color: colorScheme.textPrimary,
               ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             blurEnabled ? '작성 중인 글을 기본으로 블러 처리합니다' : '작성 중인 글을 기본으로 표시합니다',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: colorScheme.textSecondary,
               fontSize: 13,
             ),
           ),
@@ -381,14 +420,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context,
                   authController,
                   value,
+                  colorScheme,
                 ),
-        activeColor: AppColors.primary,
+        activeColor: colorScheme.primaryButton,
       ),
     );
   }
 
-  Widget _buildBiometricTile(
-      BuildContext context, AuthController authController) {
+  Widget _buildBiometricTile(BuildContext context,
+      AuthController authController, AppColorScheme colorScheme) {
     final user = authController.userModel;
     final biometricEnabled = user?.biometricEnabled ?? false;
 
@@ -396,19 +436,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: AppColors.smallCardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: SwitchListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         secondary: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: colorScheme.iconPrimary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.fingerprint,
-            color: AppColors.primary,
+            color: colorScheme.iconPrimary,
             size: 24,
           ),
         ),
@@ -416,14 +462,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           '생체 인증',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
+                color: colorScheme.textPrimary,
               ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             biometricEnabled ? '앱 실행과 일기 열기에 생체 인증이 필요합니다' : '생체 인증으로 앱을 보호합니다',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: colorScheme.textSecondary,
               fontSize: 13,
             ),
           ),
@@ -435,13 +482,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context,
                   authController,
                   value,
+                  colorScheme,
                 ),
-        activeColor: AppColors.primary,
+        activeColor: colorScheme.primaryButton,
       ),
     );
   }
 
-  Widget _buildThemeSelectionTile(BuildContext context) {
+  Widget _buildThemeSelectionTile(
+      BuildContext context, AppColorScheme colorScheme) {
     final themeController = context.watch<ThemeController>();
     final themeOptions = [
       const _ThemeOption(
@@ -468,7 +517,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: AppColors.smallCardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: List.generate(themeOptions.length, (index) {
@@ -478,7 +533,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (index > 0)
                 Divider(
                   height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
                 ),
               RadioListTile<AppThemeType>(
                 contentPadding:
@@ -493,15 +548,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 secondary: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withOpacity(0.1),
+                    color: colorScheme.primaryButton.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     option.icon,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: colorScheme.primaryButton,
                     size: 24,
                   ),
                 ),
@@ -509,19 +561,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   option.title,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w600,
+                        color: colorScheme.textPrimary,
                       ),
                 ),
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     option.subtitle,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: colorScheme.textSecondary,
                       fontSize: 13,
                     ),
                   ),
                 ),
-                activeColor: Theme.of(context).colorScheme.primary,
+                activeColor: colorScheme.primaryButton,
               ),
             ],
           );
@@ -530,15 +583,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildLogoutButton(
-      BuildContext context, AuthController authController) {
+  Widget _buildLogoutButton(BuildContext context, AuthController authController,
+      AppColorScheme colorScheme) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: AppColors.smallCardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ElevatedButton.icon(
-        onPressed: () => _showLogoutDialog(context, authController),
+        onPressed: () =>
+            _showLogoutDialog(context, authController, colorScheme),
         icon: const Icon(Icons.logout, size: 22),
         label: const Text(
           '로그아웃',
@@ -549,12 +609,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).cardColor,
-          foregroundColor: AppColors.error,
+          foregroundColor: colorScheme.error,
           padding: const EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: AppColors.error.withOpacity(0.3),
+              color: colorScheme.error.withOpacity(0.3),
               width: 1.5,
             ),
           ),
@@ -564,15 +624,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildDeleteAccountButton(
-      BuildContext context, AuthController authController) {
+  Widget _buildDeleteAccountButton(BuildContext context,
+      AuthController authController, AppColorScheme colorScheme) {
     return Center(
       child: TextButton(
-        onPressed: () => _showDeleteAccountDialog(context, authController),
-        child: const Text(
+        onPressed: () =>
+            _showDeleteAccountDialog(context, authController, colorScheme),
+        child: Text(
           '회원탈퇴',
           style: TextStyle(
-            color: AppColors.textSecondary,
+            color: colorScheme.textSecondary,
             decoration: TextDecoration.underline,
             fontSize: 14,
           ),
@@ -581,28 +642,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _showChangeNicknameDialog(
-      BuildContext context, String currentNickname) async {
+  Future<void> _showChangeNicknameDialog(BuildContext context,
+      String currentNickname, AppColorScheme colorScheme) async {
     final controller = TextEditingController(text: currentNickname);
+    final errorMessageNotifier = ValueNotifier<String?>(null);
+    final isCheckingNotifier = ValueNotifier<bool>(false);
 
     return AppDialog.show(
       context: context,
       key: AppDialogKey.changeNickname,
-      content: TextField(
-        controller: controller,
-        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
-        decoration: InputDecoration(
-          hintText: '새 닉네임 입력',
-          hintStyle: TextStyle(color: AppColors.textHint),
-          filled: true,
-          fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-              AppColors.backgroundLight,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ValueListenableBuilder<String?>(
+            valueListenable: errorMessageNotifier,
+            builder: (context, errorMessage, child) {
+              return TextField(
+                controller: controller,
+                style: TextStyle(color: colorScheme.textPrimary),
+                decoration: InputDecoration(
+                  hintText: '새 닉네임 입력',
+                  hintStyle: TextStyle(color: colorScheme.textHint),
+                  filled: true,
+                  fillColor: Theme.of(context).cardColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.primaryButton.withOpacity(0.5)),
+                  ),
+                  errorText: errorMessage,
+                ),
+                maxLength: 10,
+                onChanged: (_) {
+                  if (errorMessageNotifier.value != null) {
+                    errorMessageNotifier.value = null;
+                  }
+                },
+              );
+            },
           ),
-        ),
-        maxLength: 10,
+          ValueListenableBuilder<bool>(
+            valueListenable: isCheckingNotifier,
+            builder: (context, isChecking, child) {
+              if (!isChecking) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.primaryButton,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       actions: [
         AppDialogAction(
@@ -611,13 +710,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         AppDialogAction(
           label: '변경',
-          useHighlight: true,
+          isPrimary: true,
           onPressed: () async {
             final newNickname = controller.text.trim();
+            errorMessageNotifier.value = null;
+
             if (newNickname.isEmpty || newNickname.length < 2) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                _buildSnackBar('닉네임은 2자 이상이어야 합니다'),
-              );
+              errorMessageNotifier.value = '닉네임은 2자 이상이어야 합니다';
               return;
             }
 
@@ -627,23 +726,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             if (userId != null) {
               try {
+                if (newNickname != currentNickname) {
+                  isCheckingNotifier.value = true;
+                  final isAvailable =
+                      await userService.isNicknameAvailable(newNickname);
+                  isCheckingNotifier.value = false;
+
+                  if (!isAvailable) {
+                    errorMessageNotifier.value = '이미 사용 중인 닉네임입니다';
+                    return;
+                  }
+                }
+
                 await userService.updateUser(userId, {
                   'nickname': newNickname,
                 });
 
-                // 즉시 로컬 모델 업데이트 (반영 속도 향상)
                 authController.updateUserModel(
                   authController.userModel?.copyWith(nickname: newNickname),
                 );
 
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  _buildSnackBar('닉네임이 변경되었습니다', isSuccess: true),
-                );
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    _buildSnackBar('닉네임이 변경되었습니다', colorScheme,
+                        isSuccess: true),
+                  );
+                }
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  _buildSnackBar('오류: $e'),
-                );
+                isCheckingNotifier.value = false;
+                errorMessageNotifier.value = '오류: $e';
               }
             }
           },
@@ -656,6 +768,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BuildContext context,
     AuthController authController,
     bool value,
+    AppColorScheme colorScheme,
   ) async {
     final userService = context.read<UserService>();
     final userId = authController.currentUser?.uid;
@@ -672,7 +785,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        _buildSnackBar('설정 저장 중 오류가 발생했습니다: $e'),
+        _buildSnackBar('설정 저장 중 오류가 발생했습니다: $e', colorScheme),
       );
     }
   }
@@ -681,6 +794,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BuildContext context,
     AuthController authController,
     bool value,
+    AppColorScheme colorScheme,
   ) async {
     final userService = context.read<UserService>();
     final userId = authController.currentUser?.uid;
@@ -693,7 +807,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!canUse) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            _buildSnackBar('이 기기에서는 생체 인증을 사용할 수 없습니다'),
+            _buildSnackBar('이 기기에서는 생체 인증을 사용할 수 없습니다', colorScheme),
           );
         }
         return;
@@ -703,7 +817,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!authenticated) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            _buildSnackBar('생체 인증에 실패했습니다'),
+            _buildSnackBar('생체 인증에 실패했습니다', colorScheme),
           );
         }
         return;
@@ -720,13 +834,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          _buildSnackBar('생체 인증 설정 저장 중 오류가 발생했습니다: $e'),
+          _buildSnackBar('생체 인증 설정 저장 중 오류가 발생했습니다: $e', colorScheme),
         );
       }
     }
   }
 
-  Future<void> _showChangePasswordDialog(BuildContext context) async {
+  Future<void> _showChangePasswordDialog(
+      BuildContext context, AppColorScheme colorScheme) async {
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -742,14 +857,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             TextFormField(
               controller: newPasswordController,
               obscureText: true,
-              style:
-                  TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              style: TextStyle(color: colorScheme.textPrimary),
               decoration: InputDecoration(
                 hintText: '새 비밀번호 (6자 이상)',
-                hintStyle: TextStyle(color: AppColors.textHint),
+                hintStyle: TextStyle(color: colorScheme.textHint),
                 filled: true,
-                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-                    AppColors.backgroundLight,
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -769,14 +882,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             TextFormField(
               controller: confirmPasswordController,
               obscureText: true,
-              style:
-                  TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              style: TextStyle(color: colorScheme.textPrimary),
               decoration: InputDecoration(
-                hintText: '새 비밀번호 확인',
-                hintStyle: TextStyle(color: AppColors.textHint),
+                hintText: '비밀번호 확인',
+                hintStyle: TextStyle(color: colorScheme.textHint),
                 filled: true,
-                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-                    AppColors.backgroundLight,
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -786,7 +897,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (value == null || value.trim().isEmpty) {
                   return '비밀번호 확인을 입력해주세요';
                 }
-                if (value.trim() != newPasswordController.text.trim()) {
+                if (value != newPasswordController.text) {
                   return '비밀번호가 일치하지 않습니다';
                 }
                 return null;
@@ -802,25 +913,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         AppDialogAction(
           label: '변경',
-          useHighlight: true,
+          isPrimary: true,
           onPressed: () async {
-            if (!formKey.currentState!.validate()) return;
-
-            final authController = context.read<AuthController>();
-            try {
-              await authController
-                  .changePassword(newPasswordController.text.trim());
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  _buildSnackBar('비밀번호가 변경되었습니다', isSuccess: true),
-                );
-              }
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  _buildSnackBar('비밀번호 변경 실패: $e'),
-                );
+            if (formKey.currentState?.validate() ?? false) {
+              final authController = context.read<AuthController>();
+              try {
+                await authController
+                    .changePassword(newPasswordController.text.trim());
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    _buildSnackBar('비밀번호가 변경되었습니다', colorScheme,
+                        isSuccess: true),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    _buildSnackBar('오류: $e', colorScheme),
+                  );
+                }
               }
             }
           },
@@ -829,11 +941,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _showLogoutDialog(
-      BuildContext context, AuthController authController) async {
+  Future<void> _showLogoutDialog(BuildContext context,
+      AuthController authController, AppColorScheme colorScheme) async {
     return AppDialog.show(
       context: context,
       key: AppDialogKey.logout,
+      content: const Text('로그아웃 하시겠습니까?'),
       actions: [
         AppDialogAction(
           label: '취소',
@@ -841,11 +954,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         AppDialogAction(
           label: '로그아웃',
-          isPrimary: true,
+          useHighlight: true,
           onPressed: () async {
             await authController.signOut();
             if (context.mounted) {
-              Navigator.pop(context);
               context.go('/login');
             }
           },
@@ -854,13 +966,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _showDeleteAccountDialog(
-    BuildContext context,
-    AuthController authController,
-  ) async {
+  Future<void> _showDeleteAccountDialog(BuildContext context,
+      AuthController authController, AppColorScheme colorScheme) async {
+    final passwordController = TextEditingController();
+
     return AppDialog.show(
       context: context,
       key: AppDialogKey.deleteAccount,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('정말로 탈퇴하시겠습니까?\n모든 데이터가 영구적으로 삭제됩니다.'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: passwordController,
+            obscureText: true,
+            style: TextStyle(color: colorScheme.textPrimary),
+            decoration: InputDecoration(
+              hintText: '비밀번호 확인',
+              hintStyle: TextStyle(color: colorScheme.textHint),
+              filled: true,
+              fillColor: Theme.of(context).scaffoldBackgroundColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ],
+      ),
       actions: [
         AppDialogAction(
           label: '취소',
@@ -868,9 +1002,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         AppDialogAction(
           label: '탈퇴',
-          isPrimary: true,
+          isPrimary: true, // 에러 강조 색상
           onPressed: () async {
-            Navigator.pop(context);
+            final password = passwordController.text.trim();
+            if (password.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                _buildSnackBar('비밀번호를 입력해주세요', colorScheme),
+              );
+              return;
+            }
+
             try {
               await authController.deleteAccount();
               if (context.mounted) {
@@ -879,7 +1020,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             } catch (e) {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  _buildSnackBar('회원탈퇴 실패: $e'),
+                  _buildSnackBar('오류: $e', colorScheme),
                 );
               }
             }
@@ -889,29 +1030,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  SnackBar _buildSnackBar(String message, {bool isSuccess = false}) {
+  SnackBar _buildSnackBar(String message, AppColorScheme colorScheme,
+      {bool isSuccess = false}) {
     return SnackBar(
       content: Text(message),
-      backgroundColor: isSuccess ? AppColors.success : AppColors.error,
+      backgroundColor: isSuccess ? colorScheme.success : colorScheme.error,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      margin: const EdgeInsets.all(16),
     );
   }
 }
 
 class _ThemeOption {
+  final AppThemeType type;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
   const _ThemeOption({
     required this.type,
     required this.icon,
     required this.title,
     required this.subtitle,
   });
-
-  final AppThemeType type;
-  final IconData icon;
-  final String title;
-  final String subtitle;
 }

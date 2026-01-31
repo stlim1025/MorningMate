@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_color_scheme.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -29,10 +29,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.morningGradient,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              colorScheme.secondary.withOpacity(0.3),
+              colorScheme.backgroundLight,
+            ],
+          ),
         ),
         child: SafeArea(
           child: Center(
@@ -47,14 +55,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         shape: BoxShape.circle,
-                        boxShadow: AppColors.cardShadow,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.shadowColor.withOpacity(0.1),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.wb_sunny,
                         size: 80,
-                        color: AppColors.primary,
+                        color: colorScheme.primaryButton,
                       ),
                     ),
 
@@ -64,15 +78,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Morning Mate',
                       style:
                           Theme.of(context).textTheme.displayMedium?.copyWith(
-                                color: AppColors.textPrimary,
+                                color: colorScheme.textPrimary,
                                 fontWeight: FontWeight.bold,
                               ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       '아침을 함께하는 당신의 메이트',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: colorScheme.textSecondary,
                         fontSize: 16,
                       ),
                     ),
@@ -80,98 +94,52 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 48),
 
                     // 이메일 필드
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: AppColors.smallCardShadow,
-                      ),
-                      child: TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        onFieldSubmitted: (_) {
-                          FocusScope.of(context)
-                              .requestFocus(_passwordFocusNode);
-                        },
-                        style: const TextStyle(color: AppColors.textPrimary),
-                        decoration: InputDecoration(
-                          labelText: '이메일',
-                          labelStyle:
-                              const TextStyle(color: AppColors.textSecondary),
-                          prefixIcon:
-                              const Icon(Icons.email, color: AppColors.primary),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return '이메일을 입력해주세요';
-                          }
-                          if (!value.contains('@')) {
-                            return '올바른 이메일 형식이 아닙니다';
-                          }
-                          return null;
-                        },
-                      ),
+                    _buildTextField(
+                      controller: _emailController,
+                      label: '이메일',
+                      icon: Icons.email,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      colorScheme: colorScheme,
+                      onSubmitted: (_) {
+                        FocusScope.of(context).requestFocus(_passwordFocusNode);
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty)
+                          return '이메일을 입력해주세요';
+                        if (!value.contains('@')) return '올바른 이메일 형식이 아닙니다';
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 16),
 
                     // 비밀번호 필드
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: AppColors.smallCardShadow,
-                      ),
-                      child: TextFormField(
-                        controller: _passwordController,
-                        focusNode: _passwordFocusNode,
-                        obscureText: _obscurePassword,
-                        style: const TextStyle(color: AppColors.textPrimary),
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _handleLogin(),
-                        decoration: InputDecoration(
-                          labelText: '비밀번호',
-                          labelStyle:
-                              const TextStyle(color: AppColors.textSecondary),
-                          prefixIcon:
-                              const Icon(Icons.lock, color: AppColors.primary),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                              color: AppColors.textSecondary,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
+                    _buildTextField(
+                      controller: _passwordController,
+                      label: '비밀번호',
+                      icon: Icons.lock,
+                      focusNode: _passwordFocusNode,
+                      obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      colorScheme: colorScheme,
+                      onSubmitted: (_) => _handleLogin(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: colorScheme.textSecondary,
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return '비밀번호를 입력해주세요';
-                          }
-                          if (value.length < 6) {
-                            return '비밀번호는 최소 6자 이상이어야 합니다';
-                          }
-                          return null;
-                        },
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty)
+                          return '비밀번호를 입력해주세요';
+                        if (value.length < 6) return '비밀번호는 최소 6자 이상이어야 합니다';
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 24),
@@ -183,13 +151,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 18),
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          backgroundColor: colorScheme.primaryButton,
+                          foregroundColor: colorScheme.primaryButtonForeground,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          elevation: 4,
-                          shadowColor: AppColors.primary.withOpacity(0.4),
+                          elevation: 0,
                         ),
                         child: _isLoading
                             ? const SizedBox(
@@ -215,13 +182,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     // 회원가입 버튼
                     TextButton(
-                      onPressed: () {
-                        context.push('/signup');
-                      },
-                      child: const Text(
+                      onPressed: () => context.push('/signup'),
+                      child: Text(
                         '계정이 없으신가요? 회원가입',
                         style: TextStyle(
-                          color: AppColors.secondary,
+                          color: colorScheme.primaryButton,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -236,6 +201,56 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required AppColorScheme colorScheme,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    FocusNode? focusNode,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    void Function(String)? onSubmitted,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        onFieldSubmitted: onSubmitted,
+        style: TextStyle(color: colorScheme.textPrimary),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: colorScheme.textSecondary),
+          prefixIcon: Icon(icon, color: colorScheme.primaryButton),
+          suffixIcon: suffixIcon,
+          filled: true,
+          fillColor: Colors.transparent,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -244,6 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final authController = context.read<AuthController>();
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
     try {
       await authController.signIn(
@@ -259,11 +275,8 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: AppColors.error,
+            backgroundColor: colorScheme.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
           ),
         );
       }

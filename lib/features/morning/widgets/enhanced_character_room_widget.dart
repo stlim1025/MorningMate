@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_color_scheme.dart';
 
 class EnhancedCharacterRoomWidget extends StatefulWidget {
   final bool isAwake;
   final int characterLevel;
-  final int consecutiveDays; // 연속 일기 작성 횟수 등 표시용?
-  // MorningScreen에서는 AnimationController를 공유했지만, 여기서는 내부에서 관리하거나 외부에서 받을 수 있음.
-  // MorningScreen의 동작을 그대로 가져오기 위해 내부에서 애니메이션 관리하도록 함.
+  final int consecutiveDays;
 
   const EnhancedCharacterRoomWidget({
     super.key,
@@ -65,30 +64,29 @@ class _EnhancedCharacterRoomWidgetState
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     return Column(
       children: [
-        // 방 내부 (태양/달 제거됨 - 상위 스크린에서 처리)
-        _buildRoomInterior(widget.isAwake),
+        _buildRoomInterior(widget.isAwake, colorScheme),
       ],
     );
   }
 
-  Widget _buildRoomInterior(bool isAwake) {
+  Widget _buildRoomInterior(bool isAwake, AppColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        // 낮/밤에 따라 방 배경색을 극명하게 변경
         color: isAwake
-            ? const Color(0xFFFDF5E6) // 밝은 베이지
-            : const Color(0xFF2C3E50).withOpacity(0.8), // 어두운 남색
+            ? colorScheme.backgroundLight // 테마 연동: 밝은 베이지
+            : colorScheme.backgroundDark.withOpacity(0.8), // 테마 연동: 다크 모드 배경
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isAwake ? Colors.white : Colors.white10,
+          color: isAwake ? Colors.white.withOpacity(0.5) : Colors.white12,
           width: 4,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: colorScheme.shadowColor.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -96,56 +94,57 @@ class _EnhancedCharacterRoomWidgetState
       ),
       child: Column(
         children: [
-          // 벽 장식 (액자들)
-          _buildWallDecoration(isAwake),
-
+          _buildWallDecoration(isAwake, colorScheme),
           const SizedBox(height: 20),
-
-          // 침대와 캐릭터
-          _buildBedAndCharacter(isAwake),
-
+          _buildBedAndCharacter(isAwake, colorScheme),
           const SizedBox(height: 20),
-
-          // 바닥 장식 (화분들)
-          _buildFloorDecoration(),
+          _buildFloorDecoration(colorScheme),
         ],
       ),
     );
   }
 
-  Widget _buildWallDecoration(bool isAwake) {
+  Widget _buildWallDecoration(bool isAwake, AppColorScheme colorScheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildFrame(Icons.local_florist,
-            isAwake ? const Color(0xFFDEB887) : Colors.brown.shade800),
+        _buildFrame(
+          Icons.local_florist,
+          isAwake
+              ? colorScheme.secondary
+              : colorScheme.secondary.withOpacity(0.5),
+          colorScheme,
+        ),
         const SizedBox(width: 40),
-        _buildFrame(Icons.spa,
-            isAwake ? const Color(0xFF90EE90) : Colors.green.shade900),
+        _buildFrame(
+          Icons.spa,
+          isAwake ? colorScheme.accent : colorScheme.accent.withOpacity(0.5),
+          colorScheme,
+        ),
       ],
     );
   }
 
-  Widget _buildFrame(IconData icon, Color color) {
+  Widget _buildFrame(IconData icon, Color color, AppColorScheme colorScheme) {
     return Container(
       width: 50,
       height: 50,
       decoration: BoxDecoration(
         color: color.withOpacity(0.3),
-        border: Border.all(color: const Color(0xFF8B7355), width: 3),
+        border: Border.all(
+            color: colorScheme.textSecondary.withOpacity(0.5), width: 3),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(icon, color: color, size: 30),
     );
   }
 
-  Widget _buildBedAndCharacter(bool isAwake) {
+  Widget _buildBedAndCharacter(bool isAwake, AppColorScheme colorScheme) {
     return SizedBox(
-      height: 200, // 캐릭터 이동 공간 확보
+      height: 200,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // 침대 (잠잘 때는 중앙, 깨어나면 뒤쪽으로 배치된 효과)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 800),
             top: isAwake ? 0 : 20,
@@ -154,8 +153,9 @@ class _EnhancedCharacterRoomWidgetState
             child: Container(
               height: 120,
               decoration: BoxDecoration(
-                color:
-                    isAwake ? const Color(0xFF8B7355) : const Color(0xFF5D4037),
+                color: isAwake
+                    ? colorScheme.textSecondary.withOpacity(0.8)
+                    : colorScheme.textSecondary.withOpacity(0.4),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -164,8 +164,8 @@ class _EnhancedCharacterRoomWidgetState
                     width: 60,
                     decoration: BoxDecoration(
                       color: isAwake
-                          ? const Color(0xFFA0826D)
-                          : const Color(0xFF4E342E),
+                          ? colorScheme.textSecondary
+                          : colorScheme.textSecondary.withOpacity(0.6),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         bottomLeft: Radius.circular(12),
@@ -176,9 +176,9 @@ class _EnhancedCharacterRoomWidgetState
                     child: Container(
                       decoration: BoxDecoration(
                         color: (isAwake
-                                ? const Color(0xFFFFB6C1)
-                                : const Color(0xFF9575CD))
-                            .withOpacity(0.7),
+                                ? colorScheme.secondary
+                                : colorScheme.accent)
+                            .withOpacity(0.5),
                         borderRadius: const BorderRadius.only(
                           topRight: Radius.circular(12),
                           bottomRight: Radius.circular(12),
@@ -190,12 +190,9 @@ class _EnhancedCharacterRoomWidgetState
               ),
             ),
           ),
-
-          // 캐릭터
           AnimatedPositioned(
             duration: const Duration(milliseconds: 800),
             curve: Curves.easeInOut,
-            // 잠잘 때는 침대 위(top: 40), 깨어나면 바닥 중앙(top: 100)
             top: widget.isAwake ? 80 : 30,
             left: 0,
             right: 0,
@@ -207,13 +204,13 @@ class _EnhancedCharacterRoomWidgetState
                   builder: (context, child) {
                     double verticalOffset =
                         widget.isAwake ? -_bounceAnimation.value : 0;
-                    if (_isTapped) verticalOffset -= 20; // 추가 점프
+                    if (_isTapped) verticalOffset -= 20;
 
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       transform:
                           Matrix4.translationValues(0, verticalOffset, 0),
-                      child: _buildCharacter(widget.isAwake),
+                      child: _buildCharacter(widget.isAwake, colorScheme),
                     );
                   },
                 ),
@@ -225,16 +222,16 @@ class _EnhancedCharacterRoomWidgetState
     );
   }
 
-  Widget _buildCharacter(bool isAwake) {
+  Widget _buildCharacter(bool isAwake, AppColorScheme colorScheme) {
     return Container(
       width: 120,
       height: 120,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFFFFF0F5).withOpacity(0.5),
+        color: Colors.white.withOpacity(0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.pink.withOpacity(0.2),
+            color: colorScheme.secondary.withOpacity(0.2),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -244,28 +241,25 @@ class _EnhancedCharacterRoomWidgetState
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
-          // 캐릭터 몸
           Container(
             width: 90,
             height: 100,
-            decoration: const BoxDecoration(
-              color: Color(0xFF87CEEB), // 하늘색
-              borderRadius: BorderRadius.all(Radius.circular(45)),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryButton, // 캐릭터 몸색을 테마 기본색으로
+              borderRadius: const BorderRadius.all(Radius.circular(45)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 얼굴 부분 (크림색)
                 Container(
                   width: 70,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF8DC),
+                    color: Colors.white.withOpacity(0.9), // 얼굴색
                     borderRadius: BorderRadius.circular(35),
                   ),
                   child: Stack(
                     children: [
-                      // 눈
                       Positioned(
                         top: 25,
                         left: 18,
@@ -318,7 +312,6 @@ class _EnhancedCharacterRoomWidgetState
                                     ),
                                   ),
                       ),
-                      // 부리
                       Positioned(
                         top: 32,
                         left: 0,
@@ -329,7 +322,7 @@ class _EnhancedCharacterRoomWidgetState
                             width: _isTapped ? 16 : 12,
                             height: isAwake ? 10 : 6,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF8C00),
+                              color: Colors.orange,
                               borderRadius: isAwake
                                   ? const BorderRadius.only(
                                       bottomLeft: Radius.circular(8),
@@ -342,7 +335,6 @@ class _EnhancedCharacterRoomWidgetState
                           ),
                         ),
                       ),
-                      // 볼터치
                       Positioned(
                         top: 40,
                         right: 12,
@@ -350,7 +342,7 @@ class _EnhancedCharacterRoomWidgetState
                           width: 15,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFB6C1).withOpacity(0.5),
+                            color: colorScheme.error.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
@@ -361,22 +353,18 @@ class _EnhancedCharacterRoomWidgetState
               ],
             ),
           ),
-
-          // 날개
           Positioned(
             right: 5,
             top: 25,
             child: Container(
               width: 20,
               height: 30,
-              decoration: const BoxDecoration(
-                color: Color(0xFF87CEEB),
-                borderRadius: BorderRadius.all(Radius.circular(15)),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryButton,
+                borderRadius: const BorderRadius.all(Radius.circular(15)),
               ),
             ),
           ),
-
-          // Z 표시 (잠잘 때)
           if (!isAwake)
             Positioned(
               top: -20,
@@ -386,7 +374,6 @@ class _EnhancedCharacterRoomWidgetState
                 builder: (context, child) {
                   return Stack(
                     children: [
-                      // 첫 번째 Z
                       Transform.translate(
                         offset: Offset(
                           10 * (1 - _animationController.value),
@@ -399,13 +386,12 @@ class _EnhancedCharacterRoomWidgetState
                             'Z',
                             style: TextStyle(
                               fontSize: 24,
-                              color: Colors.white70,
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
-                      // 두 번째 Z (약간의 시차)
                       Transform.translate(
                         offset: Offset(
                           20 * (1 - ((_animationController.value + 0.5) % 1.0)),
@@ -421,7 +407,7 @@ class _EnhancedCharacterRoomWidgetState
                               'z',
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Colors.white60,
+                                color: Colors.white70,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -438,32 +424,30 @@ class _EnhancedCharacterRoomWidgetState
     );
   }
 
-  Widget _buildFloorDecoration() {
+  Widget _buildFloorDecoration(AppColorScheme colorScheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildPlant(const Color(0xFF90EE90)),
+        _buildPlant(colorScheme.accent, colorScheme),
         const SizedBox(width: 20),
-        _buildPlant(const Color(0xFF98FB98)),
+        _buildPlant(colorScheme.success, colorScheme),
       ],
     );
   }
 
-  Widget _buildPlant(Color color) {
-    return Container(
+  Widget _buildPlant(Color color, AppColorScheme colorScheme) {
+    return SizedBox(
       width: 50,
       height: 60,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // 잎
           Icon(Icons.spa, color: color, size: 35),
-          // 화분
           Container(
             width: 50,
             height: 25,
             decoration: BoxDecoration(
-              color: const Color(0xFFD2691E).withOpacity(0.7),
+              color: Colors.brown.withOpacity(0.7),
               borderRadius: const BorderRadius.vertical(
                 bottom: Radius.circular(8),
               ),

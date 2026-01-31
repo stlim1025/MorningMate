@@ -10,7 +10,7 @@ import '../../notification/controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
 import '../widgets/enhanced_character_room_widget.dart';
 import '../widgets/twinkling_stars.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 
@@ -37,64 +37,43 @@ class _MorningScreenState extends State<MorningScreen>
     final characterController = context.read<CharacterController>();
 
     try {
-      // AuthController의 유저 정보가 아직 null이라면 FirebaseAuth에서 직접 가져옴
       String? userId = authController.currentUser?.uid;
-
       if (userId == null) {
         userId = FirebaseAuth.instance.currentUser?.uid;
       }
 
       if (userId != null) {
-        // 1. 오늘의 일기 여부 먼저 확인
-        await morningController.checkTodayDiary(userId);
-        await morningController.syncConsecutiveDays(userId);
+        // 병렬로 데이터 로드
+        await Future.wait([
+          morningController.checkTodayDiary(userId),
+          characterController.loadUserData(userId),
+          if (morningController.currentQuestion == null)
+            morningController.fetchRandomQuestion(),
+        ]);
 
-        // 2. 일기가 있으면 캐릭터 상태 동기화
-        if (morningController.hasDiaryToday) {
-          characterController.setAwake(true);
-        } else {
-          characterController.setAwake(false);
-          // 일기가 없으면 랜덤 질문 가져오기
-          await morningController.fetchRandomQuestion();
+        if (mounted) {
+          _maybeAuthenticateOnLaunch(context);
         }
-
-        // 3. 나머지 유저 데이터 로드
-        await characterController.loadUserData(userId);
-      } else {
-        morningController.finishLoading();
       }
     } catch (e) {
-      print('초기화 오류: $e');
-      morningController.finishLoading();
+      debugPrint('Error initializing morning screen: $e');
     }
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Consumer2<MorningController, CharacterController>(
-        builder: (context, morningController, characterController, child) {
-          _maybeAuthenticateOnLaunch(context);
-          if (morningController.isLoading ||
-              !morningController.hasInitialized) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF6B9AC4),
-              ),
-            );
-          }
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
 
-          final hasDiary = morningController.hasDiaryToday;
-          final isAwake = hasDiary || characterController.isAwake;
+    return Scaffold(
+      body: Consumer<MorningController>(
+        builder: (context, morningController, child) {
+          final isAwake = morningController.hasDiaryToday;
+          final characterController = context.watch<CharacterController>();
 
           return Stack(
             children: [
-              // 1. Background Gradient
+              // 1. Sky Gradient Background
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -122,21 +101,19 @@ class _MorningScreenState extends State<MorningScreen>
               Positioned(
                 top: 90,
                 right: 30,
-                child: _buildSunMoon(isAwake),
+                child: _buildSunMoon(isAwake, colorScheme),
               ),
 
               // 4. Main Content
               SafeArea(
                 child: Column(
                   children: [
-                    _buildHeader(context, isAwake),
+                    _buildHeader(context, isAwake, colorScheme, isDarkMode),
                     Expanded(
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            const SizedBox(
-                                height:
-                                    60), // Adjusted space since moon is moved/resized
+                            const SizedBox(height: 60),
                             _buildEnhancedCharacterRoom(
                               context,
                               isAwake,
@@ -151,6 +128,8 @@ class _MorningScreenState extends State<MorningScreen>
                       context,
                       morningController,
                       isAwake,
+                      colorScheme,
+                      isDarkMode,
                     ),
                   ],
                 ),
@@ -159,22 +138,22 @@ class _MorningScreenState extends State<MorningScreen>
           );
         },
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(context),
+      bottomNavigationBar: _buildBottomNavigationBar(context, colorScheme),
     );
   }
 
-  Widget _buildSunMoon(bool isAwake) {
+  Widget _buildSunMoon(bool isAwake, AppColorScheme colorScheme) {
+    final color = isAwake ? colorScheme.pointStar : const Color(0xFFFFF8DC);
     return Container(
-      width: 60, // Reduced from 100
+      width: 60,
       height: 60,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isAwake ? const Color(0xFFFFD700) : const Color(0xFFFFF8DC),
+        color: color,
         boxShadow: [
           BoxShadow(
-            color: (isAwake ? const Color(0xFFFFD700) : const Color(0xFFFFF8DC))
-                .withOpacity(0.6),
-            blurRadius: 30, // Reduced blur proportional to size
+            color: color.withOpacity(0.6),
+            blurRadius: 30,
             spreadRadius: 8,
           ),
         ],
@@ -184,19 +163,11 @@ class _MorningScreenState extends State<MorningScreen>
 
   void _maybeAuthenticateOnLaunch(BuildContext context) {
     if (_hasCheckedBiometric) return;
-
     final authController = context.read<AuthController>();
     final userModel = authController.userModel;
-
-    if (userModel == null) {
-      return;
-    }
-
+    if (userModel == null) return;
     _hasCheckedBiometric = true;
-
-    if (!userModel.biometricEnabled) {
-      return;
-    }
+    if (!userModel.biometricEnabled) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -233,14 +204,17 @@ class _MorningScreenState extends State<MorningScreen>
         ),
       ],
     );
-
     return result ?? false;
   }
 
-  Widget _buildHeader(BuildContext context, bool isAwake) {
+  Widget _buildHeader(BuildContext context, bool isAwake,
+      AppColorScheme colorScheme, bool isDarkMode) {
     final authController = context.read<AuthController>();
     final userId =
         authController.userModel?.uid ?? authController.currentUser?.uid;
+    final textColor =
+        (isAwake && !isDarkMode) ? const Color(0xFF2C3E50) : Colors.white;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -253,11 +227,7 @@ class _MorningScreenState extends State<MorningScreen>
                 Text(
                   _getGreeting(),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: (isAwake &&
-                                !Provider.of<ThemeController>(context)
-                                    .isDarkMode)
-                            ? const Color(0xFF2C3E50)
-                            : Colors.white,
+                        color: textColor,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
@@ -267,11 +237,7 @@ class _MorningScreenState extends State<MorningScreen>
                     return Text(
                       '${controller.currentUser?.consecutiveDays ?? 0}일 연속 기록 중 🔥',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: (isAwake &&
-                                    !Provider.of<ThemeController>(context)
-                                        .isDarkMode)
-                                ? const Color(0xFF5A6C7D)
-                                : Colors.white70,
+                            color: textColor.withOpacity(0.8),
                           ),
                     );
                   },
@@ -297,8 +263,7 @@ class _MorningScreenState extends State<MorningScreen>
                       IconButton(
                         icon: Icon(
                           Icons.notifications_outlined,
-                          color:
-                              isAwake ? const Color(0xFF2C3E50) : Colors.white,
+                          color: textColor,
                         ),
                         onPressed: () {
                           context.pushNamed('notification');
@@ -311,8 +276,8 @@ class _MorningScreenState extends State<MorningScreen>
                           child: Container(
                             width: 8,
                             height: 8,
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
+                            decoration: BoxDecoration(
+                              color: colorScheme.error,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -322,8 +287,7 @@ class _MorningScreenState extends State<MorningScreen>
                 },
               ),
               IconButton(
-                icon: Icon(Icons.settings,
-                    color: isAwake ? const Color(0xFF2C3E50) : Colors.white),
+                icon: Icon(Icons.settings, color: textColor),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -340,7 +304,6 @@ class _MorningScreenState extends State<MorningScreen>
     );
   }
 
-  // 향상된 캐릭터 룸 (이미지 참조 스타일)
   Widget _buildEnhancedCharacterRoom(
     BuildContext context,
     bool isAwake,
@@ -360,9 +323,9 @@ class _MorningScreenState extends State<MorningScreen>
     BuildContext context,
     MorningController controller,
     bool isAwake,
+    AppColorScheme colorScheme,
+    bool isDarkMode,
   ) {
-    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
-    // 따뜻한 느낌의 앱 테마 색상 적용 (AppColors.backgroundLight)
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: BoxDecoration(
@@ -370,7 +333,7 @@ class _MorningScreenState extends State<MorningScreen>
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFD4A574).withOpacity(0.15),
+            color: colorScheme.shadowColor.withOpacity(0.15),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -382,7 +345,6 @@ class _MorningScreenState extends State<MorningScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!isAwake) ...[
-              // 질문 표시 영역
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -390,7 +352,7 @@ class _MorningScreenState extends State<MorningScreen>
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: colorScheme.cardAccent.withOpacity(0.2),
                     width: 1.5,
                   ),
                 ),
@@ -399,13 +361,13 @@ class _MorningScreenState extends State<MorningScreen>
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome,
-                            color: AppColors.awakeMode, size: 20),
+                        Icon(Icons.auto_awesome,
+                            color: colorScheme.accent, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           '오늘의 질문',
                           style: TextStyle(
-                            color: AppColors.textPrimary.withOpacity(0.7),
+                            color: colorScheme.textPrimary.withOpacity(0.7),
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -415,7 +377,7 @@ class _MorningScreenState extends State<MorningScreen>
                           onTap: () => controller.fetchRandomQuestion(),
                           child: Icon(
                             Icons.refresh,
-                            color: AppColors.textSecondary.withOpacity(0.5),
+                            color: colorScheme.textSecondary.withOpacity(0.5),
                             size: 18,
                           ),
                         ),
@@ -425,7 +387,7 @@ class _MorningScreenState extends State<MorningScreen>
                     Text(
                       controller.currentQuestion ?? '오늘의 질문을 불러오는 중...',
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        color: colorScheme.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                         height: 1.4,
@@ -434,10 +396,7 @@ class _MorningScreenState extends State<MorningScreen>
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // 크고 눈에 띄는 작성 버튼
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -452,10 +411,10 @@ class _MorningScreenState extends State<MorningScreen>
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary, // 따뜻한 골드/카라멜 색상
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primaryButton,
+                    foregroundColor: colorScheme.primaryButtonForeground,
                     elevation: 4,
-                    shadowColor: AppColors.primary.withOpacity(0.4),
+                    shadowColor: colorScheme.primaryButton.withOpacity(0.4),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -478,20 +437,15 @@ class _MorningScreenState extends State<MorningScreen>
                 ),
               ),
             ] else ...[
-              // 작성 완료 상태
               Container(
                 width: double.infinity,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
-                  color: isDarkMode
-                      ? const Color(0xFF81C784).withOpacity(0.1)
-                      : const Color(0xFF90EE90).withOpacity(0.2),
+                  color: colorScheme.success.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isDarkMode
-                        ? const Color(0xFF81C784).withOpacity(0.5)
-                        : const Color(0xFF90EE90).withOpacity(0.5),
+                    color: colorScheme.success.withOpacity(0.5),
                     width: 2,
                   ),
                 ),
@@ -499,9 +453,7 @@ class _MorningScreenState extends State<MorningScreen>
                   children: [
                     Icon(
                       Icons.check_circle,
-                      color: isDarkMode
-                          ? const Color(0xFF81C784)
-                          : const Color(0xFF228B22),
+                      color: colorScheme.success,
                       size: 32,
                     ),
                     const SizedBox(width: 16),
@@ -513,9 +465,7 @@ class _MorningScreenState extends State<MorningScreen>
                           Text(
                             '오늘의 일기 작성 완료!',
                             style: TextStyle(
-                              color: isDarkMode
-                                  ? const Color(0xFF81C784)
-                                  : const Color(0xFF228B22),
+                              color: colorScheme.success,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -524,9 +474,7 @@ class _MorningScreenState extends State<MorningScreen>
                           Text(
                             '내일 아침에 다시 만나요 😊',
                             style: TextStyle(
-                              color: isDarkMode
-                                  ? Colors.white70
-                                  : AppColors.textPrimary,
+                              color: colorScheme.textSecondary,
                               fontSize: 13,
                             ),
                           ),
@@ -543,21 +491,19 @@ class _MorningScreenState extends State<MorningScreen>
     );
   }
 
-  Widget _buildBottomNavigationBar(BuildContext context) {
+  Widget _buildBottomNavigationBar(
+      BuildContext context, AppColorScheme colorScheme) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       currentIndex: 0,
       backgroundColor:
           Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: Provider.of<ThemeController>(context).isDarkMode
-          ? const Color(0xFF3E3224)
-          : Colors.grey,
+      selectedItemColor: colorScheme.tabSelected,
+      unselectedItemColor: colorScheme.tabUnselected,
       elevation: 10,
       onTap: (index) {
         switch (index) {
           case 0:
-            // 현재 화면
             break;
           case 1:
             context.go('/character');
@@ -571,40 +517,19 @@ class _MorningScreenState extends State<MorningScreen>
         }
       },
       items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+        BottomNavigationBarItem(icon: Icon(Icons.pets), label: '캐릭터'),
+        BottomNavigationBarItem(icon: Icon(Icons.people), label: '친구'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: '홈',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.pets),
-          label: '캐릭터',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.people),
-          label: '친구',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: '아카이브',
-        ),
+            icon: Icon(Icons.calendar_today), label: '아카이브'),
       ],
     );
   }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) {
-      return '좋은 아침이에요!';
-    } else if (hour < 18) {
-      return '좋은 오후에요!';
-    } else {
-      return '좋은 저녁이에요!';
-    }
-  }
-}
-
-extension MorningControllerExt on MorningController {
-  bool isDarkMode(BuildContext context) {
-    return Provider.of<ThemeController>(context, listen: false).isDarkMode;
+    if (hour < 12) return '좋은 아침이에요!';
+    if (hour < 18) return '좋은 오후에요!';
+    return '좋은 저녁이에요!';
   }
 }

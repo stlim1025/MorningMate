@@ -14,6 +14,7 @@ import '../features/notification/screens/notification_screen.dart';
 import '../features/archive/screens/archive_screen.dart';
 import '../features/archive/screens/diary_detail_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
+import '../features/settings/screens/notification_settings_screen.dart';
 import '../data/models/diary_model.dart';
 
 class AppRouter {
@@ -116,6 +117,13 @@ class AppRouter {
         path: '/settings',
         name: 'settings',
         builder: (context, state) => const SettingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'notifications',
+            name: 'notificationSettings',
+            builder: (context, state) => const NotificationSettingsScreen(),
+          ),
+        ],
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -13,6 +13,37 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.dialogConfirmForeground,
     required this.dialogHighlightBackground,
     required this.dialogHighlightForeground,
+    required this.primaryButton,
+    required this.primaryButtonForeground,
+    required this.secondaryButton,
+    required this.secondaryButtonForeground,
+    required this.iconPrimary,
+    required this.iconSecondary,
+    required this.gaugeActive,
+    required this.gaugeInactive,
+    required this.calendarSelected,
+    required this.calendarToday,
+    required this.calendarDefault,
+    required this.tabSelected,
+    required this.tabUnselected,
+    required this.cardAccent,
+    required this.progressBar,
+    required this.streakGold,
+    required this.success,
+    required this.error,
+    required this.warning,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textHint,
+    required this.backgroundLight,
+    required this.backgroundDark,
+    required this.accent,
+    required this.secondary,
+    required this.friendAwake,
+    required this.friendSleep,
+    required this.pointStar,
+    required this.info,
+    required this.shadowColor,
   });
 
   final Color dialogTitle;
@@ -24,6 +55,44 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   final Color dialogHighlightBackground;
   final Color dialogHighlightForeground;
 
+  final Color primaryButton;
+  final Color primaryButtonForeground;
+  final Color secondaryButton;
+  final Color secondaryButtonForeground;
+  final Color iconPrimary;
+  final Color iconSecondary;
+  final Color gaugeActive;
+  final Color gaugeInactive;
+  final Color calendarSelected;
+  final Color calendarToday;
+  final Color calendarDefault;
+  final Color tabSelected;
+  final Color tabUnselected;
+  final Color cardAccent;
+  final Color progressBar;
+  final Color streakGold;
+  final Color success;
+  final Color error;
+  final Color warning;
+
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textHint;
+
+  final Color backgroundLight;
+  final Color backgroundDark;
+
+  final Color accent;
+  final Color secondary;
+
+  final Color friendAwake;
+  final Color friendSleep;
+
+  final Color pointStar;
+
+  final Color info;
+  final Color shadowColor;
+
   static const light = AppColorScheme(
     dialogTitle: AppColors.textPrimary,
     dialogBody: AppColors.textSecondary,
@@ -33,6 +102,37 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     dialogConfirmForeground: Colors.white,
     dialogHighlightBackground: AppColors.streakGold,
     dialogHighlightForeground: AppColors.textPrimary,
+    primaryButton: AppColors.primary,
+    primaryButtonForeground: Colors.white,
+    secondaryButton: Color(0xFFF0F0F0),
+    secondaryButtonForeground: AppColors.textSecondary,
+    iconPrimary: AppColors.primary,
+    iconSecondary: AppColors.textSecondary,
+    gaugeActive: AppColors.primary,
+    gaugeInactive: Color(0xFFE0E0E0),
+    calendarSelected: AppColors.primary,
+    calendarToday: AppColors.secondary,
+    calendarDefault: AppColors.textSecondary,
+    tabSelected: AppColors.primary,
+    tabUnselected: Colors.grey,
+    cardAccent: AppColors.primary,
+    progressBar: AppColors.primary,
+    streakGold: AppColors.streakGold,
+    success: AppColors.success,
+    error: AppColors.error,
+    warning: AppColors.warning,
+    textPrimary: AppColors.textPrimary,
+    textSecondary: AppColors.textSecondary,
+    textHint: AppColors.textHint,
+    backgroundLight: AppColors.backgroundLight,
+    backgroundDark: AppColors.backgroundDark,
+    accent: AppColors.accent,
+    secondary: AppColors.secondary,
+    friendAwake: AppColors.friendActive,
+    friendSleep: AppColors.friendSleep,
+    pointStar: AppColors.pointStar,
+    info: AppColors.info,
+    shadowColor: Color(0xFFD4A574),
   );
 
   static const dark = AppColorScheme(
@@ -44,6 +144,37 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     dialogConfirmForeground: Color(0xFF5D4E37),
     dialogHighlightBackground: AppColors.streakGold,
     dialogHighlightForeground: AppColors.textPrimary,
+    primaryButton: AppColors.primary,
+    primaryButtonForeground: Color(0xFF5D4E37),
+    secondaryButton: Color(0xFF424242),
+    secondaryButtonForeground: Color(0xFFE0E0E0),
+    iconPrimary: AppColors.primary,
+    iconSecondary: Color(0xFFE0E0E0),
+    gaugeActive: AppColors.primary,
+    gaugeInactive: Color(0xFF424242),
+    calendarSelected: AppColors.primary,
+    calendarToday: AppColors.secondary,
+    calendarDefault: Color(0xFFE0E0E0),
+    tabSelected: AppColors.primary,
+    tabUnselected: Colors.grey,
+    cardAccent: AppColors.primary,
+    progressBar: AppColors.primary,
+    streakGold: AppColors.streakGold,
+    success: AppColors.success,
+    error: AppColors.error,
+    warning: AppColors.warning,
+    textPrimary: Colors.white,
+    textSecondary: Color(0xFFE0E0E0),
+    textHint: Color(0xFF757575),
+    backgroundLight: Color(0xFF2C2C2C),
+    backgroundDark: Color(0xFF1E1E1E),
+    accent: Color(0xFF81C784),
+    secondary: AppColors.secondary,
+    friendAwake: AppColors.friendActive,
+    friendSleep: AppColors.friendSleep,
+    pointStar: AppColors.pointStar,
+    info: AppColors.info,
+    shadowColor: Colors.black,
   );
 
   static const sky = AppColorScheme(
@@ -55,6 +186,37 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     dialogConfirmForeground: Colors.white,
     dialogHighlightBackground: AppColors.skySecondary,
     dialogHighlightForeground: AppColors.skyTextPrimary,
+    primaryButton: AppColors.skyPrimary,
+    primaryButtonForeground: Colors.white,
+    secondaryButton: Color(0xFFE3EFFB),
+    secondaryButtonForeground: AppColors.skyTextSecondary,
+    iconPrimary: AppColors.skyPrimary,
+    iconSecondary: AppColors.skyTextSecondary,
+    gaugeActive: AppColors.skyPrimary,
+    gaugeInactive: Color(0xFFE3EFFB),
+    calendarSelected: AppColors.skyPrimary,
+    calendarToday: AppColors.skySecondary,
+    calendarDefault: AppColors.skyTextSecondary,
+    tabSelected: AppColors.skyPrimary,
+    tabUnselected: Color(0xFF7F9FC9),
+    cardAccent: AppColors.skyPrimary,
+    progressBar: AppColors.skyPrimary,
+    streakGold: Color(0xFF5AA9E6),
+    success: Color(0xFF7EC8E3),
+    error: Color(0xFFFF9AA2),
+    warning: Color(0xFFFFD97D),
+    textPrimary: AppColors.skyTextPrimary,
+    textSecondary: AppColors.skyTextSecondary,
+    textHint: Color(0xFF9CB4CC),
+    backgroundLight: Color(0xFFF0F7FF),
+    backgroundDark: Color(0xFFE3EFFB),
+    accent: Color(0xFF5AA9E6), // Sky 테마에서는 확실한 파란색 계열
+    secondary: AppColors.skySecondary,
+    friendAwake: Color(0xFF7EC8E3),
+    friendSleep: Color(0xFF9CB4CC),
+    pointStar: Color(0xFFFFD97D),
+    info: Color(0xFFAEC6CF),
+    shadowColor: Color(0xFF7F9FC9),
   );
 
   @override
@@ -67,6 +229,37 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? dialogConfirmForeground,
     Color? dialogHighlightBackground,
     Color? dialogHighlightForeground,
+    Color? primaryButton,
+    Color? primaryButtonForeground,
+    Color? secondaryButton,
+    Color? secondaryButtonForeground,
+    Color? iconPrimary,
+    Color? iconSecondary,
+    Color? gaugeActive,
+    Color? gaugeInactive,
+    Color? calendarSelected,
+    Color? calendarToday,
+    Color? calendarDefault,
+    Color? tabSelected,
+    Color? tabUnselected,
+    Color? cardAccent,
+    Color? progressBar,
+    Color? streakGold,
+    Color? success,
+    Color? error,
+    Color? warning,
+    Color? textPrimary,
+    Color? textSecondary,
+    Color? textHint,
+    Color? backgroundLight,
+    Color? backgroundDark,
+    Color? accent,
+    Color? secondary,
+    Color? friendAwake,
+    Color? friendSleep,
+    Color? pointStar,
+    Color? info,
+    Color? shadowColor,
   }) {
     return AppColorScheme(
       dialogTitle: dialogTitle ?? this.dialogTitle,
@@ -83,6 +276,39 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
           dialogHighlightBackground ?? this.dialogHighlightBackground,
       dialogHighlightForeground:
           dialogHighlightForeground ?? this.dialogHighlightForeground,
+      primaryButton: primaryButton ?? this.primaryButton,
+      primaryButtonForeground:
+          primaryButtonForeground ?? this.primaryButtonForeground,
+      secondaryButton: secondaryButton ?? this.secondaryButton,
+      secondaryButtonForeground:
+          secondaryButtonForeground ?? this.secondaryButtonForeground,
+      iconPrimary: iconPrimary ?? this.iconPrimary,
+      iconSecondary: iconSecondary ?? this.iconSecondary,
+      gaugeActive: gaugeActive ?? this.gaugeActive,
+      gaugeInactive: gaugeInactive ?? this.gaugeInactive,
+      calendarSelected: calendarSelected ?? this.calendarSelected,
+      calendarToday: calendarToday ?? this.calendarToday,
+      calendarDefault: calendarDefault ?? this.calendarDefault,
+      tabSelected: tabSelected ?? this.tabSelected,
+      tabUnselected: tabUnselected ?? this.tabUnselected,
+      cardAccent: cardAccent ?? this.cardAccent,
+      progressBar: progressBar ?? this.progressBar,
+      streakGold: streakGold ?? this.streakGold,
+      success: success ?? this.success,
+      error: error ?? this.error,
+      warning: warning ?? this.warning,
+      textPrimary: textPrimary ?? this.textPrimary,
+      textSecondary: textSecondary ?? this.textSecondary,
+      textHint: textHint ?? this.textHint,
+      backgroundLight: backgroundLight ?? this.backgroundLight,
+      backgroundDark: backgroundDark ?? this.backgroundDark,
+      accent: accent ?? this.accent,
+      secondary: secondary ?? this.secondary,
+      friendAwake: friendAwake ?? this.friendAwake,
+      friendSleep: friendSleep ?? this.friendSleep,
+      pointStar: pointStar ?? this.pointStar,
+      info: info ?? this.info,
+      shadowColor: shadowColor ?? this.shadowColor,
     );
   }
 
@@ -98,18 +324,65 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       dialogCancelForeground:
           Color.lerp(dialogCancelForeground, other.dialogCancelForeground, t) ??
               dialogCancelForeground,
-      dialogConfirmBackground:
-          Color.lerp(dialogConfirmBackground, other.dialogConfirmBackground, t) ??
-              dialogConfirmBackground,
-      dialogConfirmForeground:
-          Color.lerp(dialogConfirmForeground, other.dialogConfirmForeground, t) ??
-              dialogConfirmForeground,
-      dialogHighlightBackground:
-          Color.lerp(dialogHighlightBackground, other.dialogHighlightBackground, t) ??
-              dialogHighlightBackground,
-      dialogHighlightForeground:
-          Color.lerp(dialogHighlightForeground, other.dialogHighlightForeground, t) ??
-              dialogHighlightForeground,
+      dialogConfirmBackground: Color.lerp(
+              dialogConfirmBackground, other.dialogConfirmBackground, t) ??
+          dialogConfirmBackground,
+      dialogConfirmForeground: Color.lerp(
+              dialogConfirmForeground, other.dialogConfirmForeground, t) ??
+          dialogConfirmForeground,
+      dialogHighlightBackground: Color.lerp(
+              dialogHighlightBackground, other.dialogHighlightBackground, t) ??
+          dialogHighlightBackground,
+      dialogHighlightForeground: Color.lerp(
+              dialogHighlightForeground, other.dialogHighlightForeground, t) ??
+          dialogHighlightForeground,
+      primaryButton:
+          Color.lerp(primaryButton, other.primaryButton, t) ?? primaryButton,
+      primaryButtonForeground: Color.lerp(
+              primaryButtonForeground, other.primaryButtonForeground, t) ??
+          primaryButtonForeground,
+      secondaryButton: Color.lerp(secondaryButton, other.secondaryButton, t) ??
+          secondaryButton,
+      secondaryButtonForeground: Color.lerp(
+              secondaryButtonForeground, other.secondaryButtonForeground, t) ??
+          secondaryButtonForeground,
+      iconPrimary: Color.lerp(iconPrimary, other.iconPrimary, t) ?? iconPrimary,
+      iconSecondary:
+          Color.lerp(iconSecondary, other.iconSecondary, t) ?? iconSecondary,
+      gaugeActive: Color.lerp(gaugeActive, other.gaugeActive, t) ?? gaugeActive,
+      gaugeInactive:
+          Color.lerp(gaugeInactive, other.gaugeInactive, t) ?? gaugeInactive,
+      calendarSelected:
+          Color.lerp(calendarSelected, other.calendarSelected, t) ??
+              calendarSelected,
+      calendarToday:
+          Color.lerp(calendarToday, other.calendarToday, t) ?? calendarToday,
+      calendarDefault: Color.lerp(calendarDefault, other.calendarDefault, t) ??
+          calendarDefault,
+      tabSelected: Color.lerp(tabSelected, other.tabSelected, t) ?? tabSelected,
+      tabUnselected:
+          Color.lerp(tabUnselected, other.tabUnselected, t) ?? tabUnselected,
+      cardAccent: Color.lerp(cardAccent, other.cardAccent, t) ?? cardAccent,
+      progressBar: Color.lerp(progressBar, other.progressBar, t) ?? progressBar,
+      streakGold: Color.lerp(streakGold, other.streakGold, t) ?? streakGold,
+      success: Color.lerp(success, other.success, t) ?? success,
+      error: Color.lerp(error, other.error, t) ?? error,
+      warning: Color.lerp(warning, other.warning, t) ?? warning,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t) ?? textPrimary,
+      textSecondary:
+          Color.lerp(textSecondary, other.textSecondary, t) ?? textSecondary,
+      textHint: Color.lerp(textHint, other.textHint, t) ?? textHint,
+      backgroundLight: Color.lerp(backgroundLight, other.backgroundLight, t) ??
+          backgroundLight,
+      backgroundDark:
+          Color.lerp(backgroundDark, other.backgroundDark, t) ?? backgroundDark,
+      accent: Color.lerp(accent, other.accent, t) ?? accent,
+      secondary: Color.lerp(secondary, other.secondary, t) ?? secondary,
+      friendAwake: Color.lerp(friendAwake, other.friendAwake, t) ?? friendAwake,
+      friendSleep: Color.lerp(friendSleep, other.friendSleep, t) ?? friendSleep,
+      pointStar: Color.lerp(pointStar, other.pointStar, t) ?? pointStar,
+      info: Color.lerp(info, other.info, t) ?? info,
+      shadowColor: Color.lerp(shadowColor, other.shadowColor, t) ?? shadowColor,
     );
   }
 }

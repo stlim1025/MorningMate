@@ -156,8 +156,9 @@ class AppTheme {
               ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        hintStyle:
-            palette.inputHint == null ? null : TextStyle(color: palette.inputHint),
+        hintStyle: palette.inputHint == null
+            ? null
+            : TextStyle(color: palette.inputHint),
       ),
       iconTheme: IconThemeData(color: palette.iconColor),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -179,12 +180,7 @@ class AppTheme {
           }
           return isDark ? Colors.grey[700] : Colors.grey[300];
         }),
-        trackOutlineColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return palette.primary;
-          }
-          return isDark ? Colors.grey[600] : Colors.transparent;
-        }),
+        trackOutlineColor: MaterialStateProperty.all(Colors.transparent),
       ),
       extensions: [
         palette.appColorScheme,

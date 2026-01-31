@@ -106,14 +106,30 @@ exports.sendNotificationOnCreate = onDocumentCreated("notifications/{notificatio
 
     const userDoc = await admin.firestore().collection("users").doc(userId).get();
     const userData = userDoc.data();
-    const fcmToken = userData?.fcmToken;
 
+    // 알림 설정 확인
+    const normalizedType = normalizeNotificationType(data.type);
+    let isNotiEnabled = true;
+    if (userData) {
+        if (normalizedType === "wake_up") isNotiEnabled = userData.wakeUpNoti !== false;
+        else if (normalizedType === "friend_request") isNotiEnabled = userData.friendRequestNoti !== false;
+        else if (normalizedType === "cheer_message") isNotiEnabled = userData.cheerMessageNoti !== false;
+        else if (normalizedType === "friend_accept") isNotiEnabled = userData.friendAcceptNoti !== false;
+        else if (normalizedType === "friend_reject") isNotiEnabled = userData.friendRejectNoti !== false;
+        else if (normalizedType === "morning_diary") isNotiEnabled = userData.morningDiaryNoti !== false;
+    }
+
+    if (!isNotiEnabled) {
+        logger.info(`User ${userId} has disabled notifications for ${normalizedType}.`);
+        return;
+    }
+
+    const fcmToken = userData?.fcmToken;
     if (!fcmToken) {
         logger.info(`User ${userId} does not have an FCM token.`);
         return;
     }
 
-    const normalizedType = normalizeNotificationType(data.type);
     const { title, body } = buildNotificationContent(
         normalizedType,
         data.message,
@@ -188,6 +204,13 @@ exports.wakeUpFriend = onCall(async (request) => {
         }
 
         const friendData = friendDoc.data();
+
+        // 알림 설정 확인
+        if (friendData && friendData.wakeUpNoti === false) {
+            logger.info(`Friend ${friendId} has disabled wake-up notifications.`);
+            return { success: false, message: "Friend has disabled notifications." };
+        }
+
         const fcmToken = friendData?.fcmToken;
 
         if (!fcmToken) {
@@ -267,6 +290,13 @@ exports.sendCheerMessage = onCall(async (request) => {
         }
 
         const friendData = friendDoc.data();
+
+        // 알림 설정 확인
+        if (friendData && friendData.cheerMessageNoti === false) {
+            logger.info(`Friend ${friendId} has disabled cheer message notifications.`);
+            return { success: false, message: "Friend has disabled notifications." };
+        }
+
         const fcmToken = friendData?.fcmToken;
 
         if (!fcmToken) {
@@ -343,6 +373,13 @@ exports.sendFriendRequestNotification = onCall(async (request) => {
         }
 
         const friendData = friendDoc.data();
+
+        // 알림 설정 확인
+        if (friendData && friendData.friendRequestNoti === false) {
+            logger.info(`Friend ${friendId} has disabled friend request notifications.`);
+            return { success: false, message: "Friend has disabled notifications." };
+        }
+
         const fcmToken = friendData?.fcmToken;
 
         if (!fcmToken) {
@@ -418,6 +455,13 @@ exports.sendFriendAcceptNotification = onCall(async (request) => {
         }
 
         const friendData = friendDoc.data();
+
+        // 알림 설정 확인
+        if (friendData && friendData.friendAcceptNoti === false) {
+            logger.info(`Friend ${friendId} has disabled friend accept notifications.`);
+            return { success: false, message: "Friend has disabled notifications." };
+        }
+
         const fcmToken = friendData?.fcmToken;
 
         if (!fcmToken) {
@@ -493,6 +537,13 @@ exports.sendFriendRejectNotification = onCall(async (request) => {
         }
 
         const friendData = friendDoc.data();
+
+        // 알림 설정 확인
+        if (friendData && friendData.friendRejectNoti === false) {
+            logger.info(`Friend ${friendId} has disabled friend reject notifications.`);
+            return { success: false, message: "Friend has disabled notifications." };
+        }
+
         const fcmToken = friendData?.fcmToken;
 
         if (!fcmToken) {

@@ -60,6 +60,38 @@ class UserService {
     }
   }
 
+  // 닉네임으로 사용자 찾기
+  Future<UserModel?> getUserByNickname(String nickname) async {
+    try {
+      final query = await _usersCollection
+          .where('nickname', isEqualTo: nickname)
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        return UserModel.fromFirestore(query.docs.first);
+      }
+      return null;
+    } catch (e) {
+      print('닉네임으로 사용자 찾기 오류: $e');
+      return null;
+    }
+  }
+
+  // 닉네임 중복 확인
+  Future<bool> isNicknameAvailable(String nickname) async {
+    try {
+      final query = await _usersCollection
+          .where('nickname', isEqualTo: nickname)
+          .limit(1)
+          .get();
+      return query.docs.isEmpty;
+    } catch (e) {
+      print('닉네임 중복 확인 오류: $e');
+      return false;
+    }
+  }
+
   // 연속 기록 업데이트 (일기 작성 시 호출)
   Future<void> updateConsecutiveDays(String uid) async {
     final user = await getUser(uid);

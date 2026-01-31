@@ -11,6 +11,7 @@ enum AppDialogKey {
   addFriend,
   guestbook,
   exitWriting,
+  sentMessages,
 }
 
 class AppDialogAction {
@@ -105,6 +106,12 @@ class AppDialog {
           content: content,
           actions: actions ?? const [],
         );
+      case AppDialogKey.sentMessages:
+        return AppDialogConfig(
+          title: '보낸 메시지',
+          content: content,
+          actions: actions ?? const [],
+        );
     }
   }
 
@@ -185,10 +192,8 @@ class AppDialog {
           colors?.dialogConfirmBackground ?? Theme.of(context).primaryColor;
       foregroundColor = colors?.dialogConfirmForeground ?? Colors.white;
     } else {
-      backgroundColor =
-          colors?.dialogCancelBackground ?? Colors.grey.shade200;
-      foregroundColor =
-          colors?.dialogCancelForeground ?? Colors.grey.shade800;
+      backgroundColor = colors?.dialogCancelBackground ?? Colors.grey.shade200;
+      foregroundColor = colors?.dialogCancelForeground ?? Colors.grey.shade800;
     }
 
     return ElevatedButton(

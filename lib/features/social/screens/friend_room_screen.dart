@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:intl/intl.dart';
+import '../../../core/theme/app_color_scheme.dart';
 import '../../../services/user_service.dart';
 import '../../../data/models/user_model.dart';
+import '../../../data/models/notification_model.dart';
 import '../../morning/widgets/enhanced_character_room_widget.dart';
 import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -65,7 +67,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('친구 데이터 로드 오류: $e');
+      debugPrint('친구 데이터 로드 오류: $e');
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -75,6 +77,9 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+    final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
+
     return Scaffold(
       body: Consumer<SocialController>(
         builder: (context, socialController, child) {
@@ -90,12 +95,12 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                 end: Alignment.bottomCenter,
                 colors: isAwake
                     ? [
-                        const Color(0xFF87CEEB), // 하늘색
-                        const Color(0xFFB0E0E6), // 파우더 블루
-                        const Color(0xFFFFF8DC), // 코니실크
+                        const Color(0xFF87CEEB),
+                        const Color(0xFFB0E0E6),
+                        const Color(0xFFFFF8DC),
                       ]
                     : [
-                        const Color(0xFF0F2027), // 어두운 밤
+                        const Color(0xFF0F2027),
                         const Color(0xFF203A43),
                         const Color(0xFF2C5364),
                       ],
@@ -103,10 +108,13 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
             ),
             child: SafeArea(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: CircularProgressIndicator(
+                          color:
+                              isAwake ? colorScheme.progressBar : Colors.white))
                   : _friend == null
                       ? _buildErrorState()
-                      : _buildFriendRoom(isAwake),
+                      : _buildFriendRoom(isAwake, colorScheme, isDarkMode),
             ),
           );
         },
@@ -142,7 +150,11 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
     );
   }
 
-  Widget _buildFriendRoom(bool isAwake) {
+  Widget _buildFriendRoom(
+      bool isAwake, AppColorScheme colorScheme, bool isDarkMode) {
+    final textColor =
+        (isAwake && !isDarkMode) ? const Color(0xFF2C3E50) : Colors.white;
+
     return Column(
       children: [
         // 헤더
@@ -151,8 +163,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
           child: Row(
             children: [
               IconButton(
-                icon: Icon(Icons.arrow_back,
-                    color: isAwake ? const Color(0xFF2C3E50) : Colors.white),
+                icon: Icon(Icons.arrow_back, color: textColor),
                 onPressed: () => Navigator.pop(context),
               ),
               Expanded(
@@ -162,9 +173,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     Text(
                       '${_friend!.nickname}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: isAwake
-                                ? const Color(0xFF2C3E50)
-                                : Colors.white,
+                            color: textColor,
                             fontWeight: FontWeight.bold,
                           ),
                     ),
@@ -172,9 +181,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     Text(
                       '${_friend!.consecutiveDays}일 연속 기록 중 🔥',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: isAwake
-                                ? const Color(0xFF5A6C7D)
-                                : Colors.white70,
+                            color: textColor.withOpacity(0.8),
                           ),
                     ),
                   ],
@@ -199,7 +206,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildFriendStats(isAwake),
+                _buildFriendStats(isAwake, colorScheme),
               ],
             ),
           ),
@@ -209,13 +216,11 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Provider.of<ThemeController>(context).isDarkMode
-                ? Theme.of(context).cardColor
-                : Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: colorScheme.shadowColor.withOpacity(0.1),
                 blurRadius: 20,
                 offset: const Offset(0, -5),
               ),
@@ -231,30 +236,67 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                   Text(
                     '친구에게 한마디',
                     style: TextStyle(
-                      color: Provider.of<ThemeController>(context).isDarkMode
-                          ? Colors.white
-                          : AppColors.textPrimary,
+                      color: colorScheme.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Icon(
-                    Icons.chat_bubble_outline,
-                    color: isAwake
-                        ? AppColors.textSecondary.withOpacity(0.6)
-                        : Colors.white.withOpacity(0.5),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.secondary.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.secondary.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.history, // 보낸 기록임을 나타내는 아이콘으로 변경 시도 가능
+                        color: colorScheme.secondary,
+                        size: 24,
+                      ),
+                      onPressed: () => _showSentMessagesDialog(colorScheme),
+                      tooltip: '보낸 메시지 기록',
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(10),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              SizedBox(
+              Container(
                 width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primaryButton,
+                      colorScheme.primaryButton.withOpacity(0.85),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primaryButton.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: ElevatedButton.icon(
-                  onPressed: () => _showGuestbookDialog(),
-                  icon: const Icon(Icons.edit),
-                  label: const Text('응원 메시지 남기기'),
+                  onPressed: () => _showGuestbookDialog(colorScheme),
+                  icon: const Icon(Icons.send_rounded, size: 20),
+                  label: const Text(
+                    '친구에게 응원 메시지 보내기',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: colorScheme.primaryButtonForeground,
+                    shadowColor: Colors.transparent,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -269,7 +311,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
     );
   }
 
-  Widget _buildFriendStats(bool isAwake) {
+  Widget _buildFriendStats(bool isAwake, AppColorScheme colorScheme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -291,11 +333,13 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
             label: '레벨',
             value: 'Lv.${_friend!.characterLevel}',
             isAwake: isAwake,
+            colorScheme: colorScheme,
           ),
           _buildStatChip(
             label: '연속 기록',
             value: '${_friend!.consecutiveDays}일',
             isAwake: isAwake,
+            colorScheme: colorScheme,
           ),
         ],
       ),
@@ -306,6 +350,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
     required String label,
     required String value,
     required bool isAwake,
+    required AppColorScheme colorScheme,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,7 +368,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: isAwake
-                ? AppColors.primary.withOpacity(0.12)
+                ? colorScheme.cardAccent.withOpacity(0.12)
                 : Colors.white.withOpacity(0.15),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -340,7 +385,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
     );
   }
 
-  Future<void> _showGuestbookDialog() async {
+  Future<void> _showGuestbookDialog(AppColorScheme colorScheme) async {
     final parentContext = context;
     final messageController = TextEditingController();
 
@@ -350,13 +395,12 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
       content: TextField(
         controller: messageController,
         maxLines: 3,
-        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+        style: TextStyle(color: colorScheme.textPrimary),
         decoration: InputDecoration(
           hintText: '친구에게 응원의 메시지를 남겨주세요',
-          hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
+          hintStyle: TextStyle(color: colorScheme.textHint),
           filled: true,
-          fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-              AppColors.backgroundLight,
+          fillColor: Theme.of(context).scaffoldBackgroundColor,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -378,33 +422,28 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
             final now = DateTime.now();
             if (_lastCheerSentAt != null &&
                 now.difference(_lastCheerSentAt!) < _cheerCooldown) {
-              final remaining = _cheerCooldown - now.difference(_lastCheerSentAt!);
+              final remaining =
+                  _cheerCooldown - now.difference(_lastCheerSentAt!);
               ScaffoldMessenger.of(parentContext).showSnackBar(
                 SnackBar(
                   content: Text(
-                    '너무 많은 요청을 보냈어요. ${remaining.inSeconds}초 후에 다시 시도해주세요.',
-                  ),
-                  backgroundColor: AppColors.warning,
+                      '너무 많은 요청을 보냈어요. ${remaining.inSeconds}초 후에 다시 시도해주세요.'),
+                  backgroundColor: colorScheme.warning,
                   behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                 ),
               );
               return;
             }
 
             _lastCheerSentAt = now;
-
             Navigator.pop(context);
-
             if (!mounted) return;
 
             final messenger = ScaffoldMessenger.of(parentContext);
             messenger.showSnackBar(
-              const SnackBar(
-                content: Text('응원 메시지를 보냈습니다! 💌'),
-                backgroundColor: AppColors.success,
+              SnackBar(
+                content: const Text('응원 메시지를 보냈습니다! 💌'),
+                backgroundColor: colorScheme.success,
               ),
             );
 
@@ -424,20 +463,8 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                   if (result.data is Map && result.data['success'] == true) {
                     isPushSent = true;
                   }
-                } on FirebaseFunctionsException catch (e) {
-                  if (e.code == 'resource-exhausted' &&
-                      parentContext.mounted) {
-                    messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('너무 많은 요청을 보냈어요. 잠시 후 다시 시도해주세요.'),
-                        backgroundColor: AppColors.warning,
-                      ),
-                    );
-                    return;
-                  }
-                  print('응원 메시지 FCM 전송 오류: $e');
                 } catch (e) {
-                  print('응원 메시지 FCM 전송 오류: $e');
+                  debugPrint('응원 메시지 FCM 전송 오류: $e');
                 }
 
                 try {
@@ -453,9 +480,9 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                 } catch (e) {
                   if (parentContext.mounted) {
                     messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('응원 메시지 전송에 실패했습니다.'),
-                        backgroundColor: AppColors.error,
+                      SnackBar(
+                        content: const Text('응원 메시지 전송에 실패했습니다.'),
+                        backgroundColor: colorScheme.error,
                       ),
                     );
                   }
@@ -463,6 +490,139 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               }());
             }
           },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showSentMessagesDialog(AppColorScheme colorScheme) async {
+    final authController = context.read<AuthController>();
+    final notificationController = context.read<NotificationController>();
+    final myId = authController.currentUser?.uid;
+
+    if (myId == null) return;
+
+    return AppDialog.show(
+      context: context,
+      key: AppDialogKey.sentMessages,
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 350,
+        child: StreamBuilder<List<NotificationModel>>(
+          stream: notificationController.getSentMessagesStream(
+              myId, widget.friendId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final messages = snapshot.data ?? [];
+            if (messages.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.chat_bubble_outline,
+                        size: 48, color: colorScheme.textHint.withOpacity(0.5)),
+                    const SizedBox(height: 12),
+                    Text(
+                      '아직 보낸 메시지가 없어요',
+                      style: TextStyle(color: colorScheme.textSecondary),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              itemCount: messages.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final msg = messages[index];
+                final actualMessage = msg.message.contains('\n')
+                    ? msg.message.split('\n').last
+                    : msg.message;
+
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: colorScheme.shadowColor.withOpacity(0.08),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadowColor.withOpacity(0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              actualMessage,
+                              style: TextStyle(
+                                color: colorScheme.textPrimary,
+                                fontSize: 15,
+                                height: 1.4,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (msg.isReplied) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: colorScheme.success.withOpacity(0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.check_rounded,
+                                size: 14,
+                                color: colorScheme.success,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Icon(Icons.access_time,
+                              size: 12, color: colorScheme.textHint),
+                          const SizedBox(width: 4),
+                          Text(
+                            DateFormat('yyyy.MM.dd HH:mm')
+                                .format(msg.createdAt),
+                            style: TextStyle(
+                              color: colorScheme.textHint,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        AppDialogAction(
+          label: '닫기',
+          onPressed: () => Navigator.pop(context),
         ),
       ],
     );

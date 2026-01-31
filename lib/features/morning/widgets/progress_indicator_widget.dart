@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_color_scheme.dart';
 
 class ProgressIndicatorWidget extends StatelessWidget {
   final double progress;
@@ -15,6 +15,7 @@ class ProgressIndicatorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final percentage = (progress * 100).clamp(0, 100).toInt();
 
     return Container(
@@ -28,8 +29,8 @@ class ProgressIndicatorWidget extends StatelessWidget {
               children: [
                 Text(
                   title!,
-                  style: const TextStyle(
-                    color: Colors.white70,
+                  style: TextStyle(
+                    color: colorScheme.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -37,8 +38,8 @@ class ProgressIndicatorWidget extends StatelessWidget {
                 if (showPercentage)
                   Text(
                     '$percentage%',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colorScheme.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -52,9 +53,9 @@ class ProgressIndicatorWidget extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress.clamp(0.0, 1.0),
               minHeight: 8,
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: colorScheme.textHint.withOpacity(0.2),
               valueColor: AlwaysStoppedAnimation<Color>(
-                _getProgressColor(progress),
+                _getProgressColor(progress, colorScheme),
               ),
             ),
           ),
@@ -63,13 +64,13 @@ class ProgressIndicatorWidget extends StatelessWidget {
     );
   }
 
-  Color _getProgressColor(double progress) {
+  Color _getProgressColor(double progress, AppColorScheme colorScheme) {
     if (progress < 0.3) {
-      return AppColors.error;
+      return colorScheme.error;
     } else if (progress < 0.7) {
-      return AppColors.warning;
+      return colorScheme.warning;
     } else {
-      return AppColors.success;
+      return colorScheme.success;
     }
   }
 }
