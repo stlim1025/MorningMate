@@ -12,6 +12,7 @@ import '../widgets/enhanced_character_room_widget.dart';
 import '../widgets/twinkling_stars.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_controller.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 class MorningScreen extends StatefulWidget {
   const MorningScreen({super.key});
@@ -216,55 +217,21 @@ class _MorningScreenState extends State<MorningScreen>
   }
 
   Future<bool> _showBiometricRetryDialog(BuildContext context) async {
-    final result = await showDialog<bool>(
+    final result = await AppDialog.show<bool>(
       context: context,
+      key: AppDialogKey.biometricRetry,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+      actions: [
+        AppDialogAction(
+          label: '로그아웃',
+          onPressed: () => Navigator.pop(context, false),
         ),
-        title: const Text(
-          '생체 인증 실패',
-          style: TextStyle(
-            color: Color(0xFF2C3E50),
-            fontWeight: FontWeight.bold,
-          ),
+        AppDialogAction(
+          label: '다시 시도',
+          onPressed: () => Navigator.pop(context, true),
+          useHighlight: true,
         ),
-        content: const Text(
-          '생체 인증에 실패했습니다. 다시 시도하거나 로그아웃할 수 있습니다.',
-          style: TextStyle(color: Color(0xFF5A6C7D)),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF0F0F0),
-              foregroundColor: const Color(0xFF5A6C7D),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('로그아웃'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700),
-              foregroundColor: const Color(0xFF2C3E50),
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              '다시 시도',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
 
     return result ?? false;

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_controller.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
 
@@ -539,102 +540,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
       BuildContext context, String currentNickname) async {
     final controller = TextEditingController(text: currentNickname);
 
-    return showDialog(
+    return AppDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: Text(
-          '닉네임 변경',
-          style: TextStyle(
-            color: Theme.of(context).textTheme.titleLarge?.color,
-            fontWeight: FontWeight.bold,
+      key: AppDialogKey.changeNickname,
+      content: TextField(
+        controller: controller,
+        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+        decoration: InputDecoration(
+          hintText: '새 닉네임 입력',
+          hintStyle: TextStyle(color: AppColors.textHint),
+          filled: true,
+          fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+              AppColors.backgroundLight,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
           ),
         ),
-        content: TextField(
-          controller: controller,
-          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
-          decoration: InputDecoration(
-            hintText: '새 닉네임 입력',
-            hintStyle: TextStyle(color: AppColors.textHint),
-            filled: true,
-            fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-                AppColors.backgroundLight,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-          ),
-          maxLength: 10,
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.grey[800]
-                  : const Color(0xFFF0F0F0),
-              foregroundColor: AppColors.textSecondary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final newNickname = controller.text.trim();
-              if (newNickname.isEmpty || newNickname.length < 2) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  _buildSnackBar('닉네임은 2자 이상이어야 합니다'),
-                );
-                return;
-              }
-
-              final authController = context.read<AuthController>();
-              final userService = context.read<UserService>();
-              final userId = authController.currentUser?.uid;
-
-              if (userId != null) {
-                try {
-                  await userService.updateUser(userId, {
-                    'nickname': newNickname,
-                  });
-
-                  // 즉시 로컬 모델 업데이트 (반영 속도 향상)
-                  authController.updateUserModel(
-                    authController.userModel?.copyWith(nickname: newNickname),
-                  );
-
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    _buildSnackBar('닉네임이 변경되었습니다', isSuccess: true),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    _buildSnackBar('오류: $e'),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700),
-              foregroundColor: AppColors.textPrimary,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              '변경',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
+        maxLength: 10,
       ),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: '변경',
+          useHighlight: true,
+          onPressed: () async {
+            final newNickname = controller.text.trim();
+            if (newNickname.isEmpty || newNickname.length < 2) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                _buildSnackBar('닉네임은 2자 이상이어야 합니다'),
+              );
+              return;
+            }
+
+            final authController = context.read<AuthController>();
+            final userService = context.read<UserService>();
+            final userId = authController.currentUser?.uid;
+
+            if (userId != null) {
+              try {
+                await userService.updateUser(userId, {
+                  'nickname': newNickname,
+                });
+
+                // 즉시 로컬 모델 업데이트 (반영 속도 향상)
+                authController.updateUserModel(
+                  authController.userModel?.copyWith(nickname: newNickname),
+                );
+
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  _buildSnackBar('닉네임이 변경되었습니다', isSuccess: true),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  _buildSnackBar('오류: $e'),
+                );
+              }
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -717,198 +686,126 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirmPasswordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
-    return showDialog(
+    return AppDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: Text(
-          '비밀번호 변경',
-          style: TextStyle(
-            color: Theme.of(context).textTheme.titleLarge?.color,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: newPasswordController,
-                obscureText: true,
-                style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color),
-                decoration: InputDecoration(
-                  hintText: '새 비밀번호 (6자 이상)',
-                  hintStyle: TextStyle(color: AppColors.textHint),
-                  filled: true,
-                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-                      AppColors.backgroundLight,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+      key: AppDialogKey.changePassword,
+      content: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: newPasswordController,
+              obscureText: true,
+              style:
+                  TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              decoration: InputDecoration(
+                hintText: '새 비밀번호 (6자 이상)',
+                hintStyle: TextStyle(color: AppColors.textHint),
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                    AppColors.backgroundLight,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '새 비밀번호를 입력해주세요';
-                  }
-                  if (value.trim().length < 6) {
-                    return '비밀번호는 최소 6자 이상이어야 합니다';
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: confirmPasswordController,
-                obscureText: true,
-                style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color),
-                decoration: InputDecoration(
-                  hintText: '새 비밀번호 확인',
-                  hintStyle: TextStyle(color: AppColors.textHint),
-                  filled: true,
-                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-                      AppColors.backgroundLight,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return '새 비밀번호를 입력해주세요';
+                }
+                if (value.trim().length < 6) {
+                  return '비밀번호는 최소 6자 이상이어야 합니다';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: confirmPasswordController,
+              obscureText: true,
+              style:
+                  TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              decoration: InputDecoration(
+                hintText: '새 비밀번호 확인',
+                hintStyle: TextStyle(color: AppColors.textHint),
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                    AppColors.backgroundLight,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '비밀번호 확인을 입력해주세요';
-                  }
-                  if (value.trim() != newPasswordController.text.trim()) {
-                    return '비밀번호가 일치하지 않습니다';
-                  }
-                  return null;
-                },
               ),
-            ],
-          ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return '비밀번호 확인을 입력해주세요';
+                }
+                if (value.trim() != newPasswordController.text.trim()) {
+                  return '비밀번호가 일치하지 않습니다';
+                }
+                return null;
+              },
+            ),
+          ],
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.grey[800]
-                  : const Color(0xFFF0F0F0),
-              foregroundColor: AppColors.textSecondary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
-
-              final authController = context.read<AuthController>();
-              try {
-                await authController
-                    .changePassword(newPasswordController.text.trim());
-                if (context.mounted) {
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    _buildSnackBar('비밀번호가 변경되었습니다', isSuccess: true),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    _buildSnackBar('비밀번호 변경 실패: $e'),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700),
-              foregroundColor: AppColors.textPrimary,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              '변경',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
       ),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: '변경',
+          useHighlight: true,
+          onPressed: () async {
+            if (!formKey.currentState!.validate()) return;
+
+            final authController = context.read<AuthController>();
+            try {
+              await authController
+                  .changePassword(newPasswordController.text.trim());
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  _buildSnackBar('비밀번호가 변경되었습니다', isSuccess: true),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  _buildSnackBar('비밀번호 변경 실패: $e'),
+                );
+              }
+            }
+          },
+        ),
+      ],
     );
   }
 
   Future<void> _showLogoutDialog(
       BuildContext context, AuthController authController) async {
-    return showDialog(
+    return AppDialog.show(
       context: context,
-      builder: (context) {
-        final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
-        return AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Text(
-            '로그아웃',
-            style: TextStyle(
-              color: Theme.of(context).textTheme.titleLarge?.color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            '정말 로그아웃 하시겠습니까?',
-            style:
-                TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                foregroundColor: isDarkMode ? Colors.white70 : Colors.black87,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('취소'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                await authController.signOut();
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  context.go('/login');
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor:
-                    isDarkMode ? const Color(0xFF5D4E37) : Colors.white,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                '로그아웃',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        );
-      },
+      key: AppDialogKey.logout,
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: '로그아웃',
+          isPrimary: true,
+          onPressed: () async {
+            await authController.signOut();
+            if (context.mounted) {
+              Navigator.pop(context);
+              context.go('/login');
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -916,74 +813,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BuildContext context,
     AuthController authController,
   ) async {
-    return showDialog(
+    return AppDialog.show(
       context: context,
-      builder: (context) {
-        final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
-        return AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Text(
-            '회원탈퇴',
-            style: TextStyle(
-              color: Theme.of(context).textTheme.titleLarge?.color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            '정말 회원탈퇴 하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.',
-            style:
-                TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                foregroundColor: isDarkMode ? Colors.white70 : Colors.black87,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('취소'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor:
-                    isDarkMode ? const Color(0xFF5D4E37) : Colors.white,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                '탈퇴',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              onPressed: () async {
-                Navigator.pop(context);
-                try {
-                  await authController.deleteAccount();
-                  if (context.mounted) {
-                    context.go('/login');
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      _buildSnackBar('회원탈퇴 실패: $e'),
-                    );
-                  }
-                }
-              },
-            ),
-          ],
-        );
-      },
+      key: AppDialogKey.deleteAccount,
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: '탈퇴',
+          isPrimary: true,
+          onPressed: () async {
+            Navigator.pop(context);
+            try {
+              await authController.deleteAccount();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  _buildSnackBar('회원탈퇴 실패: $e'),
+                );
+              }
+            }
+          },
+        ),
+      ],
     );
   }
 

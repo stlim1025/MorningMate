@@ -8,6 +8,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/user_service.dart';
 import '../../../core/theme/theme_controller.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -760,122 +761,75 @@ class _SocialScreenState extends State<SocialScreen> {
     final emailController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
-    return showDialog(
+    return AppDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: Row(
+      key: AppDialogKey.addFriend,
+      leading: const Icon(Icons.person_add, color: AppColors.primary),
+      content: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.person_add, color: AppColors.primary),
-            SizedBox(width: 12),
-            Text(
-              '친구 추가',
+            const Text(
+              '친구의 이메일 주소를 입력하세요',
               style: TextStyle(
-                color: Theme.of(context).textTheme.titleLarge?.color,
-                fontWeight: FontWeight.bold,
+                color: AppColors.textSecondary,
+                fontSize: 14,
               ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              style:
+                  TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              decoration: InputDecoration(
+                hintText: 'friend@example.com',
+                hintStyle: TextStyle(color: AppColors.textHint),
+                prefixIcon: const Icon(
+                  Icons.email,
+                  color: AppColors.primary,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                    AppColors.backgroundLight,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return '이메일을 입력해주세요';
+                }
+                if (!value.contains('@')) {
+                  return '올바른 이메일 형식이 아닙니다';
+                }
+                return null;
+              },
             ),
           ],
         ),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '친구의 이메일 주소를 입력하세요',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                style: TextStyle(
-                    color: Theme.of(context).textTheme.bodyLarge?.color),
-                decoration: InputDecoration(
-                  hintText: 'friend@example.com',
-                  hintStyle: TextStyle(color: AppColors.textHint),
-                  prefixIcon: const Icon(
-                    Icons.email,
-                    color: AppColors.primary,
-                  ),
-                  filled: true,
-                  fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-                      AppColors.backgroundLight,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '이메일을 입력해주세요';
-                  }
-                  if (!value.contains('@')) {
-                    return '올바른 이메일 형식이 아닙니다';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  Provider.of<ThemeController>(context, listen: false)
-                          .isDarkMode
-                      ? Colors.grey[800]
-                      : Colors.grey[200],
-              foregroundColor:
-                  Provider.of<ThemeController>(context, listen: false)
-                          .isDarkMode
-                      ? Colors.white70
-                      : Colors.black87,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
-
-              final email = emailController.text.trim();
-              Navigator.pop(dialogContext);
-
-              await _addFriendByEmail(context, email);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor:
-                  Provider.of<ThemeController>(context, listen: false)
-                          .isDarkMode
-                      ? const Color(0xFF5D4E37)
-                      : Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              '추가',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
       ),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: '추가',
+          isPrimary: true,
+          onPressed: () async {
+            if (!formKey.currentState!.validate()) return;
+
+            final email = emailController.text.trim();
+            Navigator.pop(context);
+
+            await _addFriendByEmail(context, email);
+          },
+        ),
+      ],
     );
   }
 

@@ -11,6 +11,7 @@ import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../notification/controllers/notification_controller.dart';
 import '../../../core/theme/theme_controller.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 class FriendRoomScreen extends StatefulWidget {
   final String friendId;
@@ -343,171 +344,127 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
     final parentContext = context;
     final messageController = TextEditingController();
 
-    return showDialog(
+    return AppDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        title: Text(
-          '응원 메시지',
-          style: TextStyle(
-            color: Theme.of(context).textTheme.titleLarge?.color,
-            fontWeight: FontWeight.bold,
+      key: AppDialogKey.guestbook,
+      content: TextField(
+        controller: messageController,
+        maxLines: 3,
+        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+        decoration: InputDecoration(
+          hintText: '친구에게 응원의 메시지를 남겨주세요',
+          hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
+          filled: true,
+          fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+              AppColors.backgroundLight,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
           ),
         ),
-        content: TextField(
-          controller: messageController,
-          maxLines: 3,
-          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
-          decoration: InputDecoration(
-            hintText: '친구에게 응원의 메시지를 남겨주세요',
-            hintStyle:
-                TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
-            filled: true,
-            fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
-                AppColors.backgroundLight,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-          ),
+      ),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  Provider.of<ThemeController>(context, listen: false)
-                          .isDarkMode
-                      ? Colors.grey[800]
-                      : Colors.grey[200],
-              foregroundColor:
-                  Provider.of<ThemeController>(context, listen: false)
-                          .isDarkMode
-                      ? Colors.white70
-                      : Colors.black87,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final message = messageController.text.trim();
-              if (message.isEmpty) return;
+        AppDialogAction(
+          label: '남기기',
+          isPrimary: true,
+          onPressed: () async {
+            final message = messageController.text.trim();
+            if (message.isEmpty) return;
 
-              final now = DateTime.now();
-              if (_lastCheerSentAt != null &&
-                  now.difference(_lastCheerSentAt!) < _cheerCooldown) {
-                final remaining =
-                    _cheerCooldown - now.difference(_lastCheerSentAt!);
-                ScaffoldMessenger.of(parentContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '너무 많은 요청을 보냈어요. ${remaining.inSeconds}초 후에 다시 시도해주세요.',
-                    ),
-                    backgroundColor: AppColors.warning,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+            final now = DateTime.now();
+            if (_lastCheerSentAt != null &&
+                now.difference(_lastCheerSentAt!) < _cheerCooldown) {
+              final remaining = _cheerCooldown - now.difference(_lastCheerSentAt!);
+              ScaffoldMessenger.of(parentContext).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    '너무 많은 요청을 보냈어요. ${remaining.inSeconds}초 후에 다시 시도해주세요.',
                   ),
-                );
-                return;
-              }
-
-              _lastCheerSentAt = now;
-
-              Navigator.pop(dialogContext);
-
-              if (!mounted) return;
-
-              final messenger = ScaffoldMessenger.of(parentContext);
-              messenger.showSnackBar(
-                const SnackBar(
-                  content: Text('응원 메시지를 보냈습니다! 💌'),
-                  backgroundColor: AppColors.success,
+                  backgroundColor: AppColors.warning,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               );
+              return;
+            }
 
-              final userModel = parentContext.read<AuthController>().userModel;
-              if (userModel != null) {
-                unawaited(() async {
-                  final callable = FirebaseFunctions.instance
-                      .httpsCallable('sendCheerMessage');
-                  bool isPushSent = false;
-                  try {
-                    final result = await callable.call({
-                      'userId': userModel.uid,
-                      'friendId': _friend!.uid,
-                      'message': message,
-                      'senderNickname': userModel.nickname,
-                    });
-                    if (result.data is Map && result.data['success'] == true) {
-                      isPushSent = true;
-                    }
-                  } on FirebaseFunctionsException catch (e) {
-                    if (e.code == 'resource-exhausted' &&
-                        parentContext.mounted) {
-                      messenger.showSnackBar(
-                        const SnackBar(
-                          content: Text('너무 많은 요청을 보냈어요. 잠시 후 다시 시도해주세요.'),
-                          backgroundColor: AppColors.warning,
-                        ),
-                      );
-                      return;
-                    }
-                    print('응원 메시지 FCM 전송 오류: $e');
-                  } catch (e) {
-                    print('응원 메시지 FCM 전송 오류: $e');
-                  }
+            _lastCheerSentAt = now;
 
-                  try {
-                    await parentContext
-                        .read<NotificationController>()
-                        .sendCheerMessage(
-                          userModel.uid,
-                          userModel.nickname,
-                          _friend!.uid,
-                          message,
-                          fcmSent: isPushSent,
-                        );
-                  } catch (e) {
-                    if (parentContext.mounted) {
-                      messenger.showSnackBar(
-                        const SnackBar(
-                          content: Text('응원 메시지 전송에 실패했습니다.'),
-                          backgroundColor: AppColors.error,
-                        ),
-                      );
-                    }
-                  }
-                }());
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor:
-                  Provider.of<ThemeController>(context, listen: false)
-                          .isDarkMode
-                      ? const Color(0xFF5D4E37)
-                      : Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            Navigator.pop(context);
+
+            if (!mounted) return;
+
+            final messenger = ScaffoldMessenger.of(parentContext);
+            messenger.showSnackBar(
+              const SnackBar(
+                content: Text('응원 메시지를 보냈습니다! 💌'),
+                backgroundColor: AppColors.success,
               ),
-            ),
-            child: const Text(
-              '남기기',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
+            );
+
+            final userModel = parentContext.read<AuthController>().userModel;
+            if (userModel != null) {
+              unawaited(() async {
+                final callable = FirebaseFunctions.instance
+                    .httpsCallable('sendCheerMessage');
+                bool isPushSent = false;
+                try {
+                  final result = await callable.call({
+                    'userId': userModel.uid,
+                    'friendId': _friend!.uid,
+                    'message': message,
+                    'senderNickname': userModel.nickname,
+                  });
+                  if (result.data is Map && result.data['success'] == true) {
+                    isPushSent = true;
+                  }
+                } on FirebaseFunctionsException catch (e) {
+                  if (e.code == 'resource-exhausted' &&
+                      parentContext.mounted) {
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('너무 많은 요청을 보냈어요. 잠시 후 다시 시도해주세요.'),
+                        backgroundColor: AppColors.warning,
+                      ),
+                    );
+                    return;
+                  }
+                  print('응원 메시지 FCM 전송 오류: $e');
+                } catch (e) {
+                  print('응원 메시지 FCM 전송 오류: $e');
+                }
+
+                try {
+                  await parentContext
+                      .read<NotificationController>()
+                      .sendCheerMessage(
+                        userModel.uid,
+                        userModel.nickname,
+                        _friend!.uid,
+                        message,
+                        fcmSent: isPushSent,
+                      );
+                } catch (e) {
+                  if (parentContext.mounted) {
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('응원 메시지 전송에 실패했습니다.'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
+              }());
+            }
+          },
+        ),
+      ],
     );
   }
 }
