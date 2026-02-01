@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
@@ -66,6 +67,10 @@ class ShopScreen extends StatelessWidget {
             _buildSectionHeader('소품', Icons.auto_awesome),
             const SizedBox(height: 16),
             _buildPropGrid(user, characterController, colorScheme),
+            const SizedBox(height: 32),
+            _buildSectionHeader('바닥', Icons.grid_on),
+            const SizedBox(height: 16),
+            _buildFloorGrid(user, characterController, colorScheme),
           ],
         ),
       ),
@@ -145,6 +150,21 @@ class ShopScreen extends StatelessWidget {
     });
   }
 
+  Widget _buildFloorGrid(user, characterController, colorScheme) {
+    final purchasableFloors =
+        RoomAssets.floors.where((f) => f.price > 0).toList();
+    return _buildGrid(purchasableFloors, (item) {
+      final isPurchased = user.purchasedFloorIds.contains(item.id);
+      return _buildShopItem(
+        item: item,
+        isPurchased: isPurchased,
+        onPurchase: () =>
+            characterController.purchaseFloor(user.uid, item.id, item.price),
+        colorScheme: colorScheme,
+      );
+    });
+  }
+
   Widget _buildGrid(
       List<RoomAsset> items, Widget Function(RoomAsset) itemBuilder) {
     return GridView.builder(
@@ -195,8 +215,17 @@ class ShopScreen extends StatelessWidget {
                     (item.color ?? colorScheme.primaryButton).withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(item.icon,
-                  color: item.color ?? colorScheme.primaryButton, size: 28),
+              child: item.imagePath != null
+                  ? Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: item.imagePath!.endsWith('.svg')
+                          ? SvgPicture.asset(
+                              item.imagePath!,
+                            )
+                          : Image.asset(item.imagePath!),
+                    )
+                  : Icon(item.icon,
+                      color: item.color ?? colorScheme.primaryButton, size: 28),
             ),
             const SizedBox(height: 8),
             Text(
@@ -260,12 +289,24 @@ class ShopScreen extends StatelessWidget {
                                               .withOpacity(0.1),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: Icon(
-                                          item.icon,
-                                          size: 60,
-                                          color: item.color ??
-                                              colorScheme.primaryButton,
-                                        ),
+                                        child: item.imagePath != null
+                                            ? Padding(
+                                                padding:
+                                                    const EdgeInsets.all(16.0),
+                                                child: item.imagePath!
+                                                        .endsWith('.svg')
+                                                    ? SvgPicture.asset(
+                                                        item.imagePath!,
+                                                      )
+                                                    : Image.asset(
+                                                        item.imagePath!),
+                                              )
+                                            : Icon(
+                                                item.icon,
+                                                size: 60,
+                                                color: item.color ??
+                                                    colorScheme.primaryButton,
+                                              ),
                                       ),
                                     ),
                                     const SizedBox(height: 24),

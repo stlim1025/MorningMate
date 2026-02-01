@@ -8,6 +8,8 @@ class RoomAsset {
   final IconData icon;
   final Color? color;
   final AppThemeType? themeType;
+  final String? imagePath;
+  final double sizeMultiplier;
 
   const RoomAsset({
     required this.id,
@@ -16,6 +18,8 @@ class RoomAsset {
     required this.icon,
     this.color,
     this.themeType,
+    this.imagePath,
+    this.sizeMultiplier = 1.0,
   });
 }
 
@@ -81,19 +85,22 @@ class RoomAssets {
         name: '스트라이프',
         price: 100,
         icon: Icons.view_week, // Vertical stripes
-        color: Color(0xFFB3E5FC)),
+        color: Color(0xFFB3E5FC),
+        imagePath: 'assets/images/SpliteSky.png'),
     RoomAsset(
         id: 'check',
         name: '체크',
         price: 100,
         icon: Icons.grid_4x4, // Checks
-        color: Color(0xFFC8E6C9)),
+        color: Color(0xFFC8E6C9),
+        imagePath: 'assets/images/CheckGreen.png'),
     RoomAsset(
         id: 'dot',
         name: '도트',
         price: 100,
         icon: Icons.scatter_plot, // Dots
-        color: Color(0xFFFFF9C4)),
+        color: Color(0xFFFFF9C4),
+        imagePath: 'assets/images/DotPink.png'),
     RoomAsset(
         id: 'dark_wall',
         name: '다크벽지',
@@ -131,5 +138,47 @@ class RoomAssets {
     RoomAsset(id: 'bear', name: '곰돌이', price: 100, icon: Icons.pets),
     RoomAsset(id: 'lamp', name: '램프', price: 100, icon: Icons.lightbulb),
     RoomAsset(id: 'frame', name: '액자', price: 100, icon: Icons.crop_original),
+    RoomAsset(
+      id: 'alarm_clock',
+      name: '알람시계',
+      price: 150,
+      icon: Icons.alarm,
+      imagePath: 'assets/items/AlarmClock.png',
+    ),
+    RoomAsset(
+      id: 'wood_desk',
+      name: '원목 책상',
+      price: 200,
+      icon: Icons.table_restaurant,
+      imagePath: 'assets/items/WoodDesk.png',
+      sizeMultiplier: 3.0,
+    ),
+  ];
+
+  static const List<RoomAsset> floors = [
+    RoomAsset(
+        id: 'default',
+        name: '기본 바닥',
+        price: 0,
+        icon: Icons.grid_view,
+        color: Color(0xFFD2B48C)),
+    RoomAsset(
+        id: 'wood',
+        name: '나무 바닥',
+        price: 150,
+        icon: Icons.view_quilt,
+        imagePath: 'assets/images/WoodFloor.svg'),
+    RoomAsset(
+        id: 'tile_sky',
+        name: '하늘 타일',
+        price: 150,
+        icon: Icons.apps,
+        imagePath: 'assets/images/TileFloorSky.svg'),
+    RoomAsset(
+        id: 'carpet_pink',
+        name: '핑크 카펫',
+        price: 200,
+        icon: Icons.texture,
+        imagePath: 'assets/images/CarpetFloorPink.svg'),
   ];
 }

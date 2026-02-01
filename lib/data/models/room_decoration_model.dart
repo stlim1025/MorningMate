@@ -1,11 +1,13 @@
 class RoomDecorationModel {
   final String wallpaperId;
   final String backgroundId; // 'none', 'forest', 'valley', 'sea', 'space'
+  final String floorId;
   final List<RoomPropModel> props;
 
   RoomDecorationModel({
     this.wallpaperId = 'default',
     this.backgroundId = 'none',
+    this.floorId = 'default',
     this.props = const [],
   });
 
@@ -13,6 +15,7 @@ class RoomDecorationModel {
     return {
       'wallpaperId': wallpaperId,
       'backgroundId': backgroundId,
+      'floorId': floorId,
       'props': props.map((p) => p.toMap()).toList(),
     };
   }
@@ -21,6 +24,7 @@ class RoomDecorationModel {
     return RoomDecorationModel(
       wallpaperId: map['wallpaperId'] ?? 'default',
       backgroundId: map['backgroundId'] ?? 'none',
+      floorId: map['floorId'] ?? 'default',
       props: (map['props'] as List<dynamic>?)
               ?.map((p) => RoomPropModel.fromMap(p as Map<String, dynamic>))
               .toList() ??
@@ -31,11 +35,13 @@ class RoomDecorationModel {
   RoomDecorationModel copyWith({
     String? wallpaperId,
     String? backgroundId,
+    String? floorId,
     List<RoomPropModel>? props,
   }) {
     return RoomDecorationModel(
       wallpaperId: wallpaperId ?? this.wallpaperId,
       backgroundId: backgroundId ?? this.backgroundId,
+      floorId: floorId ?? this.floorId,
       props: props ?? this.props,
     );
   }

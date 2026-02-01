@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="512" viewBox="0 0 2048 512">
+  <defs>
+    <!-- Soft warm wood gradient -->
+    <linearGradient id="woodBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EED9BF"></stop>
+      <stop offset="1" stop-color="#E5CDAF"></stop>
+    </linearGradient>
+
+    <!-- Subtle vignette to give depth -->
+    <radialGradient id="woodVignette" cx="50%" cy="10%" r="120%">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"></stop>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.08"></stop>
+    </radialGradient>
+
+    <!-- Plank highlight -->
+    <linearGradient id="plankHi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"></stop>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.06"></stop>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="2048" height="512" fill="url(#woodBg)"></rect>
+  <rect width="2048" height="512" fill="url(#woodVignette)"></rect>
+
+  <!-- Planks -->
+  <!-- 8 wide planks with soft seams -->
+  <g>
+    <!-- seam lines -->
+    <g opacity="0.45" stroke="#C9AD8C" stroke-width="6" stroke-linecap="round">
+      <line x1="0" y1="64" x2="2048" y2="64"></line>
+      <line x1="0" y1="128" x2="2048" y2="128"></line>
+      <line x1="0" y1="192" x2="2048" y2="192"></line>
+      <line x1="0" y1="256" x2="2048" y2="256"></line>
+      <line x1="0" y1="320" x2="2048" y2="320"></line>
+      <line x1="0" y1="384" x2="2048" y2="384"></line>
+      <line x1="0" y1="448" x2="2048" y2="448"></line>
+    </g>
+
+    <!-- plank sheen bands -->
+    <g opacity="0.35">
+      <rect x="0" y="8" width="2048" height="56" fill="url(#plankHi)"></rect>
+      <rect x="0" y="72" width="2048" height="56" fill="url(#plankHi)"></rect>
+      <rect x="0" y="136" width="2048" height="56" fill="url(#plankHi)"></rect>
+      <rect x="0" y="200" width="2048" height="56" fill="url(#plankHi)"></rect>
+      <rect x="0" y="264" width="2048" height="56" fill="url(#plankHi)"></rect>
+      <rect x="0" y="328" width="2048" height="56" fill="url(#plankHi)"></rect>
+      <rect x="0" y="392" width="2048" height="56" fill="url(#plankHi)"></rect>
+      <rect x="0" y="456" width="2048" height="56" fill="url(#plankHi)"></rect>
+    </g>
+
+    <!-- gentle wood grain lines -->
+    <g opacity="0.18" stroke="#B89473" stroke-width="3" stroke-linecap="round">
+      <!-- repeat a few flowing grains -->
+      <path d="M80,40 C200,20 320,70 440,50 C560,30 680,80 800,60 C920,40 1040,85 1160,65 C1280,45 1400,95 1520,70 C1640,45 1760,90 1880,70" fill="none"></path>
+      <path d="M120,168 C260,140 360,190 520,170 C680,150 780,205 940,185 C1100,165 1210,220 1360,195 C1510,170 1610,235 1760,210 C1910,185 1980,235 2048,220" fill="none"></path>
+      <path d="M0,300 C140,280 260,330 420,310 C580,290 700,340 860,320 C1020,300 1140,350 1300,330 C1460,310 1580,360 1740,340 C1900,320 1980,360 2048,350" fill="none"></path>
+      <path d="M60,460 C220,440 340,490 520,470 C700,450 820,505 1000,485 C1180,465 1300,515 1480,495 C1660,475 1780,520 1960,500" fill="none"></path>
+    </g>
+
+    <!-- tiny knots -->
+    <g opacity="0.22" fill="#C7A07C">
+      <ellipse cx="320" cy="96" rx="18" ry="10"></ellipse>
+      <ellipse cx="980" cy="216" rx="22" ry="12"></ellipse>
+      <ellipse cx="1540" cy="352" rx="20" ry="11"></ellipse>
+      <ellipse cx="640" cy="416" rx="16" ry="9"></ellipse>
+    </g>
+  </g>
+</svg>

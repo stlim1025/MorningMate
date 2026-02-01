@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/constants/room_assets.dart';
@@ -19,7 +20,7 @@ class DecorationScreen extends StatefulWidget {
 class _DecorationScreenState extends State<DecorationScreen> {
   late ValueNotifier<RoomDecorationModel> _decorationNotifier;
   String _selectedCategory =
-      'theme'; // 'theme', 'background', 'wallpaper', 'props'
+      'background'; // 'theme', 'background', 'wallpaper', 'props'
   String? _currentUserThemeId;
   bool? _previewIsAwake;
 
@@ -183,8 +184,19 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                               .map((entry) {
                                             final idx = entry.key;
                                             final prop = entry.value;
-                                            final propSize =
-                                                innerRoomSize * 0.16;
+                                            final asset = RoomAssets.props
+                                                .firstWhere(
+                                                    (p) => p.id == prop.type,
+                                                    orElse: () =>
+                                                        const RoomAsset(
+                                                            id: '',
+                                                            name: '',
+                                                            price: 0,
+                                                            icon:
+                                                                Icons.circle));
+                                            final propSize = innerRoomSize *
+                                                0.16 *
+                                                asset.sizeMultiplier;
                                             return Positioned(
                                               left: prop.x *
                                                   (innerRoomSize - propSize),
@@ -239,7 +251,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                                       child: Center(
                                                           child: _getPropIcon(
                                                               prop.type,
-                                                              propSize * 0.7)),
+                                                              propSize)),
                                                     ),
                                                   ),
                                                   Positioned(
@@ -365,7 +377,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
               child: Column(
                 children: [
                   Container(
-                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    margin: const EdgeInsets.only(top: 10, bottom: 4),
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
@@ -391,17 +403,19 @@ class _DecorationScreenState extends State<DecorationScreen> {
   Widget _buildCategoryTabs(AppColorScheme colorScheme) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _buildTabItem('theme', '테마', Icons.palette_outlined, colorScheme),
-          const SizedBox(width: 8),
           _buildTabItem(
               'background', '배경', Icons.landscape_outlined, colorScheme),
           const SizedBox(width: 8),
           _buildTabItem('wallpaper', '벽지', Icons.wallpaper, colorScheme),
           const SizedBox(width: 8),
           _buildTabItem('props', '소품', Icons.auto_awesome_motion, colorScheme),
+          const SizedBox(width: 8),
+          _buildTabItem('floor', '바닥', Icons.grid_on_outlined, colorScheme),
+          const SizedBox(width: 8),
+          _buildTabItem('theme', '테마', Icons.palette_outlined, colorScheme),
         ],
       ),
     );
@@ -455,6 +469,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
         return _buildWallpaperList(user, colorScheme);
       case 'props':
         return _buildPropList(user, colorScheme);
+      case 'floor':
+        return _buildFloorList(user, colorScheme);
       default:
         return const SizedBox();
     }
@@ -468,10 +484,10 @@ class _DecorationScreenState extends State<DecorationScreen> {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 5,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 0.6,
+        crossAxisCount: 4,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.75,
       ),
       itemCount: purchased.length,
       itemBuilder: (context, index) {
@@ -480,6 +496,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
         return _buildSelectionCard(
           label: t.name,
           icon: t.icon,
+          imagePath: t.imagePath,
           color: t.color ??
               (isSelected ? colorScheme.success : colorScheme.backgroundLight),
           isSelected: isSelected,
@@ -508,10 +525,10 @@ class _DecorationScreenState extends State<DecorationScreen> {
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 0.6,
+            crossAxisCount: 4,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.75,
           ),
           itemCount: purchased.length,
           itemBuilder: (context, index) {
@@ -520,6 +537,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
             return _buildSelectionCard(
               label: b.name,
               icon: b.icon,
+              imagePath: b.imagePath,
               color: b.color ??
                   (isSelected ? colorScheme.success : Colors.blueGrey),
               isSelected: isSelected,
@@ -547,10 +565,10 @@ class _DecorationScreenState extends State<DecorationScreen> {
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 0.6,
+            crossAxisCount: 4,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.75,
           ),
           itemCount: purchased.length,
           itemBuilder: (context, index) {
@@ -559,10 +577,49 @@ class _DecorationScreenState extends State<DecorationScreen> {
             return _buildSelectionCard(
               label: w.name,
               color: w.color ?? colorScheme.backgroundLight,
+              imagePath: w.imagePath,
               isSelected: isSelected,
               onTap: () {
                 _decorationNotifier.value =
                     decoration.copyWith(wallpaperId: w.id);
+              },
+              colorScheme: colorScheme,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFloorList(user, AppColorScheme colorScheme) {
+    final purchased = RoomAssets.floors
+        .where((f) => user.purchasedFloorIds.contains(f.id))
+        .toList();
+
+    return ValueListenableBuilder<RoomDecorationModel>(
+      valueListenable: _decorationNotifier,
+      builder: (context, decoration, _) {
+        return GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.75,
+          ),
+          itemCount: purchased.length,
+          itemBuilder: (context, index) {
+            final f = purchased[index];
+            final isSelected = decoration.floorId == f.id;
+
+            return _buildSelectionCard(
+              label: f.name,
+              color: f.color ?? colorScheme.backgroundLight,
+              imagePath: f.imagePath,
+              icon: f.icon,
+              isSelected: isSelected,
+              onTap: () {
+                _decorationNotifier.value = decoration.copyWith(floorId: f.id);
               },
               colorScheme: colorScheme,
             );
@@ -587,10 +644,10 @@ class _DecorationScreenState extends State<DecorationScreen> {
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 0.7,
+            crossAxisCount: 4,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.75,
           ),
           itemCount: purchased.length,
           itemBuilder: (context, index) {
@@ -646,17 +703,33 @@ class _DecorationScreenState extends State<DecorationScreen> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          Icon(p.icon,
-                              color: exists
-                                  ? colorScheme.success
-                                  : Colors.blueGrey,
-                              size: 24),
+                          if (p.imagePath != null)
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Image.asset(
+                                p.imagePath!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(p.icon,
+                                      color: exists
+                                          ? colorScheme.success
+                                          : Colors.blueGrey,
+                                      size: 28);
+                                },
+                              ),
+                            )
+                          else
+                            Icon(p.icon,
+                                color: exists
+                                    ? colorScheme.success
+                                    : Colors.blueGrey,
+                                size: 28),
                           if (exists)
                             Positioned(
-                              top: 4,
-                              right: 4,
+                              top: 2,
+                              right: 2,
                               child: Icon(Icons.check_circle,
-                                  color: colorScheme.success, size: 14),
+                                  color: colorScheme.success, size: 16),
                             ),
                         ],
                       ),
@@ -666,9 +739,11 @@ class _DecorationScreenState extends State<DecorationScreen> {
                   Flexible(
                     child: Text(
                       p.name,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight:
                             exists ? FontWeight.bold : FontWeight.normal,
                         color: exists
@@ -690,6 +765,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
     required String label,
     Color? color,
     IconData? icon,
+    String? imagePath,
     required bool isSelected,
     required VoidCallback onTap,
     required AppColorScheme colorScheme,
@@ -704,6 +780,12 @@ class _DecorationScreenState extends State<DecorationScreen> {
               width: double.infinity,
               decoration: BoxDecoration(
                 color: color ?? colorScheme.shadowColor.withOpacity(0.05),
+                image: (imagePath != null && !imagePath.endsWith('.svg'))
+                    ? DecorationImage(
+                        image: AssetImage(imagePath),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
@@ -721,31 +803,43 @@ class _DecorationScreenState extends State<DecorationScreen> {
                       ]
                     : [],
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  if (icon != null)
-                    Icon(icon,
-                        size: 32,
-                        color: isSelected ? Colors.white : Colors.blueGrey),
-                  if (isSelected)
-                    const Center(
-                      child: Icon(Icons.check_circle,
-                          color: Colors.white, size: 28),
-                    ),
-                ],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (imagePath != null && imagePath.endsWith('.svg'))
+                      Positioned.fill(
+                        child: SvgPicture.asset(
+                          imagePath,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    if (icon != null && imagePath == null)
+                      Icon(icon,
+                          size: 38,
+                          color: isSelected ? Colors.white : Colors.blueGrey),
+                    if (isSelected)
+                      Container(
+                        color: Colors.black26,
+                        child: const Center(
+                          child: Icon(Icons.check_circle,
+                              color: Colors.white, size: 32),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
           const SizedBox(height: 6),
           Text(
             label,
-            maxLines: 2,
+            maxLines: 1,
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11,
-              height: 1.1,
+              fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               color: isSelected ? colorScheme.success : colorScheme.textPrimary,
             ),
@@ -761,6 +855,19 @@ class _DecorationScreenState extends State<DecorationScreen> {
         orElse: () =>
             const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
     if (asset.id.isEmpty) return SizedBox(width: size, height: size);
-    return Icon(asset.icon, color: Colors.blueGrey, size: size);
+
+    if (asset.imagePath != null) {
+      return Image.asset(
+        asset.imagePath!,
+        width: size * 0.9,
+        height: size * 0.9,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);
+        },
+      );
+    }
+
+    return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);
   }
 }

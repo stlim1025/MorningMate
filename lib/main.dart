@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'core/theme/app_theme.dart';
 import 'router/app_router.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
@@ -120,14 +119,12 @@ class MorningMateApp extends StatelessWidget {
           create: (context) => SocialController(
             context.read<FriendService>(),
             context.read<DiaryService>(),
-            context.read<NotificationService>(),
           ),
           update: (context, auth, previous) =>
               previous ??
               SocialController(
                 context.read<FriendService>(),
                 context.read<DiaryService>(),
-                context.read<NotificationService>(),
               ),
         ),
         ChangeNotifierProvider<NotificationController>(

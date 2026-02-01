@@ -9,6 +9,8 @@ import '../../../services/user_service.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/notification_model.dart';
 import '../../morning/widgets/enhanced_character_room_widget.dart';
+import '../../morning/widgets/room_background_widget.dart';
+import '../../../data/models/room_decoration_model.dart';
 import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../notification/controllers/notification_controller.dart';
@@ -85,34 +87,31 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                   ? socialController.isFriendAwake(_friend!.uid)
                   : false);
 
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isAwake
-                    ? [
-                        const Color(0xFF87CEEB),
-                        const Color(0xFFB0E0E6),
-                        const Color(0xFFFFF8DC),
-                      ]
-                    : [
-                        const Color(0xFF0F2027),
-                        const Color(0xFF203A43),
-                        const Color(0xFF2C5364),
-                      ],
+          return Stack(
+            children: [
+              // 1. Global Background
+              Positioned.fill(
+                child: RoomBackgroundWidget(
+                  decoration: _friend?.roomDecoration ?? RoomDecorationModel(),
+                  isAwake: isAwake,
+                  isDarkMode: isDarkMode,
+                  colorScheme: colorScheme,
+                ),
               ),
-            ),
-            child: SafeArea(
-              child: _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                          color:
-                              isAwake ? colorScheme.progressBar : Colors.white))
-                  : _friend == null
-                      ? _buildErrorState()
-                      : _buildFriendRoom(isAwake, colorScheme, isDarkMode),
-            ),
+
+              // 2. Main Content
+              SafeArea(
+                child: _isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                            color: isAwake
+                                ? colorScheme.progressBar
+                                : Colors.white))
+                    : _friend == null
+                        ? _buildErrorState()
+                        : _buildFriendRoom(isAwake, colorScheme, isDarkMode),
+              ),
+            ],
           );
         },
       ),
@@ -192,8 +191,8 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
         Expanded(
           child: SingleChildScrollView(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const SizedBox(height: 50), // 상단 여백 추가 (달/해 가려짐 방지)
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   child: EnhancedCharacterRoomWidget(
@@ -201,6 +200,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     characterLevel: _friend!.characterLevel,
                     consecutiveDays: _friend!.consecutiveDays,
                     roomDecoration: _friend!.roomDecoration,
+                    showBorder: true,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -359,14 +359,22 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isAwake
-            ? Colors.white.withOpacity(0.85)
-            : Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(16),
+            ? Colors.white.withOpacity(0.95) // More opaque
+            : Colors.black.withOpacity(0.25), // Darker for night
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isAwake
-              ? Colors.white.withOpacity(0.6)
-              : Colors.white.withOpacity(0.2),
+              ? colorScheme.primaryButton.withOpacity(0.15)
+              : Colors.white.withOpacity(0.1),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isAwake ? 0.08 : 0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -400,25 +408,28 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
         Text(
           label,
           style: TextStyle(
-            color: isAwake ? const Color(0xFF5A6C7D) : Colors.white70,
+            color: isAwake
+                ? colorScheme.textPrimary.withOpacity(0.6)
+                : Colors.white70,
             fontSize: 12,
             fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: isAwake
-                ? colorScheme.cardAccent.withOpacity(0.12)
-                : Colors.white.withOpacity(0.15),
+                ? colorScheme.primaryButton.withOpacity(0.08)
+                : Colors.white.withOpacity(0.12),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             value,
             style: TextStyle(
-              color: isAwake ? const Color(0xFF2C3E50) : Colors.white,
-              fontSize: 14,
+              color: isAwake ? colorScheme.primaryButton : Colors.white,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),

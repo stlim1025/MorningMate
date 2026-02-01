@@ -27,6 +27,7 @@ class UserModel {
   final List<String> purchasedThemeIds; // 구매한 테마 ID 목록
   final List<String> purchasedBackgroundIds; // 구매한 배경 ID 목록
   final List<String> purchasedPropIds; // 구매한 소품 ID 목록
+  final List<String> purchasedFloorIds; // 구매한 바닥 ID 목록
   final String currentThemeId; // 현재 선택된 테마 ID
   final RoomDecorationModel roomDecoration;
 
@@ -56,6 +57,7 @@ class UserModel {
     this.purchasedThemeIds = const ['light'],
     this.purchasedBackgroundIds = const ['none'],
     this.purchasedPropIds = const [],
+    this.purchasedFloorIds = const ['default'],
     this.currentThemeId = 'light',
     RoomDecorationModel? roomDecoration,
   }) : roomDecoration = roomDecoration ?? RoomDecorationModel();
@@ -80,7 +82,7 @@ class UserModel {
           ? (data['lastDiaryDate'] as Timestamp).toDate()
           : null,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-      characterCustomization: data['characterCustomization'],
+      characterCustomization: data['characterCustomization'] ?? {},
       friendIds: List<String>.from(data['friendIds'] ?? []),
       writingBlurEnabled: data['writingBlurEnabled'] ?? true,
       biometricEnabled: data['biometricEnabled'] ?? false,
@@ -95,6 +97,8 @@ class UserModel {
       purchasedBackgroundIds:
           List<String>.from(data['purchasedBackgroundIds'] ?? ['none']),
       purchasedPropIds: List<String>.from(data['purchasedPropIds'] ?? []),
+      purchasedFloorIds:
+          List<String>.from(data['purchasedFloorIds'] ?? ['default']),
       currentThemeId: data['currentThemeId'] ?? 'light',
       roomDecoration: data['roomDecoration'] != null
           ? RoomDecorationModel.fromMap(
@@ -132,6 +136,7 @@ class UserModel {
       'purchasedThemeIds': purchasedThemeIds,
       'purchasedBackgroundIds': purchasedBackgroundIds,
       'purchasedPropIds': purchasedPropIds,
+      'purchasedFloorIds': purchasedFloorIds,
       'currentThemeId': currentThemeId,
       'roomDecoration': roomDecoration.toMap(),
     };
@@ -164,6 +169,7 @@ class UserModel {
     List<String>? purchasedThemeIds,
     List<String>? purchasedBackgroundIds,
     List<String>? purchasedPropIds,
+    List<String>? purchasedFloorIds,
     String? currentThemeId,
     RoomDecorationModel? roomDecoration,
   }) {
@@ -195,6 +201,7 @@ class UserModel {
       purchasedBackgroundIds:
           purchasedBackgroundIds ?? this.purchasedBackgroundIds,
       purchasedPropIds: purchasedPropIds ?? this.purchasedPropIds,
+      purchasedFloorIds: purchasedFloorIds ?? this.purchasedFloorIds,
       currentThemeId: currentThemeId ?? this.currentThemeId,
       roomDecoration: roomDecoration ?? this.roomDecoration,
     );

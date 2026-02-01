@@ -5,13 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../../services/diary_service.dart';
 import '../../../services/friend_service.dart';
-import '../../../services/notification_service.dart';
 import '../../../data/models/user_model.dart';
 
 class SocialController extends ChangeNotifier {
   final FriendService _friendService;
   final DiaryService _diaryService;
-  final NotificationService _notificationService;
 
   static const Duration _wakeUpCooldown = Duration(seconds: 10);
   static const Duration _cheerCooldown = Duration(seconds: 30);
@@ -24,7 +22,6 @@ class SocialController extends ChangeNotifier {
   SocialController(
     this._friendService,
     this._diaryService,
-    this._notificationService,
   );
 
   @override

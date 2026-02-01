@@ -49,10 +49,13 @@ class CharacterController extends ChangeNotifier {
         _currentUser?.purchasedBackgroundIds.length !=
             user.purchasedBackgroundIds.length ||
         _currentUser?.purchasedPropIds.length != user.purchasedPropIds.length ||
+        _currentUser?.purchasedFloorIds.length !=
+            user.purchasedFloorIds.length ||
         _currentUser?.roomDecoration.wallpaperId !=
             user.roomDecoration.wallpaperId ||
         _currentUser?.roomDecoration.backgroundId !=
             user.roomDecoration.backgroundId ||
+        _currentUser?.roomDecoration.floorId != user.roomDecoration.floorId ||
         _currentUser?.roomDecoration.props.length !=
             user.roomDecoration.props.length) {
       _currentUser = user;
@@ -310,6 +313,30 @@ class CharacterController extends ChangeNotifier {
     _currentUser = _currentUser!.copyWith(
       points: newPoints,
       purchasedPropIds: newPurchasedProps,
+    );
+    notifyListeners();
+  }
+
+  // 바닥 구매
+  Future<void> purchaseFloor(String userId, String floorId, int price) async {
+    if (_currentUser == null) return;
+    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+    if (_currentUser!.purchasedFloorIds.contains(floorId)) {
+      throw Exception('이미 구매한 바닥입니다');
+    }
+
+    final newPurchasedFloors =
+        List<String>.from(_currentUser!.purchasedFloorIds)..add(floorId);
+    final newPoints = _currentUser!.points - price;
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+      'purchasedFloorIds': newPurchasedFloors,
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      purchasedFloorIds: newPurchasedFloors,
     );
     notifyListeners();
   }

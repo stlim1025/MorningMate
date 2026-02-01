@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="512" viewBox="0 0 2048 512">
+  <defs>
+    <linearGradient id="carpetBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F9D6DE"></stop>
+      <stop offset="1" stop-color="#F2C6D0"></stop>
+    </linearGradient>
+
+    <!-- Soft fiber noise dots pattern -->
+    <pattern id="fibers" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="transparent"></rect>
+      <g opacity="0.22" fill="#FFFFFF">
+        <circle cx="10" cy="14" r="1.6"></circle>
+        <circle cx="28" cy="10" r="1.2"></circle>
+        <circle cx="20" cy="30" r="1.4"></circle>
+        <circle cx="34" cy="28" r="1.0"></circle>
+      </g>
+      <g opacity="0.14" fill="#C88A96">
+        <circle cx="14" cy="26" r="1.2"></circle>
+        <circle cx="6" cy="32" r="0.9"></circle>
+        <circle cx="30" cy="20" r="1.1"></circle>
+      </g>
+    </pattern>
+
+    <!-- Gentle shading -->
+    <radialGradient id="carpetShade" cx="50%" cy="20%" r="140%">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"></stop>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.10"></stop>
+    </radialGradient>
+
+    <!-- Subtle woven lines -->
+    <pattern id="weave" width="22" height="22" patternUnits="userSpaceOnUse">
+      <rect width="22" height="22" fill="transparent"></rect>
+      <path d="M0 11 H22" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="2" stroke-linecap="round"></path>
+      <path d="M11 0 V22" stroke="#B77C87" stroke-opacity="0.08" stroke-width="2" stroke-linecap="round"></path>
+    </pattern>
+  </defs>
+
+  <rect width="2048" height="512" fill="url(#carpetBg)"></rect>
+  <rect width="2048" height="512" fill="url(#weave)" opacity="0.9"></rect>
+  <rect width="2048" height="512" fill="url(#fibers)" opacity="1"></rect>
+  <rect width="2048" height="512" fill="url(#carpetShade)"></rect>
+</svg>

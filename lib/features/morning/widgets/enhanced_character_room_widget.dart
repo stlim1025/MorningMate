@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../data/models/room_decoration_model.dart';
@@ -212,6 +213,32 @@ class _EnhancedCharacterRoomWidgetState
     // Adjust opacity if background is present to blend or show context?
     // Actually, if we use the 'Sky View' approach, the wall is solid but shorter.
 
+    Widget buildWallSurface() {
+      if (wallpaperAsset.imagePath != null) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(wallpaperAsset.imagePath!),
+                    fit: BoxFit.fill,
+                  ),
+                ),
+              ),
+            ),
+            if (!isAwake)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.45),
+                ),
+              ),
+          ],
+        );
+      }
+      return Container(color: wallpaperColor);
+    }
+
     return Stack(
       children: [
         // 1. Outside Nature (Visible through window or open ceiling)
@@ -224,28 +251,29 @@ class _EnhancedCharacterRoomWidgetState
               // Wall
               Expanded(
                 flex: 7,
-                child: Container(
-                  width: double.infinity,
-                  color:
-                      decoration.backgroundId == 'none' ? wallpaperColor : null,
-                  child: decoration.backgroundId == 'none'
-                      ? null // Solid wall
-                      : Column(
+                child: Stack(
+                  children: [
+                    // Base Wallpaper (Single integrated surface with window hole)
+                    Positioned.fill(
+                      child: decoration.backgroundId != 'none'
+                          ? ClipPath(
+                              clipper: WindowHoleClipper(),
+                              child: buildWallSurface(),
+                            )
+                          : buildWallSurface(),
+                    ),
+
+                    // Overlay Window UI (If background is not 'none')
+                    if (decoration.backgroundId != 'none')
+                      Positioned.fill(
+                        child: Column(
                           children: [
-                            // Top Wall
-                            Expanded(
-                              flex: 1,
-                              child: Container(color: wallpaperColor),
-                            ),
-                            // Window Row
+                            const Spacer(flex: 1), // Top Wall spacing
                             Expanded(
                               flex: 2,
                               child: Row(
                                 children: [
-                                  // Left Wall
-                                  Expanded(
-                                      flex: 1,
-                                      child: Container(color: wallpaperColor)),
+                                  const Spacer(flex: 1), // Left Wall spacing
                                   // Window
                                   Expanded(
                                     flex: 2,
@@ -254,11 +282,12 @@ class _EnhancedCharacterRoomWidgetState
                                       child: Container(
                                         decoration: BoxDecoration(
                                           border: Border.all(
-                                              color: Colors.white, width: 6),
+                                              color: Colors.white.withOpacity(
+                                                  isAwake ? 1.0 : 0.8),
+                                              width: 6),
                                           borderRadius:
                                               BorderRadius.circular(12),
-                                          color:
-                                              Colors.transparent, // See-through
+                                          color: Colors.transparent,
                                         ),
                                         child: Stack(
                                           children: [
@@ -266,52 +295,74 @@ class _EnhancedCharacterRoomWidgetState
                                               child: Container(
                                                   width: double.infinity,
                                                   height: 4,
-                                                  color: Colors.white),
+                                                  color: Colors.white
+                                                      .withOpacity(0.8)),
                                             ),
                                             Center(
                                               child: Container(
                                                   width: 4,
                                                   height: double.infinity,
-                                                  color: Colors.white),
+                                                  color: Colors.white
+                                                      .withOpacity(0.8)),
                                             ),
                                           ],
                                         ),
                                       ),
                                     ),
                                   ),
-                                  // Right Wall
-                                  Expanded(
-                                      flex: 1,
-                                      child: Container(color: wallpaperColor)),
+                                  const Spacer(flex: 1), // Right Wall spacing
                                 ],
                               ),
                             ),
-                            // Bottom Wall
-                            Expanded(
-                              flex: 1,
-                              child: Container(color: wallpaperColor),
-                            ),
+                            const Spacer(flex: 1), // Bottom Wall spacing
                           ],
                         ),
+                      ),
+                  ],
                 ),
               ),
 
               // Floor
               Expanded(
                 flex: 3,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: (isAwake
-                            ? Colors.brown.shade100
-                            : Colors.brown.shade300)
-                        .withOpacity(0.9),
-                    border: Border(
-                      top: BorderSide(
-                          color: Colors.black.withOpacity(0.1), width: 2),
+                child: () {
+                  final floorAsset = RoomAssets.floors.firstWhere(
+                    (f) => f.id == decoration.floorId,
+                    orElse: () => RoomAssets.floors.first,
+                  );
+
+                  return Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: floorAsset.color ??
+                          (isAwake
+                              ? Colors.brown.shade100
+                              : Colors.brown.shade300),
+                      border: Border(
+                        top: BorderSide(
+                            color: Colors.black.withOpacity(0.1), width: 2),
+                      ),
                     ),
-                  ),
-                ),
+                    child: Stack(
+                      children: [
+                        if (floorAsset.imagePath != null)
+                          Positioned.fill(
+                            child: SvgPicture.asset(
+                              floorAsset.imagePath!,
+                              fit: BoxFit.fill,
+                              // Apply a slight color tint if needed via theme or night mode
+                            ),
+                          ),
+                        if (!isAwake)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withOpacity(0.35),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }(),
               ),
             ],
           ),
@@ -321,7 +372,11 @@ class _EnhancedCharacterRoomWidgetState
   }
 
   Widget _buildProp(RoomPropModel prop, double size) {
-    final propSize = size * 0.16;
+    final asset = RoomAssets.props.firstWhere((p) => p.id == prop.type,
+        orElse: () =>
+            const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
+    final propSize = size * 0.16 * asset.sizeMultiplier;
+
     return Positioned(
       left: prop.x * (size - propSize),
       top: prop.y * (size - propSize),
@@ -335,6 +390,24 @@ class _EnhancedCharacterRoomWidgetState
         orElse: () =>
             const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
     if (asset.id.isEmpty) return SizedBox(width: size, height: size);
+
+    if (asset.imagePath != null) {
+      return Opacity(
+        opacity:
+            widget.isAwake ? 1.0 : 0.9, // Night mode slightly dimmed but clear
+        child: Image.asset(
+          asset.imagePath!,
+          width: size * 0.9,
+          height: size * 0.9,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to icon if image fails to load
+            return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);
+          },
+        ),
+      );
+    }
+
     return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);
   }
 
@@ -535,4 +608,27 @@ class _EnhancedCharacterRoomWidgetState
       ),
     );
   }
+}
+
+class WindowHoleClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    // Window location based on flex 1:2:1
+    double windowWidth = size.width * (2 / 4);
+    double windowHeight = size.height * (2 / 4);
+    double left = size.width * (1 / 4);
+    double top = size.height * (1 / 4);
+
+    path.addRRect(RRect.fromRectAndRadius(
+      Rect.fromLTWH(left, top, windowWidth, windowHeight),
+      const Radius.circular(12),
+    ));
+
+    return path..fillType = PathFillType.evenOdd;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
