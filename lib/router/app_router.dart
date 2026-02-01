@@ -15,6 +15,8 @@ import '../features/archive/screens/archive_screen.dart';
 import '../features/archive/screens/diary_detail_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../features/settings/screens/notification_settings_screen.dart';
+import '../features/settings/screens/terms_of_service_screen.dart';
+import '../features/settings/screens/privacy_policy_screen.dart';
 import '../data/models/diary_model.dart';
 
 class AppRouter {
@@ -122,6 +124,16 @@ class AppRouter {
             path: 'notifications',
             name: 'notificationSettings',
             builder: (context, state) => const NotificationSettingsScreen(),
+          ),
+          GoRoute(
+            path: 'terms',
+            name: 'termsOfService',
+            builder: (context, state) => const TermsOfServiceScreen(),
+          ),
+          GoRoute(
+            path: 'privacy',
+            name: 'privacyPolicy',
+            builder: (context, state) => const PrivacyPolicyScreen(),
           ),
         ],
       ),

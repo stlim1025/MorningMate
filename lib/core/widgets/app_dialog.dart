@@ -65,9 +65,10 @@ class AppDialog {
       case AppDialogKey.biometricRetry:
         return AppDialogConfig(
           title: '생체 인증 실패',
-          content: const Text(
-            '생체 인증에 실패했습니다. 다시 시도하거나 로그아웃할 수 있습니다.',
-          ),
+          content: content ??
+              const Text(
+                '생체 인증에 실패했습니다. 다시 시도하거나 로그아웃할 수 있습니다.',
+              ),
           actions: actions ?? const [],
         );
       case AppDialogKey.changeNickname:
@@ -85,15 +86,16 @@ class AppDialog {
       case AppDialogKey.logout:
         return AppDialogConfig(
           title: '로그아웃',
-          content: const Text('정말 로그아웃 하시겠습니까?'),
+          content: content ?? const Text('정말 로그아웃 하시겠습니까?'),
           actions: actions ?? const [],
         );
       case AppDialogKey.deleteAccount:
         return AppDialogConfig(
           title: '회원탈퇴',
-          content: const Text(
-            '정말 회원탈퇴 하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.',
-          ),
+          content: content ??
+              const Text(
+                '정말 회원탈퇴 하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.',
+              ),
           actions: actions ?? const [],
         );
       case AppDialogKey.addFriend:

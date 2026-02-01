@@ -143,7 +143,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   colorScheme,
                   icon: Icons.description,
                   title: '이용약관',
-                  onTap: () {},
+                  onTap: () {
+                    context.push('/settings/terms');
+                  },
                 ),
                 const SizedBox(height: 8),
                 _buildSettingsTile(
@@ -151,7 +153,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   colorScheme,
                   icon: Icons.privacy_tip,
                   title: '개인정보 처리방침',
-                  onTap: () {},
+                  onTap: () {
+                    context.push('/settings/privacy');
+                  },
                 ),
 
                 const SizedBox(height: 32),

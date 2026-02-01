@@ -230,36 +230,53 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '친구에게 한마디',
-                    style: TextStyle(
-                      color: colorScheme.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colorScheme.secondary.withOpacity(0.12),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.secondary.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.history, // 보낸 기록임을 나타내는 아이콘으로 변경 시도 가능
-                        color: colorScheme.secondary,
-                        size: 24,
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.mode_comment_rounded,
+                        color: colorScheme.primaryButton,
+                        size: 20,
                       ),
-                      onPressed: () => _showSentMessagesDialog(colorScheme),
-                      tooltip: '보낸 메시지 기록',
-                      constraints: const BoxConstraints(),
-                      padding: const EdgeInsets.all(10),
+                      const SizedBox(width: 8),
+                      Text(
+                        '친구에게 한마디',
+                        style: TextStyle(
+                          color: colorScheme.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _showSentMessagesDialog(colorScheme),
+                    icon: Icon(
+                      Icons.history_rounded,
+                      color: colorScheme.primaryButton,
+                      size: 16,
+                    ),
+                    label: Text(
+                      '보낸 기록',
+                      style: TextStyle(
+                        color: colorScheme.primaryButton,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      backgroundColor:
+                          colorScheme.primaryButton.withOpacity(0.08),
+                      side: BorderSide(
+                        color: colorScheme.primaryButton.withOpacity(0.15),
+                        width: 1,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                 ],
