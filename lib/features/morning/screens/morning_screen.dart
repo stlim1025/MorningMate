@@ -9,10 +9,11 @@ import '../../settings/screens/settings_screen.dart';
 import '../../notification/controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
 import '../widgets/enhanced_character_room_widget.dart';
-import '../widgets/twinkling_stars.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../data/models/room_decoration_model.dart';
+import '../widgets/room_background_widget.dart';
 
 class MorningScreen extends StatefulWidget {
   const MorningScreen({super.key});
@@ -72,34 +73,15 @@ class _MorningScreenState extends State<MorningScreen>
           return Stack(
             children: [
               // 1. Sky Gradient Background
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: isAwake
-                        ? [
-                            colorScheme.awakeGradientStart,
-                            colorScheme.awakeGradientMid,
-                            colorScheme.awakeGradientEnd,
-                          ]
-                        : [
-                            colorScheme.sleepGradientStart,
-                            colorScheme.sleepGradientMid,
-                            colorScheme.sleepGradientEnd,
-                          ],
-                  ),
+              // 1. Global Background (Controlled by Room Decoration)
+              Positioned.fill(
+                child: RoomBackgroundWidget(
+                  decoration: characterController.currentUser?.roomDecoration ??
+                      RoomDecorationModel(),
+                  isAwake: isAwake,
+                  isDarkMode: isDarkMode,
+                  colorScheme: colorScheme,
                 ),
-              ),
-
-              // 2. Stars (Night only)
-              if (!isAwake) const Positioned.fill(child: TwinklingStars()),
-
-              // 3. Sun/Moon (Background Element)
-              Positioned(
-                top: 90,
-                right: 30,
-                child: _buildSunMoon(isAwake, colorScheme),
               ),
 
               // 4. Main Content
@@ -137,25 +119,6 @@ class _MorningScreenState extends State<MorningScreen>
         },
       ),
       bottomNavigationBar: _buildBottomNavigationBar(context, colorScheme),
-    );
-  }
-
-  Widget _buildSunMoon(bool isAwake, AppColorScheme colorScheme) {
-    final color = isAwake ? colorScheme.pointStar : const Color(0xFFFFF8DC);
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.6),
-            blurRadius: 30,
-            spreadRadius: 8,
-          ),
-        ],
-      ),
     );
   }
 
@@ -313,6 +276,7 @@ class _MorningScreenState extends State<MorningScreen>
         isAwake: isAwake,
         characterLevel: characterController.currentUser?.characterLevel ?? 1,
         consecutiveDays: characterController.currentUser?.consecutiveDays ?? 0,
+        roomDecoration: characterController.currentUser?.roomDecoration,
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../services/user_service.dart';
 import '../../../data/models/user_model.dart';
+import '../../../data/models/room_decoration_model.dart';
 
 // 캐릭터 상태 정의 - 6단계로 확장
 enum CharacterState {
@@ -44,10 +45,32 @@ class CharacterController extends ChangeNotifier {
         _currentUser?.experience != user.experience ||
         _currentUser?.currentThemeId != user.currentThemeId ||
         _currentUser?.purchasedThemeIds.length !=
-            user.purchasedThemeIds.length) {
+            user.purchasedThemeIds.length ||
+        _currentUser?.purchasedBackgroundIds.length !=
+            user.purchasedBackgroundIds.length ||
+        _currentUser?.purchasedPropIds.length != user.purchasedPropIds.length ||
+        _currentUser?.roomDecoration.wallpaperId !=
+            user.roomDecoration.wallpaperId ||
+        _currentUser?.roomDecoration.backgroundId !=
+            user.roomDecoration.backgroundId ||
+        _currentUser?.roomDecoration.props.length !=
+            user.roomDecoration.props.length) {
       _currentUser = user;
       notifyListeners();
     }
+  }
+
+  // 방 꾸미기 설정 저장
+  Future<void> updateRoomDecoration(
+      String userId, RoomDecorationModel decoration) async {
+    if (_currentUser == null) return;
+
+    await _userService.updateUser(userId, {
+      'roomDecoration': decoration.toMap(),
+    });
+
+    _currentUser = _currentUser!.copyWith(roomDecoration: decoration);
+    notifyListeners();
   }
 
   // 레벨에서 캐릭터 상태 결정
@@ -211,6 +234,82 @@ class CharacterController extends ChangeNotifier {
     _currentUser = _currentUser!.copyWith(
       points: newPoints,
       purchasedThemeIds: newPurchasedThemes,
+    );
+    notifyListeners();
+  }
+
+  // 배경 구매
+  Future<void> purchaseBackground(
+      String userId, String backgroundId, int price) async {
+    if (_currentUser == null) return;
+    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+    if (_currentUser!.purchasedBackgroundIds.contains(backgroundId)) {
+      throw Exception('이미 구매한 배경입니다');
+    }
+
+    final newPurchasedBackgrounds =
+        List<String>.from(_currentUser!.purchasedBackgroundIds)
+          ..add(backgroundId);
+    final newPoints = _currentUser!.points - price;
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+      'purchasedBackgroundIds': newPurchasedBackgrounds,
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      purchasedBackgroundIds: newPurchasedBackgrounds,
+    );
+    notifyListeners();
+  }
+
+  // 벽지 구매
+  Future<void> purchaseWallpaper(
+      String userId, String wallpaperId, int price) async {
+    if (_currentUser == null) return;
+    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+
+    if (_currentUser!.purchasedThemeIds.contains(wallpaperId)) {
+      throw Exception('이미 구매한 벽지입니다');
+    }
+
+    final newPurchasedThemes =
+        List<String>.from(_currentUser!.purchasedThemeIds)..add(wallpaperId);
+    final newPoints = _currentUser!.points - price;
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+      'purchasedThemeIds': newPurchasedThemes,
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      purchasedThemeIds: newPurchasedThemes,
+    );
+    notifyListeners();
+  }
+
+  // 소품 구매
+  Future<void> purchaseProp(String userId, String propId, int price) async {
+    if (_currentUser == null) return;
+    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+    if (_currentUser!.purchasedPropIds.contains(propId)) {
+      throw Exception('이미 구매한 소품입니다');
+    }
+
+    final newPurchasedProps = List<String>.from(_currentUser!.purchasedPropIds)
+      ..add(propId);
+    final newPoints = _currentUser!.points - price;
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+      'purchasedPropIds': newPurchasedProps,
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      purchasedPropIds: newPurchasedProps,
     );
     notifyListeners();
   }

@@ -1,17 +1,25 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_color_scheme.dart';
+import '../../../core/constants/room_assets.dart';
+import '../../../data/models/room_decoration_model.dart';
 
 class EnhancedCharacterRoomWidget extends StatefulWidget {
   final bool isAwake;
   final int characterLevel;
   final int consecutiveDays;
+  final RoomDecorationModel? roomDecoration;
+  final bool hideProps;
+  final bool showBorder;
 
   const EnhancedCharacterRoomWidget({
     super.key,
     required this.isAwake,
     this.characterLevel = 1,
     this.consecutiveDays = 0,
+    this.roomDecoration,
+    this.hideProps = false,
+    this.showBorder = true,
   });
 
   @override
@@ -65,173 +73,321 @@ class _EnhancedCharacterRoomWidgetState
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    return Column(
-      children: [
-        _buildRoomInterior(widget.isAwake, colorScheme),
-      ],
-    );
-  }
+    final decoration = widget.roomDecoration ?? RoomDecorationModel();
 
-  Widget _buildRoomInterior(bool isAwake, AppColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isAwake
-            ? colorScheme.backgroundLight // 테마 연동: 밝은 베이지
-            : colorScheme.backgroundDark.withOpacity(0.8), // 테마 연동: 다크 모드 배경
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isAwake ? Colors.white.withOpacity(0.5) : Colors.white12,
-          width: 4,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildWallDecoration(isAwake, colorScheme),
-          const SizedBox(height: 20),
-          _buildBedAndCharacter(isAwake, colorScheme),
-          const SizedBox(height: 20),
-          _buildFloorDecoration(colorScheme),
-        ],
-      ),
-    );
-  }
+    return LayoutBuilder(builder: (context, constraints) {
+      final size = constraints.maxWidth;
 
-  Widget _buildWallDecoration(bool isAwake, AppColorScheme colorScheme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildFrame(
-          Icons.local_florist,
-          isAwake
-              ? colorScheme.secondary
-              : colorScheme.secondary.withOpacity(0.5),
-          colorScheme,
-        ),
-        const SizedBox(width: 40),
-        _buildFrame(
-          Icons.spa,
-          isAwake ? colorScheme.accent : colorScheme.accent.withOpacity(0.5),
-          colorScheme,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFrame(IconData icon, Color color, AppColorScheme colorScheme) {
-    return Container(
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.3),
-        border: Border.all(
-            color: colorScheme.textSecondary.withOpacity(0.5), width: 3),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(icon, color: color, size: 30),
-    );
-  }
-
-  Widget _buildBedAndCharacter(bool isAwake, AppColorScheme colorScheme) {
-    return SizedBox(
-      height: 200,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 800),
-            top: isAwake ? 0 : 20,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 120,
-              decoration: BoxDecoration(
-                color: isAwake
-                    ? colorScheme.textSecondary.withOpacity(0.8)
-                    : colorScheme.textSecondary.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 60,
-                    decoration: BoxDecoration(
-                      color: isAwake
-                          ? colorScheme.textSecondary
-                          : colorScheme.textSecondary.withOpacity(0.6),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        bottomLeft: Radius.circular(12),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: (isAwake
-                                ? colorScheme.secondary
-                                : colorScheme.accent)
-                            .withOpacity(0.5),
-                        borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(12),
-                          bottomRight: Radius.circular(12),
-                        ),
-                      ),
-                    ),
+      return Container(
+        width: size,
+        height: size,
+        decoration: widget.showBorder
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: widget.isAwake
+                      ? Colors.white.withOpacity(0.5)
+                      : Colors.white12,
+                  width: 4,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadowColor.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
                 ],
-              ),
+              )
+            : null,
+        clipBehavior: widget.showBorder ? Clip.antiAlias : Clip.none,
+        child: Stack(
+          children: [
+            // Wallpaper/Background
+            _buildRoomBackground(widget.isAwake, colorScheme, decoration, size),
+
+            // Props
+            if (!widget.hideProps)
+              ...decoration.props.map((prop) => _buildProp(prop, size)),
+
+            // Character
+            _buildCharacterContainer(widget.isAwake, colorScheme, size),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildRoomBackground(bool isAwake, AppColorScheme colorScheme,
+      RoomDecorationModel decoration, double size) {
+    // 1. Base Wall (Background natural scenery)
+    Widget nature;
+    switch (decoration.backgroundId) {
+      case 'forest':
+        nature = Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.green.shade200, Colors.green.shade400],
             ),
           ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeInOut,
-            top: widget.isAwake ? 80 : 30,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: _handleTap,
-                child: AnimatedBuilder(
-                  animation: _bounceAnimation,
-                  builder: (context, child) {
-                    double verticalOffset =
-                        widget.isAwake ? -_bounceAnimation.value : 0;
-                    if (_isTapped) verticalOffset -= 20;
+          child: Opacity(
+            opacity: 0.3,
+            child: Icon(Icons.park, size: 200, color: Colors.green.shade800),
+          ),
+        );
+        break;
+      case 'valley':
+        nature = Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.blueGrey.shade100, Colors.blueGrey.shade300],
+            ),
+          ),
+          child: Opacity(
+            opacity: 0.3,
+            child:
+                Icon(Icons.terrain, size: 200, color: Colors.blueGrey.shade600),
+          ),
+        );
+        break;
+      case 'sea':
+        nature = Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.blue.shade200, Colors.blue.shade600],
+            ),
+          ),
+          child: Opacity(
+            opacity: 0.3,
+            child: Icon(Icons.tsunami, size: 200, color: Colors.blue.shade800),
+          ),
+        );
+        break;
+      case 'space':
+        nature = Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [const Color(0xFF0D0221), const Color(0xFF240B36)],
+            ),
+          ),
+          child: Opacity(
+            opacity: 0.3,
+            child: Icon(Icons.rocket_launch,
+                size: 200, color: Colors.indigo.shade200),
+          ),
+          // Removed Opacity and Icon
+        );
+        break;
+      default:
+        nature = Container(color: Colors.transparent);
+    }
 
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      transform:
-                          Matrix4.translationValues(0, verticalOffset, 0),
-                      child: _buildCharacter(widget.isAwake, colorScheme),
-                    );
-                  },
+    // 2. Wallpaper Color Logic
+    Color wallpaperColor;
+    final wallpaperAsset = RoomAssets.wallpapers.firstWhere(
+      (w) => w.id == decoration.wallpaperId,
+      orElse: () => RoomAssets.wallpapers.first,
+    );
+
+    // If specific wallpaper color is defined in asset, use it.
+    // Otherwise fallback to theme/awake logic.
+    // If specific wallpaper color is defined in asset, use it.
+    // Otherwise fallback to a default color.
+    Color baseColor = wallpaperAsset.color ?? const Color(0xFFF5F5DC);
+
+    // Apply Night filter manually to decouple from UI theme
+    if (!isAwake) {
+      wallpaperColor = Color.lerp(baseColor, Colors.black, 0.45) ?? baseColor;
+    } else {
+      wallpaperColor = baseColor;
+    }
+
+    // Adjust opacity if background is present to blend or show context?
+    // Actually, if we use the 'Sky View' approach, the wall is solid but shorter.
+
+    return Stack(
+      children: [
+        // 1. Outside Nature (Visible through window or open ceiling)
+        Positioned.fill(child: nature),
+
+        // 2. Room Interior
+        Positioned.fill(
+          child: Column(
+            children: [
+              // Wall
+              Expanded(
+                flex: 7,
+                child: Container(
+                  width: double.infinity,
+                  color:
+                      decoration.backgroundId == 'none' ? wallpaperColor : null,
+                  child: decoration.backgroundId == 'none'
+                      ? null // Solid wall
+                      : Column(
+                          children: [
+                            // Top Wall
+                            Expanded(
+                              flex: 1,
+                              child: Container(color: wallpaperColor),
+                            ),
+                            // Window Row
+                            Expanded(
+                              flex: 2,
+                              child: Row(
+                                children: [
+                                  // Left Wall
+                                  Expanded(
+                                      flex: 1,
+                                      child: Container(color: wallpaperColor)),
+                                  // Window
+                                  Expanded(
+                                    flex: 2,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: Colors.white, width: 6),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          color:
+                                              Colors.transparent, // See-through
+                                        ),
+                                        child: Stack(
+                                          children: [
+                                            Center(
+                                              child: Container(
+                                                  width: double.infinity,
+                                                  height: 4,
+                                                  color: Colors.white),
+                                            ),
+                                            Center(
+                                              child: Container(
+                                                  width: 4,
+                                                  height: double.infinity,
+                                                  color: Colors.white),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Right Wall
+                                  Expanded(
+                                      flex: 1,
+                                      child: Container(color: wallpaperColor)),
+                                ],
+                              ),
+                            ),
+                            // Bottom Wall
+                            Expanded(
+                              flex: 1,
+                              child: Container(color: wallpaperColor),
+                            ),
+                          ],
+                        ),
                 ),
               ),
-            ),
+
+              // Floor
+              Expanded(
+                flex: 3,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: (isAwake
+                            ? Colors.brown.shade100
+                            : Colors.brown.shade300)
+                        .withOpacity(0.9),
+                    border: Border(
+                      top: BorderSide(
+                          color: Colors.black.withOpacity(0.1), width: 2),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildCharacter(bool isAwake, AppColorScheme colorScheme) {
+  Widget _buildProp(RoomPropModel prop, double size) {
+    final propSize = size * 0.16;
+    return Positioned(
+      left: prop.x * (size - propSize),
+      top: prop.y * (size - propSize),
+      child: _getPropVisual(prop.type, propSize),
+    );
+  }
+
+  Widget _getPropVisual(String type, double size) {
+    if (type.isEmpty) return SizedBox(width: size, height: size);
+    final asset = RoomAssets.props.firstWhere((p) => p.id == type,
+        orElse: () =>
+            const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
+    if (asset.id.isEmpty) return SizedBox(width: size, height: size);
+    return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);
+  }
+
+  Widget _buildCharacterContainer(
+      bool isAwake, AppColorScheme colorScheme, double size) {
+    final charSize = size * 0.4;
+
+    return Stack(
+      children: [
+        // Character
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOut,
+          bottom: widget.isAwake ? size * 0.25 : size * 0.15,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: GestureDetector(
+              onTap: _handleTap,
+              child: AnimatedBuilder(
+                animation: _bounceAnimation,
+                builder: (context, child) {
+                  double verticalOffset =
+                      widget.isAwake ? -_bounceAnimation.value : 0;
+                  if (_isTapped) verticalOffset -= 20;
+
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    transform: Matrix4.translationValues(0, verticalOffset, 0),
+                    child:
+                        _buildCharacter(widget.isAwake, colorScheme, charSize),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCharacter(
+      bool isAwake, AppColorScheme colorScheme, double size) {
     return Container(
-      width: 120,
-      height: 120,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white.withOpacity(0.5),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.secondary.withOpacity(0.2),
+            color: const Color(0xFFB39DDB)
+                .withOpacity(0.2), // Fixed soft purple shadow
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -242,44 +398,45 @@ class _EnhancedCharacterRoomWidgetState
         clipBehavior: Clip.none,
         children: [
           Container(
-            width: 90,
-            height: 100,
+            width: size * 0.75,
+            height: size * 0.83,
             decoration: BoxDecoration(
-              color: colorScheme.primaryButton, // 캐릭터 몸색을 테마 기본색으로
-              borderRadius: const BorderRadius.all(Radius.circular(45)),
+              color: const Color(0xFFD7A86E), // Fixed warm brown body color
+              borderRadius: BorderRadius.all(Radius.circular(size * 0.375)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 70,
-                  height: 80,
+                  width: size * 0.58,
+                  height: size * 0.67,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9), // 얼굴색
-                    borderRadius: BorderRadius.circular(35),
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(size * 0.29),
                   ),
                   child: Stack(
                     children: [
                       Positioned(
-                        top: 25,
-                        left: 18,
+                        top: size * 0.2,
+                        left: size * 0.15,
                         child: _isTapped
-                            ? const Text('>',
+                            ? Text('>',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16))
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: size * 0.13))
                             : isAwake
                                 ? Container(
-                                    width: 8,
-                                    height: 8,
+                                    width: size * 0.06,
+                                    height: size * 0.06,
                                     decoration: const BoxDecoration(
                                       color: Colors.black,
                                       shape: BoxShape.circle,
                                     ),
                                   )
                                 : Container(
-                                    width: 12,
-                                    height: 2,
-                                    margin: const EdgeInsets.only(top: 4),
+                                    width: size * 0.1,
+                                    height: size * 0.015,
+                                    margin: EdgeInsets.only(top: size * 0.03),
                                     decoration: BoxDecoration(
                                       color: Colors.black.withOpacity(0.4),
                                       borderRadius: BorderRadius.circular(1),
@@ -287,25 +444,26 @@ class _EnhancedCharacterRoomWidgetState
                                   ),
                       ),
                       Positioned(
-                        top: 25,
-                        right: 18,
+                        top: size * 0.2,
+                        right: size * 0.15,
                         child: _isTapped
-                            ? const Text('<',
+                            ? Text('<',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16))
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: size * 0.13))
                             : isAwake
                                 ? Container(
-                                    width: 8,
-                                    height: 8,
+                                    width: size * 0.06,
+                                    height: size * 0.06,
                                     decoration: const BoxDecoration(
                                       color: Colors.black,
                                       shape: BoxShape.circle,
                                     ),
                                   )
                                 : Container(
-                                    width: 12,
-                                    height: 2,
-                                    margin: const EdgeInsets.only(top: 4),
+                                    width: size * 0.1,
+                                    height: size * 0.015,
+                                    margin: EdgeInsets.only(top: size * 0.03),
                                     decoration: BoxDecoration(
                                       color: Colors.black.withOpacity(0.4),
                                       borderRadius: BorderRadius.circular(1),
@@ -313,14 +471,14 @@ class _EnhancedCharacterRoomWidgetState
                                   ),
                       ),
                       Positioned(
-                        top: 32,
+                        top: size * 0.28,
                         left: 0,
                         right: 0,
                         child: Center(
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
-                            width: _isTapped ? 16 : 12,
-                            height: isAwake ? 10 : 6,
+                            width: _isTapped ? size * 0.13 : size * 0.1,
+                            height: isAwake ? size * 0.08 : size * 0.05,
                             decoration: BoxDecoration(
                               color: Colors.orange,
                               borderRadius: isAwake
@@ -335,34 +493,10 @@ class _EnhancedCharacterRoomWidgetState
                           ),
                         ),
                       ),
-                      Positioned(
-                        top: 40,
-                        right: 12,
-                        child: Container(
-                          width: 15,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: colorScheme.error.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
               ],
-            ),
-          ),
-          Positioned(
-            right: 5,
-            top: 25,
-            child: Container(
-              width: 20,
-              height: 30,
-              decoration: BoxDecoration(
-                color: colorScheme.primaryButton,
-                borderRadius: const BorderRadius.all(Radius.circular(15)),
-              ),
             ),
           ),
           if (!isAwake)
@@ -392,67 +526,11 @@ class _EnhancedCharacterRoomWidgetState
                           ),
                         ),
                       ),
-                      Transform.translate(
-                        offset: Offset(
-                          20 * (1 - ((_animationController.value + 0.5) % 1.0)),
-                          -30 * ((_animationController.value + 0.5) % 1.0),
-                        ),
-                        child: Opacity(
-                          opacity:
-                              (1 - ((_animationController.value + 0.5) % 1.0))
-                                  .clamp(0.0, 1.0),
-                          child: const Padding(
-                            padding: EdgeInsets.only(left: 15, top: 10),
-                            child: Text(
-                              'z',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   );
                 },
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFloorDecoration(AppColorScheme colorScheme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildPlant(colorScheme.accent, colorScheme),
-        const SizedBox(width: 20),
-        _buildPlant(colorScheme.success, colorScheme),
-      ],
-    );
-  }
-
-  Widget _buildPlant(Color color, AppColorScheme colorScheme) {
-    return SizedBox(
-      width: 50,
-      height: 60,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Icon(Icons.spa, color: color, size: 35),
-          Container(
-            width: 50,
-            height: 25,
-            decoration: BoxDecoration(
-              color: Colors.brown.withOpacity(0.7),
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(8),
-              ),
-            ),
-          ),
         ],
       ),
     );

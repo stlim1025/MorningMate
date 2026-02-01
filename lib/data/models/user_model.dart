@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'room_decoration_model.dart';
 
 class UserModel {
   final String uid;
@@ -24,7 +25,10 @@ class UserModel {
   final bool friendAcceptNoti;
   final bool friendRejectNoti;
   final List<String> purchasedThemeIds; // 구매한 테마 ID 목록
+  final List<String> purchasedBackgroundIds; // 구매한 배경 ID 목록
+  final List<String> purchasedPropIds; // 구매한 소품 ID 목록
   final String currentThemeId; // 현재 선택된 테마 ID
+  final RoomDecorationModel roomDecoration;
 
   UserModel({
     required this.uid,
@@ -50,8 +54,11 @@ class UserModel {
     this.friendAcceptNoti = true,
     this.friendRejectNoti = true,
     this.purchasedThemeIds = const ['light'],
+    this.purchasedBackgroundIds = const ['none'],
+    this.purchasedPropIds = const [],
     this.currentThemeId = 'light',
-  });
+    RoomDecorationModel? roomDecoration,
+  }) : roomDecoration = roomDecoration ?? RoomDecorationModel();
 
   // Firestore에서 가져오기
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -85,7 +92,14 @@ class UserModel {
       friendRejectNoti: data['friendRejectNoti'] ?? true,
       purchasedThemeIds:
           List<String>.from(data['purchasedThemeIds'] ?? ['light']),
+      purchasedBackgroundIds:
+          List<String>.from(data['purchasedBackgroundIds'] ?? ['none']),
+      purchasedPropIds: List<String>.from(data['purchasedPropIds'] ?? []),
       currentThemeId: data['currentThemeId'] ?? 'light',
+      roomDecoration: data['roomDecoration'] != null
+          ? RoomDecorationModel.fromMap(
+              data['roomDecoration'] as Map<String, dynamic>)
+          : RoomDecorationModel(),
     );
   }
 
@@ -116,7 +130,10 @@ class UserModel {
       'friendAcceptNoti': friendAcceptNoti,
       'friendRejectNoti': friendRejectNoti,
       'purchasedThemeIds': purchasedThemeIds,
+      'purchasedBackgroundIds': purchasedBackgroundIds,
+      'purchasedPropIds': purchasedPropIds,
       'currentThemeId': currentThemeId,
+      'roomDecoration': roomDecoration.toMap(),
     };
   }
 
@@ -145,7 +162,10 @@ class UserModel {
     bool? friendAcceptNoti,
     bool? friendRejectNoti,
     List<String>? purchasedThemeIds,
+    List<String>? purchasedBackgroundIds,
+    List<String>? purchasedPropIds,
     String? currentThemeId,
+    RoomDecorationModel? roomDecoration,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -172,7 +192,11 @@ class UserModel {
       friendAcceptNoti: friendAcceptNoti ?? this.friendAcceptNoti,
       friendRejectNoti: friendRejectNoti ?? this.friendRejectNoti,
       purchasedThemeIds: purchasedThemeIds ?? this.purchasedThemeIds,
+      purchasedBackgroundIds:
+          purchasedBackgroundIds ?? this.purchasedBackgroundIds,
+      purchasedPropIds: purchasedPropIds ?? this.purchasedPropIds,
       currentThemeId: currentThemeId ?? this.currentThemeId,
+      roomDecoration: roomDecoration ?? this.roomDecoration,
     );
   }
 

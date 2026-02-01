@@ -200,6 +200,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     isAwake: isAwake,
                     characterLevel: _friend!.characterLevel,
                     consecutiveDays: _friend!.consecutiveDays,
+                    roomDecoration: _friend!.roomDecoration,
                   ),
                 ),
                 const SizedBox(height: 16),
