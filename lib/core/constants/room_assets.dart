@@ -10,6 +10,7 @@ class RoomAsset {
   final AppThemeType? themeType;
   final String? imagePath;
   final double sizeMultiplier;
+  final double aspectRatio;
 
   const RoomAsset({
     required this.id,
@@ -20,6 +21,7 @@ class RoomAsset {
     this.themeType,
     this.imagePath,
     this.sizeMultiplier = 1.0,
+    this.aspectRatio = 1.0,
   });
 }
 
@@ -105,8 +107,35 @@ class RoomAssets {
         id: 'dark_wall',
         name: '다크벽지',
         price: 100,
-        icon: Icons.brightness_3, // Dark theme hint
+        icon: Icons.brightness_3,
         color: Color(0xFF424242)),
+    RoomAsset(
+        id: 'black_stripe',
+        name: '블랙 스트라이프',
+        price: 150,
+        icon: Icons.reorder,
+        color: Color(0xFF2C2C2C)),
+    RoomAsset(
+        id: 'flower_sky',
+        name: '꽃하늘',
+        price: 100,
+        icon: Icons.scatter_plot, // Dots
+        color: Color(0xFFFFF9C4),
+        imagePath: 'assets/images/FlowerSky.png'),
+    RoomAsset(
+        id: 'pink_lace',
+        name: '핑크레이스',
+        price: 100,
+        icon: Icons.scatter_plot, // Dots
+        color: Color(0xFFFFF9C4),
+        imagePath: 'assets/images/PinkLace.png'),
+    RoomAsset(
+        id: 'red_heart',
+        name: '빨간하트',
+        price: 100,
+        icon: Icons.scatter_plot, // Dots
+        color: Color(0xFFFFF9C4),
+        imagePath: 'assets/images/RedHeart.png'),
   ];
 
   static const List<RoomAsset> backgrounds = [
@@ -146,7 +175,8 @@ class RoomAssets {
       price: 200,
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/WoodDesk.png',
-      sizeMultiplier: 3.0,
+      sizeMultiplier: 1.7,
+      aspectRatio: 1.8,
     ),
     RoomAsset(
       id: 'pogeun_sofa',
@@ -154,7 +184,8 @@ class RoomAssets {
       price: 200,
       icon: Icons.chair,
       imagePath: 'assets/items/PogeunSofa.png',
-      sizeMultiplier: 3.0,
+      sizeMultiplier: 2.0,
+      aspectRatio: 1.5,
     ),
     RoomAsset(
       id: 'cozy_bean',
@@ -162,7 +193,8 @@ class RoomAssets {
       price: 200,
       icon: Icons.chair,
       imagePath: 'assets/items/CozyBean.png',
-      sizeMultiplier: 2.0,
+      sizeMultiplier: 1.6,
+      aspectRatio: 1.2,
     ),
     RoomAsset(
       id: 'pot_1',
@@ -170,7 +202,7 @@ class RoomAssets {
       price: 120,
       icon: Icons.local_florist,
       imagePath: 'assets/items/Pot1.svg',
-      sizeMultiplier: 1.5,
+      sizeMultiplier: 1.0,
     ),
     RoomAsset(
       id: 'white_bear',
@@ -179,6 +211,22 @@ class RoomAssets {
       icon: Icons.pets,
       imagePath: 'assets/items/WhiteBear.png',
       sizeMultiplier: 1.0,
+    ),
+    RoomAsset(
+      id: 'pink_chair',
+      name: '핑크 의자',
+      price: 180,
+      icon: Icons.chair,
+      imagePath: 'assets/items/PinkChair.png',
+      sizeMultiplier: 1.5,
+    ),
+    RoomAsset(
+      id: 'blue_chair',
+      name: '파란 의자',
+      price: 180,
+      icon: Icons.chair,
+      imagePath: 'assets/items/BlueChair.png',
+      sizeMultiplier: 1.5,
     ),
     RoomAsset(
       id: 'mug_cup',
@@ -195,6 +243,23 @@ class RoomAssets {
       icon: Icons.local_cafe,
       imagePath: 'assets/items/WoodCup.png',
       sizeMultiplier: 0.8,
+    ),
+    RoomAsset(
+      id: 'cloud_watch',
+      name: '구름 시계',
+      price: 100,
+      icon: Icons.access_time,
+      imagePath: 'assets/items/CloudDigital.png',
+      sizeMultiplier: 1.3,
+    ),
+    RoomAsset(
+      id: 'red_carpet',
+      name: '레드 카펫',
+      price: 100,
+      icon: Icons.access_time,
+      imagePath: 'assets/items/RedCarpet.png',
+      sizeMultiplier: 1.5,
+      aspectRatio: 1.8,
     ),
   ];
 

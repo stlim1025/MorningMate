@@ -233,14 +233,19 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                                               price: 0,
                                                               icon: Icons
                                                                   .circle));
-                                              final propSize = innerRoomSize *
+                                              final baseSize = innerRoomSize *
                                                   0.16 *
                                                   asset.sizeMultiplier;
+                                              final propWidth =
+                                                  baseSize * asset.aspectRatio;
+                                              final propHeight = baseSize;
+
                                               return Positioned(
                                                 left: prop.x *
-                                                    (innerRoomSize - propSize),
+                                                    (innerRoomSize - propWidth),
                                                 top: prop.y *
-                                                    (innerRoomSize - propSize),
+                                                    (innerRoomSize -
+                                                        propHeight),
                                                 child: Stack(
                                                   clipBehavior: Clip.none,
                                                   children: [
@@ -250,13 +255,13 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                                                 details.delta
                                                                         .dx /
                                                                     (innerRoomSize -
-                                                                        propSize))
+                                                                        propWidth))
                                                             .clamp(0.0, 1.0);
                                                         final newY = (prop.y +
                                                                 details.delta
                                                                         .dy /
                                                                     (innerRoomSize -
-                                                                        propSize))
+                                                                        propHeight))
                                                             .clamp(0.0, 1.0);
 
                                                         final newProps = List<
@@ -275,8 +280,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                                                         newProps);
                                                       },
                                                       child: Container(
-                                                        width: propSize,
-                                                        height: propSize,
+                                                        width: propWidth,
+                                                        height: propHeight,
                                                         decoration:
                                                             BoxDecoration(
                                                           border: Border.all(
@@ -295,7 +300,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                                         child: Center(
                                                             child: _getPropIcon(
                                                                 prop.type,
-                                                                propSize)),
+                                                                propWidth,
+                                                                propHeight)),
                                                       ),
                                                     ),
                                                     Positioned(
@@ -902,33 +908,35 @@ class _DecorationScreenState extends State<DecorationScreen> {
     );
   }
 
-  Widget _getPropIcon(String type, double size) {
-    if (type.isEmpty) return SizedBox(width: size, height: size);
+  Widget _getPropIcon(String type, double width, double height) {
+    if (type.isEmpty) return SizedBox(width: width, height: height);
     final asset = RoomAssets.props.firstWhere((p) => p.id == type,
         orElse: () =>
             const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
-    if (asset.id.isEmpty) return SizedBox(width: size, height: size);
+    if (asset.id.isEmpty) return SizedBox(width: width, height: height);
 
     if (asset.imagePath != null) {
       return asset.imagePath!.endsWith('.svg')
           ? SvgPicture.asset(
               asset.imagePath!,
-              width: size * 0.9,
-              height: size * 0.9,
+              width: width * 0.9,
+              height: height * 0.9,
               fit: BoxFit.contain,
             )
           : Image.asset(
               asset.imagePath!,
-              width: size * 0.9,
-              height: size * 0.9,
+              width: width * 0.9,
+              height: height * 0.9,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 return Icon(asset.icon,
-                    color: Colors.blueGrey, size: size * 0.7);
+                    color: Colors.blueGrey,
+                    size: (width < height ? width : height) * 0.7);
               },
             );
     }
 
-    return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);
+    return Icon(asset.icon,
+        color: Colors.blueGrey, size: (width < height ? width : height) * 0.7);
   }
 }

@@ -1,7 +1,7 @@
 name: morning_mate
 description: A morning diary app with character growth and social features
 publish_to: 'none'
-version: 0.1.1+2
+version: 0.1.1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

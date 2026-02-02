@@ -79,6 +79,9 @@ class RoomBackgroundWidget extends StatelessWidget {
             child: TwinklingStarsWidget(starCount: 100),
           ),
 
+        // Clouds (specifically for golden_sun/sunset)
+        if (decoration.backgroundId == 'golden_sun') ..._buildSunsetClouds(),
+
         // Celestial Body (Sun/Moon)
         if (decoration.backgroundId != 'none')
           Positioned(
@@ -87,6 +90,134 @@ class RoomBackgroundWidget extends StatelessWidget {
             child: _buildCelestialBody(),
           ),
       ],
+    );
+  }
+
+  List<Widget> _buildSunsetClouds() {
+    return [
+      Positioned(
+        top: 60,
+        left: -10,
+        child: _buildCloud(
+          width: 170,
+          height: 65,
+          color: const Color(0xFFFF7E5F).withOpacity(0.8),
+        ),
+      ),
+      Positioned(
+        top: 140,
+        right: -20,
+        child: _buildCloud(
+          width: 200,
+          height: 75,
+          color: const Color(0xFFFEB47B).withOpacity(0.75),
+        ),
+      ),
+      Positioned(
+        top: 240,
+        left: 50,
+        child: _buildCloud(
+          width: 140,
+          height: 55,
+          color: const Color(0xFFFF6A88).withOpacity(0.7),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildCloud({
+    required double width,
+    required double height,
+    required Color color,
+  }) {
+    return SizedBox(
+      width: width,
+      height: height * 1.5,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Base glow
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.6),
+                    blurRadius: 40,
+                    spreadRadius: 10,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Main fluffy parts
+          Positioned(
+            bottom: 0,
+            child: Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(height / 2),
+              ),
+            ),
+          ),
+          // Top bump 1
+          Positioned(
+            top: 0,
+            left: width * 0.2,
+            child: Container(
+              width: width * 0.45,
+              height: width * 0.45,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Container(
+                margin: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.3),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Top bump 2
+          Positioned(
+            top: height * 0.2,
+            right: width * 0.15,
+            child: Container(
+              width: width * 0.35,
+              height: width * 0.35,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Container(
+                margin: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.2),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

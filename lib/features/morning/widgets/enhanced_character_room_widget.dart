@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_color_scheme.dart';
@@ -35,17 +36,24 @@ class _EnhancedCharacterRoomWidgetState
   late Animation<double> _bounceAnimation;
   bool _isTapped = false;
   Timer? _tapTimer;
+  Timer? _wanderTimer;
+  Timer? _movementStopTimer;
+  double _horizontalPosition = 0.5; // 0.0 to 1.0
+  double _verticalPosition = 0.5; // 0.0 to 1.0
+  bool _isMoving = false;
 
   void _handleTap() {
     if (_isTapped) return;
     setState(() {
       _isTapped = true;
+      _isMoving = true;
     });
     _tapTimer?.cancel();
     _tapTimer = Timer(const Duration(milliseconds: 1000), () {
       if (mounted) {
         setState(() {
           _isTapped = false;
+          _isMoving = false;
         });
       }
     });
@@ -62,12 +70,66 @@ class _EnhancedCharacterRoomWidgetState
     _bounceAnimation = Tween<double>(begin: 0, end: 10).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+
+    _startWandering();
+  }
+
+  void _move() {
+    if (mounted && widget.isAwake) {
+      setState(() {
+        _isMoving = true;
+        _horizontalPosition = 0.05 + Random().nextDouble() * 0.7;
+        _verticalPosition = Random().nextDouble();
+      });
+
+      _movementStopTimer?.cancel();
+      _movementStopTimer = Timer(const Duration(milliseconds: 2000), () {
+        if (mounted) {
+          setState(() {
+            _isMoving = false;
+          });
+        }
+      });
+    }
+  }
+
+  void _startWandering() {
+    _wanderTimer?.cancel();
+    _movementStopTimer?.cancel();
+    if (widget.isAwake) {
+      // 즉시 첫 번째 이동 시작
+      _move();
+      // 이후 4초마다 반복 이동
+      _wanderTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+        _move();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(EnhancedCharacterRoomWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isAwake != oldWidget.isAwake) {
+      if (widget.isAwake) {
+        _startWandering();
+      } else {
+        _wanderTimer?.cancel();
+        _movementStopTimer?.cancel();
+        setState(() {
+          _horizontalPosition = 0.5; // Reset to center when sleeping
+          _verticalPosition = 0.5;
+          _isMoving = false;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     _tapTimer?.cancel();
+    _wanderTimer?.cancel();
+    _movementStopTimer?.cancel();
     super.dispose();
   }
 
@@ -236,6 +298,25 @@ class _EnhancedCharacterRoomWidgetState
           ],
         );
       }
+
+      if (wallpaperAsset.id == 'black_stripe') {
+        return Container(
+          color: wallpaperColor,
+          child: Stack(
+            children: List.generate(6, (index) {
+              return Positioned(
+                top: (index + 1) * (size * 0.7 / 7),
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 1.2,
+                  color: Colors.white.withOpacity(0.12),
+                ),
+              );
+            }),
+          ),
+        );
+      }
       return Container(color: wallpaperColor);
     }
 
@@ -375,21 +456,24 @@ class _EnhancedCharacterRoomWidgetState
     final asset = RoomAssets.props.firstWhere((p) => p.id == prop.type,
         orElse: () =>
             const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
-    final propSize = size * 0.16 * asset.sizeMultiplier;
+
+    final baseSize = size * 0.16 * asset.sizeMultiplier;
+    final propWidth = baseSize * asset.aspectRatio;
+    final propHeight = baseSize;
 
     return Positioned(
-      left: prop.x * (size - propSize),
-      top: prop.y * (size - propSize),
-      child: _getPropVisual(prop.type, propSize),
+      left: prop.x * (size - propWidth),
+      top: prop.y * (size - propHeight),
+      child: _getPropVisual(prop.type, propWidth, propHeight),
     );
   }
 
-  Widget _getPropVisual(String type, double size) {
-    if (type.isEmpty) return SizedBox(width: size, height: size);
+  Widget _getPropVisual(String type, double width, double height) {
+    if (type.isEmpty) return SizedBox(width: width, height: height);
     final asset = RoomAssets.props.firstWhere((p) => p.id == type,
         orElse: () =>
             const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
-    if (asset.id.isEmpty) return SizedBox(width: size, height: size);
+    if (asset.id.isEmpty) return SizedBox(width: width, height: height);
 
     if (asset.imagePath != null) {
       return Opacity(
@@ -398,58 +482,64 @@ class _EnhancedCharacterRoomWidgetState
         child: asset.imagePath!.endsWith('.svg')
             ? SvgPicture.asset(
                 asset.imagePath!,
-                width: size * 0.9,
-                height: size * 0.9,
+                width: width * 0.9,
+                height: height * 0.9,
                 fit: BoxFit.contain,
               )
             : Image.asset(
                 asset.imagePath!,
-                width: size * 0.9,
-                height: size * 0.9,
+                width: width * 0.9,
+                height: height * 0.9,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   // Fallback to icon if image fails to load
                   return Icon(asset.icon,
-                      color: Colors.blueGrey, size: size * 0.7);
+                      color: Colors.blueGrey,
+                      size: (width < height ? width : height) * 0.7);
                 },
               ),
       );
     }
 
-    return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);
+    return Icon(asset.icon,
+        color: Colors.blueGrey, size: (width < height ? width : height) * 0.7);
   }
 
   Widget _buildCharacterContainer(
       bool isAwake, AppColorScheme colorScheme, double size) {
-    final charSize = size * 0.4;
+    // Decreased size from 0.4 to 0.35
+    final charSize = size * 0.35;
 
     return Stack(
       children: [
         // Character
         AnimatedPositioned(
-          duration: const Duration(milliseconds: 800),
-          curve: Curves.easeInOut,
-          bottom: widget.isAwake ? size * 0.25 : size * 0.15,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: GestureDetector(
-              onTap: _handleTap,
-              child: AnimatedBuilder(
-                animation: _bounceAnimation,
-                builder: (context, child) {
-                  double verticalOffset =
-                      widget.isAwake ? -_bounceAnimation.value : 0;
-                  if (_isTapped) verticalOffset -= 20;
+          duration:
+              const Duration(milliseconds: 2000), // Updated to move faster
+          curve: Curves.easeInOutSine,
+          // Moves within floor area (approx 8% to 22% of height)
+          bottom: widget.isAwake
+              ? (size * 0.08) + (size * 0.14 * _verticalPosition)
+              : size * 0.12,
+          // Use _horizontalPosition to move left/right naturally
+          left: (size - charSize) * _horizontalPosition,
+          child: GestureDetector(
+            onTap: _handleTap,
+            child: AnimatedBuilder(
+              animation: _bounceAnimation,
+              builder: (context, child) {
+                // Reduced vertical offset slightly to account for smaller size
+                bool shouldAnimate = widget.isAwake && (_isMoving || _isTapped);
+                double verticalOffset =
+                    shouldAnimate ? -_bounceAnimation.value * 0.5 : 0;
+                if (_isTapped) verticalOffset -= 20;
 
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    transform: Matrix4.translationValues(0, verticalOffset, 0),
-                    child:
-                        _buildCharacter(widget.isAwake, colorScheme, charSize),
-                  );
-                },
-              ),
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  transform: Matrix4.translationValues(0, verticalOffset, 0),
+                  child: _buildCharacter(widget.isAwake, colorScheme, charSize),
+                );
+              },
             ),
           ),
         ),
@@ -459,131 +549,48 @@ class _EnhancedCharacterRoomWidgetState
 
   Widget _buildCharacter(
       bool isAwake, AppColorScheme colorScheme, double size) {
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFB39DDB)
-                .withOpacity(0.2), // Fixed soft purple shadow
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
       child: Stack(
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
-          Container(
-            width: size * 0.75,
-            height: size * 0.83,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD7A86E), // Fixed warm brown body color
-              borderRadius: BorderRadius.all(Radius.circular(size * 0.375)),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: size * 0.58,
-                  height: size * 0.67,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(size * 0.29),
+          // Egg Image or Animation
+          _isTapped
+              ? Padding(
+                  padding: EdgeInsets.only(
+                      bottom: size * 0.05), // 찡긋 이미지를 살짝 위로 올려서 위치 맞춤
+                  child: Image.asset(
+                    'assets/images/Click_Egg.png',
+                    width: size * 0.95,
+                    height: size * 0.90,
+                    fit: BoxFit.contain,
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        top: size * 0.2,
-                        left: size * 0.15,
-                        child: _isTapped
-                            ? Text('>',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: size * 0.13))
-                            : isAwake
-                                ? Container(
-                                    width: size * 0.06,
-                                    height: size * 0.06,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  )
-                                : Container(
-                                    width: size * 0.1,
-                                    height: size * 0.015,
-                                    margin: EdgeInsets.only(top: size * 0.03),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.4),
-                                      borderRadius: BorderRadius.circular(1),
-                                    ),
-                                  ),
+                )
+              : (isAwake && _isMoving)
+                  ? Image.asset(
+                      'assets/animations/bouncing_egg.gif',
+                      width: size,
+                      height: size,
+                      fit: BoxFit.contain,
+                    )
+                  : Padding(
+                      padding: EdgeInsets.only(
+                          bottom: size * 0.05), // 정지 이미지를 살짝 위로 올려서 위치 맞춤
+                      child: Image.asset(
+                        'assets/images/Egg.png',
+                        width: size * 0.80,
+                        height: size * 0.75,
+                        fit: BoxFit.contain,
                       ),
-                      Positioned(
-                        top: size * 0.2,
-                        right: size * 0.15,
-                        child: _isTapped
-                            ? Text('<',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: size * 0.13))
-                            : isAwake
-                                ? Container(
-                                    width: size * 0.06,
-                                    height: size * 0.06,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  )
-                                : Container(
-                                    width: size * 0.1,
-                                    height: size * 0.015,
-                                    margin: EdgeInsets.only(top: size * 0.03),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.4),
-                                      borderRadius: BorderRadius.circular(1),
-                                    ),
-                                  ),
-                      ),
-                      Positioned(
-                        top: size * 0.28,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: _isTapped ? size * 0.13 : size * 0.1,
-                            height: isAwake ? size * 0.08 : size * 0.05,
-                            decoration: BoxDecoration(
-                              color: Colors.orange,
-                              borderRadius: isAwake
-                                  ? const BorderRadius.only(
-                                      bottomLeft: Radius.circular(8),
-                                      bottomRight: Radius.circular(8),
-                                      topLeft: Radius.circular(2),
-                                      topRight: Radius.circular(2),
-                                    )
-                                  : BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+                    ),
+
+          // Zzz animation (if sleeping)
           if (!isAwake)
             Positioned(
-              top: -20,
-              right: 0,
+              top: -size * 0.2,
+              right: -size * 0.1,
               child: AnimatedBuilder(
                 animation: _animationController,
                 builder: (context, child) {
@@ -621,20 +628,21 @@ class _EnhancedCharacterRoomWidgetState
 class WindowHoleClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    Path path = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final path = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
     // Window location based on flex 1:2:1
-    double windowWidth = size.width * (2 / 4);
-    double windowHeight = size.height * (2 / 4);
-    double left = size.width * (1 / 4);
-    double top = size.height * (1 / 4);
+    double windowWidth = size.width * 0.5;
+    double windowHeight = size.height * 0.5;
+    double left = size.width * 0.25;
+    double top = size.height * 0.25;
 
-    path.addRRect(RRect.fromRectAndRadius(
-      Rect.fromLTWH(left, top, windowWidth, windowHeight),
-      const Radius.circular(12),
-    ));
+    final holePath = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(left, top, windowWidth, windowHeight),
+        const Radius.circular(12),
+      ));
 
-    return path..fillType = PathFillType.evenOdd;
+    return Path.combine(PathOperation.difference, path, holePath);
   }
 
   @override
