@@ -356,65 +356,44 @@ class _EnhancedCharacterRoomWidgetState
                     // Overlay Window UI (If background is not 'none')
                     if (decoration.backgroundId != 'none')
                       Positioned.fill(
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            // WindowHoleClipper와 동일한 계산식 사용
-                            final windowWidth = constraints.maxWidth * 0.5;
-                            final windowHeight = constraints.maxHeight * 0.5;
-                            final left = constraints.maxWidth * 0.25;
-                            final top = constraints.maxHeight * 0.25;
-
-                            return Stack(
-                              children: [
-                                // Window positioned exactly where the hole is
-                                Positioned(
-                                  top: top,
-                                  left: left,
-                                  width: windowWidth,
-                                  height: windowHeight,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.white
-                                            .withOpacity(isAwake ? 1.0 : 0.8),
-                                        width: 6,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(6),
-                                      child: Stack(
-                                        children: [
-                                          // 가로 프레임
-                                          Positioned(
-                                            left: 0,
-                                            right: 0,
-                                            top: (windowHeight / 2) - 2,
-                                            height: 4,
-                                            child: Container(
-                                              color:
-                                                  Colors.white.withOpacity(0.8),
-                                            ),
-                                          ),
-                                          // 세로 프레임
-                                          Positioned(
-                                            top: 0,
-                                            bottom: 0,
-                                            left: (windowWidth / 2) - 2,
-                                            width: 4,
-                                            child: Container(
-                                              color:
-                                                  Colors.white.withOpacity(0.8),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                        child: Center(
+                          child: FractionallySizedBox(
+                            widthFactor: 0.5,
+                            heightFactor: 0.5,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.white
+                                      .withOpacity(isAwake ? 1.0 : 0.8),
+                                  width: 6,
                                 ),
-                              ],
-                            );
-                          },
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Stack(
+                                  children: [
+                                    // 가로 프레임
+                                    Center(
+                                      child: Container(
+                                        width: double.infinity,
+                                        height: 4,
+                                        color: Colors.white.withOpacity(0.8),
+                                      ),
+                                    ),
+                                    // 세로 프레임
+                                    Center(
+                                      child: Container(
+                                        width: 4,
+                                        height: double.infinity,
+                                        color: Colors.white.withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                   ],
