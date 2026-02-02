@@ -133,11 +133,6 @@ class RoomAssets {
   ];
 
   static const List<RoomAsset> props = [
-    RoomAsset(id: 'bed', name: '침대', price: 100, icon: Icons.bed),
-    RoomAsset(id: 'plant', name: '화분', price: 100, icon: Icons.local_florist),
-    RoomAsset(id: 'bear', name: '곰돌이', price: 100, icon: Icons.pets),
-    RoomAsset(id: 'lamp', name: '램프', price: 100, icon: Icons.lightbulb),
-    RoomAsset(id: 'frame', name: '액자', price: 100, icon: Icons.crop_original),
     RoomAsset(
       id: 'alarm_clock',
       name: '알람시계',

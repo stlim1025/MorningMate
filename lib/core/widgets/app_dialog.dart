@@ -316,6 +316,27 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
 
     return Stack(
       children: [
+        if (config.showConfetti)
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.center,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: false,
+                numberOfParticles: 30, // 양 늘리기
+                emissionFrequency: 0.1, // 더 자주 발사
+                colors: const [
+                  Colors.green,
+                  Colors.blue,
+                  Colors.pink,
+                  Colors.orange,
+                  Colors.purple
+                ],
+                createParticlePath: drawStar,
+              ),
+            ),
+          ),
         _AppDialogErrorScope(
           setError: (msg) => setState(() => _errorMessage = msg),
           child: AlertDialog(
@@ -377,25 +398,6 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
                 .toList(),
           ),
         ),
-        if (config.showConfetti)
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConfettiWidget(
-                confettiController: _confettiController,
-                blastDirectionality: BlastDirectionality.explosive,
-                shouldLoop: false,
-                colors: const [
-                  Colors.green,
-                  Colors.blue,
-                  Colors.pink,
-                  Colors.orange,
-                  Colors.purple
-                ],
-                createParticlePath: drawStar, // needs a helper
-              ),
-            ),
-          ),
       ],
     );
   }
