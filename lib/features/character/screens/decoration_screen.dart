@@ -67,8 +67,14 @@ class _DecorationScreenState extends State<DecorationScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title:
-            const Text('방 꾸미기', style: TextStyle(fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: colorScheme.primaryButton),
+        title: Text(
+          '방 꾸미기',
+          style: TextStyle(
+            color: colorScheme.primaryButton,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,

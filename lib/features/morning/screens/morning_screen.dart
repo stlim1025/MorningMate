@@ -84,6 +84,30 @@ class _MorningScreenState extends State<MorningScreen>
                 ),
               ),
 
+              // 2. Subtle Top Overlay for UI readability
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 180,
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          (isAwake && !isDarkMode)
+                              ? Colors.white.withOpacity(0.2)
+                              : Colors.black.withOpacity(0.4),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
               // 4. Main Content
               SafeArea(
                 child: Column(
@@ -171,10 +195,22 @@ class _MorningScreenState extends State<MorningScreen>
   Widget _buildHeader(BuildContext context, bool isAwake,
       AppColorScheme colorScheme, bool isDarkMode) {
     final authController = context.read<AuthController>();
+    final characterController = context.watch<CharacterController>();
     final userId =
         authController.userModel?.uid ?? authController.currentUser?.uid;
+    final backgroundId =
+        characterController.currentUser?.roomDecoration.backgroundId ??
+            'default';
+
+    // 배경이 밝은지 여부 판단 (기본 하늘이나 황금태양 배경일 때)
+    final bool isBrightBackground =
+        (isAwake && !isDarkMode) || backgroundId == 'golden_sun';
+
     final textColor =
-        (isAwake && !isDarkMode) ? const Color(0xFF2C3E50) : Colors.white;
+        isBrightBackground ? const Color(0xFF1A1A1A) : Colors.white;
+    final shadowColor = isBrightBackground
+        ? Colors.white.withOpacity(0.9)
+        : Colors.black.withOpacity(0.85);
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -188,20 +224,38 @@ class _MorningScreenState extends State<MorningScreen>
                 Text(
                   _getGreeting(),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        color: shadowColor,
+                        blurRadius: 15,
+                        offset: const Offset(0, 1),
                       ),
+                      Shadow(
+                        color: shadowColor.withOpacity(0.5),
+                        blurRadius: 5,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 4),
-                Consumer<CharacterController>(
-                  builder: (context, controller, child) {
-                    return Text(
-                      '${controller.currentUser?.consecutiveDays ?? 0}일 연속 기록 중 🔥',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: textColor.withOpacity(0.8),
-                          ),
-                    );
-                  },
+                Text(
+                  '${characterController.currentUser?.consecutiveDays ?? 0}일 연속 기록 중 🔥',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: textColor.withOpacity(0.9),
+                    fontWeight: FontWeight.w600,
+                    shadows: [
+                      Shadow(
+                        color: shadowColor,
+                        blurRadius: 10,
+                      ),
+                      Shadow(
+                        color: shadowColor.withOpacity(0.4),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -221,25 +275,33 @@ class _MorningScreenState extends State<MorningScreen>
                   return Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.notifications_outlined,
-                          color: textColor,
+                      Container(
+                        decoration: BoxDecoration(
+                          color: shadowColor.withOpacity(0.25),
+                          shape: BoxShape.circle,
                         ),
-                        onPressed: () {
-                          context.pushNamed('notification');
-                        },
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.notifications_outlined,
+                            color: textColor,
+                          ),
+                          onPressed: () {
+                            context.pushNamed('notification');
+                          },
+                        ),
                       ),
                       if (hasUnread)
                         Positioned(
-                          right: 12,
-                          top: 10,
+                          right: 8,
+                          top: 8,
                           child: Container(
-                            width: 8,
-                            height: 8,
+                            width: 10,
+                            height: 10,
                             decoration: BoxDecoration(
                               color: colorScheme.error,
                               shape: BoxShape.circle,
+                              border:
+                                  Border.all(color: Colors.white, width: 1.5),
                             ),
                           ),
                         ),
@@ -247,16 +309,23 @@ class _MorningScreenState extends State<MorningScreen>
                   );
                 },
               ),
-              IconButton(
-                icon: Icon(Icons.settings, color: textColor),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
-                    ),
-                  );
-                },
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: shadowColor.withOpacity(0.25),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.settings, color: textColor),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),

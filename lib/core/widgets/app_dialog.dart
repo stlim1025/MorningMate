@@ -316,7 +316,8 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
 
     return Stack(
       children: [
-        if (config.showConfetti)
+        if (config.showConfetti) ...[
+          // Center Explosion
           Positioned.fill(
             child: Align(
               alignment: Alignment.center,
@@ -324,19 +325,50 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
                 confettiController: _confettiController,
                 blastDirectionality: BlastDirectionality.explosive,
                 shouldLoop: false,
-                numberOfParticles: 30, // 양 늘리기
-                emissionFrequency: 0.1, // 더 자주 발사
+                numberOfParticles: 50,
+                emissionFrequency: 0.2,
+                maxBlastForce: 40,
+                minBlastForce: 20,
                 colors: const [
-                  Colors.green,
+                  Color(0xFFFFD700), // Gold
+                  Color(0xFFFFDF00), // Bright Gold
                   Colors.blue,
                   Colors.pink,
                   Colors.orange,
-                  Colors.purple
+                  Colors.purple,
+                  Colors.white,
                 ],
                 createParticlePath: drawStar,
               ),
             ),
           ),
+          // Left Bottom Burst
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: -pi / 4,
+              emissionFrequency: 0.1,
+              numberOfParticles: 20,
+              maxBlastForce: 50,
+              minBlastForce: 20,
+              colors: const [Color(0xFFFFD700), Colors.pink, Colors.orange],
+            ),
+          ),
+          // Right Bottom Burst
+          Align(
+            alignment: Alignment.bottomRight,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: -3 * pi / 4,
+              emissionFrequency: 0.1,
+              numberOfParticles: 20,
+              maxBlastForce: 50,
+              minBlastForce: 20,
+              colors: const [Color(0xFFFFD700), Colors.blue, Colors.purple],
+            ),
+          ),
+        ],
         _AppDialogErrorScope(
           setError: (msg) => setState(() => _errorMessage = msg),
           child: AlertDialog(

@@ -149,6 +149,22 @@ class RoomAssets {
       sizeMultiplier: 3.0,
     ),
     RoomAsset(
+      id: 'pogeun_sofa',
+      name: '포근소파',
+      price: 200,
+      icon: Icons.chair,
+      imagePath: 'assets/items/PogeunSofa.png',
+      sizeMultiplier: 3.0,
+    ),
+    RoomAsset(
+      id: 'cozy_bean',
+      name: '낮잠소파',
+      price: 200,
+      icon: Icons.chair,
+      imagePath: 'assets/items/CozyBean.png',
+      sizeMultiplier: 2.0,
+    ),
+    RoomAsset(
       id: 'pot_1',
       name: '식물 화분',
       price: 120,
@@ -162,7 +178,23 @@ class RoomAssets {
       price: 180,
       icon: Icons.pets,
       imagePath: 'assets/items/WhiteBear.png',
-      sizeMultiplier: 2.0,
+      sizeMultiplier: 1.0,
+    ),
+    RoomAsset(
+      id: 'mug_cup',
+      name: '머그컵',
+      price: 100,
+      icon: Icons.local_cafe,
+      imagePath: 'assets/items/MugCup.png',
+      sizeMultiplier: 0.8,
+    ),
+    RoomAsset(
+      id: 'wood_cup',
+      name: '원목 컵',
+      price: 100,
+      icon: Icons.local_cafe,
+      imagePath: 'assets/items/WoodCup.png',
+      sizeMultiplier: 0.8,
     ),
   ];
 
