@@ -342,6 +342,7 @@ class _MorningScreenState extends State<MorningScreen>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: EnhancedCharacterRoomWidget(
+        key: const ValueKey('main_character_room'),
         isAwake: isAwake,
         characterLevel: characterController.currentUser?.characterLevel ?? 1,
         consecutiveDays: characterController.currentUser?.consecutiveDays ?? 0,

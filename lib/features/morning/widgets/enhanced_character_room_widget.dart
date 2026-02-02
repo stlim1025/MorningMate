@@ -72,13 +72,22 @@ class _EnhancedCharacterRoomWidgetState
     );
 
     _startWandering();
+
+    // 이미지 미리 로드하여 깜빡임 방지
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        precacheImage(const AssetImage('assets/images/Click_Egg.png'), context);
+        precacheImage(const AssetImage('assets/images/Sleep_Egg.png'), context);
+        precacheImage(const AssetImage('assets/images/Drool_Egg.png'), context);
+      }
+    });
   }
 
   void _move() {
     if (mounted && widget.isAwake) {
       setState(() {
         _isMoving = true;
-        _horizontalPosition = 0.05 + Random().nextDouble() * 0.7;
+        _horizontalPosition = 0.05 + Random().nextDouble() * 0.9;
         _verticalPosition = Random().nextDouble();
       });
 
@@ -347,56 +356,65 @@ class _EnhancedCharacterRoomWidgetState
                     // Overlay Window UI (If background is not 'none')
                     if (decoration.backgroundId != 'none')
                       Positioned.fill(
-                        child: Column(
-                          children: [
-                            const Spacer(flex: 1), // Top Wall spacing
-                            Expanded(
-                              flex: 2,
-                              child: Row(
-                                children: [
-                                  const Spacer(flex: 1), // Left Wall spacing
-                                  // Window
-                                  Expanded(
-                                    flex: 2,
-                                    child: ClipRRect(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            // WindowHoleClipper와 동일한 계산식 사용
+                            final windowWidth = constraints.maxWidth * 0.5;
+                            final windowHeight = constraints.maxHeight * 0.5;
+                            final left = constraints.maxWidth * 0.25;
+                            final top = constraints.maxHeight * 0.25;
+
+                            return Stack(
+                              children: [
+                                // Window positioned exactly where the hole is
+                                Positioned(
+                                  top: top,
+                                  left: left,
+                                  width: windowWidth,
+                                  height: windowHeight,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.white
+                                            .withOpacity(isAwake ? 1.0 : 0.8),
+                                        width: 6,
+                                      ),
                                       borderRadius: BorderRadius.circular(12),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Colors.white.withOpacity(
-                                                  isAwake ? 1.0 : 0.8),
-                                              width: 6),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          color: Colors.transparent,
-                                        ),
-                                        child: Stack(
-                                          children: [
-                                            Center(
-                                              child: Container(
-                                                  width: double.infinity,
-                                                  height: 4,
-                                                  color: Colors.white
-                                                      .withOpacity(0.8)),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Stack(
+                                        children: [
+                                          // 가로 프레임
+                                          Positioned(
+                                            left: 0,
+                                            right: 0,
+                                            top: (windowHeight / 2) - 2,
+                                            height: 4,
+                                            child: Container(
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
                                             ),
-                                            Center(
-                                              child: Container(
-                                                  width: 4,
-                                                  height: double.infinity,
-                                                  color: Colors.white
-                                                      .withOpacity(0.8)),
+                                          ),
+                                          // 세로 프레임
+                                          Positioned(
+                                            top: 0,
+                                            bottom: 0,
+                                            left: (windowWidth / 2) - 2,
+                                            width: 4,
+                                            child: Container(
+                                              color:
+                                                  Colors.white.withOpacity(0.8),
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  const Spacer(flex: 1), // Right Wall spacing
-                                ],
-                              ),
-                            ),
-                            const Spacer(flex: 1), // Bottom Wall spacing
-                          ],
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                   ],
@@ -559,38 +577,50 @@ class _EnhancedCharacterRoomWidgetState
           // Egg Image or Animation
           _isTapped
               ? Padding(
-                  padding: EdgeInsets.only(
-                      bottom: size * 0.05), // 찡긋 이미지를 살짝 위로 올려서 위치 맞춤
+                  padding: EdgeInsets.only(bottom: size * 0.05), // 탭 이미지 위치 맞춤
                   child: Image.asset(
-                    'assets/images/Click_Egg.png',
-                    width: size * 0.95,
-                    height: size * 0.90,
+                    isAwake
+                        ? 'assets/images/Click_Egg.png'
+                        : 'assets/images/Drool_Egg.png',
+                    width: size * 0.80,
+                    height: size * 0.85,
                     fit: BoxFit.contain,
                   ),
                 )
-              : (isAwake && _isMoving)
-                  ? Image.asset(
-                      'assets/animations/bouncing_egg.gif',
-                      width: size,
-                      height: size,
-                      fit: BoxFit.contain,
-                    )
-                  : Padding(
-                      padding: EdgeInsets.only(
-                          bottom: size * 0.05), // 정지 이미지를 살짝 위로 올려서 위치 맞춤
+              : !isAwake
+                  ? Padding(
+                      padding:
+                          EdgeInsets.only(bottom: size * 0.05), // 잠든 이미지 위치 맞춤
                       child: Image.asset(
-                        'assets/images/Egg.png',
+                        'assets/images/Sleep_Egg.png',
                         width: size * 0.80,
                         height: size * 0.75,
                         fit: BoxFit.contain,
                       ),
-                    ),
+                    )
+                  : _isMoving
+                      ? Image.asset(
+                          'assets/animations/bouncing_egg.gif',
+                          width: size,
+                          height: size,
+                          fit: BoxFit.contain,
+                        )
+                      : Padding(
+                          padding: EdgeInsets.only(
+                              bottom: size * 0.05), // 정지 이미지를 살짝 위로 올려서 위치 맞춤
+                          child: Image.asset(
+                            'assets/images/Egg.png',
+                            width: size * 0.80,
+                            height: size * 0.75,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
 
           // Zzz animation (if sleeping)
           if (!isAwake)
             Positioned(
-              top: -size * 0.2,
-              right: -size * 0.1,
+              top: -size * 0.05,
+              right: size * 0.05,
               child: AnimatedBuilder(
                 animation: _animationController,
                 builder: (context, child) {
