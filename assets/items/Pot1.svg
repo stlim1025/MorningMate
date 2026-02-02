@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+
+  <!-- ====== 잎 ====== -->
+  <g fill="#6EDB7F">
+    <ellipse cx="256" cy="150" rx="70" ry="90"></ellipse>
+    <ellipse cx="180" cy="180" rx="60" ry="80"></ellipse>
+    <ellipse cx="332" cy="180" rx="60" ry="80"></ellipse>
+    <ellipse cx="210" cy="110" rx="50" ry="70"></ellipse>
+    <ellipse cx="300" cy="110" rx="50" ry="70"></ellipse>
+  </g>
+
+  <!-- 잎 하이라이트 -->
+  <g fill="#A8F0B4" opacity="0.7">
+    <ellipse cx="235" cy="110" rx="18" ry="10"></ellipse>
+    <ellipse cx="310" cy="150" rx="16" ry="9"></ellipse>
+    <ellipse cx="180" cy="160" rx="14" ry="8"></ellipse>
+  </g>
+
+  <!-- ====== 흙 ====== -->
+  <ellipse cx="256" cy="260" rx="150" ry="45" fill="#8B5A3C"></ellipse>
+
+  <!-- ====== 화분 몸통 ====== -->
+  <defs>
+    <linearGradient id="potGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFD86B"></stop>
+      <stop offset="100%" stop-color="#FFBF3F"></stop>
+    </linearGradient>
+  </defs>
+
+  <rect x="110" y="250" width="292" height="180" rx="60" fill="url(#potGrad)"></rect>
+
+  <!-- 윗테두리 -->
+  <rect x="100" y="230" width="312" height="50" rx="25" fill="#FFE07A"></rect>
+
+  <!-- ====== 얼굴 ====== -->
+  <!-- 눈 -->
+  <circle cx="200" cy="330" r="22" fill="#111"></circle>
+  <circle cx="312" cy="330" r="22" fill="#111"></circle>
+
+  <!-- 눈 반짝 -->
+  <circle cx="193" cy="322" r="7" fill="#fff"></circle>
+  <circle cx="305" cy="322" r="7" fill="#fff"></circle>
+
+  <!-- 볼 -->
+  <ellipse cx="165" cy="350" rx="14" ry="8" fill="#FF9BB0" opacity="0.6"></ellipse>
+  <ellipse cx="347" cy="350" rx="14" ry="8" fill="#FF9BB0" opacity="0.6"></ellipse>
+
+  <!-- 입 -->
+  <path d="M220 360 Q256 395 292 360" stroke="#111" stroke-width="8" fill="none" stroke-linecap="round"></path>
+
+  <!-- ====== 바닥 그림자 ====== -->
+  <ellipse cx="256" cy="430" rx="120" ry="18" fill="#000" opacity="0.08"></ellipse>
+
+</svg>

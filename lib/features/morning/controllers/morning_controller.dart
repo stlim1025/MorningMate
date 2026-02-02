@@ -367,6 +367,20 @@ class MorningController extends ChangeNotifier {
         _writingDuration >= (targetMinutes * 60);
   }
 
+  // 모든 상태 초기화 (로그아웃용)
+  void clear() {
+    _writingTimer?.cancel();
+    _writingTimer = null;
+    _todayDiary = null;
+    _currentQuestion = null;
+    _writingDuration = 0;
+    _charCount = 0;
+    _isWriting = false;
+    _isLoading = false;
+    _hasInitialized = false;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _writingTimer?.cancel();

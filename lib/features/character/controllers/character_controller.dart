@@ -356,6 +356,14 @@ class CharacterController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 모든 상태 초기화 (로그아웃용)
+  void clear() {
+    _currentUser = null;
+    _isAwake = false;
+    _currentAnimation = 'idle';
+    notifyListeners();
+  }
+
   // 캐릭터 이미지 경로 가져오기
   String getCharacterImagePath() {
     final state = characterState;

@@ -96,13 +96,18 @@ class MorningMateApp extends StatelessWidget {
             context.read<QuestionService>(),
             context.read<UserService>(),
           ),
-          update: (context, auth, previous) =>
-              previous ??
-              MorningController(
-                context.read<DiaryService>(),
-                context.read<QuestionService>(),
-                context.read<UserService>(),
-              ),
+          update: (context, auth, previous) {
+            final controller = previous ??
+                MorningController(
+                  context.read<DiaryService>(),
+                  context.read<QuestionService>(),
+                  context.read<UserService>(),
+                );
+            if (auth.userModel == null) {
+              controller.clear();
+            }
+            return controller;
+          },
         ),
         ChangeNotifierProxyProvider<AuthController, CharacterController>(
           create: (context) => CharacterController(
@@ -111,7 +116,11 @@ class MorningMateApp extends StatelessWidget {
           update: (context, auth, previous) {
             final controller =
                 previous ?? CharacterController(context.read<UserService>());
-            controller.updateFromUser(auth.userModel);
+            if (auth.userModel == null) {
+              controller.clear();
+            } else {
+              controller.updateFromUser(auth.userModel);
+            }
             return controller;
           },
         ),
@@ -120,12 +129,17 @@ class MorningMateApp extends StatelessWidget {
             context.read<FriendService>(),
             context.read<DiaryService>(),
           ),
-          update: (context, auth, previous) =>
-              previous ??
-              SocialController(
-                context.read<FriendService>(),
-                context.read<DiaryService>(),
-              ),
+          update: (context, auth, previous) {
+            final controller = previous ??
+                SocialController(
+                  context.read<FriendService>(),
+                  context.read<DiaryService>(),
+                );
+            if (auth.userModel == null) {
+              controller.clear();
+            }
+            return controller;
+          },
         ),
         ChangeNotifierProvider<NotificationController>(
           create: (_) => NotificationController(),
@@ -136,6 +150,8 @@ class MorningMateApp extends StatelessWidget {
             final controller = previous ?? ThemeController();
             if (auth.userModel != null) {
               controller.syncWithUserTheme(auth.userModel!.currentThemeId);
+            } else {
+              controller.resetToDefault();
             }
             return controller;
           },

@@ -153,6 +153,22 @@ class RoomAssets {
       imagePath: 'assets/items/WoodDesk.png',
       sizeMultiplier: 3.0,
     ),
+    RoomAsset(
+      id: 'pot_1',
+      name: '식물 화분',
+      price: 120,
+      icon: Icons.local_florist,
+      imagePath: 'assets/items/Pot1.svg',
+      sizeMultiplier: 1.5,
+    ),
+    RoomAsset(
+      id: 'white_bear',
+      name: '흰 곰 인형',
+      price: 180,
+      icon: Icons.pets,
+      imagePath: 'assets/items/WhiteBear.png',
+      sizeMultiplier: 2.0,
+    ),
   ];
 
   static const List<RoomAsset> floors = [

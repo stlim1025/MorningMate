@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -603,36 +604,45 @@ class _SocialScreenState extends State<SocialScreen> {
       AppColorScheme colorScheme) async {
     final authController = context.read<AuthController>();
 
-    // 즉시 쿨다운 시작 및 중복 클릭 방지
+    // 1. 쿨다운 체크
     if (!controller.canSendWakeUp(friend.uid)) return;
 
-    try {
-      await controller.wakeUpFriend(
-        authController.currentUser!.uid,
-        authController.userModel!.nickname,
-        friend.uid,
-        friend.nickname,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${friend.nickname}님을 깨웠습니다! ⏰'),
-            backgroundColor: colorScheme.success,
-            behavior: SnackBarBehavior.floating,
-          ),
+    // 2. 즉시 UI 피드백 (쿨다운 시작 및 스낵바)
+    controller.startWakeUpCooldown(friend.uid);
+
+    final friendId = friend.uid;
+    final friendNickname = friend.nickname;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('$friendNickname님을 깨웠습니다! ⏰'),
+        backgroundColor: colorScheme.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    // 3. 실제 전송은 백그라운드에서 진행
+    unawaited(() async {
+      try {
+        await controller.wakeUpFriend(
+          authController.currentUser!.uid,
+          authController.userModel!.nickname,
+          friendId,
+          friendNickname,
         );
+      } catch (e) {
+        debugPrint('깨우기 요청 실패: $e');
+        if (mounted) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: const Text('깨우기 요청 실패'),
+              backgroundColor: colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('깨우기 요청 실패'),
-            backgroundColor: colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
+    }());
   }
 
   Widget _buildBottomNavigationBar(

@@ -490,13 +490,25 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
             if (message.isEmpty) return;
 
             final socialController = parentContext.read<SocialController>();
+            final notificationController =
+                parentContext.read<NotificationController>();
+            final authController = parentContext.read<AuthController>();
+            final userModel = authController.userModel;
+
+            if (userModel == null) return;
+
+            // 1. 쿨다운 체크
             if (!socialController.canSendCheer(_friend!.uid)) {
               return;
             }
 
+            // 다이얼로그 닫기
             Navigator.pop(context);
-            if (!mounted) return;
 
+            // 2. 즉시 UI 피드백 (쿨다운 시작 및 스낵바)
+            socialController.startCheerCooldown(_friend!.uid);
+
+            final friendId = _friend!.uid;
             final messenger = ScaffoldMessenger.of(parentContext);
             messenger.showSnackBar(
               SnackBar(
@@ -505,15 +517,17 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
               ),
             );
 
-            final userModel = parentContext.read<AuthController>().userModel;
-            if (userModel != null) {
-              unawaited(() async {
+            // 3. 실제 전송은 백그라운드에서 진행
+            unawaited(() async {
+              try {
+                // FCM 알림 (클라우드 함수)
                 final callable = FirebaseFunctions.instance
                     .httpsCallable('sendCheerMessage');
+
                 try {
                   await callable.call({
                     'userId': userModel.uid,
-                    'friendId': _friend!.uid,
+                    'friendId': friendId,
                     'message': message,
                     'senderNickname': userModel.nickname,
                   });
@@ -521,28 +535,26 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                   debugPrint('응원 메시지 FCM 전송 오류: $e');
                 }
 
-                try {
-                  await parentContext
-                      .read<NotificationController>()
-                      .sendCheerMessage(
-                        userModel.uid,
-                        userModel.nickname,
-                        _friend!.uid,
-                        message,
-                        fcmSent: false,
-                      );
-                } catch (e) {
-                  if (parentContext.mounted) {
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: const Text('응원 메시지 전송에 실패했습니다.'),
-                        backgroundColor: colorScheme.error,
-                      ),
-                    );
-                  }
+                // Firestore 알림 데이터 생성 (fcmSent를 false로 설정)
+                await notificationController.sendCheerMessage(
+                  userModel.uid,
+                  userModel.nickname,
+                  friendId,
+                  message,
+                  fcmSent: false,
+                );
+              } catch (e) {
+                debugPrint('응원 메시지 전송 오류: $e');
+                if (parentContext.mounted) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('응원 메시지 전송에 실패했습니다.'),
+                      backgroundColor: colorScheme.error,
+                    ),
+                  );
                 }
-              }());
-            }
+              }
+            }());
           },
         ),
       ],

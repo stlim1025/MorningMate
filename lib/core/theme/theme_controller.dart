@@ -55,4 +55,8 @@ class ThemeController extends ChangeNotifier {
       await setTheme(themeType);
     }
   }
+
+  Future<void> resetToDefault() async {
+    await setTheme(AppThemeType.light);
+  }
 }

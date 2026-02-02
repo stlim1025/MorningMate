@@ -706,17 +706,23 @@ class _DecorationScreenState extends State<DecorationScreen> {
                           if (p.imagePath != null)
                             Padding(
                               padding: const EdgeInsets.all(8.0),
-                              child: Image.asset(
-                                p.imagePath!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Icon(p.icon,
-                                      color: exists
-                                          ? colorScheme.success
-                                          : Colors.blueGrey,
-                                      size: 28);
-                                },
-                              ),
+                              child: p.imagePath!.endsWith('.svg')
+                                  ? SvgPicture.asset(
+                                      p.imagePath!,
+                                      fit: BoxFit.contain,
+                                    )
+                                  : Image.asset(
+                                      p.imagePath!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Icon(p.icon,
+                                            color: exists
+                                                ? colorScheme.success
+                                                : Colors.blueGrey,
+                                            size: 28);
+                                      },
+                                    ),
                             )
                           else
                             Icon(p.icon,
@@ -857,15 +863,23 @@ class _DecorationScreenState extends State<DecorationScreen> {
     if (asset.id.isEmpty) return SizedBox(width: size, height: size);
 
     if (asset.imagePath != null) {
-      return Image.asset(
-        asset.imagePath!,
-        width: size * 0.9,
-        height: size * 0.9,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);
-        },
-      );
+      return asset.imagePath!.endsWith('.svg')
+          ? SvgPicture.asset(
+              asset.imagePath!,
+              width: size * 0.9,
+              height: size * 0.9,
+              fit: BoxFit.contain,
+            )
+          : Image.asset(
+              asset.imagePath!,
+              width: size * 0.9,
+              height: size * 0.9,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(asset.icon,
+                    color: Colors.blueGrey, size: size * 0.7);
+              },
+            );
     }
 
     return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);

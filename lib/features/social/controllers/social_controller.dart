@@ -91,23 +91,17 @@ class SocialController extends ChangeNotifier {
   }
 
   bool canSendWakeUp(String friendId) {
-    final now = DateTime.now();
     final lastSentAt = _wakeUpCooldowns[friendId];
-    if (lastSentAt == null) {
-      _wakeUpCooldowns[friendId] = now;
-      _startCooldownTimer();
-      notifyListeners(); // 즉시 UI 반영
-      return true;
-    }
+    if (lastSentAt == null) return true;
 
-    if (now.difference(lastSentAt) >= _wakeUpCooldown) {
-      _wakeUpCooldowns[friendId] = now;
-      _startCooldownTimer();
-      notifyListeners(); // 즉시 UI 반영
-      return true;
-    }
+    final now = DateTime.now();
+    return now.difference(lastSentAt) >= _wakeUpCooldown;
+  }
 
-    return false;
+  void startWakeUpCooldown(String friendId) {
+    _wakeUpCooldowns[friendId] = DateTime.now();
+    _startCooldownTimer();
+    notifyListeners();
   }
 
   Duration wakeUpCooldownRemaining(String friendId) {
@@ -122,23 +116,17 @@ class SocialController extends ChangeNotifier {
   }
 
   bool canSendCheer(String friendId) {
-    final now = DateTime.now();
     final lastSentAt = _cheerCooldowns[friendId];
-    if (lastSentAt == null) {
-      _cheerCooldowns[friendId] = now;
-      _startCooldownTimer();
-      notifyListeners();
-      return true;
-    }
+    if (lastSentAt == null) return true;
 
-    if (now.difference(lastSentAt) >= _cheerCooldown) {
-      _cheerCooldowns[friendId] = now;
-      _startCooldownTimer();
-      notifyListeners();
-      return true;
-    }
+    final now = DateTime.now();
+    return now.difference(lastSentAt) >= _cheerCooldown;
+  }
 
-    return false;
+  void startCheerCooldown(String friendId) {
+    _cheerCooldowns[friendId] = DateTime.now();
+    _startCooldownTimer();
+    notifyListeners();
   }
 
   Duration cheerCooldownRemaining(String friendId) {
@@ -407,6 +395,21 @@ class SocialController extends ChangeNotifier {
       print('친구 일기 확인 오류: $e');
       return false;
     }
+  }
+
+  // 모든 상태 초기화 (로그아웃용)
+  void clear() {
+    _cooldownTimer?.cancel();
+    _cooldownTimer = null;
+    _friendRequestSubscription?.cancel();
+    _friendRequestSubscription = null;
+    _friends = [];
+    _friendRequests = [];
+    _friendsAwakeStatus.clear();
+    _wakeUpCooldowns.clear();
+    _cheerCooldowns.clear();
+    _isLoading = false;
+    notifyListeners();
   }
 
   // 실시간 친구 목록 스트림

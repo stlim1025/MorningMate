@@ -395,16 +395,24 @@ class _EnhancedCharacterRoomWidgetState
       return Opacity(
         opacity:
             widget.isAwake ? 1.0 : 0.9, // Night mode slightly dimmed but clear
-        child: Image.asset(
-          asset.imagePath!,
-          width: size * 0.9,
-          height: size * 0.9,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            // Fallback to icon if image fails to load
-            return Icon(asset.icon, color: Colors.blueGrey, size: size * 0.7);
-          },
-        ),
+        child: asset.imagePath!.endsWith('.svg')
+            ? SvgPicture.asset(
+                asset.imagePath!,
+                width: size * 0.9,
+                height: size * 0.9,
+                fit: BoxFit.contain,
+              )
+            : Image.asset(
+                asset.imagePath!,
+                width: size * 0.9,
+                height: size * 0.9,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback to icon if image fails to load
+                  return Icon(asset.icon,
+                      color: Colors.blueGrey, size: size * 0.7);
+                },
+              ),
       );
     }
 
