@@ -536,11 +536,19 @@ class _EnhancedCharacterRoomWidgetState
                       children: [
                         if (floorAsset.imagePath != null)
                           Positioned.fill(
-                            child: SvgPicture.asset(
-                              floorAsset.imagePath!,
-                              fit: BoxFit.fill,
-                              // Apply a slight color tint if needed via theme or night mode
-                            ),
+                            child: floorAsset.imagePath!.endsWith('.svg')
+                                ? SvgPicture.asset(
+                                    floorAsset.imagePath!,
+                                    fit: BoxFit.fill,
+                                    // Apply a slight color tint if needed via theme or night mode
+                                  )
+                                : Image.asset(
+                                    floorAsset.imagePath!,
+                                    fit: BoxFit.fill,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const SizedBox.shrink();
+                                    },
+                                  ),
                           ),
                         if (!isAwake)
                           Positioned.fill(
