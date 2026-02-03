@@ -480,8 +480,11 @@ class CharacterController extends ChangeNotifier {
   }
 
   // 광고 로드
-  void loadRewardedAd() {
+  void loadRewardedAd({BuildContext? context}) {
     if (_rewardedAd != null || _isAdLoading) return;
+
+    final currentContext = context ?? AppRouter.navigatorKey.currentContext;
+    if (currentContext == null) return;
 
     _isAdLoading = true;
     notifyListeners();
@@ -489,11 +492,9 @@ class CharacterController extends ChangeNotifier {
     // Test Ad Unit ID
     // Android: ca-app-pub-3940256099942544/5224354917
     // iOS: ca-app-pub-3940256099942544/1712485313
-    final adUnitId =
-        Theme.of(AppRouter.navigatorKey.currentContext!).platform ==
-                TargetPlatform.iOS
-            ? 'ca-app-pub-3940256099942544/1712485313'
-            : 'ca-app-pub-3940256099942544/5224354917';
+    final adUnitId = Theme.of(currentContext).platform == TargetPlatform.iOS
+        ? 'ca-app-pub-3940256099942544/1712485313'
+        : 'ca-app-pub-3940256099942544/5224354917';
 
     RewardedAd.load(
       adUnitId: adUnitId,
@@ -517,7 +518,7 @@ class CharacterController extends ChangeNotifier {
   // 광고 보여주기
   void showRewardedAd(BuildContext context) {
     if (_rewardedAd == null) {
-      loadRewardedAd();
+      loadRewardedAd(context: context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('광고가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.')),
       );
