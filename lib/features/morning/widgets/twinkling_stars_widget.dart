@@ -143,7 +143,8 @@ class StarsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white;
+    final baseStarColor = const Color(0xFFE6F3FF);
+    final paint = Paint()..color = baseStarColor;
 
     // 1. 일반 별 그리기
     for (var star in stars) {
@@ -153,16 +154,16 @@ class StarsPainter extends CustomPainter {
               1) /
           2;
 
-      final finalOpacity = 0.15 + (opacity * 0.65);
-      paint.color = Colors.white.withOpacity(finalOpacity);
+      final finalOpacity = 0.08 + (opacity * 0.45);
+      paint.color = baseStarColor.withOpacity(finalOpacity);
 
       final position = Offset(star.x * size.width, star.y * size.height);
       canvas.drawCircle(position, star.size, paint);
 
       if (finalOpacity > 0.6) {
         final glowPaint = Paint()
-          ..color = Colors.white.withOpacity(finalOpacity * 0.25)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+          ..color = baseStarColor.withOpacity(finalOpacity * 0.2)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
         canvas.drawCircle(position, star.size * 1.8, glowPaint);
       }
     }
@@ -192,8 +193,8 @@ class StarsPainter extends CustomPainter {
     final starPaint = Paint()
       ..shader = LinearGradient(
         colors: [
-          Colors.white,
-          Colors.white.withOpacity(0.0),
+          baseStarColor.withOpacity(0.85),
+          baseStarColor.withOpacity(0.0),
         ],
         begin: Alignment(
           (currentPos.dx / size.width) * 2 - 1,
@@ -213,16 +214,17 @@ class StarsPainter extends CustomPainter {
       path,
       Paint()
         ..shader = starPaint.shader
-        ..strokeWidth = 2.0
+        ..strokeWidth = 1.4
         ..strokeCap = StrokeCap.round,
     );
 
     // 헤드 부분의 작은 빛
     canvas.drawCircle(
         currentPos,
-        1.5 * (1.0 - progress.clamp(0.0, 1.0)),
+        1.2 * (1.0 - progress.clamp(0.0, 1.0)),
         Paint()
-          ..color = Colors.white.withOpacity((1.0 - progress).clamp(0.0, 1.0)));
+          ..color =
+              baseStarColor.withOpacity((1.0 - progress).clamp(0.0, 1.0)));
   }
 
   @override

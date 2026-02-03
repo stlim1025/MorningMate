@@ -62,13 +62,18 @@ class RoomBackgroundWidget extends StatelessWidget {
 
     return Stack(
       children: [
-        // Gradient Base
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: gradientColors,
+        if (backgroundImagePath == null)
+          Container(
+            color: isAwake
+                ? const Color(0xFFBFE7FF)
+                : const Color(0xFF101525),
+          ),
+        if (backgroundImagePath != null)
+          Positioned.fill(
+            child: Image.asset(
+              backgroundImagePath,
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
             ),
           ),
         ),
@@ -151,221 +156,81 @@ class RoomBackgroundWidget extends StatelessWidget {
     ];
   }
 
-  Widget _buildCloud({
-    required double width,
-    required double height,
-    required Color color,
-  }) {
-    return SizedBox(
-      width: width,
-      height: height * 1.5,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Base glow
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.6),
-                    blurRadius: 40,
-                    spreadRadius: 10,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Main fluffy parts
-          Positioned(
-            bottom: 0,
-            child: Container(
-              width: width,
-              height: height,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(height / 2),
-              ),
-            ),
-          ),
-          // Top bump 1
-          Positioned(
-            top: 0,
-            left: width * 0.2,
-            child: Container(
-              width: width * 0.45,
-              height: width * 0.45,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withOpacity(0.3),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Top bump 2
-          Positioned(
-            top: height * 0.2,
-            right: width * 0.15,
-            child: Container(
-              width: width * 0.35,
-              height: width * 0.35,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
-              child: Container(
-                margin: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withOpacity(0.2),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+}
+
+class AuroraBurstEffect extends StatefulWidget {
+  const AuroraBurstEffect({super.key});
+
+  @override
+  State<AuroraBurstEffect> createState() => _AuroraBurstEffectState();
+}
+
+class _AuroraBurstEffectState extends State<AuroraBurstEffect>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat();
   }
 
-  Widget _buildCelestialBody() {
-    Color color;
-    List<BoxShadow> shadows;
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
-    switch (decoration.backgroundId) {
-      case 'golden_sun':
-        color = const Color(0xFFFF4500); // Deep Orange Red
-        shadows = [
-          BoxShadow(
-              color: Colors.orange.withOpacity(0.4),
-              blurRadius: 50,
-              spreadRadius: 15),
-          BoxShadow(
-              color: Colors.red.withOpacity(0.2),
-              blurRadius: 80,
-              spreadRadius: 5),
-        ];
-        break;
-      case 'blue_moon':
-        color = Colors.blueAccent.shade100;
-        shadows = [
-          BoxShadow(
-              color: Colors.blueAccent.withOpacity(0.5),
-              blurRadius: 40,
-              spreadRadius: 10),
-        ];
-        break;
-      case 'starry_night':
-        color = Colors.white;
-        shadows = [
-          BoxShadow(
-              color: Colors.white.withOpacity(0.3),
-              blurRadius: 20,
-              spreadRadius: 5),
-        ];
-        break;
-      default: // Default checks isAwake
-        color = isAwake ? colorScheme.pointStar : const Color(0xFFFFF8DC);
-        shadows = [
-          BoxShadow(
-            color: color.withOpacity(0.6),
-            blurRadius: 30,
-            spreadRadius: 8,
-          ),
-        ];
-    }
-
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-        gradient: (decoration.backgroundId == 'blue_moon' ||
-                decoration.backgroundId == 'starry_night' ||
-                decoration.backgroundId == 'golden_sun')
-            ? RadialGradient(
-                colors: [
-                  decoration.backgroundId == 'golden_sun'
-                      ? const Color(0xFFFFD700) // Gold
-                      : color,
-                  decoration.backgroundId == 'golden_sun'
-                      ? const Color(0xFFFF4500) // Deep Orange
-                      : color.withOpacity(0.8),
-                ],
-                center: decoration.backgroundId == 'golden_sun'
-                    ? const Alignment(0, 0)
-                    : const Alignment(-0.3, -0.3),
-              )
-            : null,
-        boxShadow: shadows,
-      ),
-      child: (decoration.backgroundId == 'blue_moon' ||
-              decoration.backgroundId == 'starry_night')
-          ? Stack(
-              children: [
-                // Crater 1
-                Positioned(
-                  top: 12,
-                  left: 15,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black.withOpacity(0.08),
-                    ),
-                  ),
-                ),
-                // Crater 2
-                Positioned(
-                  bottom: 15,
-                  right: 12,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black.withOpacity(0.06),
-                    ),
-                  ),
-                ),
-                // Crater 3
-                Positioned(
-                  top: 25,
-                  right: 18,
-                  child: Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black.withOpacity(0.05),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          : null,
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: _AuroraPainter(progress: _controller.value),
+          size: Size.infinite,
+        );
+      },
     );
+  }
+}
+
+class _AuroraPainter extends CustomPainter {
+  final double progress;
+
+  _AuroraPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center =
+        Offset(size.width - 80, 120); // Align with sun position roughly
+    final maxRadius = size.shortestSide * 0.9;
+
+    for (int i = 0; i < 3; i++) {
+      final waveProgress = (progress + (i * 0.25)) % 1.0;
+      final radius = maxRadius * (0.35 + waveProgress * 0.65);
+      final opacity = (1 - waveProgress).clamp(0.0, 1.0) * 0.35;
+
+      final paint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFFFFF0A6).withOpacity(opacity),
+            const Color(0xFFFFB347).withOpacity(opacity * 0.7),
+            Colors.transparent,
+          ],
+          stops: const [0.0, 0.4, 1.0],
+        ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+      canvas.drawCircle(center, radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _AuroraPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
 
