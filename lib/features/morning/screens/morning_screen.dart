@@ -70,6 +70,18 @@ class _MorningScreenState extends State<MorningScreen>
           final isAwake = morningController.hasDiaryToday;
           final characterController = context.watch<CharacterController>();
 
+          if (characterController.showLevelUpDialog && mounted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                AppDialog.show(
+                  context: context,
+                  key: AppDialogKey.levelUp,
+                );
+                characterController.consumeLevelUpDialog();
+              }
+            });
+          }
+
           return Stack(
             children: [
               // 1. Sky Gradient Background
@@ -347,6 +359,7 @@ class _MorningScreenState extends State<MorningScreen>
         characterLevel: characterController.currentUser?.characterLevel ?? 1,
         consecutiveDays: characterController.currentUser?.consecutiveDays ?? 0,
         roomDecoration: characterController.currentUser?.roomDecoration,
+        currentAnimation: characterController.currentAnimation,
       ),
     );
   }

@@ -42,6 +42,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.friendAwake,
     required this.friendSleep,
     required this.pointStar,
+    required this.twig,
     required this.info,
     required this.shadowColor,
     required this.awakeGradientStart,
@@ -95,6 +96,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
   final Color friendSleep;
 
   final Color pointStar;
+  final Color twig;
 
   final Color info;
   final Color shadowColor;
@@ -143,6 +145,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     friendAwake: AppColors.friendActive,
     friendSleep: AppColors.friendSleep,
     pointStar: AppColors.pointStar,
+    twig: AppColors.twig,
     info: AppColors.info,
     shadowColor: Color(0x26D4A574),
     awakeGradientStart: Color(0xFFFFF8E7),
@@ -191,6 +194,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     friendAwake: AppColors.friendActive,
     friendSleep: AppColors.friendSleep,
     pointStar: AppColors.pointStar,
+    twig: AppColors.twig,
     info: AppColors.info,
     shadowColor: Colors.black45,
     awakeGradientStart: Color(0xFF1A1A1A),
@@ -239,6 +243,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     friendAwake: Color(0xFF7EC8E3),
     friendSleep: Color(0xFF9CB4CC),
     pointStar: Color(0xFFFFD97D),
+    twig: Color(0xFF8D6E63),
     info: Color(0xFFAEC6CF),
     shadowColor: Color(0xFF7F9FC9),
     awakeGradientStart: Color(0xFF87CEEB),
@@ -287,6 +292,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     friendAwake: Color(0xFFB5EAD7),
     friendSleep: Color(0xFFD4C4B0),
     pointStar: Color(0xFFFFD700),
+    twig: Color(0xFF8D6E63),
     info: Color(0xFFAEC6CF),
     shadowColor: Color(0x339B6BFF),
     awakeGradientStart: Color(0xFFF1EDFF),
@@ -335,6 +341,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     friendAwake: Color(0xFFB5EAD7),
     friendSleep: Color(0xFFD4C4B0),
     pointStar: Color(0xFFFFD700),
+    twig: Color(0xFF8D6E63),
     info: Color(0xFFAEC6CF),
     shadowColor: Color(0x33FF7EB3),
     awakeGradientStart: Color(0xFFFFEDF5),
@@ -384,6 +391,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     Color? friendAwake,
     Color? friendSleep,
     Color? pointStar,
+    Color? twig,
     Color? info,
     Color? shadowColor,
     Color? awakeGradientStart,
@@ -439,6 +447,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       friendAwake: friendAwake ?? this.friendAwake,
       friendSleep: friendSleep ?? this.friendSleep,
       pointStar: pointStar ?? this.pointStar,
+      twig: twig ?? this.twig,
       info: info ?? this.info,
       shadowColor: shadowColor ?? this.shadowColor,
       awakeGradientStart: awakeGradientStart ?? this.awakeGradientStart,
@@ -519,6 +528,7 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
       friendAwake: Color.lerp(friendAwake, other.friendAwake, t) ?? friendAwake,
       friendSleep: Color.lerp(friendSleep, other.friendSleep, t) ?? friendSleep,
       pointStar: Color.lerp(pointStar, other.pointStar, t)!,
+      twig: Color.lerp(twig, other.twig, t)!,
       info: Color.lerp(info, other.info, t)!,
       shadowColor: Color.lerp(shadowColor, other.shadowColor, t)!,
       awakeGradientStart:

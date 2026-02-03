@@ -52,6 +52,7 @@ class AppColors {
 
   // Streak & Gamification
   static const Color streakGold = Color(0xFFFFD700);
+  static const Color twig = Color(0xFF8D6E63);
   static const Color pointStar = Color(0xFFFFE66D);
 
   // Social Colors

@@ -202,6 +202,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     consecutiveDays: _friend!.consecutiveDays,
                     roomDecoration: _friend!.roomDecoration,
                     showBorder: true,
+                    currentAnimation: 'idle',
                   ),
                 ),
                 const SizedBox(height: 16),

@@ -40,12 +40,16 @@ class CharacterRoomScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: colorScheme.pointStar.withOpacity(0.2),
+                  color: colorScheme.twig.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.stars, color: colorScheme.pointStar, size: 18),
+                    Image.asset(
+                      'assets/images/branch.png',
+                      width: 18,
+                      height: 18,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       '${controller.currentUser?.points ?? 0}',
@@ -53,6 +57,15 @@ class CharacterRoomScreen extends StatelessWidget {
                         color: colorScheme.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '가지',
+                      style: TextStyle(
+                        color: colorScheme.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

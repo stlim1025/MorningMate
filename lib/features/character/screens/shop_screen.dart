@@ -36,11 +36,24 @@ class ShopScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.stars, color: colorScheme.pointStar, size: 20),
+                Image.asset(
+                  'assets/images/branch.png',
+                  width: 20,
+                  height: 20,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   '${user.points}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '가지',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -239,7 +252,11 @@ class ShopScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.stars, color: colorScheme.pointStar, size: 12),
+                Image.asset(
+                  'assets/images/branch.png',
+                  width: 14,
+                  height: 14,
+                ),
                 const SizedBox(width: 2),
                 Text(
                   '${item.price}',
@@ -264,7 +281,32 @@ class ShopScreen extends StatelessWidget {
                         final shouldPurchase = await AppDialog.show<bool>(
                           context: context,
                           key: AppDialogKey.purchase,
-                          content: Text('${item.name}을(를) 구매하시겠습니까?'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('${item.name}을(를) 구매하시겠습니까?'),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/branch.png',
+                                    width: 18,
+                                    height: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${item.price} 가지',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.twig,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         );
 
                         if (shouldPurchase == true) {

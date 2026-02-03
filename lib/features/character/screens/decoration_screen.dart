@@ -213,6 +213,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                               hideProps:
                                                   _selectedCategory == 'props',
                                               showBorder: true,
+                                              currentAnimation:
+                                                  controller.currentAnimation,
                                             ),
                                           ),
                                           // 2. Props (rendered on top of the room)

@@ -22,7 +22,7 @@ class WritingScreen extends StatefulWidget {
 }
 
 class _WritingScreenState extends State<WritingScreen> {
-  final TextEditingController _textController = TextEditingController();
+  late final _BlurTextEditingController _textController;
   final FocusNode _focusNode = FocusNode();
   bool _enableBlur = false;
   bool _didLoadSettings = false;
@@ -33,6 +33,11 @@ class _WritingScreenState extends State<WritingScreen> {
     super.initState();
     final morningController = context.read<MorningController>();
     morningController.startWriting();
+
+    _textController = _BlurTextEditingController(
+      blurEnabled: _enableBlur,
+      colorScheme: AppColorScheme.light,
+    );
 
     _textController.addListener(() {
       morningController.updateCharCount(_textController.text);
@@ -47,6 +52,9 @@ class _WritingScreenState extends State<WritingScreen> {
       final userBlurEnabled = authController.userModel?.writingBlurEnabled;
       if (userBlurEnabled != null) {
         _enableBlur = userBlurEnabled;
+        _textController.blurEnabled = _enableBlur;
+        _textController.colorScheme =
+            Theme.of(context).extension<AppColorScheme>()!;
         _didLoadSettings = true;
       }
     }
@@ -102,6 +110,7 @@ class _WritingScreenState extends State<WritingScreen> {
             onPressed: () {
               setState(() {
                 _enableBlur = !_enableBlur;
+                _textController.blurEnabled = _enableBlur;
               });
             },
           ),
@@ -385,38 +394,13 @@ class _WritingScreenState extends State<WritingScreen> {
                 ),
               ),
             ),
+            // The text blur is now handled by _BlurTextEditingController
+            // Background overlay to make area feeling uniform when blur is active
             if (_enableBlur && _textController.text.isNotEmpty)
               Positioned.fill(
                 child: IgnorePointer(
-                  child: ClipRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                      child: Container(
-                        color: Theme.of(context).cardColor.withOpacity(0.7),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.visibility_off,
-                                color:
-                                    colorScheme.primaryButton.withOpacity(0.8),
-                                size: 48,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '글 가리기 활성화됨',
-                                style: TextStyle(
-                                  color: colorScheme.textSecondary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                  child: Container(
+                    color: Theme.of(context).cardColor.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -642,16 +626,27 @@ class _WritingScreenState extends State<WritingScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: colorScheme.cardAccent.withOpacity(0.2),
+                      color: colorScheme.twig.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      '+${10 + (controller.currentUser?.consecutiveDays ?? 0) * 2} 포인트 획득',
-                      style: TextStyle(
-                        color: colorScheme.cardAccent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/branch.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '+${10 + (controller.currentUser?.consecutiveDays ?? 0) * 2} 가지 획득',
+                          style: TextStyle(
+                            color: colorScheme.twig,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -710,6 +705,75 @@ class _WritingScreenState extends State<WritingScreen> {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+}
+
+class _BlurTextEditingController extends TextEditingController {
+  bool blurEnabled;
+  AppColorScheme colorScheme;
+
+  _BlurTextEditingController({
+    required this.blurEnabled,
+    required this.colorScheme,
+    String? text,
+  }) : super(text: text);
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    if (!blurEnabled || text.isEmpty) {
+      return super.buildTextSpan(
+          context: context, style: style, withComposing: withComposing);
+    }
+
+    int start = 0;
+    int end = text.length;
+
+    if (selection.isValid) {
+      final beforeCursor = text.substring(0, selection.baseOffset);
+      final lastBreak = beforeCursor.lastIndexOf('\n');
+      start = lastBreak != -1 ? lastBreak + 1 : 0;
+
+      final afterCursor = text.substring(selection.baseOffset);
+      final nextBreak = afterCursor.indexOf('\n');
+      end = nextBreak != -1 ? selection.baseOffset + nextBreak : text.length;
+    }
+
+    final beforePart = text.substring(0, start);
+    final currentPart = text.substring(start, end);
+    final afterPart = text.substring(end);
+
+    final blurStyle = style?.copyWith(
+      color: null,
+      foreground: Paint()
+        ..style = PaintingStyle.fill
+        ..color = (style?.color ?? colorScheme.textPrimary).withOpacity(0.2)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0),
+    );
+
+    return TextSpan(
+      style: style,
+      children: [
+        if (beforePart.isNotEmpty)
+          TextSpan(
+            text: beforePart,
+            style: blurStyle,
+          ),
+        if (currentPart.isNotEmpty)
+          TextSpan(
+            text: currentPart,
+            style: style,
+          ),
+        if (afterPart.isNotEmpty)
+          TextSpan(
+            text: afterPart,
+            style: blurStyle,
+          ),
+      ],
+    );
   }
 }
 

@@ -23,11 +23,22 @@ class CharacterController extends ChangeNotifier {
   UserModel? _currentUser;
   bool _isAwake = false;
   String _currentAnimation = 'idle';
+  bool _showLevelUpDialog = false;
+  int? _justLeveledUpTo;
 
   // Getters
   UserModel? get currentUser => _currentUser;
   bool get isAwake => _isAwake;
   String get currentAnimation => _currentAnimation;
+  bool get showLevelUpDialog => _showLevelUpDialog;
+  int? get justLeveledUpTo => _justLeveledUpTo;
+
+  void consumeLevelUpDialog() {
+    _showLevelUpDialog = false;
+    _justLeveledUpTo = null;
+    notifyListeners();
+  }
+
   CharacterState get characterState =>
       _getCharacterStateFromLevel(_currentUser?.characterLevel ?? 1);
 
@@ -185,7 +196,7 @@ class CharacterController extends ChangeNotifier {
       notifyListeners();
     });
 
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 1));
 
     await _userService.updateUser(userId, {
       'characterLevel': newLevel,
@@ -198,6 +209,8 @@ class CharacterController extends ChangeNotifier {
     );
 
     _currentAnimation = 'idle';
+    _showLevelUpDialog = true;
+    _justLeveledUpTo = newLevel;
     Future.microtask(() {
       notifyListeners();
     });
@@ -220,7 +233,7 @@ class CharacterController extends ChangeNotifier {
   // 테마 구매
   Future<void> purchaseTheme(String userId, String themeId, int price) async {
     if (_currentUser == null) return;
-    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+    if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
     if (_currentUser!.purchasedThemeIds.contains(themeId)) {
       throw Exception('이미 구매한 테마입니다');
     }
@@ -245,7 +258,7 @@ class CharacterController extends ChangeNotifier {
   Future<void> purchaseBackground(
       String userId, String backgroundId, int price) async {
     if (_currentUser == null) return;
-    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+    if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
     if (_currentUser!.purchasedBackgroundIds.contains(backgroundId)) {
       throw Exception('이미 구매한 배경입니다');
     }
@@ -271,7 +284,7 @@ class CharacterController extends ChangeNotifier {
   Future<void> purchaseWallpaper(
       String userId, String wallpaperId, int price) async {
     if (_currentUser == null) return;
-    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+    if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
 
     if (_currentUser!.purchasedThemeIds.contains(wallpaperId)) {
       throw Exception('이미 구매한 벽지입니다');
@@ -296,7 +309,7 @@ class CharacterController extends ChangeNotifier {
   // 소품 구매
   Future<void> purchaseProp(String userId, String propId, int price) async {
     if (_currentUser == null) return;
-    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+    if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
     if (_currentUser!.purchasedPropIds.contains(propId)) {
       throw Exception('이미 구매한 소품입니다');
     }
@@ -320,7 +333,7 @@ class CharacterController extends ChangeNotifier {
   // 바닥 구매
   Future<void> purchaseFloor(String userId, String floorId, int price) async {
     if (_currentUser == null) return;
-    if (_currentUser!.points < price) throw Exception('포인트가 부족합니다');
+    if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
     if (_currentUser!.purchasedFloorIds.contains(floorId)) {
       throw Exception('이미 구매한 바닥입니다');
     }

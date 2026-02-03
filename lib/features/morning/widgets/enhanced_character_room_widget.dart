@@ -13,6 +13,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
   final RoomDecorationModel? roomDecoration;
   final bool hideProps;
   final bool showBorder;
+  final String currentAnimation;
 
   const EnhancedCharacterRoomWidget({
     super.key,
@@ -22,6 +23,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
     this.roomDecoration,
     this.hideProps = false,
     this.showBorder = true,
+    this.currentAnimation = 'idle',
   });
 
   @override
@@ -41,6 +43,10 @@ class _EnhancedCharacterRoomWidgetState
   double _horizontalPosition = 0.5; // 0.0 to 1.0
   double _verticalPosition = 0.5; // 0.0 to 1.0
   bool _isMoving = false;
+  bool _isDragging = false;
+  bool _isFalling = false;
+  double? _dragBottom;
+  double? _dragLeft;
 
   void _handleTap() {
     if (_isTapped) return;
@@ -63,11 +69,12 @@ class _EnhancedCharacterRoomWidgetState
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration:
+          const Duration(milliseconds: 1500), // Slower, more natural rhythm
       vsync: this,
     )..repeat(reverse: true);
 
-    _bounceAnimation = Tween<double>(begin: 0, end: 10).animate(
+    _bounceAnimation = Tween<double>(begin: 0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
@@ -92,7 +99,7 @@ class _EnhancedCharacterRoomWidgetState
       });
 
       _movementStopTimer?.cancel();
-      _movementStopTimer = Timer(const Duration(milliseconds: 2000), () {
+      _movementStopTimer = Timer(const Duration(milliseconds: 3500), () {
         if (mounted) {
           setState(() {
             _isMoving = false;
@@ -108,8 +115,8 @@ class _EnhancedCharacterRoomWidgetState
     if (widget.isAwake) {
       // 즉시 첫 번째 이동 시작
       _move();
-      // 이후 4초마다 반복 이동
-      _wanderTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      // 이후 6초마다 반복 이동
+      _wanderTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
         _move();
       });
     }
@@ -140,6 +147,63 @@ class _EnhancedCharacterRoomWidgetState
     _wanderTimer?.cancel();
     _movementStopTimer?.cancel();
     super.dispose();
+  }
+
+  void _handleDragStart(
+      DragStartDetails details, double size, double charSize) {
+    if (!widget.isAwake) return;
+    _wanderTimer?.cancel();
+    _movementStopTimer?.cancel();
+    setState(() {
+      _isDragging = true;
+      _isFalling = false;
+      _isMoving = true;
+      // Initialize drag position BASED on current position
+      _dragBottom = (size * 0.0) + (size * 0.23 * _verticalPosition);
+      _dragLeft = (size - charSize) * _horizontalPosition;
+    });
+  }
+
+  void _handleDragUpdate(
+      DragUpdateDetails details, double size, double charSize) {
+    if (!_isDragging) return;
+    setState(() {
+      // update pixel positions directly
+      // In Flutter, delta.dy is positive downwards, so we SUBTRACT from bottom
+      _dragBottom = (_dragBottom ?? 0) - details.delta.dy;
+      _dragLeft = (_dragLeft ?? 0) + details.delta.dx;
+
+      // Clamp within room bounds (approximate)
+      _dragBottom = (_dragBottom ?? 0).clamp(0.0, size - charSize);
+      _dragLeft = (_dragLeft ?? 0).clamp(0.0, size - charSize);
+    });
+  }
+
+  void _handleDragEnd(DragEndDetails details, double size, double charSize) {
+    if (!_isDragging) return;
+
+    setState(() {
+      _isDragging = false;
+      _isFalling = true;
+
+      // When dropped, we want to fall back to the "floor"
+      // Floor bottom range is 0.01 to 0.23 of size
+      _verticalPosition = Random().nextDouble();
+      // Map pixel left back to _horizontalPosition percentage
+      _horizontalPosition = (_dragLeft ?? 0) / (size - charSize);
+      _horizontalPosition = _horizontalPosition.clamp(0.05, 0.95);
+    });
+
+    // Reset falling state after animation finishes
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() {
+          _isFalling = false;
+          _isMoving = false;
+        });
+        _startWandering();
+      }
+    });
   }
 
   @override
@@ -183,10 +247,52 @@ class _EnhancedCharacterRoomWidgetState
 
             // Character
             _buildCharacterContainer(widget.isAwake, colorScheme, size),
+
+            // Level Up Effect
+            if (widget.currentAnimation == 'evolve') _buildLevelUpEffect(size),
           ],
         ),
       );
     });
+  }
+
+  Widget _buildLevelUpEffect(double size) {
+    return Positioned.fill(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.3),
+        ),
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(seconds: 1),
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: 1.0 + (value * 2.0),
+                child: Opacity(
+                  opacity: (1.0 - value).clamp(0.0, 1.0),
+                  child: Container(
+                    width: size * 0.5,
+                    height: size * 0.5,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white,
+                          blurRadius: 50,
+                          spreadRadius: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildRoomBackground(bool isAwake, AppColorScheme colorScheme,
@@ -507,34 +613,86 @@ class _EnhancedCharacterRoomWidgetState
     // Decreased size from 0.4 to 0.35
     final charSize = size * 0.35;
 
+    // Determine current position based on state
+    double currentBottom;
+    double currentLeft;
+
+    if (_isDragging) {
+      currentBottom = _dragBottom ?? 0;
+      currentLeft = _dragLeft ?? 0;
+    } else {
+      currentBottom = widget.isAwake
+          ? (size * 0.0) + (size * 0.25 * _verticalPosition)
+          : size * 0.11;
+      currentLeft = (size - charSize) * _horizontalPosition;
+    }
+
     return Stack(
       children: [
         // Character
         AnimatedPositioned(
-          duration:
-              const Duration(milliseconds: 2000), // Updated to move faster
-          curve: Curves.easeInOutSine,
-          // Moves within floor area (approx 8% to 22% of height)
-          bottom: widget.isAwake
-              ? (size * 0.08) + (size * 0.14 * _verticalPosition)
-              : size * 0.12,
-          // Use _horizontalPosition to move left/right naturally
-          left: (size - charSize) * _horizontalPosition,
+          duration: _isDragging
+              ? Duration.zero
+              : (_isFalling
+                  ? const Duration(milliseconds: 800)
+                  : const Duration(milliseconds: 3500)),
+          curve: _isFalling ? Curves.bounceOut : Curves.easeInOutQuart,
+          bottom: currentBottom,
+          left: currentLeft,
           child: GestureDetector(
             onTap: _handleTap,
-            child: AnimatedBuilder(
-              animation: _bounceAnimation,
-              builder: (context, child) {
-                // Reduced vertical offset slightly to account for smaller size
-                bool shouldAnimate = widget.isAwake && (_isMoving || _isTapped);
-                double verticalOffset =
-                    shouldAnimate ? -_bounceAnimation.value * 0.5 : 0;
-                if (_isTapped) verticalOffset -= 20;
+            onPanStart: (details) => _handleDragStart(details, size, charSize),
+            onPanUpdate: (details) =>
+                _handleDragUpdate(details, size, charSize),
+            onPanEnd: (details) => _handleDragEnd(details, size, charSize),
+            child: TweenAnimationBuilder<double>(
+              // Combined intensity (for jelly) and tap lift animation
+              tween: Tween<double>(
+                begin: 0.0,
+                end: _isTapped ? 1.0 : 0.0,
+              ),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              builder: (context, tapValue, child) {
+                return TweenAnimationBuilder<double>(
+                  tween: Tween<double>(
+                    begin: 0.15,
+                    end: (widget.isAwake && (_isMoving || _isTapped))
+                        ? 1.0
+                        : 0.15,
+                  ),
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.easeInOut,
+                  builder: (context, intensity, child) {
+                    return AnimatedBuilder(
+                      animation: _bounceAnimation,
+                      builder: (context, child) {
+                        // Jump Height scales with intensity
+                        double jumpHeight =
+                            _bounceAnimation.value * 15 * intensity;
+                        // Smoothly interpolate tap lift (0 to 20px)
+                        double tapLift = tapValue * 20;
+                        double verticalOffset = -jumpHeight - tapLift;
 
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  transform: Matrix4.translationValues(0, verticalOffset, 0),
-                  child: _buildCharacter(widget.isAwake, colorScheme, charSize),
+                        // Jelly Scale Effect scales with intensity
+                        // Reduced from 0.15 to 0.08 for subtler movement
+                        double maxSquash = 0.08 * intensity;
+                        double scaleX = (1.0 + maxSquash) -
+                            (_bounceAnimation.value * maxSquash * 2);
+                        double scaleY = (1.0 - maxSquash) +
+                            (_bounceAnimation.value * maxSquash * 2);
+
+                        return Transform(
+                          alignment: Alignment.bottomCenter,
+                          transform: Matrix4.identity()
+                            ..translate(0.0, verticalOffset)
+                            ..scale(scaleX, scaleY),
+                          child: _buildCharacter(
+                              widget.isAwake, colorScheme, charSize),
+                        );
+                      },
+                    );
+                  },
                 );
               },
             ),
@@ -546,6 +704,61 @@ class _EnhancedCharacterRoomWidgetState
 
   Widget _buildCharacter(
       bool isAwake, AppColorScheme colorScheme, double size) {
+    // Shared dimensions for the character components
+    final double charWidth = size * 0.80;
+    final double charHeight = size * 0.75;
+
+    // 1. Idle/Normal State
+    final Widget normalEgg = Stack(
+      alignment: Alignment.center,
+      children: [
+        // Base Body
+        Image.asset(
+          isAwake ? 'assets/images/Body.png' : 'assets/images/Sleep_Body.png',
+          width: charWidth,
+          height: charHeight,
+          fit: BoxFit.contain,
+        ),
+        // Expression Layer
+        Image.asset(
+          isAwake
+              ? 'assets/images/Face_Default.png'
+              : 'assets/images/Face_Sleep.png',
+          width: charWidth,
+          height: charHeight,
+          fit: BoxFit.contain,
+        ),
+      ],
+    );
+
+    // 2. Tapped/Reaction State
+    final Widget tappedEgg = Padding(
+      padding: EdgeInsets.only(
+        left: isAwake ? 0 : size * 0.04, // Shift slightly right when sleeping
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Base Body
+          Image.asset(
+            isAwake ? 'assets/images/Body.png' : 'assets/images/Sleep_Body.png',
+            width: charWidth,
+            height: charHeight,
+            fit: BoxFit.contain,
+          ),
+          // Expression Layer (Wink or Drool)
+          Image.asset(
+            isAwake
+                ? 'assets/images/Face_Wink.png'
+                : 'assets/images/Face_Drool.png',
+            width: isAwake ? charWidth * 1.3 : charWidth,
+            height: charHeight,
+            fit: BoxFit.contain,
+          ),
+        ],
+      ),
+    );
+
     return SizedBox(
       width: size,
       height: size,
@@ -553,47 +766,17 @@ class _EnhancedCharacterRoomWidgetState
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
-          // Egg Image or Animation
-          _isTapped
-              ? Padding(
-                  padding: EdgeInsets.only(bottom: size * 0.05), // 탭 이미지 위치 맞춤
-                  child: Image.asset(
-                    isAwake
-                        ? 'assets/images/Click_Egg.png'
-                        : 'assets/images/Drool_Egg.png',
-                    width: size * 0.80,
-                    height: size * 0.85,
-                    fit: BoxFit.contain,
-                  ),
-                )
-              : !isAwake
-                  ? Padding(
-                      padding:
-                          EdgeInsets.only(bottom: size * 0.05), // 잠든 이미지 위치 맞춤
-                      child: Image.asset(
-                        'assets/images/Sleep_Egg.png',
-                        width: size * 0.80,
-                        height: size * 0.75,
-                        fit: BoxFit.contain,
-                      ),
-                    )
-                  : _isMoving
-                      ? Image.asset(
-                          'assets/animations/bouncing_egg.gif',
-                          width: size,
-                          height: size,
-                          fit: BoxFit.contain,
-                        )
-                      : Padding(
-                          padding: EdgeInsets.only(
-                              bottom: size * 0.05), // 정지 이미지를 살짝 위로 올려서 위치 맞춤
-                          child: Image.asset(
-                            'assets/images/Egg.png',
-                            width: size * 0.80,
-                            height: size * 0.75,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 250),
+            firstChild: normalEgg,
+            secondChild: tappedEgg,
+            crossFadeState: _isTapped
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstCurve: Curves.easeIn,
+            secondCurve: Curves.easeOut,
+            sizeCurve: Curves.easeInOut,
+          ),
 
           // Zzz animation (if sleeping)
           if (!isAwake)
@@ -603,27 +786,22 @@ class _EnhancedCharacterRoomWidgetState
               child: AnimatedBuilder(
                 animation: _animationController,
                 builder: (context, child) {
-                  return Stack(
-                    children: [
-                      Transform.translate(
-                        offset: Offset(
-                          10 * (1 - _animationController.value),
-                          -20 * _animationController.value,
-                        ),
-                        child: Opacity(
-                          opacity:
-                              (1 - _animationController.value).clamp(0.0, 1.0),
-                          child: const Text(
-                            'Z',
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                  return Transform.translate(
+                    offset: Offset(
+                      10 * (1 - _animationController.value),
+                      -20 * _animationController.value,
+                    ),
+                    child: Opacity(
+                      opacity: (1 - _animationController.value).clamp(0.0, 1.0),
+                      child: const Text(
+                        'Z',
+                        style: TextStyle(
+                          fontSize: 24,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
+                    ),
                   );
                 },
               ),

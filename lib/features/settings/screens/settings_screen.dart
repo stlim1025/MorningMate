@@ -263,15 +263,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: colorScheme.pointStar.withOpacity(0.15),
+                        color: colorScheme.twig.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.star,
-                            color: colorScheme.pointStar,
-                            size: 14,
+                          Image.asset(
+                            'assets/images/branch.png',
+                            width: 14,
+                            height: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(

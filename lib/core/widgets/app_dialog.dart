@@ -17,6 +17,7 @@ enum AppDialogKey {
   sentMessages,
   purchase,
   purchaseComplete,
+  levelUp,
 }
 
 class AppDialogAction {
@@ -163,6 +164,35 @@ class AppDialog {
                   isPrimary: true,
                   isFullWidth: true,
                   onPressed: (context) => Navigator.pop(context),
+                ),
+              ],
+        );
+      case AppDialogKey.levelUp:
+        return AppDialogConfig(
+          title: '🎊 축하합니다! 🎊',
+          showConfetti: true,
+          content: content ??
+              const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '캐릭터가 새로운 단계로 성장했어요!',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '앞으로도 꾸준히 성장을 도와주세요.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label: '확인',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context, true),
                 ),
               ],
         );
