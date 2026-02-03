@@ -85,7 +85,8 @@ class _MorningMateAppState extends State<MorningMateApp> {
         Provider<NotificationService>(
           create: (_) {
             final service = NotificationService();
-            service.setScaffoldMessengerKey(scaffoldMessengerKey);
+            service
+                .setScaffoldMessengerKey(MorningMateApp.scaffoldMessengerKey);
             service.setNavigatorKey(AppRouter.navigatorKey);
             return service;
           },
