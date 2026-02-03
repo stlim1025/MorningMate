@@ -14,6 +14,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
   final bool hideProps;
   final bool showBorder;
   final String currentAnimation;
+  final Function(RoomPropModel)? onPropTap;
 
   const EnhancedCharacterRoomWidget({
     super.key,
@@ -24,6 +25,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
     this.hideProps = false,
     this.showBorder = true,
     this.currentAnimation = 'idle',
+    this.onPropTap,
   });
 
   @override
@@ -83,9 +85,11 @@ class _EnhancedCharacterRoomWidgetState
     // 이미지 미리 로드하여 깜빡임 방지
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        precacheImage(const AssetImage('assets/images/Click_Egg.png'), context);
-        precacheImage(const AssetImage('assets/images/Sleep_Egg.png'), context);
-        precacheImage(const AssetImage('assets/images/Drool_Egg.png'), context);
+        precacheImage(const AssetImage('assets/images/Face_Wink.png'), context);
+        precacheImage(
+            const AssetImage('assets/images/Face_Sleep.png'), context);
+        precacheImage(
+            const AssetImage('assets/images/Face_Drool.png'), context);
       }
     });
   }
@@ -567,7 +571,10 @@ class _EnhancedCharacterRoomWidgetState
     return Positioned(
       left: prop.x * (size - propWidth),
       top: prop.y * (size - propHeight),
-      child: _getPropVisual(prop.type, propWidth, propHeight),
+      child: GestureDetector(
+        onTap: () => widget.onPropTap?.call(prop),
+        child: _getPropVisual(prop.type, propWidth, propHeight),
+      ),
     );
   }
 

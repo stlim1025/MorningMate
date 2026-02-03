@@ -26,6 +26,47 @@ class _DecorationScreenState extends State<DecorationScreen> {
   late AppThemeType _originalThemeType;
   bool? _previewIsAwake;
 
+  Future<String?> _showStickyNoteInput(BuildContext context) async {
+    String text = '';
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+        return AlertDialog(
+          backgroundColor: colorScheme.backgroundLight,
+          title:
+              Text('메모 작성', style: TextStyle(color: colorScheme.textPrimary)),
+          content: TextField(
+            autofocus: true,
+            maxLength: 50,
+            decoration: InputDecoration(
+              hintText: '짧은 메시지를 남겨보세요',
+              hintStyle: TextStyle(color: colorScheme.textHint),
+              counterStyle: TextStyle(color: colorScheme.textSecondary),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            style: TextStyle(color: colorScheme.textPrimary),
+            onChanged: (value) => text = value,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('취소',
+                  style: TextStyle(color: colorScheme.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, text),
+              child: Text('확인',
+                  style: TextStyle(color: colorScheme.primaryButton)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -119,7 +160,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                          content: Text('저장 실패: $e'),
+                          content: Text(
+                              '저장 실패: ${e.toString().replaceFirst('Exception: ', '')}'),
                           backgroundColor: colorScheme.error),
                     );
                   }
@@ -685,17 +727,26 @@ class _DecorationScreenState extends State<DecorationScreen> {
   }
 
   Widget _buildPropList(user, AppColorScheme colorScheme) {
-    final purchased = RoomAssets.props
-        .where((p) => user.purchasedPropIds.contains(p.id))
-        .toList();
-
-    if (purchased.isEmpty) {
-      return const Center(child: Text('구매한 소품이 없습니다. 상점에서 구매해 보세요!'));
-    }
-
     return ValueListenableBuilder<RoomDecorationModel>(
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
+        // 이미 배치된 소품이거나 소유 중인 소품을 목록에 표시
+        final availableProps = RoomAssets.props
+            .where((p) =>
+                user.purchasedPropIds.contains(p.id) ||
+                decoration.props.any((prop) => prop.type == p.id))
+            .toList();
+
+        if (availableProps.isEmpty) {
+          return const Center(child: Text('구매한 소품이 없습니다. 상점에서 구매해 보세요!'));
+        }
+
+        final now = DateTime.now();
+        final isUsedToday = user.lastStickyNoteDate != null &&
+            user.lastStickyNoteDate!.year == now.year &&
+            user.lastStickyNoteDate!.month == now.month &&
+            user.lastStickyNoteDate!.day == now.day;
+
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -704,14 +755,15 @@ class _DecorationScreenState extends State<DecorationScreen> {
             mainAxisSpacing: 12,
             childAspectRatio: 0.75,
           ),
-          itemCount: purchased.length,
+          itemCount: availableProps.length,
           itemBuilder: (context, index) {
-            final p = purchased[index];
+            final p = availableProps[index];
             final exists = decoration.props.any((prop) => prop.type == p.id);
 
             return GestureDetector(
-              onTap: () {
+              onTap: () async {
                 if (exists) {
+                  // 이미 배치된 경우: 제거
                   final newProps = decoration.props
                       .where((prop) => prop.type != p.id)
                       .toList();
@@ -719,15 +771,60 @@ class _DecorationScreenState extends State<DecorationScreen> {
                       decoration.copyWith(props: newProps);
                   return;
                 }
-                final newProp = RoomPropModel(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  type: p.id,
-                  x: 0.5,
-                  y: 0.5,
-                );
-                _decorationNotifier.value = decoration.copyWith(
-                  props: [...decoration.props, newProp],
-                );
+
+                // 새로 배치하는 경우
+                if (p.id == 'sticky_note') {
+                  // 오늘 이미 작성했는지 체크
+                  if (isUsedToday) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('메모는 하루에 한 번만 작성할 수 있습니다.'),
+                        backgroundColor: colorScheme.error,
+                      ),
+                    );
+                    return;
+                  }
+
+                  // 인벤토리에 있는지 체크 (이미 배치된 걸 제거했다가 다시 넣는 경우 대비)
+                  if (!user.purchasedPropIds.contains('sticky_note')) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('보관 중인 메모 노트가 없습니다. 상점에서 구매해 주세요.'),
+                        backgroundColor: colorScheme.error,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final text = await _showStickyNoteInput(context);
+                  if (text == null || text.trim().isEmpty) return;
+
+                  final newProp = RoomPropModel(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    type: p.id,
+                    x: 0.5,
+                    y: 0.5,
+                    metadata: {
+                      'content': text,
+                      'heartCount': 0,
+                      'createdAt': DateTime.now().toIso8601String(),
+                    },
+                  );
+                  _decorationNotifier.value = decoration.copyWith(
+                    props: [...decoration.props, newProp],
+                  );
+                } else {
+                  // 일반 소품 배치
+                  final newProp = RoomPropModel(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    type: p.id,
+                    x: 0.5,
+                    y: 0.5,
+                  );
+                  _decorationNotifier.value = decoration.copyWith(
+                    props: [...decoration.props, newProp],
+                  );
+                }
               },
               child: Column(
                 mainAxisSize: MainAxisSize.min,

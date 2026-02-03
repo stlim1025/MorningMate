@@ -203,6 +203,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                     roomDecoration: _friend!.roomDecoration,
                     showBorder: true,
                     currentAnimation: 'idle',
+                    onPropTap: (prop) => _showFriendMemoDialog(prop),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -703,6 +704,129 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ],
+    );
+  }
+
+  void _showFriendMemoDialog(RoomPropModel prop) {
+    if (prop.type != 'sticky_note' || prop.metadata == null) return;
+    if (_friend == null) return;
+
+    final content = prop.metadata!['content'] ?? '';
+    int heartCount = prop.metadata!['heartCount'] ?? 0;
+    List<dynamic> likedBy = prop.metadata!['likedBy'] ?? [];
+
+    final authController = context.read<AuthController>();
+    final userModel = authController.userModel;
+    if (userModel == null) return;
+
+    bool isLiked = likedBy.contains(userModel.uid);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox(
+                width: 320,
+                height: 320,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // 1. 메모지 배경 이미지
+                    Positioned.fill(
+                      child: Image.asset(
+                        'assets/items/StickyNote.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    // 2. 텍스트 내용 (중앙)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(40, 60, 40, 60),
+                      child: Center(
+                        child: SingleChildScrollView(
+                          child: Text(
+                            content,
+                            style: const TextStyle(
+                              fontFamily: 'NanumPenScript-Regular',
+                              fontSize: 24,
+                              color: Colors.black87,
+                              height: 1.3,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // 3. 하트 (왼쪽 아래) - 상호작용 가능
+                    Positioned(
+                      bottom: 30,
+                      left: 35,
+                      child: GestureDetector(
+                        onTap: () async {
+                          if (isLiked) return; // 이미 좋아요 함
+
+                          // UI Optimistic Update
+                          setState(() {
+                            isLiked = true;
+                            heartCount++;
+                          });
+
+                          // Call Controller
+                          try {
+                            await context
+                                .read<SocialController>()
+                                .likeStickyNote(
+                                  userModel.uid,
+                                  userModel.nickname,
+                                  _friend!.uid,
+                                  prop.id,
+                                );
+                          } catch (e) {
+                            // Revert on error (optional)
+                          }
+                        },
+                        child: Row(
+                          children: [
+                            Icon(
+                              isLiked ? Icons.favorite : Icons.favorite_border,
+                              color: Colors.red,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$heartCount',
+                              style: const TextStyle(
+                                fontFamily: 'NanumPenScript-Regular',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // 4. 닫기 버튼 (오른쪽 위 - x 버튼)
+                    Positioned(
+                      top: 35,
+                      right: 15,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.close,
+                            color: Colors.black54, size: 24),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

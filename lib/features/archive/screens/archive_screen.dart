@@ -7,6 +7,7 @@ import '../../../core/theme/app_color_scheme.dart';
 import '../../../services/diary_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/diary_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -91,6 +92,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                         _buildCalendar(),
                         const SizedBox(height: 16),
                         if (_selectedDay != null) _buildSelectedDayInfo(),
+                        const SizedBox(height: 24),
+                        _buildMyMemosButton(),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -566,5 +570,198 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       default:
         return '📝';
     }
+  }
+
+  Widget _buildMyMemosButton() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: ElevatedButton.icon(
+        onPressed: _showMyMemosBottomSheet,
+        icon: const Icon(Icons.note_alt_outlined),
+        label: const Text('내 메모 모아보기'),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: Colors.amber.shade100,
+          foregroundColor: Colors.brown,
+          elevation: 0,
+        ),
+      ),
+    );
+  }
+
+  void _showMyMemosBottomSheet() {
+    final authController = context.read<AuthController>();
+    final userId = authController.currentUser?.uid;
+
+    if (userId == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      '내 메모',
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                    ),
+                  ),
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(userId)
+                          .collection('memos')
+                          .orderBy('createdAt', descending: true)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.note_alt_outlined,
+                                    size: 48, color: Colors.grey.shade300),
+                                const SizedBox(height: 16),
+                                Text(
+                                  '작성한 메모가 없습니다',
+                                  style: TextStyle(color: Colors.grey.shade500),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        final memos = snapshot.data!.docs;
+
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: memos.length,
+                          padding: const EdgeInsets.all(20),
+                          itemBuilder: (context, index) {
+                            final data =
+                                memos[index].data() as Map<String, dynamic>;
+                            final content = data['content'] as String? ?? '';
+                            final heartCount = data['heartCount'] as int? ?? 0;
+                            final createdAt =
+                                data['createdAt'] as String? ?? '';
+
+                            DateTime? date;
+                            try {
+                              date = DateTime.parse(createdAt);
+                            } catch (_) {}
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF9C4),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          content,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            height: 1.4,
+                                            color: Colors.black87,
+                                            fontFamily:
+                                                'NanumPenScript-Regular',
+                                          ),
+                                        ),
+                                        if (date != null) ...[
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            DateFormat('yyyy.MM.dd')
+                                                .format(date),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.black45,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    children: [
+                                      const Icon(Icons.favorite,
+                                          color: Colors.red, size: 20),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '$heartCount',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }

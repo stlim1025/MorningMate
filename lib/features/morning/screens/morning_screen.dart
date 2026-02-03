@@ -32,6 +32,88 @@ class _MorningScreenState extends State<MorningScreen>
     _initializeScreen();
   }
 
+  void _showMemoDialog(RoomPropModel prop) {
+    if (prop.type != 'sticky_note' || prop.metadata == null) return;
+
+    final content = prop.metadata!['content'] ?? '';
+    final heartCount = prop.metadata!['heartCount'] ?? 0;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          child: SizedBox(
+            width: 320,
+            height: 320,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // 1. 메모지 배경 이미지
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/items/StickyNote.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                // 2. 텍스트 내용 (중앙)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(40, 60, 40, 60),
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Text(
+                        content,
+                        style: const TextStyle(
+                          fontFamily: 'NanumPenScript-Regular',
+                          fontSize: 24,
+                          color: Colors.black87,
+                          height: 1.3,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+                // 3. 하트 (왼쪽 아래)
+                Positioned(
+                  bottom: 30,
+                  left: 35,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.favorite, color: Colors.red, size: 24),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$heartCount',
+                        style: const TextStyle(
+                          fontFamily: 'NanumPenScript-Regular',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // 4. 닫기 버튼 (오른쪽 위 - x 버튼)
+                Positioned(
+                  top: 35,
+                  right: 15,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.close,
+                        color: Colors.black54, size: 24),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _initializeScreen() async {
     final authController = context.read<AuthController>();
     final morningController = context.read<MorningController>();
@@ -46,6 +128,7 @@ class _MorningScreenState extends State<MorningScreen>
         // 병렬로 데이터 로드
         await Future.wait([
           morningController.checkTodayDiary(userId),
+          context.read<CharacterController>().checkAndClearExpiredMemos(userId),
           if (morningController.currentQuestion == null)
             morningController.fetchRandomQuestion(),
         ]);
@@ -360,6 +443,7 @@ class _MorningScreenState extends State<MorningScreen>
         consecutiveDays: characterController.currentUser?.consecutiveDays ?? 0,
         roomDecoration: characterController.currentUser?.roomDecoration,
         currentAnimation: characterController.currentAnimation,
+        onPropTap: (prop) => _showMemoDialog(prop),
       ),
     );
   }

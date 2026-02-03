@@ -72,3 +72,6 @@ flutter:
         - asset: assets/fonts/Pretendard-Regular.otf
         - asset: assets/fonts/Pretendard-Bold.otf
           weight: 700
+    - family: NanumPenScript-Regular
+      fonts:
+        - asset: assets/fonts/NanumPenScript-Regular.ttf

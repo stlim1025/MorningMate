@@ -261,6 +261,15 @@ class RoomAssets {
       sizeMultiplier: 1.5,
       aspectRatio: 1.8,
     ),
+    RoomAsset(
+      id: 'sticky_note',
+      name: '메모 노트',
+      price: 50,
+      icon: Icons.note_alt_outlined,
+      imagePath: 'assets/items/StickyNote.png',
+      sizeMultiplier: 0.7,
+      aspectRatio: 1.0,
+    ),
   ];
 
   static const List<RoomAsset> floors = [

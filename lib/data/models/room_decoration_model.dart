@@ -52,12 +52,14 @@ class RoomPropModel {
   final String type; // 'plant', 'bear', 'lamp', 'frame', etc.
   final double x; // 0.0 ~ 1.0 (normalized relative to room width)
   final double y; // 0.0 ~ 1.0 (normalized relative to room height)
+  final Map<String, dynamic>? metadata;
 
   RoomPropModel({
     required this.id,
     required this.type,
     required this.x,
     required this.y,
+    this.metadata,
   });
 
   Map<String, dynamic> toMap() {
@@ -66,6 +68,7 @@ class RoomPropModel {
       'type': type,
       'x': x,
       'y': y,
+      'metadata': metadata,
     };
   }
 
@@ -75,6 +78,7 @@ class RoomPropModel {
       type: map['type'] ?? '',
       x: (map['x'] as num?)?.toDouble() ?? 0.0,
       y: (map['y'] as num?)?.toDouble() ?? 0.0,
+      metadata: map['metadata'] as Map<String, dynamic>?,
     );
   }
 
@@ -83,12 +87,14 @@ class RoomPropModel {
     String? type,
     double? x,
     double? y,
+    Map<String, dynamic>? metadata,
   }) {
     return RoomPropModel(
       id: id ?? this.id,
       type: type ?? this.type,
       x: x ?? this.x,
       y: y ?? this.y,
+      metadata: metadata ?? this.metadata,
     );
   }
 }

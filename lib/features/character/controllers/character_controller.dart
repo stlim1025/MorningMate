@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../services/user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/room_decoration_model.dart';
 
@@ -79,12 +80,100 @@ class CharacterController extends ChangeNotifier {
       String userId, RoomDecorationModel decoration) async {
     if (_currentUser == null) return;
 
-    await _userService.updateUser(userId, {
+    final oldProps = _currentUser!.roomDecoration.props;
+    final newProps = decoration.props;
+
+    // 새롭게 추가된 스티커 메모가 있는지 확인
+    // 기존 소품에 스티커 메모가 없었고, 새로운 소품에 스티커 메모가 있다면 새로 추가된 것으로 간주
+    bool newlyAddedStickyNote = !oldProps.any((p) => p.type == 'sticky_note') &&
+        newProps.any((p) => p.type == 'sticky_note');
+
+    Map<String, dynamic> updates = {
       'roomDecoration': decoration.toMap(),
-    });
+    };
+
+    if (newlyAddedStickyNote) {
+      // 1. 일회용 소품 소비 (인벤토리에서 제거)
+      final updatedPurchasedProps =
+          List<String>.from(_currentUser!.purchasedPropIds);
+      updatedPurchasedProps.remove('sticky_note');
+
+      updates['purchasedPropIds'] = updatedPurchasedProps;
+      updates['lastStickyNoteDate'] = FieldValue.serverTimestamp();
+
+      // 로컬 모델 미리 업데이트 (UI 반영용)
+      _currentUser = _currentUser!.copyWith(
+        purchasedPropIds: updatedPurchasedProps,
+        lastStickyNoteDate: DateTime.now(),
+      );
+    }
+
+    await _userService.updateUser(userId, updates);
+
+    // Sticky Note Sync (Archive)
+    final firestore = FirebaseFirestore.instance;
+    final batch = firestore.batch();
+    bool hasMemos = false;
+
+    for (final prop in decoration.props) {
+      if (prop.type == 'sticky_note' && prop.metadata != null) {
+        final memoRef = firestore
+            .collection('users')
+            .doc(userId)
+            .collection('memos')
+            .doc(prop.id);
+
+        batch.set(
+            memoRef,
+            {
+              'id': prop.id,
+              'content': prop.metadata!['content'],
+              'heartCount': prop.metadata!['heartCount'] ?? 0,
+              'likedBy': prop.metadata!['likedBy'] ?? [],
+              'createdAt': prop.metadata!['createdAt'] ??
+                  DateTime.now().toIso8601String(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
+        hasMemos = true;
+      }
+    }
+
+    if (hasMemos) {
+      await batch.commit();
+    }
 
     _currentUser = _currentUser!.copyWith(roomDecoration: decoration);
     notifyListeners();
+  }
+
+  /// 만료된(오늘 날짜가 아닌) 메모를 확인하고 제거합니다.
+  Future<void> checkAndClearExpiredMemos(String userId) async {
+    if (_currentUser == null) return;
+
+    final decoration = _currentUser!.roomDecoration;
+    final now = DateTime.now();
+
+    // 오늘 날짜가 아닌 스티커 메모 필터링
+    final activeProps = decoration.props.where((p) {
+      if (p.type != 'sticky_note') return true;
+      if (p.metadata == null || p.metadata!['createdAt'] == null) return false;
+
+      try {
+        final createdAt = DateTime.parse(p.metadata!['createdAt']);
+        return createdAt.year == now.year &&
+            createdAt.month == now.month &&
+            createdAt.day == now.day;
+      } catch (e) {
+        return false;
+      }
+    }).toList();
+
+    // 변경사항이 있는 경우에만 업데이트
+    if (activeProps.length != decoration.props.length) {
+      final newDecoration = decoration.copyWith(props: activeProps);
+      await updateRoomDecoration(userId, newDecoration);
+    }
   }
 
   // 레벨에서 캐릭터 상태 결정
@@ -312,6 +401,17 @@ class CharacterController extends ChangeNotifier {
     if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
     if (_currentUser!.purchasedPropIds.contains(propId)) {
       throw Exception('이미 구매한 소품입니다');
+    }
+
+    // 스티커 메모는 하루에 한 번만 작성 가능
+    if (propId == 'sticky_note' && _currentUser!.lastStickyNoteDate != null) {
+      final now = DateTime.now();
+      final lastDate = _currentUser!.lastStickyNoteDate!;
+      if (lastDate.year == now.year &&
+          lastDate.month == now.month &&
+          lastDate.day == now.day) {
+        throw Exception('메모는 하루에 한 번만 작성할 수 있습니다.');
+      }
     }
 
     final newPurchasedProps = List<String>.from(_currentUser!.purchasedPropIds)

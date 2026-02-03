@@ -416,4 +416,82 @@ class SocialController extends ChangeNotifier {
   Stream<List<UserModel>> getFriendsStream(String userId) {
     return _friendService.getFriendsStream(userId);
   }
+
+  Future<void> likeStickyNote(String userId, String userNickname,
+      String friendId, String memoId) async {
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(friendId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(userRef);
+      if (!snapshot.exists) return;
+
+      final data = snapshot.data()!;
+      if (data['roomDecoration'] == null) return;
+
+      final decorationMap = Map<String, dynamic>.from(data['roomDecoration']);
+      final props =
+          List<Map<String, dynamic>>.from(decorationMap['props'] ?? []);
+
+      bool updated = false;
+      int? newHeartCount;
+      List<String>? newLikedBy;
+
+      for (var i = 0; i < props.length; i++) {
+        // Handle "sticky_note"
+        if (props[i]['id'] == memoId && props[i]['type'] == 'sticky_note') {
+          final metadata =
+              Map<String, dynamic>.from(props[i]['metadata'] ?? {});
+          final likedBy = List<String>.from(metadata['likedBy'] ?? []);
+
+          if (!likedBy.contains(userId)) {
+            likedBy.add(userId);
+            metadata['likedBy'] = likedBy;
+            metadata['heartCount'] = (metadata['heartCount'] ?? 0) + 1;
+            props[i]['metadata'] = metadata;
+
+            newHeartCount = metadata['heartCount'];
+            newLikedBy = likedBy;
+            updated = true;
+          }
+        }
+      }
+
+      if (updated) {
+        decorationMap['props'] = props;
+        transaction.update(userRef, {'roomDecoration': decorationMap});
+
+        // Update Archive (Memos collection)
+        if (newHeartCount != null) {
+          final memoRef = FirebaseFirestore.instance
+              .collection('users')
+              .doc(friendId)
+              .collection('memos')
+              .doc(memoId);
+
+          transaction.set(
+              memoRef,
+              {
+                'heartCount': newHeartCount,
+                'likedBy': newLikedBy,
+              },
+              SetOptions(merge: true));
+        }
+
+        // Add Notification
+        final notificationRef =
+            FirebaseFirestore.instance.collection('notifications').doc();
+        transaction.set(notificationRef, {
+          'userId': friendId,
+          'senderId': userId,
+          'senderNickname': userNickname,
+          'type': 'memoLike',
+          'message': '$userNickname님이 내 메모에 하트를 보냈어요! ❤️',
+          'isRead': false,
+          'fcmSent': false,
+          'createdAt': Timestamp.fromDate(DateTime.now()),
+        });
+      }
+    });
+  }
 }

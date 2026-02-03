@@ -13,6 +13,7 @@ class UserModel {
   final int maxConsecutiveDays;
   final DateTime? lastLoginDate;
   final DateTime? lastDiaryDate;
+  final DateTime? lastStickyNoteDate; // 오늘 메모 작성 여부 체크용
   final DateTime createdAt;
   final Map<String, dynamic>? characterCustomization;
   final List<String> friendIds;
@@ -43,6 +44,7 @@ class UserModel {
     this.maxConsecutiveDays = 0,
     this.lastLoginDate,
     this.lastDiaryDate,
+    this.lastStickyNoteDate,
     required this.createdAt,
     this.characterCustomization,
     this.friendIds = const [],
@@ -80,6 +82,9 @@ class UserModel {
           : null,
       lastDiaryDate: data['lastDiaryDate'] != null
           ? (data['lastDiaryDate'] as Timestamp).toDate()
+          : null,
+      lastStickyNoteDate: data['lastStickyNoteDate'] != null
+          ? (data['lastStickyNoteDate'] as Timestamp).toDate()
           : null,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       characterCustomization: data['characterCustomization'] ?? {},
@@ -122,6 +127,9 @@ class UserModel {
           lastLoginDate != null ? Timestamp.fromDate(lastLoginDate!) : null,
       'lastDiaryDate':
           lastDiaryDate != null ? Timestamp.fromDate(lastDiaryDate!) : null,
+      'lastStickyNoteDate': lastStickyNoteDate != null
+          ? Timestamp.fromDate(lastStickyNoteDate!)
+          : null,
       'createdAt': Timestamp.fromDate(createdAt),
       'characterCustomization': characterCustomization ?? {},
       'friendIds': friendIds,
@@ -155,6 +163,7 @@ class UserModel {
     int? maxConsecutiveDays,
     DateTime? lastLoginDate,
     DateTime? lastDiaryDate,
+    DateTime? lastStickyNoteDate,
     DateTime? createdAt,
     Map<String, dynamic>? characterCustomization,
     List<String>? friendIds,
@@ -185,6 +194,7 @@ class UserModel {
       maxConsecutiveDays: maxConsecutiveDays ?? this.maxConsecutiveDays,
       lastLoginDate: lastLoginDate ?? this.lastLoginDate,
       lastDiaryDate: lastDiaryDate ?? this.lastDiaryDate,
+      lastStickyNoteDate: lastStickyNoteDate ?? this.lastStickyNoteDate,
       createdAt: createdAt ?? this.createdAt,
       characterCustomization:
           characterCustomization ?? this.characterCustomization,
