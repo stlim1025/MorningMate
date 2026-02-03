@@ -10,6 +10,7 @@ import '../../morning/widgets/enhanced_character_room_widget.dart';
 import '../../morning/widgets/room_background_widget.dart';
 import '../../../data/models/room_decoration_model.dart';
 import '../../../core/theme/app_theme_type.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 class DecorationScreen extends StatefulWidget {
   const DecorationScreen({super.key});
@@ -352,7 +353,20 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                                       top: -10,
                                                       right: -10,
                                                       child: GestureDetector(
-                                                        onTap: () {
+                                                        onTap: () async {
+                                                          if (prop.type ==
+                                                              'sticky_note') {
+                                                            final confirm =
+                                                                await AppDialog
+                                                                    .show<bool>(
+                                                              context: context,
+                                                              key: AppDialogKey
+                                                                  .deleteStickyNote,
+                                                            );
+                                                            if (confirm != true)
+                                                              return;
+                                                          }
+
                                                           final newProps = List<
                                                                   RoomPropModel>.from(
                                                               currentDecoration
@@ -764,6 +778,14 @@ class _DecorationScreenState extends State<DecorationScreen> {
               onTap: () async {
                 if (exists) {
                   // 이미 배치된 경우: 제거
+                  if (p.id == 'sticky_note') {
+                    final confirm = await AppDialog.show<bool>(
+                      context: context,
+                      key: AppDialogKey.deleteStickyNote,
+                    );
+                    if (confirm != true) return;
+                  }
+
                   final newProps = decoration.props
                       .where((prop) => prop.type != p.id)
                       .toList();

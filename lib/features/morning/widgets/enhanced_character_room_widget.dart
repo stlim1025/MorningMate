@@ -90,6 +90,7 @@ class _EnhancedCharacterRoomWidgetState
             const AssetImage('assets/images/Face_Sleep.png'), context);
         precacheImage(
             const AssetImage('assets/images/Face_Drool.png'), context);
+        precacheImage(const AssetImage('assets/images/Egg_Wing.png'), context);
       }
     });
   }
@@ -715,10 +716,18 @@ class _EnhancedCharacterRoomWidgetState
     final double charWidth = size * 0.80;
     final double charHeight = size * 0.75;
 
-    // 1. Idle/Normal State
+    // normalEgg construction with Wings
     final Widget normalEgg = Stack(
       alignment: Alignment.center,
       children: [
+        // Wings (Level 2+)
+        if (widget.characterLevel >= 2)
+          Image.asset(
+            'assets/images/Egg_Wing.png',
+            width: charWidth * 1.2,
+            height: charHeight,
+            fit: BoxFit.contain,
+          ),
         // Base Body
         Image.asset(
           isAwake ? 'assets/images/Body.png' : 'assets/images/Sleep_Body.png',
@@ -746,6 +755,14 @@ class _EnhancedCharacterRoomWidgetState
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Wings (Level 2+)
+          if (widget.characterLevel >= 2)
+            Image.asset(
+              'assets/images/Egg_Wing.png',
+              width: charWidth * 1.2,
+              height: charHeight,
+              fit: BoxFit.contain,
+            ),
           // Base Body
           Image.asset(
             isAwake ? 'assets/images/Body.png' : 'assets/images/Sleep_Body.png',

@@ -6,8 +6,21 @@ import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../controllers/character_controller.dart';
 
-class ShopScreen extends StatelessWidget {
+class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
+
+  @override
+  State<ShopScreen> createState() => _ShopScreenState();
+}
+
+class _ShopScreenState extends State<ShopScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CharacterController>().loadRewardedAd();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +78,11 @@ class ShopScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 광고 보기 버튼
+            _buildAdButton(
+                user, colorScheme, context.read<CharacterController>()),
+            const SizedBox(height: 24),
+
             _buildSectionHeader('테마', Icons.palette),
             const SizedBox(height: 16),
             _buildThemeGrid(user, characterController, colorScheme),
@@ -86,6 +104,114 @@ class ShopScreen extends StatelessWidget {
             _buildFloorGrid(user, characterController, colorScheme),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAdButton(
+      user, AppColorScheme colorScheme, CharacterController controller) {
+    // 오늘 광고 시청 횟수 제한 체크 (로컬)
+    // 실제 로직은 컨트롤러의 watchAdAndGetPoints에서도 체크하지만 UI 업데이트를 위해 여기서도 체크
+    int currentCount = user.adRewardCount;
+    final now = DateTime.now();
+    final lastDate = user.lastAdRewardDate;
+
+    if (lastDate != null &&
+        (lastDate.year != now.year ||
+            lastDate.month != now.month ||
+            lastDate.day != now.day)) {
+      currentCount = 0;
+    }
+
+    final bool isLimitReached = currentCount >= 10;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.indigo.shade400,
+            Colors.deepPurple.shade500,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.deepPurple.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.play_arrow_rounded,
+                color: Colors.white, size: 32),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '광고 보고 가지 받기',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Image.asset('assets/images/branch.png',
+                        width: 16, height: 16),
+                    const SizedBox(width: 4),
+                    const Text(
+                      '+10 가지',
+                      style: TextStyle(
+                        color: Colors.yellowAccent,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '($currentCount/10)',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: isLimitReached || controller.isAdLoading
+                ? null
+                : () => controller.showRewardedAd(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.deepPurple,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: Text(isLimitReached ? '완료' : '보기'),
+          ),
+        ],
       ),
     );
   }
@@ -187,7 +313,7 @@ class ShopScreen extends StatelessWidget {
         crossAxisCount: 3,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.72,
+        childAspectRatio: 0.82,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) => itemBuilder(items[index]),
@@ -249,27 +375,6 @@ class ShopScreen extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/images/branch.png',
-                  width: 14,
-                  height: 14,
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  '${item.price}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isPurchased || canAfford
-                        ? colorScheme.textSecondary
-                        : colorScheme.error,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -284,9 +389,54 @@ class ShopScreen extends StatelessWidget {
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              Center(
+                                child: Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    color: (item.color ??
+                                            colorScheme.primaryButton)
+                                        .withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: item.imagePath != null
+                                      ? Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: item.imagePath!
+                                                  .endsWith('.svg')
+                                              ? SvgPicture.asset(
+                                                  item.imagePath!,
+                                                )
+                                              : Image.asset(item.imagePath!),
+                                        )
+                                      : Icon(
+                                          item.icon,
+                                          size: 40,
+                                          color: item.color ??
+                                              colorScheme.primaryButton,
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
                               Text('${item.name}을(를) 구매하시겠습니까?'),
                               const SizedBox(height: 12),
-                              Row(
+                              if (!canAfford) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  '가지가 부족합니다.',
+                                  style: TextStyle(
+                                    color: colorScheme.error,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          actions: [
+                            AppDialogAction(
+                              label: '${item.price}',
+                              labelWidget: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Image.asset(
@@ -296,17 +446,23 @@ class ShopScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    '${item.price} 가지',
-                                    style: TextStyle(
+                                    '${item.price}',
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: colorScheme.twig,
+                                      height: 1.1,
                                     ),
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                              isPrimary: true,
+                              isFullWidth: true,
+                              isEnabled:
+                                  AlwaysStoppedAnimation<bool>(canAfford),
+                              onPressed: (context) =>
+                                  Navigator.pop(context, true),
+                            ),
+                          ],
                         );
 
                         if (shouldPurchase == true) {
@@ -385,8 +541,22 @@ class ShopScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8)),
                   elevation: 0,
                 ),
-                child: Text(isPurchased ? '완료' : '구매',
-                    style: const TextStyle(fontSize: 11)),
+                child: isPurchased
+                    ? const Text('완료', style: TextStyle(fontSize: 11))
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/branch.png',
+                            width: 14,
+                            height: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text('${item.price}',
+                              style: const TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
               ),
             ),
           ],

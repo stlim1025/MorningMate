@@ -18,7 +18,7 @@ import 'features/character/controllers/character_controller.dart';
 import 'features/social/controllers/social_controller.dart';
 import 'features/notification/controllers/notification_controller.dart';
 import 'core/theme/theme_controller.dart';
-
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 // FCM 백그라운드 핸들러 (최상위 함수)
@@ -36,6 +36,8 @@ void main() async {
 
   // Firebase 초기화
   await Firebase.initializeApp();
+  // 👇 광고 SDK 초기화 (필수)
+  await MobileAds.instance.initialize();
   if (kIsWeb) {
     await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
   }

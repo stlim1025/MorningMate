@@ -14,6 +14,8 @@ class UserModel {
   final DateTime? lastLoginDate;
   final DateTime? lastDiaryDate;
   final DateTime? lastStickyNoteDate; // 오늘 메모 작성 여부 체크용
+  final DateTime? lastAdRewardDate; // 마지막 광고 보상 받은 시간
+  final int adRewardCount; // 오늘 광고 보상 받은 횟수
   final DateTime createdAt;
   final Map<String, dynamic>? characterCustomization;
   final List<String> friendIds;
@@ -45,6 +47,8 @@ class UserModel {
     this.lastLoginDate,
     this.lastDiaryDate,
     this.lastStickyNoteDate,
+    this.lastAdRewardDate,
+    this.adRewardCount = 0,
     required this.createdAt,
     this.characterCustomization,
     this.friendIds = const [],
@@ -86,6 +90,10 @@ class UserModel {
       lastStickyNoteDate: data['lastStickyNoteDate'] != null
           ? (data['lastStickyNoteDate'] as Timestamp).toDate()
           : null,
+      lastAdRewardDate: data['lastAdRewardDate'] != null
+          ? (data['lastAdRewardDate'] as Timestamp).toDate()
+          : null,
+      adRewardCount: data['adRewardCount'] ?? 0,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       characterCustomization: data['characterCustomization'] ?? {},
       friendIds: List<String>.from(data['friendIds'] ?? []),
@@ -130,6 +138,10 @@ class UserModel {
       'lastStickyNoteDate': lastStickyNoteDate != null
           ? Timestamp.fromDate(lastStickyNoteDate!)
           : null,
+      'lastAdRewardDate': lastAdRewardDate != null
+          ? Timestamp.fromDate(lastAdRewardDate!)
+          : null,
+      'adRewardCount': adRewardCount,
       'createdAt': Timestamp.fromDate(createdAt),
       'characterCustomization': characterCustomization ?? {},
       'friendIds': friendIds,
@@ -164,6 +176,8 @@ class UserModel {
     DateTime? lastLoginDate,
     DateTime? lastDiaryDate,
     DateTime? lastStickyNoteDate,
+    DateTime? lastAdRewardDate,
+    int? adRewardCount,
     DateTime? createdAt,
     Map<String, dynamic>? characterCustomization,
     List<String>? friendIds,
@@ -195,6 +209,8 @@ class UserModel {
       lastLoginDate: lastLoginDate ?? this.lastLoginDate,
       lastDiaryDate: lastDiaryDate ?? this.lastDiaryDate,
       lastStickyNoteDate: lastStickyNoteDate ?? this.lastStickyNoteDate,
+      lastAdRewardDate: lastAdRewardDate ?? this.lastAdRewardDate,
+      adRewardCount: adRewardCount ?? this.adRewardCount,
       createdAt: createdAt ?? this.createdAt,
       characterCustomization:
           characterCustomization ?? this.characterCustomization,
@@ -219,9 +235,10 @@ class UserModel {
 
   // 경험치 관련 헬퍼 메서드
   static int getRequiredExpForLevel(int level) {
-    // 레벨별 필요 경험치: 10, 50, 100, 200, 350, 500
-    const expTable = [0, 10, 30, 50, 100, 200, 300];
-    if (level < 1 || level > 6) return 0;
+    // 레벨별 필요 경험치: 30, 50, 100, 150, 200
+    // 1->2: 30, 2->3: 50, 3->4: 100, 4->5: 150, 5->6: 200
+    const expTable = [0, 30, 50, 100, 150, 200];
+    if (level < 1 || level >= expTable.length) return 0;
     return expTable[level];
   }
 

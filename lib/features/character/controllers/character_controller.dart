@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../../../router/app_router.dart'; // navigatorKey 접근을 위해
 import '../../../services/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../data/models/user_model.dart';
@@ -18,7 +20,9 @@ enum CharacterState {
 class CharacterController extends ChangeNotifier {
   final UserService _userService;
 
-  CharacterController(this._userService);
+  CharacterController(this._userService) {
+    loadRewardedAd();
+  }
 
   // 상태 변수
   UserModel? _currentUser;
@@ -27,12 +31,18 @@ class CharacterController extends ChangeNotifier {
   bool _showLevelUpDialog = false;
   int? _justLeveledUpTo;
 
+  // 광고 관련 상태
+  RewardedAd? _rewardedAd;
+  bool _isAdLoading = false;
+
   // Getters
   UserModel? get currentUser => _currentUser;
   bool get isAwake => _isAwake;
   String get currentAnimation => _currentAnimation;
   bool get showLevelUpDialog => _showLevelUpDialog;
   int? get justLeveledUpTo => _justLeveledUpTo;
+  bool get isAdLoading => _isAdLoading;
+  bool get isAdReady => _rewardedAd != null;
 
   void consumeLevelUpDialog() {
     _showLevelUpDialog = false;
@@ -466,6 +476,116 @@ class CharacterController extends ChangeNotifier {
     });
 
     _currentUser = _currentUser!.copyWith(currentThemeId: themeId);
+    notifyListeners();
+  }
+
+  // 광고 로드
+  void loadRewardedAd() {
+    if (_rewardedAd != null || _isAdLoading) return;
+
+    _isAdLoading = true;
+    notifyListeners();
+
+    // Test Ad Unit ID
+    // Android: ca-app-pub-3940256099942544/5224354917
+    // iOS: ca-app-pub-3940256099942544/1712485313
+    final adUnitId =
+        Theme.of(AppRouter.navigatorKey.currentContext!).platform ==
+                TargetPlatform.iOS
+            ? 'ca-app-pub-3940256099942544/1712485313'
+            : 'ca-app-pub-3940256099942544/5224354917';
+
+    RewardedAd.load(
+      adUnitId: adUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          debugPrint('$ad loaded.');
+          _rewardedAd = ad;
+          _isAdLoading = false;
+          notifyListeners();
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          debugPrint('RewardedAd failed to load: $error');
+          _isAdLoading = false;
+          notifyListeners();
+        },
+      ),
+    );
+  }
+
+  // 광고 보여주기
+  void showRewardedAd(BuildContext context) {
+    if (_rewardedAd == null) {
+      loadRewardedAd();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('광고가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.')),
+      );
+      return;
+    }
+
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _rewardedAd = null;
+        loadRewardedAd(); // 다음 광고 미리 로드
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _rewardedAd = null;
+        loadRewardedAd();
+      },
+    );
+
+    _rewardedAd!.show(
+      onUserEarnedReward: (AdWithoutView ad, RewardItem rewardItem) async {
+        if (_currentUser != null) {
+          await watchAdAndGetPoints(_currentUser!.uid);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('광고 시청 보상으로 10 가지를 획득했습니다!')),
+            );
+          }
+        }
+      },
+    );
+  }
+
+  Future<void> watchAdAndGetPoints(String userId) async {
+    if (_currentUser == null) return;
+
+    final now = DateTime.now();
+    int currentCount = _currentUser!.adRewardCount;
+    DateTime? lastDate = _currentUser!.lastAdRewardDate;
+
+    // 날짜가 바뀌었는지 확인 (어제 이전에 봤다면 카운트 초기화)
+    if (lastDate != null) {
+      if (lastDate.year != now.year ||
+          lastDate.month != now.month ||
+          lastDate.day != now.day) {
+        currentCount = 0;
+      }
+    }
+
+    // 하루 최대 10번 제한
+    if (currentCount >= 10) {
+      throw Exception('오늘은 더 이상 광고를 통해\n가지를 획득할 수 없습니다.\n(일일 최대 10회)');
+    }
+
+    final newPoints = _currentUser!.points + 10;
+    final newCount = currentCount + 1;
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+      'adRewardCount': newCount,
+      'lastAdRewardDate': FieldValue.serverTimestamp(),
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      adRewardCount: newCount,
+      lastAdRewardDate: now,
+    );
     notifyListeners();
   }
 

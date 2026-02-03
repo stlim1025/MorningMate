@@ -18,6 +18,7 @@ enum AppDialogKey {
   purchase,
   purchaseComplete,
   levelUp,
+  deleteStickyNote,
 }
 
 class AppDialogAction {
@@ -28,9 +29,11 @@ class AppDialogAction {
     this.useHighlight = false,
     this.isFullWidth = false,
     this.isEnabled,
+    this.labelWidget,
   });
 
   final String label;
+  final Widget? labelWidget;
   final dynamic onPressed;
   final bool isPrimary;
   final bool useHighlight;
@@ -196,6 +199,23 @@ class AppDialog {
                 ),
               ],
         );
+      case AppDialogKey.deleteStickyNote:
+        return AppDialogConfig(
+          title: '메모 삭제',
+          content: content ?? const Text('메모를 삭제하시겠습니까?'),
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label: '취소',
+                  onPressed: (context) => Navigator.pop(context, false),
+                ),
+                AppDialogAction(
+                  label: '확인',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context, true),
+                ),
+              ],
+        );
     }
   }
 
@@ -278,16 +298,17 @@ class AppDialog {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: Text(
-            action.label,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          child: action.labelWidget ??
+              Text(
+                action.label,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
         );
 
         if (action.isFullWidth) {
           return SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 52,
             child: button,
           );
         }
