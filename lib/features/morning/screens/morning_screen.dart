@@ -14,6 +14,7 @@ import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/models/room_decoration_model.dart';
 import '../widgets/room_background_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MorningScreen extends StatefulWidget {
   const MorningScreen({super.key});
@@ -35,8 +36,11 @@ class _MorningScreenState extends State<MorningScreen>
   void _showMemoDialog(RoomPropModel prop) {
     if (prop.type != 'sticky_note' || prop.metadata == null) return;
 
+    final userId = context.read<AuthController>().currentUser?.uid;
+    if (userId == null) return;
+
     final content = prop.metadata!['content'] ?? '';
-    final heartCount = prop.metadata!['heartCount'] ?? 0;
+    final localHeartCount = prop.metadata!['heartCount'] ?? 0;
 
     showDialog(
       context: context,
@@ -76,24 +80,43 @@ class _MorningScreenState extends State<MorningScreen>
                     ),
                   ),
                 ),
-                // 3. 하트 (왼쪽 아래)
+                // 3. 하트 (왼쪽 아래) - 스트림 연동
                 Positioned(
                   bottom: 30,
                   left: 35,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.favorite, color: Colors.red, size: 24),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$heartCount',
-                        style: const TextStyle(
-                          fontFamily: 'NanumPenScript-Regular',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
+                  child: StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
+                        .collection('memos')
+                        .doc(prop.id)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      int displayHeartCount = localHeartCount;
+                      if (snapshot.hasData && snapshot.data!.exists) {
+                        final data =
+                            snapshot.data!.data() as Map<String, dynamic>;
+                        displayHeartCount =
+                            data['heartCount'] ?? localHeartCount;
+                      }
+
+                      return Row(
+                        children: [
+                          const Icon(Icons.favorite,
+                              color: Colors.red, size: 24),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$displayHeartCount',
+                            style: const TextStyle(
+                              fontFamily: 'NanumPenScript-Regular',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 // 4. 닫기 버튼 (오른쪽 위 - x 버튼)
