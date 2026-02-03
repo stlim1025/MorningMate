@@ -49,11 +49,30 @@ void main() async {
   runApp(const MorningMateApp());
 }
 
-class MorningMateApp extends StatelessWidget {
+class MorningMateApp extends StatefulWidget {
   const MorningMateApp({super.key});
 
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
+
+  @override
+  State<MorningMateApp> createState() => _MorningMateAppState();
+}
+
+class _MorningMateAppState extends State<MorningMateApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final rootContext = AppRouter.navigatorKey.currentContext;
+      if (rootContext == null) {
+        return;
+      }
+      rootContext
+          .read<CharacterController>()
+          .loadRewardedAd(context: rootContext);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +184,7 @@ class MorningMateApp extends StatelessWidget {
             title: 'Morning Mate',
             debugShowCheckedModeBanner: false,
             theme: themeController.themeData,
-            scaffoldMessengerKey: scaffoldMessengerKey,
+            scaffoldMessengerKey: MorningMateApp.scaffoldMessengerKey,
             routerConfig: AppRouter.router,
           );
         },
