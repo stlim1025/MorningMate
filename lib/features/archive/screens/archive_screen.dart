@@ -735,15 +735,18 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                                   const SizedBox(width: 12),
                                   Column(
                                     children: [
-                                      const Icon(Icons.favorite,
-                                          color: Colors.red, size: 20),
+                                      Image.asset(
+                                        'assets/images/Pink_Heart.png',
+                                        width: 20,
+                                        height: 20,
+                                      ),
                                       const SizedBox(height: 4),
                                       Text(
                                         '$heartCount',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
-                                          color: Colors.red,
+                                          color: Color(0xFFFF8EAB),
                                         ),
                                       ),
                                     ],

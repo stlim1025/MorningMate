@@ -91,6 +91,7 @@ class _EnhancedCharacterRoomWidgetState
         precacheImage(
             const AssetImage('assets/images/Face_Drool.png'), context);
         precacheImage(const AssetImage('assets/images/Egg_Wing.png'), context);
+        precacheImage(const AssetImage('assets/images/Egg_Wing2.png'), context);
       }
     });
   }
@@ -248,7 +249,9 @@ class _EnhancedCharacterRoomWidgetState
 
             // Props
             if (!widget.hideProps)
-              ...decoration.props.map((prop) => _buildProp(prop, size)),
+              ...decoration.props
+                  .where((prop) => _isPropValid(prop))
+                  .map((prop) => _buildProp(prop, size)),
 
             // Character
             _buildCharacterContainer(widget.isAwake, colorScheme, size),
@@ -686,8 +689,8 @@ class _EnhancedCharacterRoomWidgetState
                         // Jump Height scales with intensity
                         double jumpHeight =
                             _bounceAnimation.value * 15 * intensity;
-                        // Smoothly interpolate tap lift (0 to 20px)
-                        double tapLift = tapValue * 20;
+                        // Subtler tap lift (4px instead of 20px) to keep body stable
+                        double tapLift = tapValue * 4;
                         double verticalOffset = -jumpHeight - tapLift;
 
                         // Jelly Scale Effect scales with intensity
@@ -724,73 +727,6 @@ class _EnhancedCharacterRoomWidgetState
     final double charWidth = size * 0.80;
     final double charHeight = size * 0.75;
 
-    // normalEgg construction with Wings
-    final Widget normalEgg = Stack(
-      alignment: Alignment.center,
-      children: [
-        // Wings (Level 2+)
-        if (widget.characterLevel >= 2)
-          Image.asset(
-            'assets/images/Egg_Wing.png',
-            width: charWidth * 1.2,
-            height: charHeight,
-            fit: BoxFit.contain,
-          ),
-        // Base Body
-        Image.asset(
-          isAwake ? 'assets/images/Body.png' : 'assets/images/Sleep_Body.png',
-          width: charWidth,
-          height: charHeight,
-          fit: BoxFit.contain,
-        ),
-        // Expression Layer
-        Image.asset(
-          isAwake
-              ? 'assets/images/Face_Default.png'
-              : 'assets/images/Face_Sleep.png',
-          width: charWidth,
-          height: charHeight,
-          fit: BoxFit.contain,
-        ),
-      ],
-    );
-
-    // 2. Tapped/Reaction State
-    final Widget tappedEgg = Padding(
-      padding: EdgeInsets.only(
-        left: isAwake ? 0 : size * 0.04, // Shift slightly right when sleeping
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Wings (Level 2+)
-          if (widget.characterLevel >= 2)
-            Image.asset(
-              'assets/images/Egg_Wing.png',
-              width: charWidth * 1.2,
-              height: charHeight,
-              fit: BoxFit.contain,
-            ),
-          // Base Body
-          Image.asset(
-            isAwake ? 'assets/images/Body.png' : 'assets/images/Sleep_Body.png',
-            width: charWidth,
-            height: charHeight,
-            fit: BoxFit.contain,
-          ),
-          // Expression Layer (Wink or Drool)
-          Image.asset(
-            isAwake
-                ? 'assets/images/Face_Wink.png'
-                : 'assets/images/Face_Drool.png',
-            width: isAwake ? charWidth * 1.3 : charWidth,
-            height: charHeight,
-            fit: BoxFit.contain,
-          ),
-        ],
-      ),
-    );
-
     return SizedBox(
       width: size,
       height: size,
@@ -798,16 +734,51 @@ class _EnhancedCharacterRoomWidgetState
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
+          // 1. Wings (Level 2+) - Static layer to prevent flickering
+          if (widget.characterLevel >= 2)
+            Image.asset(
+              widget.characterLevel >= 3
+                  ? 'assets/images/Egg_Wing2.png'
+                  : 'assets/images/Egg_Wing.png',
+              width:
+                  widget.characterLevel >= 3 ? charWidth * 2 : charWidth * 1.2,
+              height: widget.characterLevel >= 3 ? charHeight * 2 : charHeight,
+              fit: BoxFit.contain,
+            ),
+
+          // 2. Base Body - Static layer to prevent flickering
+          Image.asset(
+            isAwake ? 'assets/images/Body.png' : 'assets/images/Sleep_Body.png',
+            width: charWidth,
+            height: charHeight,
+            fit: BoxFit.contain,
+          ),
+
+          // 3. Expression Layer - Only cross-fade the face
           AnimatedCrossFade(
-            duration: const Duration(milliseconds: 250),
-            firstChild: normalEgg,
-            secondChild: tappedEgg,
+            duration: const Duration(milliseconds: 200),
+            alignment: Alignment.center,
             crossFadeState: _isTapped
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            firstCurve: Curves.easeIn,
-            secondCurve: Curves.easeOut,
-            sizeCurve: Curves.easeInOut,
+            firstChild: Image.asset(
+              isAwake
+                  ? 'assets/images/Face_Default.png'
+                  : 'assets/images/Face_Sleep.png',
+              width: charWidth,
+              height: charHeight,
+              fit: BoxFit.contain,
+              key: const ValueKey('face_normal'),
+            ),
+            secondChild: Image.asset(
+              isAwake
+                  ? 'assets/images/Face_Wink.png'
+                  : 'assets/images/Face_Drool.png',
+              width: charWidth,
+              height: charHeight,
+              fit: BoxFit.contain,
+              key: const ValueKey('face_tapped'),
+            ),
           ),
 
           // Zzz animation (if sleeping)
@@ -841,6 +812,25 @@ class _EnhancedCharacterRoomWidgetState
         ],
       ),
     );
+  }
+
+  bool _isPropValid(RoomPropModel prop) {
+    if (prop.type != 'sticky_note') return true;
+    if (prop.metadata == null || prop.metadata!['createdAt'] == null) {
+      return false;
+    }
+
+    try {
+      final now = DateTime.now();
+      final createdAt = DateTime.parse(prop.metadata!['createdAt']);
+      // 같은 날짜인지 확인 (년, 월, 일)
+      return createdAt.year == now.year &&
+          createdAt.month == now.month &&
+          createdAt.day == now.day;
+    } catch (e) {
+      debugPrint('메모 날짜 파싱 오류: $e');
+      return false;
+    }
   }
 }
 

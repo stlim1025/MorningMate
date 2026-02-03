@@ -175,6 +175,7 @@ class StarsPainter extends CustomPainter {
   }
 
   void _drawShootingStar(Canvas canvas, Size size) {
+    final baseStarColor = const Color(0xFFE6F3FF);
     final progress = shootingStarProgress!;
     if (progress > 1.2) return;
 

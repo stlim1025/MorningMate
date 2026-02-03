@@ -791,10 +791,12 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                         },
                         child: Row(
                           children: [
-                            Icon(
-                              isLiked ? Icons.favorite : Icons.favorite_border,
-                              color: Colors.red,
-                              size: 24,
+                            Image.asset(
+                              isLiked
+                                  ? 'assets/images/Pink_Heart.png'
+                                  : 'assets/images/Pink_Heart_Empty.png',
+                              width: 24,
+                              height: 24,
                             ),
                             const SizedBox(width: 4),
                             Text(

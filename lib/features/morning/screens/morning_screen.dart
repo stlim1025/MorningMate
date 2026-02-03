@@ -102,8 +102,11 @@ class _MorningScreenState extends State<MorningScreen>
 
                       return Row(
                         children: [
-                          const Icon(Icons.favorite,
-                              color: Colors.red, size: 24),
+                          Image.asset(
+                            'assets/images/Pink_Heart.png',
+                            width: 24,
+                            height: 24,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '$displayHeartCount',
