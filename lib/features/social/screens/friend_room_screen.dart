@@ -9,7 +9,7 @@ import '../../../services/user_service.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/notification_model.dart';
 import '../../morning/widgets/enhanced_character_room_widget.dart';
-import '../../morning/widgets/room_background_widget.dart';
+
 import '../../../data/models/room_decoration_model.dart';
 import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -87,21 +87,29 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                   ? socialController.isFriendAwake(_friend!.uid)
                   : false);
 
+          final textColor =
+              (isAwake && !isDarkMode) ? const Color(0xFF2C3E50) : Colors.white;
+
           return Stack(
             children: [
-              // 1. Global Background
-              Positioned.fill(
-                child: RoomBackgroundWidget(
-                  decoration: _friend?.roomDecoration ?? RoomDecorationModel(),
-                  isAwake: isAwake,
-                  isDarkMode: isDarkMode,
-                  colorScheme: colorScheme,
+              // 1. Full Screen Room Background
+              if (_friend != null && !_isLoading)
+                Positioned.fill(
+                  child: EnhancedCharacterRoomWidget(
+                    isAwake: isAwake,
+                    characterLevel: _friend!.characterLevel,
+                    consecutiveDays: _friend!.consecutiveDays,
+                    roomDecoration: _friend!.roomDecoration,
+                    showBorder: false,
+                    currentAnimation: 'idle',
+                    onPropTap: (prop) => _showFriendMemoDialog(prop),
+                    colorScheme: colorScheme,
+                    isDarkMode: isDarkMode,
+                  ),
                 ),
-              ),
 
-              // 2. Main Content
+              // 2. UI Overlay
               SafeArea(
-                bottom: false,
                 child: _isLoading
                     ? Center(
                         child: CircularProgressIndicator(
@@ -110,7 +118,243 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
                                 : Colors.white))
                     : _friend == null
                         ? _buildErrorState()
-                        : _buildFriendRoom(isAwake, colorScheme, isDarkMode),
+                        : Column(
+                            children: [
+                              // Header
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.arrow_back,
+                                          color: textColor),
+                                      onPressed: () => Navigator.pop(context),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${_friend!.nickname}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  color: textColor,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${_friend!.consecutiveDays}일 연속 기록 중 🔥',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: textColor
+                                                      .withOpacity(0.8),
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const Spacer(),
+
+                              // Stats
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: _buildFriendStats(isAwake, colorScheme),
+                              ),
+
+                              // Guestbook Area
+                              Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(24)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colorScheme.shadowColor
+                                          .withOpacity(0.1),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, -5),
+                                    ),
+                                  ],
+                                ),
+                                child: SafeArea(
+                                  top: false,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.mode_comment_rounded,
+                                                color:
+                                                    colorScheme.primaryButton,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '친구에게 한마디',
+                                                style: TextStyle(
+                                                  color:
+                                                      colorScheme.textPrimary,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          TextButton.icon(
+                                            onPressed: () =>
+                                                _showSentMessagesDialog(
+                                                    colorScheme),
+                                            icon: Icon(
+                                              Icons.history_rounded,
+                                              color: colorScheme.primaryButton,
+                                              size: 16,
+                                            ),
+                                            label: Text(
+                                              '보낸 기록',
+                                              style: TextStyle(
+                                                color:
+                                                    colorScheme.primaryButton,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            style: TextButton.styleFrom(
+                                              backgroundColor: colorScheme
+                                                  .primaryButton
+                                                  .withOpacity(0.08),
+                                              side: BorderSide(
+                                                color: colorScheme.primaryButton
+                                                    .withOpacity(0.15),
+                                                width: 1,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 4),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              minimumSize: Size.zero,
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Consumer<SocialController>(
+                                        builder:
+                                            (context, socialController, child) {
+                                          final remaining = _friend != null
+                                              ? socialController
+                                                  .cheerCooldownRemaining(
+                                                      _friend!.uid)
+                                              : Duration.zero;
+                                          final seconds =
+                                              (remaining.inMilliseconds / 1000)
+                                                  .ceil();
+                                          final isCooldown = seconds > 0;
+
+                                          return Container(
+                                            width: double.infinity,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              gradient: LinearGradient(
+                                                colors: isCooldown
+                                                    ? [
+                                                        colorScheme.textHint
+                                                            .withOpacity(0.3),
+                                                        colorScheme.textHint
+                                                            .withOpacity(0.2),
+                                                      ]
+                                                    : [
+                                                        colorScheme
+                                                            .primaryButton,
+                                                        colorScheme
+                                                            .primaryButton
+                                                            .withOpacity(0.85),
+                                                      ],
+                                              ),
+                                              boxShadow: [
+                                                if (!isCooldown)
+                                                  BoxShadow(
+                                                    color: colorScheme
+                                                        .primaryButton
+                                                        .withOpacity(0.3),
+                                                    blurRadius: 12,
+                                                    offset: const Offset(0, 4),
+                                                  ),
+                                              ],
+                                            ),
+                                            child: ElevatedButton.icon(
+                                              onPressed: isCooldown
+                                                  ? null
+                                                  : () => _showGuestbookDialog(
+                                                      colorScheme),
+                                              icon: Icon(
+                                                isCooldown
+                                                    ? Icons.timer_outlined
+                                                    : Icons.send_rounded,
+                                                size: 20,
+                                              ),
+                                              label: Text(
+                                                isCooldown
+                                                    ? '$seconds초 후에 다시 보낼 수 있어요'
+                                                    : '친구에게 응원 메시지 보내기',
+                                                style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    Colors.transparent,
+                                                foregroundColor: isCooldown
+                                                    ? colorScheme.textSecondary
+                                                    : colorScheme
+                                                        .primaryButtonForeground,
+                                                disabledForegroundColor:
+                                                    colorScheme.textSecondary,
+                                                shadowColor: Colors.transparent,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 16),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
               ),
             ],
           );
@@ -144,220 +388,6 @@ class _FriendRoomScreenState extends State<FriendRoomScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFriendRoom(
-      bool isAwake, AppColorScheme colorScheme, bool isDarkMode) {
-    final textColor =
-        (isAwake && !isDarkMode) ? const Color(0xFF2C3E50) : Colors.white;
-
-    return Column(
-      children: [
-        // 헤더
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: textColor),
-                onPressed: () => Navigator.pop(context),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${_friend!.nickname}',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: textColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_friend!.consecutiveDays}일 연속 기록 중 🔥',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: textColor.withOpacity(0.8),
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // 캐릭터 영역 (방 모양)
-        Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 50), // 상단 여백 추가 (달/해 가려짐 방지)
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  child: EnhancedCharacterRoomWidget(
-                    isAwake: isAwake,
-                    characterLevel: _friend!.characterLevel,
-                    consecutiveDays: _friend!.consecutiveDays,
-                    roomDecoration: _friend!.roomDecoration,
-                    showBorder: true,
-                    currentAnimation: 'idle',
-                    onPropTap: (prop) => _showFriendMemoDialog(prop),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildFriendStats(isAwake, colorScheme),
-              ],
-            ),
-          ),
-        ),
-
-        // 방명록 영역
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadowColor.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.mode_comment_rounded,
-                          color: colorScheme.primaryButton,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '친구에게 한마디',
-                          style: TextStyle(
-                            color: colorScheme.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextButton.icon(
-                      onPressed: () => _showSentMessagesDialog(colorScheme),
-                      icon: Icon(
-                        Icons.history_rounded,
-                        color: colorScheme.primaryButton,
-                        size: 16,
-                      ),
-                      label: Text(
-                        '보낸 기록',
-                        style: TextStyle(
-                          color: colorScheme.primaryButton,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        backgroundColor:
-                            colorScheme.primaryButton.withOpacity(0.08),
-                        side: BorderSide(
-                          color: colorScheme.primaryButton.withOpacity(0.15),
-                          width: 1,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Consumer<SocialController>(
-                  builder: (context, socialController, child) {
-                    final remaining = _friend != null
-                        ? socialController.cheerCooldownRemaining(_friend!.uid)
-                        : Duration.zero;
-                    final seconds = (remaining.inMilliseconds / 1000).ceil();
-                    final isCooldown = seconds > 0;
-
-                    return Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: LinearGradient(
-                          colors: isCooldown
-                              ? [
-                                  colorScheme.textHint.withOpacity(0.3),
-                                  colorScheme.textHint.withOpacity(0.2),
-                                ]
-                              : [
-                                  colorScheme.primaryButton,
-                                  colorScheme.primaryButton.withOpacity(0.85),
-                                ],
-                        ),
-                        boxShadow: [
-                          if (!isCooldown)
-                            BoxShadow(
-                              color: colorScheme.primaryButton.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                        ],
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: isCooldown
-                            ? null
-                            : () => _showGuestbookDialog(colorScheme),
-                        icon: Icon(
-                          isCooldown
-                              ? Icons.timer_outlined
-                              : Icons.send_rounded,
-                          size: 20,
-                        ),
-                        label: Text(
-                          isCooldown
-                              ? '$seconds초 후에 다시 보낼 수 있어요'
-                              : '친구에게 응원 메시지 보내기',
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: isCooldown
-                              ? colorScheme.textSecondary
-                              : colorScheme.primaryButtonForeground,
-                          disabledForegroundColor: colorScheme.textSecondary,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 

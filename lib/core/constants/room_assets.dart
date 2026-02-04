@@ -75,7 +75,7 @@ class RoomAssets {
         name: '기본',
         price: 0,
         icon: Icons.check_box_outline_blank, // Plain
-        color: Color(0xFFF5F5DC)),
+        imagePath: 'assets/images/Default_wall.png'),
     RoomAsset(
         id: 'classic',
         name: '클래식',
@@ -178,6 +178,7 @@ class RoomAssets {
       name: '알람시계',
       price: 150,
       icon: Icons.alarm,
+      sizeMultiplier: 0.6,
       imagePath: 'assets/items/AlarmClock.png',
     ),
     RoomAsset(
@@ -186,7 +187,7 @@ class RoomAssets {
       price: 200,
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/WoodDesk.png',
-      sizeMultiplier: 1.7,
+      sizeMultiplier: 1.2,
       aspectRatio: 1.8,
     ),
     RoomAsset(
@@ -195,7 +196,7 @@ class RoomAssets {
       price: 200,
       icon: Icons.chair,
       imagePath: 'assets/items/PogeunSofa.png',
-      sizeMultiplier: 2.0,
+      sizeMultiplier: 1.2,
       aspectRatio: 1.5,
     ),
     RoomAsset(
@@ -204,7 +205,7 @@ class RoomAssets {
       price: 200,
       icon: Icons.chair,
       imagePath: 'assets/items/CozyBean.png',
-      sizeMultiplier: 1.6,
+      sizeMultiplier: 1.0,
       aspectRatio: 1.2,
     ),
     RoomAsset(
@@ -213,7 +214,7 @@ class RoomAssets {
       price: 120,
       icon: Icons.local_florist,
       imagePath: 'assets/items/Pot1.svg',
-      sizeMultiplier: 1.0,
+      sizeMultiplier: 0.8,
     ),
     RoomAsset(
       id: 'white_bear',
@@ -221,7 +222,7 @@ class RoomAssets {
       price: 180,
       icon: Icons.pets,
       imagePath: 'assets/items/WhiteBear.png',
-      sizeMultiplier: 1.0,
+      sizeMultiplier: 0.8,
     ),
     RoomAsset(
       id: 'pink_chair',
@@ -229,7 +230,7 @@ class RoomAssets {
       price: 180,
       icon: Icons.chair,
       imagePath: 'assets/items/PinkChair.png',
-      sizeMultiplier: 1.5,
+      sizeMultiplier: 1.0,
     ),
     RoomAsset(
       id: 'blue_chair',
@@ -237,7 +238,7 @@ class RoomAssets {
       price: 180,
       icon: Icons.chair,
       imagePath: 'assets/items/BlueChair.png',
-      sizeMultiplier: 1.5,
+      sizeMultiplier: 1.0,
     ),
     RoomAsset(
       id: 'mug_cup',
@@ -253,7 +254,7 @@ class RoomAssets {
       price: 100,
       icon: Icons.local_cafe,
       imagePath: 'assets/items/WoodCup.png',
-      sizeMultiplier: 0.8,
+      sizeMultiplier: 0.6,
     ),
     RoomAsset(
       id: 'cloud_watch',
@@ -261,7 +262,7 @@ class RoomAssets {
       price: 100,
       icon: Icons.access_time,
       imagePath: 'assets/items/CloudDigital.png',
-      sizeMultiplier: 1.3,
+      sizeMultiplier: 1.0,
     ),
     RoomAsset(
       id: 'red_carpet',
@@ -269,7 +270,7 @@ class RoomAssets {
       price: 100,
       icon: Icons.access_time,
       imagePath: 'assets/items/RedCarpet.png',
-      sizeMultiplier: 1.5,
+      sizeMultiplier: 1.0,
       aspectRatio: 1.8,
     ),
     RoomAsset(
@@ -278,7 +279,7 @@ class RoomAssets {
       price: 50,
       icon: Icons.note_alt_outlined,
       imagePath: 'assets/items/StickyNote.png',
-      sizeMultiplier: 0.7,
+      sizeMultiplier: 0.6,
       aspectRatio: 1.0,
     ),
   ];
@@ -295,7 +296,7 @@ class RoomAssets {
         name: '나무 바닥',
         price: 150,
         icon: Icons.view_quilt,
-        imagePath: 'assets/images/WoodFloor.svg'),
+        imagePath: 'assets/images/Wood_tile1.png'),
     RoomAsset(
         id: 'tile_sky',
         name: '하늘 타일',

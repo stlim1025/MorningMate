@@ -7,7 +7,7 @@ import '../../../core/constants/room_assets.dart';
 import '../controllers/character_controller.dart';
 import '../../morning/controllers/morning_controller.dart';
 import '../../morning/widgets/enhanced_character_room_widget.dart';
-import '../../morning/widgets/room_background_widget.dart';
+
 import '../../../data/models/room_decoration_model.dart';
 import '../../../core/theme/app_theme_type.dart';
 import '../../../core/widgets/app_dialog.dart';
@@ -23,6 +23,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
   late ValueNotifier<RoomDecorationModel> _decorationNotifier;
   String _selectedCategory =
       'background'; // 'theme', 'background', 'wallpaper', 'props'
+  int? _selectedPropIndex; // Track selected prop for editing
   String? _currentUserThemeId;
   late AppThemeType _originalThemeType;
   bool? _previewIsAwake;
@@ -198,273 +199,116 @@ class _DecorationScreenState extends State<DecorationScreen> {
               child: ValueListenableBuilder<RoomDecorationModel>(
                 valueListenable: _decorationNotifier,
                 builder: (context, decoration, child) {
-                  return LayoutBuilder(builder: (context, constraints) {
-                    final controller = context.read<CharacterController>();
-                    final morningController =
-                        context.watch<MorningController>();
+                  final controller = context.read<CharacterController>();
+                  final morningController = context.watch<MorningController>();
 
-                    // Use preview state or actual state if preview state is not yet set
-                    _previewIsAwake ??= morningController.hasDiaryToday;
-                    final isAwakePreview = _previewIsAwake!;
+                  // Use preview state or actual state if preview state is not yet set
+                  _previewIsAwake ??= morningController.hasDiaryToday;
+                  final isAwakePreview = _previewIsAwake!;
 
-                    final isDarkMode = themeController.isDarkMode;
-
-                    return Stack(
-                      children: [
-                        // 0. Global Background (Moon/Sun/Stars/Gradient) - Fills entire top area
-                        Positioned.fill(
-                          child: RoomBackgroundWidget(
-                            decoration: decoration,
-                            isDarkMode: isDarkMode,
-                            colorScheme: colorScheme,
-                            isAwake: isAwakePreview,
-                          ),
-                        ),
-
-                        // 1. Room Interior (The Square Room) - Positioned similar to main screen
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                                left: 30, right: 30, bottom: 40),
-                            child: AspectRatio(
-                              aspectRatio: 1.0,
-                              child: AnimatedBuilder(
-                                animation: _decorationNotifier,
-                                builder: (context, child) {
-                                  final currentDecoration =
-                                      _decorationNotifier.value;
-                                  return LayoutBuilder(
-                                    builder: (context, roomConstraints) {
-                                      final innerRoomSize =
-                                          roomConstraints.maxWidth;
-                                      return Stack(
-                                        clipBehavior: Clip.none,
-                                        children: [
-                                          Positioned.fill(
-                                            child: EnhancedCharacterRoomWidget(
-                                              isAwake: isAwakePreview,
-                                              characterLevel: controller
-                                                      .currentUser
-                                                      ?.characterLevel ??
-                                                  1,
-                                              consecutiveDays: controller
-                                                      .currentUser
-                                                      ?.consecutiveDays ??
-                                                  0,
-                                              roomDecoration: currentDecoration,
-                                              hideProps:
-                                                  _selectedCategory == 'props',
-                                              showBorder: true,
-                                              currentAnimation:
-                                                  controller.currentAnimation,
-                                            ),
-                                          ),
-                                          // 2. Props (rendered on top of the room)
-                                          if (_selectedCategory == 'props')
-                                            ...currentDecoration.props
-                                                .asMap()
-                                                .entries
-                                                .map((entry) {
-                                              final idx = entry.key;
-                                              final prop = entry.value;
-                                              final asset = RoomAssets.props
-                                                  .firstWhere(
-                                                      (p) => p.id == prop.type,
-                                                      orElse: () =>
-                                                          const RoomAsset(
-                                                              id: '',
-                                                              name: '',
-                                                              price: 0,
-                                                              icon: Icons
-                                                                  .circle));
-                                              final baseSize = innerRoomSize *
-                                                  0.16 *
-                                                  asset.sizeMultiplier;
-                                              final propWidth =
-                                                  baseSize * asset.aspectRatio;
-                                              final propHeight = baseSize;
-
-                                              return Positioned(
-                                                left: prop.x *
-                                                    (innerRoomSize - propWidth),
-                                                top: prop.y *
-                                                    (innerRoomSize -
-                                                        propHeight),
-                                                child: Stack(
-                                                  clipBehavior: Clip.none,
-                                                  children: [
-                                                    GestureDetector(
-                                                      onPanUpdate: (details) {
-                                                        final newX = (prop.x +
-                                                                details.delta
-                                                                        .dx /
-                                                                    (innerRoomSize -
-                                                                        propWidth))
-                                                            .clamp(0.0, 1.0);
-                                                        final newY = (prop.y +
-                                                                details.delta
-                                                                        .dy /
-                                                                    (innerRoomSize -
-                                                                        propHeight))
-                                                            .clamp(0.0, 1.0);
-
-                                                        final newProps = List<
-                                                                RoomPropModel>.from(
-                                                            currentDecoration
-                                                                .props);
-                                                        newProps[idx] =
-                                                            prop.copyWith(
-                                                                x: newX,
-                                                                y: newY);
-                                                        _decorationNotifier
-                                                                .value =
-                                                            currentDecoration
-                                                                .copyWith(
-                                                                    props:
-                                                                        newProps);
-                                                      },
-                                                      child: Container(
-                                                        width: propWidth,
-                                                        height: propHeight,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          border: Border.all(
-                                                            color: colorScheme
-                                                                .primaryButton
-                                                                .withOpacity(
-                                                                    0.5),
-                                                            width: 2.0,
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(12),
-                                                          color: Colors.white
-                                                              .withOpacity(0.3),
-                                                        ),
-                                                        child: Center(
-                                                            child: _getPropIcon(
-                                                                prop.type,
-                                                                propWidth,
-                                                                propHeight)),
-                                                      ),
-                                                    ),
-                                                    Positioned(
-                                                      top: -10,
-                                                      right: -10,
-                                                      child: GestureDetector(
-                                                        onTap: () async {
-                                                          if (prop.type ==
-                                                              'sticky_note') {
-                                                            final confirm =
-                                                                await AppDialog
-                                                                    .show<bool>(
-                                                              context: context,
-                                                              key: AppDialogKey
-                                                                  .deleteStickyNote,
-                                                            );
-                                                            if (confirm != true)
-                                                              return;
-                                                          }
-
-                                                          final newProps = List<
-                                                                  RoomPropModel>.from(
-                                                              currentDecoration
-                                                                  .props);
-                                                          newProps
-                                                              .removeAt(idx);
-                                                          _decorationNotifier
-                                                                  .value =
-                                                              currentDecoration
-                                                                  .copyWith(
-                                                                      props:
-                                                                          newProps);
-                                                        },
-                                                        child: Container(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(4),
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                            color: Colors.white,
-                                                            shape:
-                                                                BoxShape.circle,
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                  color: Colors
-                                                                      .black12,
-                                                                  blurRadius: 4)
-                                                            ],
-                                                          ),
-                                                          child: Icon(
-                                                              Icons.close,
-                                                              color: colorScheme
-                                                                  .error,
-                                                              size: 16),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            }),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // 3. Day/Night Preview Toggle Button
-                        Positioned(
-                          top: 100, // Below App Bar
-                          left: 20,
-                          child: GestureDetector(
-                            onTap: () {
+                  return Stack(
+                    children: [
+                      // 1. Room Interior (Full Screen)
+                      Positioned.fill(
+                        child: EnhancedCharacterRoomWidget(
+                          isAwake: isAwakePreview,
+                          characterLevel:
+                              controller.currentUser?.characterLevel ?? 1,
+                          consecutiveDays:
+                              controller.currentUser?.consecutiveDays ?? 0,
+                          roomDecoration: decoration,
+                          hideProps: false,
+                          showBorder: false,
+                          bottomPadding: 0,
+                          currentAnimation: controller.currentAnimation,
+                          isPropEditable: _selectedCategory == 'props',
+                          selectedPropIndex: _selectedCategory == 'props'
+                              ? _selectedPropIndex
+                              : null,
+                          onPropChanged: (index, newProp) {
+                            final newProps =
+                                List<RoomPropModel>.from(decoration.props);
+                            newProps[index] = newProp;
+                            _decorationNotifier.value =
+                                decoration.copyWith(props: newProps);
+                          },
+                          onPropTap: (prop) {
+                            if (_selectedCategory != 'props') return;
+                            final index = decoration.props.indexOf(prop);
+                            if (index != -1) {
                               setState(() {
-                                _previewIsAwake = !isAwakePreview;
+                                _selectedPropIndex = index;
                               });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.35),
-                                borderRadius: BorderRadius.circular(20),
-                                border:
-                                    Border.all(color: Colors.white24, width: 1),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    isAwakePreview
-                                        ? Icons.wb_sunny_rounded
-                                        : Icons.nightlight_round,
-                                    color: isAwakePreview
-                                        ? Colors.orangeAccent
-                                        : Colors.yellowAccent,
-                                    size: 18,
+                            }
+                          },
+                          onPropDelete: (index) async {
+                            final prop = decoration.props[index];
+                            if (prop.type == 'sticky_note') {
+                              final confirm = await AppDialog.show<bool>(
+                                context: context,
+                                key: AppDialogKey.deleteStickyNote,
+                              );
+                              if (confirm != true) return;
+                            }
+
+                            final newProps =
+                                List<RoomPropModel>.from(decoration.props);
+                            newProps.removeAt(index);
+                            _decorationNotifier.value =
+                                decoration.copyWith(props: newProps);
+                            setState(() {
+                              _selectedPropIndex = null;
+                            });
+                          },
+                        ),
+                      ),
+
+                      // 2. Day/Night Preview Toggle Button
+                      Positioned(
+                        top: 100, // Below App Bar
+                        left: 20,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _previewIsAwake = !isAwakePreview;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.35),
+                              borderRadius: BorderRadius.circular(20),
+                              border:
+                                  Border.all(color: Colors.white24, width: 1),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isAwakePreview
+                                      ? Icons.wb_sunny_rounded
+                                      : Icons.nightlight_round,
+                                  color: isAwakePreview
+                                      ? Colors.orangeAccent
+                                      : Colors.yellowAccent,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isAwakePreview ? '미리보기: 낮' : '미리보기: 밤',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    isAwakePreview ? '미리보기: 낮' : '미리보기: 밤',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ],
-                    );
-                  });
+                      ),
+                    ],
+                  );
                 },
               ),
             ),
@@ -1027,37 +871,5 @@ class _DecorationScreenState extends State<DecorationScreen> {
         ],
       ),
     );
-  }
-
-  Widget _getPropIcon(String type, double width, double height) {
-    if (type.isEmpty) return SizedBox(width: width, height: height);
-    final asset = RoomAssets.props.firstWhere((p) => p.id == type,
-        orElse: () =>
-            const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
-    if (asset.id.isEmpty) return SizedBox(width: width, height: height);
-
-    if (asset.imagePath != null) {
-      return asset.imagePath!.endsWith('.svg')
-          ? SvgPicture.asset(
-              asset.imagePath!,
-              width: width * 0.9,
-              height: height * 0.9,
-              fit: BoxFit.contain,
-            )
-          : Image.asset(
-              asset.imagePath!,
-              width: width * 0.9,
-              height: height * 0.9,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(asset.icon,
-                    color: Colors.blueGrey,
-                    size: (width < height ? width : height) * 0.7);
-              },
-            );
-    }
-
-    return Icon(asset.icon,
-        color: Colors.blueGrey, size: (width < height ? width : height) * 0.7);
   }
 }
