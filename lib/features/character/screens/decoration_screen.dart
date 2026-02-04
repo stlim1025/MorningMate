@@ -221,10 +221,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
                           showBorder: false,
                           bottomPadding: 0,
                           currentAnimation: controller.currentAnimation,
-                          isPropEditable: _selectedCategory == 'props',
-                          selectedPropIndex: _selectedCategory == 'props'
-                              ? _selectedPropIndex
-                              : null,
+                          isPropEditable: true, // 항상 소품 편집 가능
+                          selectedPropIndex: _selectedPropIndex, // 항상 선택 표시
                           onPropChanged: (index, newProp) {
                             final newProps =
                                 List<RoomPropModel>.from(decoration.props);
@@ -233,11 +231,19 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                 decoration.copyWith(props: newProps);
                           },
                           onPropTap: (prop) {
-                            if (_selectedCategory != 'props') return;
                             final index = decoration.props.indexOf(prop);
                             if (index != -1) {
+                              // Bring selected prop to front (end of list = top layer)
+                              final newProps =
+                                  List<RoomPropModel>.from(decoration.props);
+                              final selectedProp = newProps.removeAt(index);
+                              newProps.add(selectedProp);
+
+                              _decorationNotifier.value =
+                                  decoration.copyWith(props: newProps);
+
                               setState(() {
-                                _selectedPropIndex = index;
+                                _selectedPropIndex = newProps.length - 1;
                               });
                             }
                           },

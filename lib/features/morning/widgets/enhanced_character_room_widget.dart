@@ -64,15 +64,9 @@ class _EnhancedCharacterRoomWidgetState
   bool _isMoving = false;
   bool _isDragging = false;
   bool _isFalling = false;
+
   double? _dragBottom;
   double? _dragLeft;
-
-  // ... (existing methods _handleTap, initState, etc - preserved by not including them in replacement if feasible, but I need to be careful with range)
-  // I will skip to the _buildPropFor3D part since I am using MultiReplace or big chunk?
-  // The tool is replace_file_content.
-  // I need to replace the Constructor part first.
-  // Then the _buildPropFor3D part.
-  // I will use replace_file_content for constructor first.
 
   void _handleTap() {
     if (_isTapped) return;
@@ -223,14 +217,15 @@ class _EnhancedCharacterRoomWidgetState
             _build3DRoom(
                 widget.isAwake, colorScheme, decoration, width, renderHeight),
 
-            // Props
-            if (!widget.hideProps)
+            // Props (순서대로 렌더링 - 리스트 끝이 최상위 레이어)
+            if (!widget.hideProps) ...[
               ...decoration.props.asMap().entries.map((entry) {
-                final index = entry.key;
-                final prop = entry.value;
-                if (!_isPropValid(prop)) return const SizedBox.shrink();
-                return _buildPropFor3D(prop, index, width, renderHeight);
+                return _isPropValid(entry.value)
+                    ? _buildPropFor3D(
+                        entry.value, entry.key, width, renderHeight)
+                    : const SizedBox.shrink();
               }),
+            ],
 
             // Character
             _buildCharacterContainer3D(
@@ -648,40 +643,22 @@ class _EnhancedCharacterRoomWidgetState
   /// 3D 바닥에 Prop 배치 (사다리꼴 좌표계)
   Widget _buildPropFor3D(
       RoomPropModel prop, int index, double width, double height) {
-    // Geometry Constants
-    final hLineYBottom = height * 0.42; // Floor Top (Back Wall)
-    final vLineX = width * 0.32;
-    final floorLeftY = height * 0.60;
-
-    // Prop Dimensions
+    // Prop Dimensions with simple depth scaling
     final asset = RoomAssets.props.firstWhere(
       (p) => p.id == prop.type,
       orElse: () =>
           const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle),
     );
-    final baseSize = (width + height) * 0.08 * asset.sizeMultiplier;
+
+    // Simple scale based on Y position for depth cue
+    final scale = 0.7 + 0.4 * prop.y.clamp(0.0, 1.0);
+    final baseSize = (width + height) * 0.08 * asset.sizeMultiplier * scale;
     final propWidth = baseSize * asset.aspectRatio;
     final propHeight = baseSize;
 
-    // Coordinates (Relaxed Clamp 0.0 ~ 1.0)
-    final py = prop.y.clamp(0.0, 1.0);
-    final px = prop.x.clamp(0.0, 1.0);
-
-    // Y Position (Depth)
-    // 0 = Front (Bottom), 1 = Back (Top)
-    final yPos = hLineYBottom + (1 - py) * (height - hLineYBottom);
-
-    // X Boundaries at current Y
-    double xLeft = 0;
-    if (yPos < floorLeftY) {
-      xLeft = vLineX * (floorLeftY - yPos) / (floorLeftY - hLineYBottom);
-    } else {
-      xLeft = 0;
-    }
-    final xRight = width;
-
-    // X Position
-    final xPos = xLeft + px * (xRight - xLeft) - propWidth / 2;
+    // Direct 2D coordinate mapping (0~1 to screen size)
+    final xPos = prop.x * width;
+    final yPos = prop.y * height;
 
     // Visual Widget
     Widget child = _getPropVisual(prop.type, propWidth, propHeight);
@@ -738,30 +715,12 @@ class _EnhancedCharacterRoomWidgetState
         onPanUpdate: (details) {
           if (widget.onPropChanged == null) return;
 
-          // Inverse Logic
-          // dy maps to d(py)
-          // yPos = hLineYBottom + (1 - py) * (H - hLineYBottom)
-          // dy = -d(py) * (H - hLineYBottom)
-          // d(py) = -dy / (H - hLineYBottom)
-          final dPy = -details.delta.dy / (height - hLineYBottom);
-          final newPy = (prop.y + dPy).clamp(0.0, 1.0);
+          // Simple 2D drag: convert screen delta to normalized coordinates
+          final dPx = details.delta.dx / width;
+          final dPy = details.delta.dy / height;
 
-          // newPx calculation involves recalculating xLeft/xRight at newPy
-          final newYPos = hLineYBottom + (1 - newPy) * (height - hLineYBottom);
-          double newXLeft = 0;
-          if (newYPos < floorLeftY) {
-            newXLeft =
-                vLineX * (floorLeftY - newYPos) / (floorLeftY - hLineYBottom);
-          }
-          final newXRight = width;
-          final roomWidthAtY = newXRight - newXLeft;
-
-          // dx maps to d(px)
-          // xPos = xLeft + px * roomWidthAtY - w/2
-          // dx = d(px) * roomWidthAtY
-          // d(px) = dx / roomWidthAtY
-          final dPx = details.delta.dx / (roomWidthAtY > 0 ? roomWidthAtY : 1);
           final newPx = (prop.x + dPx).clamp(0.0, 1.0);
+          final newPy = (prop.y + dPy).clamp(0.0, 1.0);
 
           widget.onPropChanged!(index, prop.copyWith(x: newPx, y: newPy));
         },
@@ -775,8 +734,8 @@ class _EnhancedCharacterRoomWidgetState
     }
 
     return Positioned(
-      left: xPos,
-      top: yPos - propHeight,
+      left: xPos - propWidth / 2,
+      top: yPos - propHeight / 2,
       child: child,
     );
   }
@@ -787,7 +746,7 @@ class _EnhancedCharacterRoomWidgetState
     final hLineYBottom = height * 0.42;
     final vLineX = width * 0.32;
     final floorLeftY = height * 0.60;
-    final charSize = (width + height) * 0.12;
+    final charSize = (width + height) * 0.08;
 
     double currentLeft;
     double currentTop;
