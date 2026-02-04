@@ -13,7 +13,6 @@ import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/models/room_decoration_model.dart';
-import '../widgets/room_background_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MorningScreen extends StatefulWidget {
@@ -193,15 +192,12 @@ class _MorningScreenState extends State<MorningScreen>
 
           return Stack(
             children: [
-              // 1. Sky Gradient Background
-              // 1. Global Background (Controlled by Room Decoration)
+              // 1. 3D 방이 전체 영역을 채움 (배경은 창문을 통해서만 표시)
               Positioned.fill(
-                child: RoomBackgroundWidget(
-                  decoration: characterController.currentUser?.roomDecoration ??
-                      RoomDecorationModel(),
-                  isAwake: isAwake,
-                  isDarkMode: isDarkMode,
-                  colorScheme: colorScheme,
+                child: _buildEnhancedCharacterRoom(
+                  context,
+                  isAwake,
+                  characterController,
                 ),
               ),
 
@@ -229,26 +225,12 @@ class _MorningScreenState extends State<MorningScreen>
                 ),
               ),
 
-              // 4. Main Content
+              // 3. Main Content (헤더, 하단 섹션 오버레이)
               SafeArea(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _buildHeader(context, isAwake, colorScheme, isDarkMode),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 60),
-                            _buildEnhancedCharacterRoom(
-                              context,
-                              isAwake,
-                              characterController,
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
-                      ),
-                    ),
                     _buildBottomSection(
                       context,
                       morningController,
@@ -460,17 +442,19 @@ class _MorningScreenState extends State<MorningScreen>
     bool isAwake,
     CharacterController characterController,
   ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      child: EnhancedCharacterRoomWidget(
-        key: const ValueKey('main_character_room'),
-        isAwake: isAwake,
-        characterLevel: characterController.currentUser?.characterLevel ?? 1,
-        consecutiveDays: characterController.currentUser?.consecutiveDays ?? 0,
-        roomDecoration: characterController.currentUser?.roomDecoration,
-        currentAnimation: characterController.currentAnimation,
-        onPropTap: (prop) => _showMemoDialog(prop),
-      ),
+    final isDarkMode = Provider.of<ThemeController>(context, listen: false).isDarkMode;
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+
+    return EnhancedCharacterRoomWidget(
+      key: const ValueKey('main_character_room'),
+      isAwake: isAwake,
+      isDarkMode: isDarkMode,
+      colorScheme: colorScheme,
+      characterLevel: characterController.currentUser?.characterLevel ?? 1,
+      consecutiveDays: characterController.currentUser?.consecutiveDays ?? 0,
+      roomDecoration: characterController.currentUser?.roomDecoration,
+      currentAnimation: characterController.currentAnimation,
+      onPropTap: (prop) => _showMemoDialog(prop),
     );
   }
 
