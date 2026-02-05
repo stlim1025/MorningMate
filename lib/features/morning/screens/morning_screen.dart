@@ -16,6 +16,7 @@ import '../../../data/models/room_decoration_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/store_button.dart';
 import '../widgets/diary_button.dart';
+import '../widgets/decoration_button.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
 
 class MorningScreen extends StatefulWidget {
@@ -229,41 +230,47 @@ class _MorningScreenState extends State<MorningScreen>
                 ),
               ),
 
-              // 3. Floating Buttons (Room 하단에 플로팅)
+              // 3. 상점/꾸미기 버튼 (왼쪽)
               Positioned(
-                left: 0,
-                right: 0,
-                bottom: 15, // 하단 탭 바 바로 위
+                left: 20,
+                bottom: isAwake ? 15 : 120, // 일기 작성 후에는 하단 탭 바로 위, 작성 전에는 위쪽
                 child: SafeArea(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20),
-                        child:
-                            const StoreButton(), // No transform needed for simple icon
-                      ),
-                      if (!isAwake)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 10, right: 20),
-                            child: DiaryButton(
-                              onTap: () async {
-                                if (morningController.currentQuestion == null) {
-                                  await morningController.fetchRandomQuestion();
-                                }
-                                if (context.mounted) {
-                                  context.push('/writing',
-                                      extra: morningController.currentQuestion);
-                                }
-                              },
-                            ),
-                          ),
-                        ),
+                      const DecorationButton(),
+                      const SizedBox(height: 8),
+                      const StoreButton(),
                     ],
                   ),
                 ),
               ),
+
+              // 4. 일기작성하기 버튼 (중앙 하단)
+              if (!isAwake)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 15, // 하단 탭 바 바로 위
+                  child: SafeArea(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: DiaryButton(
+                          onTap: () async {
+                            if (morningController.currentQuestion == null) {
+                              await morningController.fetchRandomQuestion();
+                            }
+                            if (context.mounted) {
+                              context.push('/writing',
+                                  extra: morningController.currentQuestion);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
 
               // 4. Main Content (헤더, 하단 섹션 오버레이)
               SafeArea(

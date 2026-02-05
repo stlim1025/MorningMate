@@ -31,12 +31,14 @@ class FriendRoomScreen extends StatefulWidget {
 }
 
 class _FriendRoomScreenState extends State<FriendRoomScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   UserModel? _friend;
   bool _isLoading = true;
   bool? _friendAwakeStatus;
   late AnimationController _buttonController;
   late Animation<double> _scaleAnimation;
+  late AnimationController _recordButtonController;
+  late Animation<double> _recordScaleAnimation;
 
   @override
   void initState() {
@@ -47,6 +49,14 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _buttonController, curve: Curves.easeInOut),
+    );
+
+    _recordButtonController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _recordScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _recordButtonController, curve: Curves.easeInOut),
     );
     _loadFriendData();
   }
@@ -88,6 +98,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
   @override
   void dispose() {
     _buttonController.dispose();
+    _recordButtonController.dispose();
     super.dispose();
   }
 
@@ -228,55 +239,11 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            // 보낸 기록 버튼 (왼쪽)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 20),
-                              child: GestureDetector(
-                                onTap: () =>
-                                    _showSentMessagesDialog(colorScheme),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 56,
-                                      height: 56,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.15),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Icon(
-                                        Icons.history_rounded,
-                                        color: colorScheme.primaryButton,
-                                        size: 28,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    const Text(
-                                      '보낸기록',
-                                      style: TextStyle(
-                                        fontFamily: 'BMJUA',
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF4E342E),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // 응원 메시지 보내기 버튼 (오른쪽)
+                            // 응원 메시지 보내기 버튼 (왼쪽)
                             Expanded(
                               child: Padding(
                                 padding:
-                                    const EdgeInsets.only(left: 10, right: 20),
+                                    const EdgeInsets.only(left: 20, right: 10),
                                 child: GestureDetector(
                                   onTapDown: isCooldown
                                       ? null
@@ -324,6 +291,29 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                         ],
                                       ),
                                     ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // 보낸 기록 버튼 (오른쪽)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 20),
+                              child: GestureDetector(
+                                onTapDown: (_) =>
+                                    _recordButtonController.forward(),
+                                onTapUp: (_) {
+                                  _recordButtonController.reverse();
+                                  _showSentMessagesDialog(colorScheme);
+                                },
+                                onTapCancel: () =>
+                                    _recordButtonController.reverse(),
+                                child: ScaleTransition(
+                                  scale: _recordScaleAnimation,
+                                  child: Image.asset(
+                                    'assets/icons/SendRecord_Icon.png',
+                                    width: 90,
+                                    height: 90,
+                                    fit: BoxFit.contain,
                                   ),
                                 ),
                               ),

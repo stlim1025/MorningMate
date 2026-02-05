@@ -760,7 +760,7 @@ class _EnhancedCharacterRoomWidgetState
       currentTop = (_dragY! * height - charSize).clamp(0.0, height - charSize);
     } else {
       // 일반 상태: 바닥 영역에 3D 매핑
-      final py = _verticalPosition.clamp(0.42, 1.0); // 바닥 영역만
+      final py = _verticalPosition.clamp(0.5, 1.0); // 바닥 영역만 (0.5 이상)
       final px = _horizontalPosition.clamp(0.05, 0.95);
 
       // 단순 2D 매핑 (바닥 영역)
@@ -853,14 +853,29 @@ class _EnhancedCharacterRoomWidgetState
     _wanderTimer?.cancel();
     _movementStopTimer?.cancel();
 
-    // 현재 캐릭터의 정규화된 위치(_horizontalPosition, _verticalPosition)를 드래그 좌표로 초기화합니다.
+    // 현재 캐릭터의 실제 화면 위치를 역산
+    // _buildCharacterContainer3D의 렌더링 로직과 동일하게 계산
+    final hLineYBottom = height * 0.42;
+    final py = _verticalPosition.clamp(0.5, 1.0);
+    final px = _horizontalPosition.clamp(0.05, 0.95);
+
+    // 화면상 캐릭터 중심 위치 계산 (렌더링 로직 역산)
+    final currentLeft =
+        (px * width - charSize / 2).clamp(0.0, width - charSize);
+    final currentTop = (py * height - charSize)
+        .clamp(hLineYBottom - charSize * 0.5, height - charSize);
+
+    // 화면 위치를 정규화 좌표로 변환 (캐릭터 중심 기준)
+    final screenCenterX = currentLeft + charSize / 2;
+    final screenCenterY = currentTop + charSize;
+
     setState(() {
       _isDragging = true;
       _isFalling = false;
       _isMoving = true;
-      // 현재 캐릭터 위치를 드래그 시작점으로
-      _dragX = _horizontalPosition;
-      _dragY = _verticalPosition;
+      // 실제 화면 위치를 정규화하여 드래그 시작점으로 사용
+      _dragX = (screenCenterX / width).clamp(0.0, 1.0);
+      _dragY = (screenCenterY / height).clamp(0.0, 1.0);
     });
   }
 
@@ -868,7 +883,7 @@ class _EnhancedCharacterRoomWidgetState
       DragUpdateDetails d, double width, double height, double charSize) {
     if (!_isDragging) return;
     setState(() {
-      // 화면 전체를 자유롭게 드래그 (정규화된 좌표)
+      // 델타 값만 적용하여 캐릭터 이동
       _dragX = ((_dragX ?? 0.5) + d.delta.dx / width).clamp(0.0, 1.0);
       _dragY = ((_dragY ?? 0.5) + d.delta.dy / height).clamp(0.0, 1.0);
     });
@@ -877,32 +892,78 @@ class _EnhancedCharacterRoomWidgetState
   void _handleDragEnd3D(
       DragEndDetails d, double width, double height, double charSize) {
     if (!_isDragging) return;
+
+    final dropY = _dragY ?? 0.5;
+    final dropX = _dragX ?? 0.5;
+
+    // 바닥 영역 기준: 0.5 이상이 바닥
+    final floorThreshold = 0.5;
+    final wasOnFloor = _verticalPosition >= floorThreshold;
+    final isDroppedOnFloor = dropY >= floorThreshold;
+
     setState(() {
       _isDragging = false;
-      _isFalling = true;
 
-      final dropY = _dragY ?? 0.5;
-      final dropX = _dragX ?? 0.5;
+      // 드래그 좌표 초기화 (다음 드래그를 위해)
+      _dragX = null;
+      _dragY = null;
 
-      // 바닥 영역(0.42 이하)에 놓으면 가장 가까운 바닥으로 떨어짐
-      if (dropY < 0.42) {
-        _verticalPosition = 0.42; // 바닥 맨 위로
-      } else {
-        _verticalPosition = dropY.clamp(0.42, 1.0);
-      }
+      // 바닥에서 바닥으로 이동: 떨어지는 모션 없음
+      if (wasOnFloor && isDroppedOnFloor) {
+        _isFalling = false;
+        _verticalPosition = dropY.clamp(floorThreshold, 1.0);
+        _horizontalPosition = dropX.clamp(0.05, 0.95);
+        _isMoving = false;
 
-      _horizontalPosition = dropX.clamp(0.05, 0.95);
-    });
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        setState(() {
-          _isFalling = false;
-          _isMoving = false;
-        });
-        // 잠시 대기 후 배회 다시 시작 (자연스러운 연결)
-        Future.delayed(const Duration(milliseconds: 1500), () {
+        // 바로 배회 재시작
+        Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted && !_isDragging) {
             _startWandering();
+          }
+        });
+      }
+      // 벽 영역(0.5 미만)에서 놓으면 바닥으로 떨어짐
+      else if (dropY < floorThreshold) {
+        _isFalling = true;
+        _verticalPosition = floorThreshold; // 바닥 맨 위로 떨어짐
+
+        // 수평 위치는 드래그한 위치 유지 (안전하게 clamp)
+        // 왼쪽 벽(x < 0.3)에서 놓으면 왼쪽 바닥으로
+        // 오른쪽 벽(x > 0.7)에서 놓으면 오른쪽 바닥으로
+        // 중앙 벽에서 놓으면 중앙 바닥으로
+        _horizontalPosition = dropX.clamp(0.1, 0.9);
+
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) {
+            setState(() {
+              _isFalling = false;
+              _isMoving = false;
+            });
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              if (mounted && !_isDragging) {
+                _startWandering();
+              }
+            });
+          }
+        });
+      }
+      // 바닥에서 벽으로 이동: 바닥으로 떨어짐
+      else {
+        _isFalling = true;
+        _verticalPosition = dropY.clamp(floorThreshold, 1.0);
+        _horizontalPosition = dropX.clamp(0.05, 0.95);
+
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) {
+            setState(() {
+              _isFalling = false;
+              _isMoving = false;
+            });
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              if (mounted && !_isDragging) {
+                _startWandering();
+              }
+            });
           }
         });
       }
