@@ -14,6 +14,9 @@ import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/models/room_decoration_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../widgets/store_button.dart';
+import '../widgets/diary_button.dart';
+import '../../common/widgets/custom_bottom_navigation_bar.dart';
 
 class MorningScreen extends StatefulWidget {
   const MorningScreen({super.key});
@@ -198,6 +201,7 @@ class _MorningScreenState extends State<MorningScreen>
                   context,
                   isAwake,
                   characterController,
+                  todaysMood: morningController.todayDiary?.mood,
                 ),
               ),
 
@@ -225,12 +229,49 @@ class _MorningScreenState extends State<MorningScreen>
                 ),
               ),
 
-              // 3. Main Content (헤더, 하단 섹션 오버레이)
+              // 3. Floating Buttons (Room 하단에 플로팅)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 15, // 하단 탭 바 바로 위
+                child: SafeArea(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20),
+                        child:
+                            const StoreButton(), // No transform needed for simple icon
+                      ),
+                      if (!isAwake)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 10, right: 20),
+                            child: DiaryButton(
+                              onTap: () async {
+                                if (morningController.currentQuestion == null) {
+                                  await morningController.fetchRandomQuestion();
+                                }
+                                if (context.mounted) {
+                                  context.push('/writing',
+                                      extra: morningController.currentQuestion);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 4. Main Content (헤더, 하단 섹션 오버레이)
               SafeArea(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _buildHeader(context, isAwake, colorScheme, isDarkMode),
+                    const Spacer(),
                     _buildBottomSection(
                       context,
                       morningController,
@@ -245,7 +286,7 @@ class _MorningScreenState extends State<MorningScreen>
           );
         },
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(context, colorScheme),
+      bottomNavigationBar: _buildBottomNavigationBar(context),
     );
   }
 
@@ -440,9 +481,11 @@ class _MorningScreenState extends State<MorningScreen>
   Widget _buildEnhancedCharacterRoom(
     BuildContext context,
     bool isAwake,
-    CharacterController characterController,
-  ) {
-    final isDarkMode = Provider.of<ThemeController>(context, listen: false).isDarkMode;
+    CharacterController characterController, {
+    String? todaysMood,
+  }) {
+    final isDarkMode =
+        Provider.of<ThemeController>(context, listen: false).isDarkMode;
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
     return EnhancedCharacterRoomWidget(
@@ -455,6 +498,7 @@ class _MorningScreenState extends State<MorningScreen>
       roomDecoration: characterController.currentUser?.roomDecoration,
       currentAnimation: characterController.currentAnimation,
       onPropTap: (prop) => _showMemoDialog(prop),
+      todaysMood: todaysMood,
     );
   }
 
@@ -465,203 +509,13 @@ class _MorningScreenState extends State<MorningScreen>
     AppColorScheme colorScheme,
     bool isDarkMode,
   ) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.15),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isAwake) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: colorScheme.cardAccent.withOpacity(0.2),
-                    width: 1.5,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.auto_awesome,
-                            color: colorScheme.accent, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          '오늘의 질문',
-                          style: TextStyle(
-                            color: colorScheme.textPrimary.withOpacity(0.7),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () => controller.fetchRandomQuestion(),
-                          child: Icon(
-                            Icons.refresh,
-                            color: colorScheme.textSecondary.withOpacity(0.5),
-                            size: 18,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      controller.currentQuestion ?? '오늘의 질문을 불러오는 중...',
-                      style: TextStyle(
-                        color: colorScheme.textPrimary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (controller.currentQuestion == null) {
-                      await controller.fetchRandomQuestion();
-                    }
-                    if (context.mounted) {
-                      context.push('/writing',
-                          extra: controller.currentQuestion);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primaryButton,
-                    foregroundColor: colorScheme.primaryButtonForeground,
-                    elevation: 4,
-                    shadowColor: colorScheme.primaryButton.withOpacity(0.4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.edit_note, size: 24),
-                      SizedBox(width: 8),
-                      Text(
-                        '오늘의 일기 작성하기',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ] else ...[
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                decoration: BoxDecoration(
-                  color: colorScheme.success.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: colorScheme.success.withOpacity(0.5),
-                    width: 2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: colorScheme.success,
-                      size: 32,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '오늘의 일기 작성 완료!',
-                            style: TextStyle(
-                              color: colorScheme.success,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '내일 아침에 다시 만나요 😊',
-                            style: TextStyle(
-                              color: colorScheme.textSecondary,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
-  Widget _buildBottomNavigationBar(
-      BuildContext context, AppColorScheme colorScheme) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    return CustomBottomNavigationBar(
       currentIndex: 0,
-      backgroundColor:
-          Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-      selectedItemColor: colorScheme.tabSelected,
-      unselectedItemColor: colorScheme.tabUnselected,
-      elevation: 10,
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            break;
-          case 1:
-            context.go('/character');
-            break;
-          case 2:
-            context.go('/social');
-            break;
-          case 3:
-            context.go('/archive');
-            break;
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-        BottomNavigationBarItem(icon: Icon(Icons.pets), label: '캐릭터'),
-        BottomNavigationBarItem(icon: Icon(Icons.people), label: '친구'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today), label: '아카이브'),
-      ],
+      onTap: (index) {}, // Navigation handled inside the widget
     );
   }
 

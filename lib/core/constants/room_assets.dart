@@ -200,6 +200,15 @@ class RoomAssets {
       aspectRatio: 1.8,
     ),
     RoomAsset(
+      id: 'wooden_desk_sprite',
+      name: '원목 책상2',
+      price: 200,
+      icon: Icons.table_restaurant,
+      imagePath: 'assets/items/wooden_desk_sprite.png',
+      sizeMultiplier: 1.2,
+      aspectRatio: 1.8,
+    ),
+    RoomAsset(
       id: 'wood_chair',
       name: '원목 의자',
       price: 200,

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -33,9 +33,10 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
     this.colorScheme,
     this.isPropEditable = false,
     this.onPropChanged,
-    this.bottomPadding = 110.0,
     this.selectedPropIndex,
     this.onPropDelete,
+    this.todaysMood,
+    this.bottomPadding = 0,
   });
 
   final bool isPropEditable;
@@ -43,6 +44,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
   final double bottomPadding;
   final int? selectedPropIndex;
   final Function(int index)? onPropDelete;
+  final String? todaysMood;
 
   @override
   State<EnhancedCharacterRoomWidget> createState() =>
@@ -100,7 +102,7 @@ class _EnhancedCharacterRoomWidgetState
 
     _startWandering();
 
-    // 이미지 미리 로드하여 깜빡임 방지
+    // ?대?吏 誘몃━ 濡쒕뱶?섏뿬 源쒕묀??諛⑹?
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         precacheImage(const AssetImage('assets/images/Face_Wink.png'), context);
@@ -137,9 +139,9 @@ class _EnhancedCharacterRoomWidgetState
     _wanderTimer?.cancel();
     _movementStopTimer?.cancel();
     if (widget.isAwake) {
-      // 즉시 첫 번째 이동 시작
+      // 利됱떆 泥?踰덉㎏ ?대룞 ?쒖옉
       _move();
-      // 이후 6초마다 반복 이동
+      // ?댄썑 6珥덈쭏??諛섎났 ?대룞
       _wanderTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
         _move();
       });
@@ -213,11 +215,11 @@ class _EnhancedCharacterRoomWidgetState
         clipBehavior: widget.showBorder ? Clip.antiAlias : Clip.none,
         child: Stack(
           children: [
-            // 3D 방 내부 (바닥, 벽, 창문)
+            // 3D 諛??대? (諛붾떏, 踰? 李쎈Ц)
             _build3DRoom(
                 widget.isAwake, colorScheme, decoration, width, renderHeight),
 
-            // Props (순서대로 렌더링 - 리스트 끝이 최상위 레이어)
+            // Props (?쒖꽌?濡??뚮뜑留?- 由ъ뒪???앹씠 理쒖긽???덉씠??
             if (!widget.hideProps) ...[
               ...decoration.props.asMap().entries.map((entry) {
                 return _isPropValid(entry.value)
@@ -241,19 +243,19 @@ class _EnhancedCharacterRoomWidgetState
 
   Widget _build3DRoom(bool isAwake, AppColorScheme colorScheme,
       RoomDecorationModel decoration, double width, double height) {
-    // 1. 치수 정의
-    final hLineYTop = height * 0.15; // 천장 라인
-    final hLineYBottom = height * 0.42; // 바닥 라인
-    final vLineX = width * 0.32; // 코너 x좌표
-    final floorLeftY = height * 0.60; // 바닥 왼쪽 끝
+    // 1. 移섏닔 ?뺤쓽
+    final hLineYTop = height * 0.15; // 泥쒖옣 ?쇱씤
+    final hLineYBottom = height * 0.42; // 諛붾떏 ?쇱씤
+    final vLineX = width * 0.32; // 肄붾꼫 x醫뚰몴
+    final floorLeftY = height * 0.60; // 諛붾떏 ?쇱そ ??
 
-    // 왼쪽 벽의 실제 렌더링 너비를 화면 전체 너비만큼 확보하여
-    // 회전 시 잘리지 않도록 함
+    // ?쇱そ 踰쎌쓽 ?ㅼ젣 ?뚮뜑留??덈퉬瑜??붾㈃ ?꾩껜 ?덈퉬留뚰겮 ?뺣낫?섏뿬
+    // ?뚯쟾 ???섎━吏 ?딅룄濡???
     final leftW = vLineX;
     final frontW = width - vLineX;
     final wallH = hLineYBottom - hLineYTop;
 
-    // 2. 에셋 준비
+    // 2. ?먯뀑 以鍮?
     final floorAsset = RoomAssets.floors.firstWhere(
       (f) => f.id == decoration.floorId,
       orElse: () => RoomAssets.floors.first,
@@ -268,7 +270,7 @@ class _EnhancedCharacterRoomWidgetState
         ? baseColor
         : Color.lerp(baseColor, Colors.black, 0.45) ?? baseColor;
 
-    // 3. 공용 벽지 레이어 생성 (정면 + 왼쪽 "펼친" 크기)
+    // 3. 怨듭슜 踰쎌? ?덉씠???앹꽦 (?뺣㈃ + ?쇱そ "?쇱튇" ?ш린)
     final totalW = leftW + frontW;
     final sharedWallpaper = _buildSharedWallpaperLayer(
       wallpaperAsset: wallpaperAsset,
@@ -280,14 +282,14 @@ class _EnhancedCharacterRoomWidgetState
 
     return Stack(
       children: [
-        // 0. 기본 배경
+        // 0. 湲곕낯 諛곌꼍
         Positioned.fill(
           child: Container(
             color: isAwake ? const Color(0xFFF5F0E8) : const Color(0xFF2A2A2A),
           ),
         ),
 
-        // 1. 천장 (Ceiling)
+        // 1. 泥쒖옣 (Ceiling)
         Positioned.fill(
           child: ClipPath(
             clipper: _CeilingClipper(
@@ -313,7 +315,7 @@ class _EnhancedCharacterRoomWidgetState
           ),
         ),
 
-        // 2. 정면 벽 (Front Wall) - 텍스처의 오른쪽 부분 사용
+        // 2. ?뺣㈃ 踰?(Front Wall) - ?띿뒪泥섏쓽 ?ㅻⅨ履?遺遺??ъ슜
         Positioned(
           left: vLineX,
           top: hLineYTop,
@@ -356,21 +358,21 @@ class _EnhancedCharacterRoomWidgetState
           ),
         ),
 
-        // 3. 좌측 벽 (Left Wall) - 텍스처의 왼쪽 부분 사용 + 3D 회전
+        // 3. 醫뚯륫 踰?(Left Wall) - ?띿뒪泥섏쓽 ?쇱そ 遺遺??ъ슜 + 3D ?뚯쟾
         Positioned(
           left: 0,
           top: hLineYTop,
           width: leftW,
           height: wallH,
           child: Transform(
-            alignment: Alignment.centerRight, // 오른쪽(코너)을 축으로 회전
+            alignment: Alignment.centerRight, // ?ㅻⅨ履?肄붾꼫)??異뺤쑝濡??뚯쟾
             transform: Matrix4.identity()
               ..setEntry(3, 2, 0.001)
-              ..rotateY(-1.475) // 더 많이 기울임
-              ..scale(5.0, 1.0), // 기울기만큼 폭 확대
+              ..rotateY(-1.475) // ??留롮씠 湲곗슱??
+              ..scale(5.0, 1.0), // 湲곗슱湲곕쭔?????뺣?
             child: Stack(
               children: [
-                // 벽지 슬라이스
+                // 踰쎌? ?щ씪?댁뒪
                 _buildWallSlice(
                   sharedWallpaper: sharedWallpaper,
                   sliceX: 0,
@@ -402,10 +404,10 @@ class _EnhancedCharacterRoomWidgetState
                   width: 2,
                   child: Container(color: Colors.black.withOpacity(0.5)),
                 ),
-                // 창문 (벽면 변환을 그대로 따름)
+                // 李쎈Ц (踰쎈㈃ 蹂?섏쓣 洹몃?濡??곕쫫)
                 Positioned(
-                  left: leftW * 0.2, // 벽 너비의 20% 지점
-                  top: wallH * 0.15, // 벽 높이의 15% 지점
+                  left: leftW * 0.2, // 踰??덈퉬??20% 吏??
+                  top: wallH * 0.15, // 踰??믪씠??15% 吏??
                   width: leftW * 0.65,
                   height: wallH * 0.7,
                   child: Container(
@@ -439,7 +441,7 @@ class _EnhancedCharacterRoomWidgetState
           ),
         ),
 
-        // 4. 바닥 (Floor)
+        // 4. 諛붾떏 (Floor)
         Positioned.fill(
           child: ClipPath(
             clipper: _FloorClipper(
@@ -450,8 +452,8 @@ class _EnhancedCharacterRoomWidgetState
             child: Transform(
               alignment: Alignment.topCenter,
               transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001) // 원근감 최적화
-                ..rotateX(-0.6), // 대각선 시야처럼 보이게 기울기 조정
+                ..setEntry(3, 2, 0.001) // ?먭렐媛?理쒖쟻??
+                ..rotateX(-0.6), // ?媛곸꽑 ?쒖빞泥섎읆 蹂댁씠寃?湲곗슱湲?議곗젙
               child: Container(
                 decoration: BoxDecoration(
                   color: floorAsset.color ??
@@ -484,14 +486,14 @@ class _EnhancedCharacterRoomWidgetState
                       top: 0,
                       left: 0,
                       right: 0,
-                      height: height * 0.3, // 원근감 고려하여 그림자 길이 확대
+                      height: height * 0.3, // ?먭렐媛?怨좊젮?섏뿬 洹몃┝??湲몄씠 ?뺣?
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withOpacity(0.5), // 투명도 증가
+                              Colors.black.withOpacity(0.5), // ?щ챸??利앷?
                               Colors.transparent,
                             ],
                           ),
@@ -503,14 +505,14 @@ class _EnhancedCharacterRoomWidgetState
                       top: 0,
                       bottom: 0,
                       left: 0,
-                      width: width * 0.3, // 그림자 너비 확대
+                      width: width * 0.3, // 洹몃┝???덈퉬 ?뺣?
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                             colors: [
-                              Colors.black.withOpacity(0.5), // 투명도 증가
+                              Colors.black.withOpacity(0.5), // ?щ챸??利앷?
                               Colors.transparent,
                             ],
                           ),
@@ -533,7 +535,7 @@ class _EnhancedCharacterRoomWidgetState
     );
   }
 
-  /// 공용 벽지 레이어 (펼쳐진 상태)
+  /// 怨듭슜 踰쎌? ?덉씠??(?쇱퀜吏??곹깭)
   Widget _buildSharedWallpaperLayer({
     required RoomAsset wallpaperAsset,
     required Color wallpaperColor,
@@ -548,7 +550,7 @@ class _EnhancedCharacterRoomWidgetState
               wallpaperAsset.imagePath!,
               width: totalWidth,
               height: totalHeight,
-              fit: BoxFit.fill, // 전체 영역 꽉 채우기
+              fit: BoxFit.fill, // ?꾩껜 ?곸뿭 苑?梨꾩슦湲?
             )
           : (wallpaperAsset.id == 'black_stripe'
               ? Stack(
@@ -578,17 +580,17 @@ class _EnhancedCharacterRoomWidgetState
     );
   }
 
-  /// 벽지 슬라이스 (특정 영역만 잘라내기)
+  /// 踰쎌? ?щ씪?댁뒪 (?뱀젙 ?곸뿭留??섎씪?닿린)
   Widget _buildWallSlice({
     required Widget sharedWallpaper,
-    required double sliceX, // 전체 벽지에서의 시작 X 위치
+    required double sliceX, // ?꾩껜 踰쎌??먯꽌???쒖옉 X ?꾩튂
     required double sliceW,
     required double sliceH,
     required double totalWidth,
   }) {
     return ClipRect(
       child: Transform.translate(
-        offset: Offset(-sliceX, 0), // 왼쪽으로 밀어서 해당 구간만 보이게 함
+        offset: Offset(-sliceX, 0), // ?쇱そ?쇰줈 諛?댁꽌 ?대떦 援ш컙留?蹂댁씠寃???
         child: OverflowBox(
           alignment: Alignment.topLeft,
           minWidth: totalWidth,
@@ -640,7 +642,7 @@ class _EnhancedCharacterRoomWidgetState
     );
   }
 
-  /// 3D 바닥에 Prop 배치 (사다리꼴 좌표계)
+  /// 3D 諛붾떏??Prop 諛곗튂 (?щ떎由ш섦 醫뚰몴怨?
   Widget _buildPropFor3D(
       RoomPropModel prop, int index, double width, double height) {
     // Prop Dimensions with simple depth scaling
@@ -740,7 +742,7 @@ class _EnhancedCharacterRoomWidgetState
     );
   }
 
-  /// 3D 바닥 위 캐릭터 (드래그/배회 시 좌표 변환)
+  /// 3D 諛붾떏 ??罹먮┃??(?쒕옒洹?諛고쉶 ??醫뚰몴 蹂??
   Widget _buildCharacterContainer3D(
       bool isAwake, AppColorScheme colorScheme, double width, double height) {
     final hLineYBottom = height * 0.42;
@@ -818,13 +820,30 @@ class _EnhancedCharacterRoomWidgetState
                             (_bounceAnimation.value * maxSquash * 2);
                         final scaleY = (1.0 - maxSquash) +
                             (_bounceAnimation.value * maxSquash * 2);
-                        return Transform(
-                          alignment: Alignment.bottomCenter,
-                          transform: Matrix4.identity()
-                            ..translate(0.0, verticalOffset)
-                            ..scale(scaleX, scaleY),
-                          child:
-                              _buildCharacter(isAwake, colorScheme, charSize),
+
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.center,
+                          children: [
+                            // Character with animation
+                            Transform(
+                              alignment: Alignment.bottomCenter,
+                              transform: Matrix4.identity()
+                                ..translate(0.0, verticalOffset)
+                                ..scale(scaleX, scaleY),
+                              child: _buildCharacter(
+                                  isAwake, colorScheme, charSize),
+                            ),
+                            // Mood Bubble (따라 움직이도록 verticalOffset 적용)
+                            if (widget.todaysMood != null && isAwake)
+                              Positioned(
+                                top: -charSize * 0.6 +
+                                    verticalOffset, // 애니메이션 적용
+                                right: -charSize * 0.4,
+                                child: _buildMoodBubble(
+                                    widget.todaysMood!, charSize),
+                              ),
+                          ],
                         );
                       },
                     );
@@ -1069,6 +1088,60 @@ class _EnhancedCharacterRoomWidgetState
       return false;
     }
   }
+
+  Widget _buildMoodBubble(String mood, double charSize) {
+    // 이모티콘 맵핑 (ArchiveScreen과 일치)
+    String getMoodEmoji(String mood) {
+      if (mood.isEmpty) return '📝';
+      final emojiRegex = RegExp(
+          r'[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]',
+          unicode: true);
+      if (emojiRegex.hasMatch(mood)) return mood;
+      switch (mood) {
+        case 'happy':
+          return '😊';
+        case 'neutral':
+          return '😐';
+        case 'sad':
+          return '😢';
+        case 'excited':
+          return '🤩';
+        default:
+          return '📝';
+      }
+    }
+
+    final emoji = getMoodEmoji(mood);
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.8, end: 1.0),
+      duration: const Duration(milliseconds: 1000),
+      curve: Curves.elasticOut,
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            width: charSize * 0.8,
+            height: charSize * 0.8,
+            padding: EdgeInsets.only(bottom: charSize * 0.1), // 말풍선 꼬리 여백
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/icons/Bubble_Icon.png'),
+                fit: BoxFit.contain,
+              ),
+            ),
+            child: Text(
+              emoji,
+              style: TextStyle(
+                fontSize: charSize * 0.25,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 /// 천장용 클리퍼
@@ -1107,11 +1180,11 @@ class _FloorClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     return Path()
-      ..moveTo(vLineX, hLineYBottom)
+      ..moveTo(0, floorLeftY)
+      ..lineTo(vLineX, hLineYBottom)
       ..lineTo(size.width, hLineYBottom)
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
-      ..lineTo(0, floorLeftY)
       ..close();
   }
 

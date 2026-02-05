@@ -78,3 +78,6 @@ flutter:
     - family: NanumPenScript-Regular
       fonts:
         - asset: assets/fonts/NanumPenScript-Regular.ttf
+    - family: BMJUA
+      fonts:
+        - asset: assets/fonts/BMJUA_ttf.ttf

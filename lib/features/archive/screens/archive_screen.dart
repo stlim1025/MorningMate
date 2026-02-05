@@ -8,6 +8,7 @@ import '../../../services/diary_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/diary_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../common/widgets/custom_bottom_navigation_bar.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -478,37 +479,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   }
 
   Widget _buildBottomNavigationBar(BuildContext context) {
-    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
+    return CustomBottomNavigationBar(
       currentIndex: 3,
-      selectedItemColor: colorScheme.tabSelected,
-      unselectedItemColor: colorScheme.tabUnselected,
-      backgroundColor:
-          Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-      elevation: 8,
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            context.go('/morning');
-            break;
-          case 1:
-            context.go('/character');
-            break;
-          case 2:
-            context.go('/social');
-            break;
-          case 3:
-            break;
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-        BottomNavigationBarItem(icon: Icon(Icons.pets), label: '캐릭터'),
-        BottomNavigationBarItem(icon: Icon(Icons.people), label: '친구'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today), label: '아카이브'),
-      ],
+      onTap: (index) {},
     );
   }
 

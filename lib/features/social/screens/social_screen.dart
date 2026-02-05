@@ -8,6 +8,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/user_service.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../common/widgets/custom_bottom_navigation_bar.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -223,7 +224,7 @@ class _SocialScreenState extends State<SocialScreen> {
         icon: const Icon(Icons.add),
         label: const Text('친구 추가'),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(context, colorScheme),
+      bottomNavigationBar: _buildBottomNavigationBar(context),
     );
   }
 
@@ -645,49 +646,10 @@ class _SocialScreenState extends State<SocialScreen> {
     }());
   }
 
-  Widget _buildBottomNavigationBar(
-      BuildContext context, AppColorScheme colorScheme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 2,
-        selectedItemColor: colorScheme.tabSelected,
-        unselectedItemColor: colorScheme.tabUnselected,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              context.go('/morning');
-              break;
-            case 1:
-              context.go('/character');
-              break;
-            case 2:
-              break;
-            case 3:
-              context.go('/archive');
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.pets), label: '캐릭터'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: '친구'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today), label: '아카이브'),
-        ],
-      ),
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    return CustomBottomNavigationBar(
+      currentIndex: 2,
+      onTap: (index) {},
     );
   }
 
