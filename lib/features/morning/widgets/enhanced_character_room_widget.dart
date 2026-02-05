@@ -67,8 +67,9 @@ class _EnhancedCharacterRoomWidgetState
   bool _isDragging = false;
   bool _isFalling = false;
 
-  double? _dragBottom;
-  double? _dragLeft;
+  // 2D 화면 좌표 (0~1 정규화)
+  double? _dragX;
+  double? _dragY;
 
   void _handleTap() {
     if (_isTapped) return;
@@ -121,7 +122,8 @@ class _EnhancedCharacterRoomWidgetState
       setState(() {
         _isMoving = true;
         _horizontalPosition = 0.05 + Random().nextDouble() * 0.9;
-        _verticalPosition = Random().nextDouble();
+        // 바닥 영역에서만 배회 (0.42 ~ 1.0)
+        _verticalPosition = 0.42 + Random().nextDouble() * 0.58;
       });
 
       _movementStopTimer?.cancel();
@@ -742,41 +744,29 @@ class _EnhancedCharacterRoomWidgetState
     );
   }
 
-  /// 3D 諛붾떏 ??罹먮┃??(?쒕옒洹?諛고쉶 ??醫뚰몴 蹂??
+  /// 캐릭터 컨테이너 (2D 화면 좌표 기반)
   Widget _buildCharacterContainer3D(
       bool isAwake, AppColorScheme colorScheme, double width, double height) {
     final hLineYBottom = height * 0.42;
-    final vLineX = width * 0.32;
-    final floorLeftY = height * 0.60;
     final charSize = (width + height) * 0.08;
 
     double currentLeft;
     double currentTop;
 
-    if (_isDragging && _dragLeft != null && _dragBottom != null) {
-      currentLeft = _dragLeft!.clamp(0.0, width - charSize);
-      currentTop = height -
-          charSize -
-          _dragBottom!.clamp(0.0, height - hLineYBottom - charSize);
+    if (_isDragging && _dragX != null && _dragY != null) {
+      // 드래그 중: 화면 어디든 자유롭게 이동 (2D 좌표)
+      currentLeft =
+          (_dragX! * width - charSize / 2).clamp(0.0, width - charSize);
+      currentTop = (_dragY! * height - charSize).clamp(0.0, height - charSize);
     } else {
-      final py = _verticalPosition.clamp(0.05, 0.95);
+      // 일반 상태: 바닥 영역에 3D 매핑
+      final py = _verticalPosition.clamp(0.42, 1.0); // 바닥 영역만
       final px = _horizontalPosition.clamp(0.05, 0.95);
 
-      final yPos = hLineYBottom + (1 - py) * (height - hLineYBottom);
-      double xLeft = 0;
-      if (yPos < floorLeftY) {
-        xLeft = vLineX * (floorLeftY - yPos) / (floorLeftY - hLineYBottom);
-      } else {
-        xLeft = 0;
-      }
-
-      final xRight = width;
-      currentLeft = xLeft + px * (xRight - xLeft) - charSize / 2;
-      currentTop = yPos - charSize + (isAwake ? 0 : charSize * 0.3);
-
-      currentLeft = currentLeft.clamp(0.0, width - charSize);
-      currentTop =
-          currentTop.clamp(hLineYBottom - charSize * 0.5, height - charSize);
+      // 단순 2D 매핑 (바닥 영역)
+      currentLeft = (px * width - charSize / 2).clamp(0.0, width - charSize);
+      currentTop = (py * height - charSize + (isAwake ? 0 : charSize * 0.3))
+          .clamp(hLineYBottom - charSize * 0.5, height - charSize);
     }
 
     return Stack(
@@ -862,72 +852,46 @@ class _EnhancedCharacterRoomWidgetState
     if (!widget.isAwake) return;
     _wanderTimer?.cancel();
     _movementStopTimer?.cancel();
-    final hLineYBottom = height * 0.42;
-    final vLineX = width * 0.32;
-    final floorLeftY = height * 0.60;
 
-    final py = _verticalPosition.clamp(0.05, 0.95);
-    final px = _horizontalPosition.clamp(0.05, 0.95);
-
-    final yPos = hLineYBottom + (1 - py) * (height - hLineYBottom);
-    double xLeft = 0;
-    if (yPos < floorLeftY) {
-      xLeft = vLineX * (floorLeftY - yPos) / (floorLeftY - hLineYBottom);
-    } else {
-      xLeft = 0;
-    }
-
-    final xRight = width;
-    final baseLeft = xLeft + px * (xRight - xLeft) - charSize / 2;
-    final baseTop = yPos - charSize;
-
+    // 현재 캐릭터의 정규화된 위치(_horizontalPosition, _verticalPosition)를 드래그 좌표로 초기화합니다.
     setState(() {
       _isDragging = true;
       _isFalling = false;
       _isMoving = true;
-      _dragLeft = baseLeft;
-      _dragBottom = height - baseTop - charSize;
+      // 현재 캐릭터 위치를 드래그 시작점으로
+      _dragX = _horizontalPosition;
+      _dragY = _verticalPosition;
     });
   }
 
   void _handleDragUpdate3D(
       DragUpdateDetails d, double width, double height, double charSize) {
     if (!_isDragging) return;
-    final hLineYBottom = height * 0.42;
     setState(() {
-      _dragLeft = ((_dragLeft ?? 0) + d.delta.dx).clamp(0.0, width - charSize);
-      _dragBottom = ((_dragBottom ?? 0) - d.delta.dy)
-          .clamp(0.0, height - hLineYBottom - charSize * 0.5);
+      // 화면 전체를 자유롭게 드래그 (정규화된 좌표)
+      _dragX = ((_dragX ?? 0.5) + d.delta.dx / width).clamp(0.0, 1.0);
+      _dragY = ((_dragY ?? 0.5) + d.delta.dy / height).clamp(0.0, 1.0);
     });
   }
 
   void _handleDragEnd3D(
       DragEndDetails d, double width, double height, double charSize) {
     if (!_isDragging) return;
-    final hLineYBottom = height * 0.42;
-    final vLineX = width * 0.32;
     setState(() {
       _isDragging = false;
       _isFalling = true;
 
-      final currentY = height - (_dragBottom ?? 0) - charSize;
-      final py = (1 - (currentY - hLineYBottom) / (height - hLineYBottom))
-          .clamp(0.05, 0.95);
+      final dropY = _dragY ?? 0.5;
+      final dropX = _dragX ?? 0.5;
 
-      final floorLeftY = height * 0.60;
-      double xLeft = 0;
-      if (currentY < floorLeftY) {
-        xLeft = vLineX * (floorLeftY - currentY) / (floorLeftY - hLineYBottom);
+      // 바닥 영역(0.42 이하)에 놓으면 가장 가까운 바닥으로 떨어짐
+      if (dropY < 0.42) {
+        _verticalPosition = 0.42; // 바닥 맨 위로
       } else {
-        xLeft = 0;
+        _verticalPosition = dropY.clamp(0.42, 1.0);
       }
 
-      final xRight = width;
-      final px = (((_dragLeft ?? 0) + charSize / 2 - xLeft) / (xRight - xLeft))
-          .clamp(0.05, 0.95);
-
-      _verticalPosition = py;
-      _horizontalPosition = px;
+      _horizontalPosition = dropX.clamp(0.05, 0.95);
     });
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
@@ -935,7 +899,12 @@ class _EnhancedCharacterRoomWidgetState
           _isFalling = false;
           _isMoving = false;
         });
-        _startWandering();
+        // 잠시 대기 후 배회 다시 시작 (자연스러운 연결)
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted && !_isDragging) {
+            _startWandering();
+          }
+        });
       }
     });
   }
