@@ -29,6 +29,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
           children: [
             _TabItem(
               iconPath: 'assets/icons/Home_Icon.png',
+              label: '홈',
               width: 32,
               height: 32,
               isSelected: currentIndex == 0,
@@ -36,6 +37,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
             ),
             _TabItem(
               iconPath: 'assets/icons/Charactor_Icon.png',
+              label: '캐릭터',
               width: 45,
               height: 32,
               isSelected: currentIndex == 1,
@@ -43,6 +45,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
             ),
             _TabItem(
               iconPath: 'assets/icons/Friend_Icon.png',
+              label: '친구',
               width: 45,
               height: 32,
               isSelected: currentIndex == 2,
@@ -50,6 +53,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
             ),
             _TabItem(
               iconPath: 'assets/icons/Calander_Icon.png',
+              label: '기록',
               width: 40,
               height: 32,
               isSelected: currentIndex == 3,
@@ -82,6 +86,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
 class _TabItem extends StatefulWidget {
   final String iconPath;
+  final String label;
   final double width;
   final double height;
   final bool isSelected;
@@ -89,6 +94,7 @@ class _TabItem extends StatefulWidget {
 
   const _TabItem({
     required this.iconPath,
+    required this.label,
     required this.width,
     required this.height,
     required this.isSelected,
@@ -133,16 +139,34 @@ class _TabItemState extends State<_TabItem>
       onTapCancel: () => _controller.reverse(),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.only(top: 18, left: 10, right: 10, bottom: 2),
+        padding: const EdgeInsets.only(top: 8, left: 10, right: 10, bottom: 2),
         child: ScaleTransition(
           scale: _scaleAnimation,
-          child: Image.asset(
-            widget.iconPath,
-            width: widget.width,
-            height: widget.height,
-            opacity: widget.isSelected
-                ? const AlwaysStoppedAnimation(1.0)
-                : const AlwaysStoppedAnimation(0.5), // Dim unselected
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                widget.iconPath,
+                width: widget.width,
+                height: widget.height,
+                opacity: widget.isSelected
+                    ? const AlwaysStoppedAnimation(1.0)
+                    : const AlwaysStoppedAnimation(0.5), // Dim unselected
+              ),
+              const SizedBox(height: 2),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontFamily: 'BMJUA',
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: widget.isSelected
+                      ? const Color(0xFF4E342E) // Dark Brown
+                      : const Color(0xFF4E342E).withOpacity(0.5),
+                ),
+              ),
+            ],
           ),
         ),
       ),
