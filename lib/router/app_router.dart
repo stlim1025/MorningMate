@@ -8,6 +8,7 @@ import '../features/auth/screens/signup_screen.dart';
 import '../features/morning/screens/morning_screen.dart';
 import '../features/morning/screens/writing_screen.dart';
 import '../features/character/screens/character_room_screen.dart';
+import '../features/character/screens/decoration_screen.dart';
 import '../features/social/screens/social_screen.dart';
 import '../features/social/screens/friend_room_screen.dart';
 import '../features/notification/screens/notification_screen.dart';
@@ -75,6 +76,13 @@ class AppRouter {
         path: '/character',
         name: 'character',
         builder: (context, state) => const CharacterRoomScreen(),
+        routes: [
+          GoRoute(
+            path: 'decoration',
+            name: 'decoration',
+            builder: (context, state) => const DecorationScreen(),
+          ),
+        ],
       ),
 
       // Social Routes
