@@ -35,7 +35,8 @@ class _ShopScreenState extends State<ShopScreen> {
     return Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/Ceiling.png'),
+            image: ResizeImage(AssetImage('assets/images/Ceiling.png'),
+                width: 1080),
             fit: BoxFit.fill,
           ),
         ),

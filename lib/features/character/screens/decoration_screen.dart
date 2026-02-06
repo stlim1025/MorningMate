@@ -111,7 +111,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    final characterController = context.watch<CharacterController>();
+    final characterController = context.read<CharacterController>();
     final themeController = context.read<ThemeController>();
     final user = characterController.currentUser;
 
@@ -337,7 +337,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   image: const DecorationImage(
-                    image: AssetImage('assets/images/Ceiling.png'),
+                    image: ResizeImage(AssetImage('assets/images/Ceiling.png'),
+                        width: 1080),
                     fit: BoxFit.fill,
                   ),
                   borderRadius:

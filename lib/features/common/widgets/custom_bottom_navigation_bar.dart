@@ -17,7 +17,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
       height: 80, // Fixed height for transparency and background
       decoration: const BoxDecoration(
         image: DecorationImage(
-          image: AssetImage('assets/images/Down_Tab2.png'),
+          image: ResizeImage(AssetImage('assets/images/Down_Tab2.png'),
+              width: 1080),
           fit: BoxFit.fill,
         ),
       ),
@@ -154,6 +155,7 @@ class _TabItemState extends State<_TabItem>
                   width: widget.width,
                   height: widget.height,
                   fit: BoxFit.contain,
+                  cacheWidth: 100, // Optimize memory for small icons
                   opacity: widget.isSelected
                       ? const AlwaysStoppedAnimation(1.0)
                       : const AlwaysStoppedAnimation(0.5),

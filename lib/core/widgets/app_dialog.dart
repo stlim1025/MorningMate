@@ -483,6 +483,7 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
                         child: Image.asset(
                           'assets/images/Popup_Background.png',
                           fit: BoxFit.fill,
+                          cacheWidth: 800, // Optimized
                         ),
                       ),
                       // Content
@@ -581,6 +582,7 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
                     width: 120,
                     height: 120,
                     fit: BoxFit.contain,
+                    cacheWidth: 300, // Optimized
                   ),
                 ),
               ],
@@ -664,6 +666,7 @@ class _ImageActionButtonState extends State<_ImageActionButton> {
                     fit: BoxFit.fill,
                     width: double.infinity,
                     height: 52, // Fixed height to match standard button
+                    cacheHeight: 150, // Optimized
                   ),
                   widget.child ??
                       Text(

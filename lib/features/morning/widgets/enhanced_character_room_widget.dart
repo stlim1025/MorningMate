@@ -120,11 +120,11 @@ class _EnhancedCharacterRoomWidgetState
             context);
         precacheImage(
             ResizeImage(const AssetImage('assets/images/Egg_Wing.png'),
-                width: 800),
+                width: 300),
             context);
         precacheImage(
             ResizeImage(const AssetImage('assets/images/Egg_Wing2.png'),
-                width: 800),
+                width: 300),
             context);
       }
     });
@@ -231,8 +231,16 @@ class _EnhancedCharacterRoomWidgetState
         child: Stack(
           children: [
             // 3D 諛??대? (諛붾떏, 踰? 李쎈Ц)
-            _build3DRoom(
-                widget.isAwake, colorScheme, decoration, width, renderHeight),
+            RepaintBoundary(
+              child: Room3DBackground(
+                isAwake: widget.isAwake,
+                colorScheme: colorScheme,
+                decoration: decoration,
+                width: width,
+                height: renderHeight,
+                isDarkMode: widget.isDarkMode,
+              ),
+            ),
 
             // Props (?쒖꽌?濡??뚮뜑留?- 由ъ뒪???앹씠 理쒖긽???덉씠??
             if (!widget.hideProps) ...[
@@ -254,357 +262,6 @@ class _EnhancedCharacterRoomWidgetState
         ),
       );
     });
-  }
-
-  Widget _build3DRoom(bool isAwake, AppColorScheme colorScheme,
-      RoomDecorationModel decoration, double width, double height) {
-    // 1. 移섏닔 ?뺤쓽
-    final hLineYTop = height * 0.15; // 泥쒖옣 ?쇱씤
-    final hLineYBottom = height * 0.42; // 諛붾떏 ?쇱씤
-    final vLineX = width * 0.32; // 肄붾꼫 x醫뚰몴
-    final floorLeftY = height * 0.60; // 諛붾떏 ?쇱そ ??
-
-    // ?쇱そ 踰쎌쓽 ?ㅼ젣 ?뚮뜑留??덈퉬瑜??붾㈃ ?꾩껜 ?덈퉬留뚰겮 ?뺣낫?섏뿬
-    // ?뚯쟾 ???섎━吏 ?딅룄濡???
-    final leftW = vLineX;
-    final frontW = width - vLineX;
-    final wallH = hLineYBottom - hLineYTop;
-
-    // 2. ?먯뀑 以鍮?
-    final floorAsset = RoomAssets.floors.firstWhere(
-      (f) => f.id == decoration.floorId,
-      orElse: () => RoomAssets.floors.first,
-    );
-
-    final wallpaperAsset = RoomAssets.wallpapers.firstWhere(
-      (w) => w.id == decoration.wallpaperId,
-      orElse: () => RoomAssets.wallpapers.first,
-    );
-    Color baseColor = wallpaperAsset.color ?? const Color(0xFFF5F5DC);
-    // 야간에는 아주 살짝만 어둡게
-    Color wallpaperColor = isAwake
-        ? baseColor
-        : Color.lerp(baseColor, Colors.black, 0.05) ?? baseColor;
-
-    // 3. 공용 벽지 레이어 생성 (정면 + 왼쪽 "잇닿" 배치)
-    final totalW = leftW + frontW;
-    final sharedWallpaper = _buildSharedWallpaperLayer(
-      wallpaperAsset: wallpaperAsset,
-      wallpaperColor: wallpaperColor,
-      isAwake: isAwake,
-      totalWidth: totalW,
-      totalHeight: wallH,
-    );
-
-    return Stack(
-      children: [
-        // 0. 기본 배경 (야간에도 너무 어둡지 않게)
-        Positioned.fill(
-          child: Container(
-            color: isAwake ? const Color(0xFFF5F0E8) : const Color(0xFFEDE5DD),
-          ),
-        ),
-
-        // 1. 泥쒖옣 (Ceiling)
-        Positioned.fill(
-          child: ClipPath(
-            clipper: _CeilingClipper(
-              hLineYTop: hLineYTop,
-              vLineX: vLineX,
-            ),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/images/Ceiling.png',
-                    fit: BoxFit.cover,
-                    cacheWidth: 1080,
-                  ),
-                ),
-                // 야간 모드 천장 오버레이 제거 (색상 조정만 사용)
-              ],
-            ),
-          ),
-        ),
-
-        // 2. ?뺣㈃ 踰?(Front Wall) - ?띿뒪泥섏쓽 ?ㅻⅨ履?遺遺??ъ슜
-        Positioned(
-          left: vLineX,
-          top: hLineYTop,
-          width: frontW,
-          height: wallH,
-          child: Stack(
-            children: [
-              _buildWallSlice(
-                sharedWallpaper: sharedWallpaper,
-                sliceX: leftW,
-                sliceW: frontW,
-                sliceH: wallH,
-                totalWidth: totalW,
-              ),
-              // Top Boundary
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 2,
-                child: Container(color: Colors.black.withOpacity(0.5)),
-              ),
-              // Bottom Boundary
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 2,
-                child: Container(color: Colors.black.withOpacity(0.5)),
-              ),
-              // Left Boundary (Corner)
-              Positioned(
-                top: 0,
-                bottom: 0,
-                left: 0,
-                width: 2,
-                child: Container(color: Colors.black.withOpacity(0.5)),
-              ),
-            ],
-          ),
-        ),
-
-        // 3. 醫뚯륫 踰?(Left Wall) - ?띿뒪泥섏쓽 ?쇱そ 遺遺??ъ슜 + 3D ?뚯쟾
-        Positioned(
-          left: 0,
-          top: hLineYTop,
-          width: leftW,
-          height: wallH,
-          child: Transform(
-            alignment: Alignment.centerRight, // ?ㅻⅨ履?肄붾꼫)??異뺤쑝濡??뚯쟾
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001)
-              ..rotateY(-1.475) // ??留롮씠 湲곗슱??
-              ..scale(5.0, 1.0), // 湲곗슱湲곕쭔?????뺣?
-            child: Stack(
-              children: [
-                // 踰쎌? ?щ씪?댁뒪
-                _buildWallSlice(
-                  sharedWallpaper: sharedWallpaper,
-                  sliceX: 0,
-                  sliceW: leftW,
-                  sliceH: wallH,
-                  totalWidth: totalW,
-                ),
-                // Top Boundary
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 2,
-                  child: Container(color: Colors.black.withOpacity(0.5)),
-                ),
-                // Bottom Boundary
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 2,
-                  child: Container(color: Colors.black.withOpacity(0.5)),
-                ),
-                // Right Boundary (Corner)
-                Positioned(
-                  top: 0,
-                  bottom: 0,
-                  right: 0,
-                  width: 2,
-                  child: Container(color: Colors.black.withOpacity(0.5)),
-                ),
-                // 李쎈Ц (踰쎈㈃ 蹂?섏쓣 洹몃?濡??곕쫫)
-                Positioned(
-                  left: leftW * 0.2, // 踰??덈퉬??20% 吏??
-                  top: wallH * 0.15, // 踰??믪씠??15% 吏??
-                  width: leftW * 0.65,
-                  height: wallH * 0.7,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: const Color(0xFF8B7355),
-                        width: 5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: RoomBackgroundWidget(
-                        decoration: decoration,
-                        isAwake: isAwake,
-                        isDarkMode: widget.isDarkMode,
-                        colorScheme: widget.colorScheme ?? colorScheme,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // 4. 諛붾떏 (Floor)
-        Positioned.fill(
-          child: ClipPath(
-            clipper: _FloorClipper(
-              vLineX: vLineX,
-              hLineYBottom: hLineYBottom,
-              floorLeftY: floorLeftY,
-            ),
-            child: Transform(
-              alignment: Alignment.topCenter,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001) // ?먭렐媛?理쒖쟻??
-                ..rotateX(-0.6), // ?媛곸꽑 ?쒖빞泥섎읆 蹂댁씠寃?湲곗슱湲?議곗젙
-              child: Container(
-                decoration: BoxDecoration(
-                  color: floorAsset.color ??
-                      (isAwake
-                          ? const Color(0xFFE8DCCF)
-                          : const Color(0xFFDDD1C5)), // 더 밝은 바닥색
-                  image: (floorAsset.imagePath != null &&
-                          !floorAsset.imagePath!.endsWith('.svg'))
-                      ? DecorationImage(
-                          image: ResizeImage(
-                            AssetImage(floorAsset.imagePath!),
-                            width: 1080,
-                          ),
-                          repeat: ImageRepeat.repeat,
-                          alignment: Alignment.topCenter,
-                          scale: 5.0,
-                        )
-                      : null,
-                ),
-                child: Stack(
-                  children: [
-                    if (floorAsset.imagePath != null &&
-                        floorAsset.imagePath!.endsWith('.svg'))
-                      Positioned.fill(
-                        child: SvgPicture.asset(
-                          floorAsset.imagePath!,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
-                        ),
-                      ),
-                    // Top Shadow (Back wall shadow)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: height * 0.3, // ?먭렐媛?怨좊젮?섏뿬 洹몃┝??湲몄씠 ?뺣?
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.5), // ?щ챸??利앷?
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Left Shadow (Left wall shadow)
-                    Positioned(
-                      top: 0,
-                      bottom: 0,
-                      left: 0,
-                      width: width * 0.3, // 洹몃┝???덈퉬 ?뺣?
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              Colors.black.withOpacity(0.5), // ?щ챸??利앷?
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // 야간 모드 바닥 오버레이 제거 (색상 조정만 사용)
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// 怨듭슜 踰쎌? ?덉씠??(?쇱퀜吏??곹깭)
-  Widget _buildSharedWallpaperLayer({
-    required RoomAsset wallpaperAsset,
-    required Color wallpaperColor,
-    required bool isAwake,
-    required double totalWidth,
-    required double totalHeight,
-  }) {
-    final base = Container(
-      color: wallpaperColor,
-      child: wallpaperAsset.imagePath != null
-          ? Image.asset(
-              wallpaperAsset.imagePath!,
-              width: totalWidth,
-              height: totalHeight,
-              fit: BoxFit.fill,
-              cacheWidth: 1080,
-            )
-          : (wallpaperAsset.id == 'black_stripe'
-              ? Stack(
-                  children: List.generate(6, (index) {
-                    return Positioned(
-                      top: (index + 1) * (totalHeight / 7),
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        height: 1.2,
-                        color: Colors.white.withOpacity(0.12),
-                      ),
-                    );
-                  }),
-                )
-              : const SizedBox.shrink()),
-    );
-
-    // 야간 모드 오버레이 제거 (색상 조정만 사용)
-    return base;
-  }
-
-  /// 踰쎌? ?щ씪?댁뒪 (?뱀젙 ?곸뿭留??섎씪?닿린)
-  Widget _buildWallSlice({
-    required Widget sharedWallpaper,
-    required double sliceX, // ?꾩껜 踰쎌??먯꽌???쒖옉 X ?꾩튂
-    required double sliceW,
-    required double sliceH,
-    required double totalWidth,
-  }) {
-    return ClipRect(
-      child: Transform.translate(
-        offset: Offset(-sliceX, 0), // ?쇱そ?쇰줈 諛?댁꽌 ?대떦 援ш컙留?蹂댁씠寃???
-        child: OverflowBox(
-          alignment: Alignment.topLeft,
-          minWidth: totalWidth,
-          maxWidth: totalWidth,
-          minHeight: sliceH,
-          maxHeight: sliceH,
-          child: sharedWallpaper,
-        ),
-      ),
-    );
   }
 
   Widget _buildLevelUpEffect(double size) {
@@ -1242,4 +899,373 @@ class _FloorClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+/// 3D Room Background Layer (Walls, Floor, Ceiling)
+/// Extracted to prevent rebuilding deeply nested transforms/clippers on every frame during prop drag.
+class Room3DBackground extends StatelessWidget {
+  final bool isAwake;
+  final AppColorScheme colorScheme;
+  final RoomDecorationModel decoration;
+  final double width;
+  final double height;
+  final bool isDarkMode;
+
+  const Room3DBackground({
+    super.key,
+    required this.isAwake,
+    required this.colorScheme,
+    required this.decoration,
+    required this.width,
+    required this.height,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. 치수 정의
+    final hLineYTop = height * 0.15; // 천장 라인
+    final hLineYBottom = height * 0.42; // 바닥 라인
+    final vLineX = width * 0.32; // 코너 x좌표
+    final floorLeftY = height * 0.60; // 바닥 왼쪽 끝
+
+    // 왼쪽 벽의 실제 렌더링 너비를 화면 전체 너비만큼 확보하여
+    // 회전 시 잘리지 않도록 함
+    final leftW = vLineX;
+    final frontW = width - vLineX;
+    final wallH = hLineYBottom - hLineYTop;
+
+    // 2. 자산 준비
+    final floorAsset = RoomAssets.floors.firstWhere(
+      (f) => f.id == decoration.floorId,
+      orElse: () => RoomAssets.floors.first,
+    );
+
+    final wallpaperAsset = RoomAssets.wallpapers.firstWhere(
+      (w) => w.id == decoration.wallpaperId,
+      orElse: () => RoomAssets.wallpapers.first,
+    );
+    Color baseColor = wallpaperAsset.color ?? const Color(0xFFF5F5DC);
+    // 야간에는 아주 살짝만 어둡게
+    Color wallpaperColor = isAwake
+        ? baseColor
+        : Color.lerp(baseColor, Colors.black, 0.05) ?? baseColor;
+
+    // 3. 공용 벽지 레이어 생성 (정면 + 왼쪽 "잇닿" 배치)
+    final totalW = leftW + frontW;
+    final sharedWallpaper = _buildSharedWallpaperLayer(
+      wallpaperAsset: wallpaperAsset,
+      wallpaperColor: wallpaperColor,
+      isAwake: isAwake,
+      totalWidth: totalW,
+      totalHeight: wallH,
+    );
+
+    return Stack(
+      children: [
+        // 0. 기본 배경 (야간에도 너무 어둡지 않게)
+        Positioned.fill(
+          child: Container(
+            color: isAwake ? const Color(0xFFF5F0E8) : const Color(0xFFEDE5DD),
+          ),
+        ),
+
+        // 1. 천장 (Ceiling)
+        Positioned.fill(
+          child: ClipPath(
+            clipper: _CeilingClipper(
+              hLineYTop: hLineYTop,
+              vLineX: vLineX,
+            ),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/images/Ceiling.png',
+                    fit: BoxFit.cover,
+                    cacheWidth: 1080,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // 2. 정면 벽 (Front Wall) - 텍스처의 오른쪽 부분 사용
+        Positioned(
+          left: vLineX,
+          top: hLineYTop,
+          width: frontW,
+          height: wallH,
+          child: Stack(
+            children: [
+              _buildWallSlice(
+                sharedWallpaper: sharedWallpaper,
+                sliceX: leftW,
+                sliceW: frontW,
+                sliceH: wallH,
+                totalWidth: totalW,
+              ),
+              // Top Boundary
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 2,
+                child: Container(color: Colors.black.withOpacity(0.5)),
+              ),
+              // Bottom Boundary
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 2,
+                child: Container(color: Colors.black.withOpacity(0.5)),
+              ),
+              // Left Boundary (Corner)
+              Positioned(
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: 2,
+                child: Container(color: Colors.black.withOpacity(0.5)),
+              ),
+            ],
+          ),
+        ),
+
+        // 3. 왼쪽 벽 (Left Wall) - 텍스처의 왼쪽 부분 사용 + 3D 회전
+        Positioned(
+          left: 0,
+          top: hLineYTop,
+          width: leftW,
+          height: wallH,
+          child: Transform(
+            alignment: Alignment.centerRight, // 오른쪽(코너)를 축으로 회전
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateY(-1.475) // 더 많이 기울임
+              ..scale(5.0, 1.0), // 기울기만큼만 확대
+            child: Stack(
+              children: [
+                // 벽지 슬라이스
+                _buildWallSlice(
+                  sharedWallpaper: sharedWallpaper,
+                  sliceX: 0,
+                  sliceW: leftW,
+                  sliceH: wallH,
+                  totalWidth: totalW,
+                ),
+                // Top Boundary
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 2,
+                  child: Container(color: Colors.black.withOpacity(0.5)),
+                ),
+                // Bottom Boundary
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 2,
+                  child: Container(color: Colors.black.withOpacity(0.5)),
+                ),
+                // Right Boundary (Corner)
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  right: 0,
+                  width: 2,
+                  child: Container(color: Colors.black.withOpacity(0.5)),
+                ),
+                // 창문 (벽면 변환을 그대로 따름)
+                Positioned(
+                  left: leftW * 0.2, // 벽 너비의 20% 지점
+                  top: wallH * 0.15, // 벽 높이의 15% 지점
+                  width: leftW * 0.65,
+                  height: wallH * 0.7,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: const Color(0xFF8B7355),
+                        width: 5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: RoomBackgroundWidget(
+                        decoration: decoration,
+                        isAwake: isAwake,
+                        isDarkMode: isDarkMode,
+                        colorScheme: colorScheme,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // 4. 바닥 (Floor)
+        Positioned.fill(
+          child: ClipPath(
+            clipper: _FloorClipper(
+              vLineX: vLineX,
+              hLineYBottom: hLineYBottom,
+              floorLeftY: floorLeftY,
+            ),
+            child: Transform(
+              alignment: Alignment.topCenter,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001) // 원근감 최적화
+                ..rotateX(-0.6), // 대각선 시야처럼 보이게 기울기 조정
+              child: Container(
+                decoration: BoxDecoration(
+                  color: floorAsset.color ??
+                      (isAwake
+                          ? const Color(0xFFE8DCCF)
+                          : const Color(0xFFDDD1C5)), // 더 밝은 바닥색
+                  image: (floorAsset.imagePath != null &&
+                          !floorAsset.imagePath!.endsWith('.svg'))
+                      ? DecorationImage(
+                          image: ResizeImage(
+                            AssetImage(floorAsset.imagePath!),
+                            width: 1080,
+                          ),
+                          repeat: ImageRepeat.repeat,
+                          alignment: Alignment.topCenter,
+                          scale: 5.0,
+                        )
+                      : null,
+                ),
+                child: Stack(
+                  children: [
+                    if (floorAsset.imagePath != null &&
+                        floorAsset.imagePath!.endsWith('.svg'))
+                      Positioned.fill(
+                        child: SvgPicture.asset(
+                          floorAsset.imagePath!,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
+                        ),
+                      ),
+                    // Top Shadow (Back wall shadow)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: height * 0.3, // 원근감 고려하여 그림자 길이 조정
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.5), // 투명도 증가
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Left Shadow (Left wall shadow)
+                    Positioned(
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      width: width * 0.3, // 그림자 너비 조정
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              Colors.black.withOpacity(0.5), // 투명도 증가
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 공용 벽지 레이어 (매끄러운 연결을 위해)
+  Widget _buildSharedWallpaperLayer({
+    required RoomAsset wallpaperAsset,
+    required Color wallpaperColor,
+    required bool isAwake,
+    required double totalWidth,
+    required double totalHeight,
+  }) {
+    final base = Container(
+      color: wallpaperColor,
+      child: wallpaperAsset.imagePath != null
+          ? Image.asset(
+              wallpaperAsset.imagePath!,
+              width: totalWidth,
+              height: totalHeight,
+              fit: BoxFit.fill,
+              cacheWidth: 1080,
+            )
+          : (wallpaperAsset.id == 'black_stripe'
+              ? Stack(
+                  children: List.generate(6, (index) {
+                    return Positioned(
+                      top: (index + 1) * (totalHeight / 7),
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 1.2,
+                        color: Colors.white.withOpacity(0.12),
+                      ),
+                    );
+                  }),
+                )
+              : const SizedBox.shrink()),
+    );
+
+    return base;
+  }
+
+  /// 벽지 슬라이스 (특정 영역만 잘라내기)
+  Widget _buildWallSlice({
+    required Widget sharedWallpaper,
+    required double sliceX, // 전체 벽지에서의 시작 X 위치
+    required double sliceW,
+    required double sliceH,
+    required double totalWidth,
+  }) {
+    return ClipRect(
+      child: Transform.translate(
+        offset: Offset(-sliceX, 0), // 왼쪽으로 밀어서 해당 구간만 보이게 함
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: totalWidth,
+          maxWidth: totalWidth,
+          minHeight: sliceH,
+          maxHeight: sliceH,
+          child: sharedWallpaper,
+        ),
+      ),
+    );
+  }
 }

@@ -35,7 +35,7 @@ class RoomBackgroundWidget extends StatelessWidget {
             child: Image.asset(
               backgroundImagePath,
               fit: BoxFit.cover,
-              cacheWidth: 800,
+              cacheWidth: 400, // Reduced from 800 as it's for a small window
               alignment: Alignment.topCenter,
             ),
           ),

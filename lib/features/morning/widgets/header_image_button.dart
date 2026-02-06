@@ -55,6 +55,7 @@ class _HeaderImageButtonState extends State<HeaderImageButton>
           width: widget.size,
           height: widget.size,
           fit: BoxFit.contain,
+          cacheWidth: 150, // Optimize memory usage
         ),
       ),
     );

@@ -74,7 +74,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/Ceiling.png'),
+            image: ResizeImage(AssetImage('assets/images/Ceiling.png'),
+                width: 1080),
             fit: BoxFit.cover,
           ),
         ),
@@ -135,6 +136,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 width: 50,
                 height: 30,
                 fit: BoxFit.fill,
+                cacheWidth: 150, // Optimized
               ),
               Text(
                 '${_diaries.where((d) => d.dateOnly.year == _focusedDay.year && d.dateOnly.month == _focusedDay.month).length}개',
@@ -159,7 +161,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
         image: DecorationImage(
-          image: AssetImage('assets/images/Calander_Background.png'),
+          image: ResizeImage(
+              AssetImage('assets/images/Calander_Background.png'),
+              width: 800),
           fit: BoxFit.fill,
         ),
       ),
@@ -477,7 +481,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             return Container(
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/images/MyNote_Background.png'),
+                  image: ResizeImage(
+                      AssetImage('assets/images/MyNote_Background.png'),
+                      width: 800),
                   fit: BoxFit.fill,
                 ),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -541,7 +547,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                               padding: const EdgeInsets.all(24),
                               decoration: const BoxDecoration(
                                 image: DecorationImage(
-                                  image: AssetImage('assets/images/Memo.png'),
+                                  image: ResizeImage(
+                                      AssetImage('assets/images/Memo.png'),
+                                      width: 800),
                                   fit: BoxFit.fill,
                                 ),
                               ),
@@ -584,6 +592,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                                         'assets/images/Pink_Heart.png',
                                         width: 20,
                                         height: 20,
+                                        cacheWidth: 100, // Optimized
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
@@ -671,6 +680,7 @@ class _AnimatedImageButtonState extends State<_AnimatedImageButton>
               width: double.infinity,
               height: 60,
               fit: BoxFit.fill,
+              cacheWidth: 800, // Optimized
             ),
             if (widget.child != null) widget.child!,
           ],
@@ -740,6 +750,7 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                 child: Image.asset(
                   'assets/images/Archive_Background.png',
                   fit: BoxFit.fill,
+                  cacheWidth: 800, // Optimized
                 ),
               ),
               // Content

@@ -51,6 +51,7 @@ class CharacterRoomScreen extends StatelessWidget {
                       'assets/images/branch.png',
                       width: 18,
                       height: 18,
+                      cacheWidth: 100,
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -80,7 +81,8 @@ class CharacterRoomScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/Ceiling.png'),
+            image: ResizeImage(AssetImage('assets/images/Ceiling.png'),
+                width: 1080),
             fit: BoxFit.cover,
           ),
         ),
@@ -448,6 +450,7 @@ class _AnimatedCustomButtonState extends State<_AnimatedCustomButton>
                 child: Image.asset(
                   widget.bgImage,
                   fit: BoxFit.fill,
+                  cacheWidth: 300,
                 ),
               ),
               Row(
@@ -457,6 +460,7 @@ class _AnimatedCustomButtonState extends State<_AnimatedCustomButton>
                     widget.iconPath,
                     width: 24,
                     height: 24,
+                    cacheWidth: 100,
                   ),
                   const SizedBox(width: 8),
                   Text(

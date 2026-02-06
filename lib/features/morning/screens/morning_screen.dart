@@ -64,6 +64,7 @@ class _MorningScreenState extends State<MorningScreen>
                   child: Image.asset(
                     'assets/items/StickyNote.png',
                     fit: BoxFit.contain,
+                    cacheWidth: 800,
                   ),
                 ),
                 // 2. 텍스트 내용 (중앙)
@@ -110,6 +111,7 @@ class _MorningScreenState extends State<MorningScreen>
                             'assets/images/Pink_Heart.png',
                             width: 24,
                             height: 24,
+                            cacheWidth: 100,
                           ),
                           const SizedBox(width: 4),
                           Text(

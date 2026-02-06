@@ -50,6 +50,7 @@ class _DiaryButtonState extends State<DiaryButton>
               width: double.infinity,
               height: 90,
               fit: BoxFit.fill,
+              cacheHeight: 200, // Optimize memory for fixed height
             ),
             const Padding(
               padding: EdgeInsets.only(top: 6),

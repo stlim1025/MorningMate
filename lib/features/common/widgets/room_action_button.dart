@@ -85,6 +85,7 @@ class _RoomActionButtonState extends State<RoomActionButton>
                 child: Image.asset(
                   'assets/icons/Button_Background.png',
                   fit: BoxFit.fill,
+                  cacheWidth: 200, // Optimize memory
                 ),
               ),
               // 아이콘과 텍스트 - Flexible로 감싸서 오버플로우 방지
@@ -102,6 +103,7 @@ class _RoomActionButtonState extends State<RoomActionButton>
                         width: widget.size * 0.6,
                         height: widget.size * 0.6,
                         fit: BoxFit.contain,
+                        cacheWidth: 150, // Optimize memory
                       ),
                     ),
                     const SizedBox(height: 2),

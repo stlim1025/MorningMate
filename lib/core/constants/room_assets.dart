@@ -331,12 +331,6 @@ class RoomAssets {
         icon: Icons.view_quilt,
         imagePath: 'assets/images/Wood_Tile2.png'),
     RoomAsset(
-        id: 'tile_sky',
-        name: '하늘 타일',
-        price: 150,
-        icon: Icons.apps,
-        imagePath: 'assets/images/TileFloorSky.svg'),
-    RoomAsset(
         id: 'pink_wood',
         name: '핑크 나무 바닥',
         price: 200,
