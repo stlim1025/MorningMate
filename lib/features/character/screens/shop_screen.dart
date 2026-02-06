@@ -32,80 +32,88 @@ class _ShopScreenState extends State<ShopScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('상점', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: colorScheme.shadowColor.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
+    return Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Ceiling.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title:
+                const Text('상점', style: TextStyle(fontWeight: FontWeight.bold)),
+            centerTitle: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: colorScheme.shadowColor.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/branch.png',
+                      width: 20,
+                      height: 20,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${user.points}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '가지',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.asset(
-                  'assets/images/branch.png',
-                  width: 20,
-                  height: 20,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${user.points}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '가지',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                // 광고 보기 버튼
+                _buildAdButton(
+                    user, colorScheme, context.read<CharacterController>()),
+                const SizedBox(height: 24),
+
+                _buildSectionHeader('테마', Icons.palette),
+                const SizedBox(height: 16),
+                _buildThemeGrid(user, characterController, colorScheme),
+                const SizedBox(height: 32),
+                _buildSectionHeader('벽지', Icons.wallpaper),
+                const SizedBox(height: 16),
+                _buildWallpaperGrid(user, characterController, colorScheme),
+                const SizedBox(height: 32),
+                _buildSectionHeader('배경', Icons.landscape),
+                const SizedBox(height: 16),
+                _buildBackgroundGrid(user, characterController, colorScheme),
+                const SizedBox(height: 32),
+                _buildSectionHeader('소품', Icons.auto_awesome),
+                const SizedBox(height: 16),
+                _buildPropGrid(user, characterController, colorScheme),
+                const SizedBox(height: 32),
+                _buildSectionHeader('바닥', Icons.grid_on),
+                const SizedBox(height: 16),
+                _buildFloorGrid(user, characterController, colorScheme),
               ],
             ),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 광고 보기 버튼
-            _buildAdButton(
-                user, colorScheme, context.read<CharacterController>()),
-            const SizedBox(height: 24),
-
-            _buildSectionHeader('테마', Icons.palette),
-            const SizedBox(height: 16),
-            _buildThemeGrid(user, characterController, colorScheme),
-            const SizedBox(height: 32),
-            _buildSectionHeader('벽지', Icons.wallpaper),
-            const SizedBox(height: 16),
-            _buildWallpaperGrid(user, characterController, colorScheme),
-            const SizedBox(height: 32),
-            _buildSectionHeader('배경', Icons.landscape),
-            const SizedBox(height: 16),
-            _buildBackgroundGrid(user, characterController, colorScheme),
-            const SizedBox(height: 32),
-            _buildSectionHeader('소품', Icons.auto_awesome),
-            const SizedBox(height: 16),
-            _buildPropGrid(user, characterController, colorScheme),
-            const SizedBox(height: 32),
-            _buildSectionHeader('바닥', Icons.grid_on),
-            const SizedBox(height: 16),
-            _buildFloorGrid(user, characterController, colorScheme),
-          ],
-        ),
-      ),
-    );
+        ));
   }
 
   Widget _buildAdButton(

@@ -250,16 +250,25 @@ class AppDialog {
     AppDialogAction action,
     AppColorScheme? colors,
   ) {
-    if (['취소', '확인', '변경'].contains(action.label)) {
-      final imagePath = action.label == '취소'
-          ? 'assets/images/Cancel_Button.png'
-          : 'assets/images/Confirm_Button.png';
+    // '탈퇴' actions are excluded to keep their specific red styling.
+    // 'Brown' buttons (isPrimary) come here, along with specific labels.
+    final isConfirmStyle = (action.isPrimary && action.label != '탈퇴') ||
+        ['확인', '변경', '구매', '전송', '수락', '등록', '요청'].contains(action.label);
+
+    // 'Cancel' or 'Close' style buttons.
+    final isCancelStyle = ['취소', '닫기', '거절', '아니오'].contains(action.label);
+
+    if (isConfirmStyle || isCancelStyle) {
+      final imagePath = isConfirmStyle
+          ? 'assets/images/Confirm_Button.png'
+          : 'assets/images/Cancel_Button.png';
 
       const textColor = Color(0xFF4E342E);
 
       return _ImageActionButton(
         imagePath: imagePath,
         label: action.label,
+        child: action.labelWidget,
         onPressed: () {
           if (action.onPressed is Function(BuildContext)) {
             action.onPressed(context);
@@ -568,6 +577,7 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
 class _ImageActionButton extends StatefulWidget {
   final String imagePath;
   final String label;
+  final Widget? child;
   final VoidCallback? onPressed;
   final ValueListenable<bool>? isEnabled;
   final Color? textColor;
@@ -575,6 +585,7 @@ class _ImageActionButton extends StatefulWidget {
   const _ImageActionButton({
     required this.imagePath,
     required this.label,
+    this.child,
     this.onPressed,
     this.isEnabled,
     this.textColor,
@@ -612,15 +623,16 @@ class _ImageActionButtonState extends State<_ImageActionButton> {
                     width: double.infinity,
                     height: 52, // Fixed height to match standard button
                   ),
-                  Text(
-                    widget.label,
-                    style: TextStyle(
-                      fontFamily: 'BMJUA',
-                      color: widget.textColor ?? const Color(0xFF4E342E),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  widget.child ??
+                      Text(
+                        widget.label,
+                        style: TextStyle(
+                          fontFamily: 'BMJUA',
+                          color: widget.textColor ?? const Color(0xFF4E342E),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                 ],
               ),
             ),

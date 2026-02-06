@@ -323,7 +323,10 @@ class _DecorationScreenState extends State<DecorationScreen> {
               flex: 10,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
+                  image: const DecorationImage(
+                    image: AssetImage('assets/images/Ceiling.png'),
+                    fit: BoxFit.fill,
+                  ),
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(32)),
                   boxShadow: [
