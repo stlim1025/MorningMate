@@ -255,7 +255,7 @@ class _MorningScreenState extends State<MorningScreen>
                   child: SafeArea(
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: DiaryButton(
                           onTap: () async {
                             if (morningController.currentQuestion == null) {

@@ -23,19 +23,35 @@ class ReplyDialog {
     return AppDialog.show(
       context: context,
       key: AppDialogKey.guestbook,
-      content: TextField(
-        controller: messageController,
-        maxLines: 3,
-        autofocus: true,
-        style: TextStyle(color: colorScheme.textPrimary),
-        decoration: InputDecoration(
-          hintText: '$receiverNickname님께 답장하기',
-          hintStyle: TextStyle(color: colorScheme.textHint),
-          filled: true,
-          fillColor: Theme.of(context).scaffoldBackgroundColor,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      content: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: TextField(
+          controller: messageController,
+          maxLines: 3,
+          autofocus: true,
+          style: TextStyle(color: colorScheme.textPrimary),
+          decoration: InputDecoration(
+            hintText: '$receiverNickname님께 답장하기',
+            hintStyle: TextStyle(color: colorScheme.textHint),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.04),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: colorScheme.primaryButton, width: 1.5),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ),

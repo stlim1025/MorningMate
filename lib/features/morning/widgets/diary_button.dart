@@ -54,7 +54,7 @@ class _DiaryButtonState extends State<DiaryButton>
             const Padding(
               padding: EdgeInsets.only(top: 6),
               child: Text(
-                '일기작성하기',
+                '일기 작성하기',
                 style: TextStyle(
                   fontFamily: 'BMJUA',
                   fontSize: 23,

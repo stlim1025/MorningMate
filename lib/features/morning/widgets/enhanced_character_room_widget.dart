@@ -268,11 +268,12 @@ class _EnhancedCharacterRoomWidgetState
       orElse: () => RoomAssets.wallpapers.first,
     );
     Color baseColor = wallpaperAsset.color ?? const Color(0xFFF5F5DC);
+    // 야간에는 아주 살짝만 어둡게
     Color wallpaperColor = isAwake
         ? baseColor
-        : Color.lerp(baseColor, Colors.black, 0.45) ?? baseColor;
+        : Color.lerp(baseColor, Colors.black, 0.05) ?? baseColor;
 
-    // 3. 怨듭슜 踰쎌? ?덉씠???앹꽦 (?뺣㈃ + ?쇱そ "?쇱튇" ?ш린)
+    // 3. 공용 벽지 레이어 생성 (정면 + 왼쪽 "잇닿" 배치)
     final totalW = leftW + frontW;
     final sharedWallpaper = _buildSharedWallpaperLayer(
       wallpaperAsset: wallpaperAsset,
@@ -284,10 +285,10 @@ class _EnhancedCharacterRoomWidgetState
 
     return Stack(
       children: [
-        // 0. 湲곕낯 諛곌꼍
+        // 0. 기본 배경 (야간에도 너무 어둡지 않게)
         Positioned.fill(
           child: Container(
-            color: isAwake ? const Color(0xFFF5F0E8) : const Color(0xFF2A2A2A),
+            color: isAwake ? const Color(0xFFF5F0E8) : const Color(0xFFEDE5DD),
           ),
         ),
 
@@ -306,12 +307,7 @@ class _EnhancedCharacterRoomWidgetState
                     fit: BoxFit.cover,
                   ),
                 ),
-                if (!isAwake)
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.black.withOpacity(0.45),
-                    ),
-                  ),
+                // 야간 모드 천장 오버레이 제거 (색상 조정만 사용)
               ],
             ),
           ),
@@ -461,7 +457,7 @@ class _EnhancedCharacterRoomWidgetState
                   color: floorAsset.color ??
                       (isAwake
                           ? const Color(0xFFE8DCCF)
-                          : Colors.brown.shade800),
+                          : const Color(0xFFDDD1C5)), // 더 밝은 바닥색
                   image: (floorAsset.imagePath != null &&
                           !floorAsset.imagePath!.endsWith('.svg'))
                       ? DecorationImage(
@@ -521,12 +517,7 @@ class _EnhancedCharacterRoomWidgetState
                         ),
                       ),
                     ),
-                    if (!isAwake)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withOpacity(0.4),
-                        ),
-                      ),
+                    // 야간 모드 바닥 오버레이 제거 (색상 조정만 사용)
                   ],
                 ),
               ),
@@ -571,15 +562,8 @@ class _EnhancedCharacterRoomWidgetState
               : const SizedBox.shrink()),
     );
 
-    return Stack(
-      children: [
-        Positioned.fill(child: base),
-        if (!isAwake)
-          Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.45)),
-          ),
-      ],
-    );
+    // 야간 모드 오버레이 제거 (색상 조정만 사용)
+    return base;
   }
 
   /// 踰쎌? ?щ씪?댁뒪 (?뱀젙 ?곸뿭留??섎씪?닿린)
@@ -978,29 +962,41 @@ class _EnhancedCharacterRoomWidgetState
     if (asset.id.isEmpty) return SizedBox(width: width, height: height);
 
     if (asset.imagePath != null) {
-      return Opacity(
-        opacity:
-            widget.isAwake ? 1.0 : 0.9, // Night mode slightly dimmed but clear
-        child: asset.imagePath!.endsWith('.svg')
-            ? SvgPicture.asset(
-                asset.imagePath!,
-                width: width * 0.9,
-                height: height * 0.9,
-                fit: BoxFit.contain,
-              )
-            : Image.asset(
-                asset.imagePath!,
-                width: width * 0.9,
-                height: height * 0.9,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  // Fallback to icon if image fails to load
-                  return Icon(asset.icon,
-                      color: Colors.blueGrey,
-                      size: (width < height ? width : height) * 0.7);
-                },
-              ),
-      );
+      Widget imageWidget = asset.imagePath!.endsWith('.svg')
+          ? SvgPicture.asset(
+              asset.imagePath!,
+              width: width * 0.9,
+              height: height * 0.9,
+              fit: BoxFit.contain,
+            )
+          : Image.asset(
+              asset.imagePath!,
+              width: width * 0.9,
+              height: height * 0.9,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to icon if image fails to load
+                return Icon(asset.icon,
+                    color: Colors.blueGrey,
+                    size: (width < height ? width : height) * 0.7);
+              },
+            );
+
+      // 잠들어있을 때 아주 살짝만 어둡게 처리
+      if (!widget.isAwake) {
+        imageWidget = ColorFiltered(
+          colorFilter: ColorFilter.mode(
+            Colors.black.withOpacity(0.08),
+            BlendMode.darken,
+          ),
+          child: Opacity(
+            opacity: 0.95,
+            child: imageWidget,
+          ),
+        );
+      }
+
+      return imageWidget;
     }
 
     return Icon(asset.icon,

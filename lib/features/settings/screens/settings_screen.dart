@@ -659,21 +659,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
-            controller: controller,
-            style: TextStyle(color: colorScheme.textPrimary),
-            decoration: InputDecoration(
-              hintText: '새 닉네임 입력',
-              hintStyle: TextStyle(color: colorScheme.textHint),
-              filled: true,
-              fillColor: Theme.of(context).cardColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                    color: colorScheme.primaryButton.withOpacity(0.5)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: controller,
+              style: TextStyle(color: colorScheme.textPrimary),
+              decoration: InputDecoration(
+                hintText: '새 닉네임 입력',
+                hintStyle: TextStyle(color: colorScheme.textHint),
+                filled: true,
+                fillColor: Colors.black.withOpacity(0.04),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      BorderSide(color: colorScheme.primaryButton, width: 1.5),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
+              maxLength: 10,
             ),
-            maxLength: 10,
           ),
           ValueListenableBuilder<bool>(
             valueListenable: isCheckingNotifier,
@@ -850,76 +865,124 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextFormField(
-              controller: currentPasswordController,
-              obscureText: true,
-              style: TextStyle(color: colorScheme.textPrimary),
-              decoration: InputDecoration(
-                hintText: '현재 비밀번호',
-                hintStyle: TextStyle(color: colorScheme.textHint),
-                filled: true,
-                fillColor: Theme.of(context).scaffoldBackgroundColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextFormField(
+                controller: currentPasswordController,
+                obscureText: true,
+                style: TextStyle(color: colorScheme.textPrimary),
+                decoration: InputDecoration(
+                  hintText: '현재 비밀번호',
+                  hintStyle: TextStyle(color: colorScheme.textHint),
+                  filled: true,
+                  fillColor: Colors.black.withOpacity(0.04),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.textHint.withOpacity(0.2)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.textHint.withOpacity(0.2)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.primaryButton, width: 1.5),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '현재 비밀번호를 입력해주세요';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '현재 비밀번호를 입력해주세요';
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: newPasswordController,
-              obscureText: true,
-              style: TextStyle(color: colorScheme.textPrimary),
-              decoration: InputDecoration(
-                hintText: '새 비밀번호 (6자 이상)',
-                hintStyle: TextStyle(color: colorScheme.textHint),
-                filled: true,
-                fillColor: Theme.of(context).scaffoldBackgroundColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextFormField(
+                controller: newPasswordController,
+                obscureText: true,
+                style: TextStyle(color: colorScheme.textPrimary),
+                decoration: InputDecoration(
+                  hintText: '새 비밀번호 (6자 이상)',
+                  hintStyle: TextStyle(color: colorScheme.textHint),
+                  filled: true,
+                  fillColor: Colors.black.withOpacity(0.04),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.textHint.withOpacity(0.2)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.textHint.withOpacity(0.2)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.primaryButton, width: 1.5),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '새 비밀번호를 입력해주세요';
+                  }
+                  if (value.trim().length < 6) {
+                    return '비밀번호는 최소 6자 이상이어야 합니다';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '새 비밀번호를 입력해주세요';
-                }
-                if (value.trim().length < 6) {
-                  return '비밀번호는 최소 6자 이상이어야 합니다';
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: confirmPasswordController,
-              obscureText: true,
-              style: TextStyle(color: colorScheme.textPrimary),
-              decoration: InputDecoration(
-                hintText: '비밀번호 확인',
-                hintStyle: TextStyle(color: colorScheme.textHint),
-                filled: true,
-                fillColor: Theme.of(context).scaffoldBackgroundColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextFormField(
+                controller: confirmPasswordController,
+                obscureText: true,
+                style: TextStyle(color: colorScheme.textPrimary),
+                decoration: InputDecoration(
+                  hintText: '비밀번호 확인',
+                  hintStyle: TextStyle(color: colorScheme.textHint),
+                  filled: true,
+                  fillColor: Colors.black.withOpacity(0.04),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.textHint.withOpacity(0.2)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.textHint.withOpacity(0.2)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.primaryButton, width: 1.5),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '비밀번호 확인을 입력해주세요';
+                  }
+                  if (value != newPasswordController.text) {
+                    return '비밀번호가 일치하지 않습니다';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return '비밀번호 확인을 입력해주세요';
-                }
-                if (value != newPasswordController.text) {
-                  return '비밀번호가 일치하지 않습니다';
-                }
-                return null;
-              },
             ),
           ],
         ),

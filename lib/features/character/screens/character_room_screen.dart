@@ -14,9 +14,10 @@ class CharacterRoomScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -76,28 +77,36 @@ class CharacterRoomScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Expanded(
-              child: Consumer<CharacterController>(
-                builder: (context, controller, child) {
-                  return SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        _buildCharacter(context, controller, colorScheme),
-                        const SizedBox(height: 32),
-                        _buildCharacterInfo(context, controller, colorScheme),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  );
-                },
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Ceiling.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              Expanded(
+                child: Consumer<CharacterController>(
+                  builder: (context, controller, child) {
+                    return SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildCharacter(context, controller, colorScheme),
+                          const SizedBox(height: 32),
+                          _buildCharacterInfo(context, controller, colorScheme),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            _buildBottomActions(context, colorScheme),
-          ],
+              _buildBottomActions(context, colorScheme),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(context),

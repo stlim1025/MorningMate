@@ -21,7 +21,7 @@ class RoomBackgroundWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final backgroundImagePath = _backgroundImagePath(decoration.backgroundId);
 
-    return Stack(
+    Widget backgroundContent = Stack(
       children: [
         // 1. 기본 배경색 (이미지가 없을 경우)
         if (backgroundImagePath == null)
@@ -47,6 +47,19 @@ class RoomBackgroundWidget extends StatelessWidget {
           ),
       ],
     );
+
+    // 잠들어있을 때 창문 배경도 살짝 어둡게 처리
+    if (!isAwake && backgroundImagePath != null) {
+      backgroundContent = ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          Colors.black.withOpacity(0.15),
+          BlendMode.darken,
+        ),
+        child: backgroundContent,
+      );
+    }
+
+    return backgroundContent;
   }
 
   String? _backgroundImagePath(String backgroundId) {

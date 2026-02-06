@@ -138,34 +138,45 @@ class _TabItemState extends State<_TabItem>
       },
       onTapCancel: () => _controller.reverse(),
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.only(top: 8, left: 10, right: 10, bottom: 2),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         child: ScaleTransition(
           scale: _scaleAnimation,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                widget.iconPath,
-                width: widget.width,
-                height: widget.height,
-                opacity: widget.isSelected
-                    ? const AlwaysStoppedAnimation(1.0)
-                    : const AlwaysStoppedAnimation(0.5), // Dim unselected
-              ),
-              const SizedBox(height: 2),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontFamily: 'BMJUA',
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: widget.isSelected
-                      ? const Color(0xFF4E342E) // Dark Brown
-                      : const Color(0xFF4E342E).withOpacity(0.5),
+              const SizedBox(height: 6),
+              // Flexible로 감싸서 오버플로우 방지
+              Flexible(
+                child: Image.asset(
+                  widget.iconPath,
+                  width: widget.width,
+                  height: widget.height,
+                  fit: BoxFit.contain,
+                  opacity: widget.isSelected
+                      ? const AlwaysStoppedAnimation(1.0)
+                      : const AlwaysStoppedAnimation(0.5),
                 ),
               ),
+              const SizedBox(height: 2),
+              // 텍스트도 Flexible로 감싸서 잘리지 않도록
+              Flexible(
+                child: Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontFamily: 'BMJUA',
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: widget.isSelected
+                        ? const Color(0xFF4E342E)
+                        : const Color(0xFF4E342E).withOpacity(0.5),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 2),
             ],
           ),
         ),

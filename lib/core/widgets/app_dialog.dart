@@ -250,6 +250,28 @@ class AppDialog {
     AppDialogAction action,
     AppColorScheme? colors,
   ) {
+    if (['취소', '확인', '변경'].contains(action.label)) {
+      final imagePath = action.label == '취소'
+          ? 'assets/images/Cancel_Button.png'
+          : 'assets/images/Confirm_Button.png';
+
+      const textColor = Color(0xFF4E342E);
+
+      return _ImageActionButton(
+        imagePath: imagePath,
+        label: action.label,
+        onPressed: () {
+          if (action.onPressed is Function(BuildContext)) {
+            action.onPressed(context);
+          } else {
+            action.onPressed?.call();
+          }
+        },
+        isEnabled: action.isEnabled,
+        textColor: textColor,
+      );
+    }
+
     Color backgroundColor;
     Color foregroundColor;
 
@@ -422,63 +444,96 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
         ],
         _AppDialogErrorScope(
           setError: (msg) => setState(() => _errorMessage = msg),
-          child: AlertDialog(
-            backgroundColor: Theme.of(context).cardColor,
+          child: Dialog(
+            backgroundColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
-            title: Row(
-              children: [
-                if (config.leading != null) ...[
-                  config.leading!,
-                  const SizedBox(width: 12),
-                ],
-                Expanded(
-                  child: Text(
-                    config.title,
-                    style: TextStyle(
-                      color: colors?.dialogTitle ??
-                          Theme.of(context).textTheme.titleLarge?.color,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/Popup_Background.png'),
+                  fit: BoxFit.fill,
                 ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (config.content != null)
-                  DefaultTextStyle.merge(
-                    style: TextStyle(
-                      color: colors?.dialogBody ??
-                          Theme.of(context).textTheme.bodyMedium?.color,
-                    ),
-                    child: config.content!,
-                  ),
-                if (_errorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(
-                      _errorMessage!,
-                      style: TextStyle(
-                        color: colors?.error ?? Colors.red,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    24, 40, 24, 28), // 상단 패딩을 늘려 전체적으로 내림
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    if (config.title.isNotEmpty) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (config.leading != null) ...[
+                            config.leading!,
+                            const SizedBox(width: 10),
+                          ],
+                          Text(
+                            config.title,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontFamily: 'BMJUA',
+                              fontSize: 23,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4E342E), // Dark Brown
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-              ],
+                      const SizedBox(height: 20),
+                    ],
+                    // Content
+                    if (config.content != null)
+                      DefaultTextStyle.merge(
+                        style: TextStyle(
+                          color: colors?.dialogBody ??
+                              Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                        child: config.content!,
+                      ),
+                    if (_errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(
+                            color: colors?.error ?? Colors.red,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    // Actions
+                    if (config.actions.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          mainAxisAlignment:
+                              config.actionsAlignment ?? MainAxisAlignment.end,
+                          children: config.actions
+                              .map((action) => Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 4),
+                                      child: AppDialog._buildActionButton(
+                                          context, action, colors),
+                                    ),
+                                  ))
+                              .toList(),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            actionsAlignment: config.actionsAlignment,
-            actions: config.actions
-                .map((action) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child:
-                          AppDialog._buildActionButton(context, action, colors),
-                    ))
-                .toList(),
           ),
         ),
       ],
@@ -507,5 +562,71 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
     }
     path.close();
     return path;
+  }
+}
+
+class _ImageActionButton extends StatefulWidget {
+  final String imagePath;
+  final String label;
+  final VoidCallback? onPressed;
+  final ValueListenable<bool>? isEnabled;
+  final Color? textColor;
+
+  const _ImageActionButton({
+    required this.imagePath,
+    required this.label,
+    this.onPressed,
+    this.isEnabled,
+    this.textColor,
+  });
+
+  @override
+  State<_ImageActionButton> createState() => _ImageActionButtonState();
+}
+
+class _ImageActionButtonState extends State<_ImageActionButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: widget.isEnabled ?? const AlwaysStoppedAnimation(true),
+      builder: (context, isEnabled, child) {
+        return GestureDetector(
+          onTapDown:
+              isEnabled ? (_) => setState(() => _isPressed = true) : null,
+          onTapUp: isEnabled ? (_) => setState(() => _isPressed = false) : null,
+          onTapCancel:
+              isEnabled ? () => setState(() => _isPressed = false) : null,
+          onTap: isEnabled ? widget.onPressed : null,
+          child: Opacity(
+            opacity: isEnabled ? 1.0 : 0.5,
+            child: Transform.scale(
+              scale: _isPressed ? 0.95 : 1.0,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.asset(
+                    widget.imagePath,
+                    fit: BoxFit.fill,
+                    width: double.infinity,
+                    height: 52, // Fixed height to match standard button
+                  ),
+                  Text(
+                    widget.label,
+                    style: TextStyle(
+                      fontFamily: 'BMJUA',
+                      color: widget.textColor ?? const Color(0xFF4E342E),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }

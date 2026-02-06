@@ -44,9 +44,10 @@ class _SocialScreenState extends State<SocialScreen> {
         userId == null ? null : socialController.getFriendsStream(userId);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -90,131 +91,139 @@ class _SocialScreenState extends State<SocialScreen> {
             ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            Consumer<SocialController>(
-              builder: (context, controller, child) {
-                if (controller.friendRequests.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: colorScheme.accent.withOpacity(0.3),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.accent.withOpacity(0.1),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Ceiling.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              Consumer<SocialController>(
+                builder: (context, controller, child) {
+                  if (controller.friendRequests.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Container(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: colorScheme.accent.withOpacity(0.3),
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: colorScheme.accent.withOpacity(0.15),
-                              shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.accent.withOpacity(0.1),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: colorScheme.accent.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.person_add_rounded,
+                                  color: colorScheme.accent, size: 20),
                             ),
-                            child: Icon(Icons.person_add_rounded,
-                                color: colorScheme.accent, size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '새로운 친구 요청',
-                            style: TextStyle(
-                              color: colorScheme.textPrimary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: colorScheme.accent,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${controller.friendRequests.length}',
-                              style: const TextStyle(
-                                color: Colors.white,
+                            const SizedBox(width: 12),
+                            Text(
+                              '새로운 친구 요청',
+                              style: TextStyle(
+                                color: colorScheme.textPrimary,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 12,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      ...controller.friendRequests
-                          .map((req) => _buildRequestItem(req, colorScheme)),
-                    ],
-                  ),
-                );
-              },
-            ),
-            Expanded(
-              child: StreamBuilder<List<UserModel>>(
-                stream: friendsStream,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.people_outline,
-                              size: 80, color: colorScheme.textHint),
-                          const SizedBox(height: 16),
-                          Text(
-                            '아직 친구가 없어요',
-                            style: TextStyle(
-                              color: colorScheme.textSecondary,
-                              fontSize: 16,
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: colorScheme.accent,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${controller.friendRequests.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final friends = snapshot.data!;
-                  return GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.8,
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ...controller.friendRequests
+                            .map((req) => _buildRequestItem(req, colorScheme)),
+                      ],
                     ),
-                    itemCount: friends.length,
-                    itemBuilder: (context, index) {
-                      return _buildFriendCard(friends[index], colorScheme);
-                    },
                   );
                 },
               ),
-            ),
-          ],
+              Expanded(
+                child: StreamBuilder<List<UserModel>>(
+                  stream: friendsStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.people_outline,
+                                size: 80, color: colorScheme.textHint),
+                            const SizedBox(height: 16),
+                            Text(
+                              '아직 친구가 없어요',
+                              style: TextStyle(
+                                color: colorScheme.textSecondary,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    final friends = snapshot.data!;
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 0.8,
+                      ),
+                      itemCount: friends.length,
+                      itemBuilder: (context, index) {
+                        return _buildFriendCard(friends[index], colorScheme);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -662,17 +671,33 @@ class _SocialScreenState extends State<SocialScreen> {
     return AppDialog.show(
       context: context,
       key: AppDialogKey.addFriend,
-      content: TextField(
-        controller: controller,
-        style: TextStyle(color: colorScheme.textPrimary),
-        decoration: InputDecoration(
-          hintText: '친구 닉네임 입력',
-          hintStyle: TextStyle(color: colorScheme.textHint),
-          filled: true,
-          fillColor: Theme.of(context).scaffoldBackgroundColor,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      content: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: TextField(
+          controller: controller,
+          style: TextStyle(color: colorScheme.textPrimary),
+          decoration: InputDecoration(
+            hintText: '친구 닉네임 입력',
+            hintStyle: TextStyle(color: colorScheme.textHint),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.04),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  BorderSide(color: colorScheme.primaryButton, width: 1.5),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ),

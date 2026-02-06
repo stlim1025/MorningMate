@@ -17,6 +17,7 @@ import '../../notification/controllers/notification_controller.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
+import '../../common/widgets/room_action_button.dart';
 
 class FriendRoomScreen extends StatefulWidget {
   final String friendId;
@@ -37,8 +38,6 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
   bool? _friendAwakeStatus;
   late AnimationController _buttonController;
   late Animation<double> _scaleAnimation;
-  late AnimationController _recordButtonController;
-  late Animation<double> _recordScaleAnimation;
 
   @override
   void initState() {
@@ -49,14 +48,6 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _buttonController, curve: Curves.easeInOut),
-    );
-
-    _recordButtonController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _recordScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _recordButtonController, curve: Curves.easeInOut),
     );
     _loadFriendData();
   }
@@ -98,7 +89,6 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
   @override
   void dispose() {
     _buttonController.dispose();
-    _recordButtonController.dispose();
     super.dispose();
   }
 
@@ -298,24 +288,13 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                             // 보낸 기록 버튼 (오른쪽)
                             Padding(
                               padding: const EdgeInsets.only(right: 20),
-                              child: GestureDetector(
-                                onTapDown: (_) =>
-                                    _recordButtonController.forward(),
-                                onTapUp: (_) {
-                                  _recordButtonController.reverse();
+                              child: RoomActionButton(
+                                iconPath: 'assets/icons/SendRecord_Icon.png',
+                                label: '보낸기록',
+                                size: 90,
+                                onTap: () {
                                   _showSentMessagesDialog(colorScheme);
                                 },
-                                onTapCancel: () =>
-                                    _recordButtonController.reverse(),
-                                child: ScaleTransition(
-                                  scale: _recordScaleAnimation,
-                                  child: Image.asset(
-                                    'assets/icons/SendRecord_Icon.png',
-                                    width: 90,
-                                    height: 90,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
                               ),
                             ),
                           ],
