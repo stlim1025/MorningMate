@@ -59,6 +59,7 @@ class _SocialScreenState extends State<SocialScreen> {
               style: TextStyle(
                 color: colorScheme.textPrimary,
                 fontWeight: FontWeight.bold,
+                fontFamily: 'BMJUA',
               ),
             ),
           ],

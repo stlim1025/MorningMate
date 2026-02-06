@@ -170,6 +170,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                       color: textColor,
                                                       fontWeight:
                                                           FontWeight.bold,
+                                                      fontFamily: 'BMJUA',
                                                     ),
                                                 overflow: TextOverflow.ellipsis,
                                               ),
@@ -183,6 +184,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                       ?.copyWith(
                                                         color: textColor
                                                             .withOpacity(0.8),
+                                                        fontFamily: 'BMJUA',
                                                       ),
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -381,11 +383,24 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                   hintText: '친구에게 응원의 메시지를 남겨주세요',
                   hintStyle: TextStyle(color: colorScheme.textHint),
                   filled: true,
-                  fillColor: Theme.of(context).scaffoldBackgroundColor,
+                  fillColor: Colors.black.withOpacity(0.04),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                        color: colorScheme.textHint.withOpacity(0.2)),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.textHint.withOpacity(0.2)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: colorScheme.primaryButton, width: 1.5),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   errorText: errorText,
                 ),
                 onChanged: (_) {

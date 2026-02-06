@@ -30,42 +30,55 @@ class _DecorationScreenState extends State<DecorationScreen> {
 
   Future<String?> _showStickyNoteInput(BuildContext context) async {
     String text = '';
-    return showDialog<String>(
+    return AppDialog.show<String>(
       context: context,
-      builder: (context) {
-        final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-        return AlertDialog(
-          backgroundColor: colorScheme.backgroundLight,
-          title:
-              Text('메모 작성', style: TextStyle(color: colorScheme.textPrimary)),
-          content: TextField(
+      key: AppDialogKey.writeMemo,
+      content: Builder(
+        builder: (context) {
+          final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+          return TextField(
             autofocus: true,
             maxLength: 50,
             decoration: InputDecoration(
               hintText: '짧은 메시지를 남겨보세요',
               hintStyle: TextStyle(color: colorScheme.textHint),
               counterStyle: TextStyle(color: colorScheme.textSecondary),
+              filled: true,
+              fillColor: Colors.black.withOpacity(0.04),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
               ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    BorderSide(color: colorScheme.primaryButton, width: 1.5),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             style: TextStyle(color: colorScheme.textPrimary),
             onChanged: (value) => text = value,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('취소',
-                  style: TextStyle(color: colorScheme.textSecondary)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, text),
-              child: Text('확인',
-                  style: TextStyle(color: colorScheme.primaryButton)),
-            ),
-          ],
-        );
-      },
+          );
+        },
+      ),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: (context) => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: '확인',
+          isPrimary: true,
+          onPressed: (context) => Navigator.pop(context, text),
+        ),
+      ],
     );
   }
 

@@ -1085,13 +1085,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               hintText: '비밀번호 확인',
               hintStyle: TextStyle(color: colorScheme.textHint),
               filled: true,
-              fillColor: Theme.of(context).cardColor,
+              fillColor: Colors.black.withOpacity(0.04),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: colorScheme.primaryButton.withOpacity(0.1),
-                ),
+                borderSide:
+                    BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
               ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    BorderSide(color: colorScheme.primaryButton, width: 1.5),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
           ),
           const SizedBox(height: 16),
@@ -1102,14 +1113,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () => isCheckedNotifier.value = !isChecked,
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
-                        value: isChecked,
-                        onChanged: (value) =>
-                            isCheckedNotifier.value = value ?? false,
-                        activeColor: colorScheme.error,
+                    GestureDetector(
+                      onTap: () => isCheckedNotifier.value = !isChecked,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: isChecked
+                              ? colorScheme.primaryButton
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isChecked
+                                ? colorScheme.primaryButton
+                                : colorScheme.textHint.withOpacity(0.5),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: isChecked
+                            ? const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.white,
+                              )
+                            : null,
                       ),
                     ),
                     const SizedBox(width: 8),

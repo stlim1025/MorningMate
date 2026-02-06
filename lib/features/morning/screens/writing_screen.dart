@@ -149,6 +149,8 @@ class _WritingScreenState extends State<WritingScreen> {
                       if (widget.initialQuestion != null)
                         _buildQuestionCard(colorScheme),
                       const SizedBox(height: 16),
+                      _buildMoodSelection(colorScheme),
+                      const SizedBox(height: 16),
                       _buildWritingArea(context, colorScheme),
                       _buildBottomActions(context, controller, colorScheme),
                     ],
@@ -338,6 +340,57 @@ class _WritingScreenState extends State<WritingScreen> {
     );
   }
 
+  Widget _buildMoodSelection(AppColorScheme colorScheme) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadowColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.sentiment_satisfied_alt,
+                color: colorScheme.primaryButton,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '오늘의 기분',
+                style: TextStyle(
+                  color: colorScheme.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildMoodButton('😊', 'happy', colorScheme),
+              _buildMoodButton('😐', 'neutral', colorScheme),
+              _buildMoodButton('😢', 'sad', colorScheme),
+              _buildMoodButton('🤩', 'excited', colorScheme),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWritingArea(BuildContext context, AppColorScheme colorScheme) {
     return Container(
       constraints: BoxConstraints(
@@ -428,47 +481,6 @@ class _WritingScreenState extends State<WritingScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.sentiment_satisfied_alt,
-                      color: colorScheme.primaryButton,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '오늘의 기분',
-                      style: TextStyle(
-                        color: colorScheme.textSecondary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildMoodButton('😊', 'happy', colorScheme),
-                    _buildMoodButton('😐', 'neutral', colorScheme),
-                    _buildMoodButton('😢', 'sad', colorScheme),
-                    _buildMoodButton('🤩', 'excited', colorScheme),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(

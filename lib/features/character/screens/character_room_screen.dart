@@ -304,61 +304,36 @@ class CharacterRoomScreen extends StatelessWidget {
   }
 
   Widget _buildBottomActions(BuildContext context, AppColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
       child: Row(
         children: [
           Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () {
+            child: _AnimatedCustomButton(
+              bgImage: 'assets/images/Cancel_Button.png',
+              iconPath: 'assets/icons/Store_Icon.png',
+              label: '상점',
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ShopScreen()),
                 );
               },
-              icon: const Icon(Icons.shopping_bag),
-              label: const Text('상점'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: colorScheme.primaryButton,
-                side: BorderSide(
-                    color: colorScheme.primaryButton.withOpacity(0.5)),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
+            child: _AnimatedCustomButton(
+              bgImage: 'assets/images/Confirm_Button.png',
+              iconPath: 'assets/icons/Ggumim_Icon.png',
+              label: '꾸미기',
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) => const DecorationScreen()),
                 );
               },
-              icon: const Icon(Icons.edit),
-              label: const Text('꾸미기'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primaryButton,
-                foregroundColor: colorScheme.primaryButtonForeground,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
-              ),
             ),
           ),
         ],
@@ -409,5 +384,96 @@ class CharacterRoomScreen extends StatelessWidget {
       case CharacterState.sleeping:
         return '수면 중 💤';
     }
+  }
+}
+
+class _AnimatedCustomButton extends StatefulWidget {
+  final String bgImage;
+  final String iconPath;
+  final String label;
+  final VoidCallback onTap;
+
+  const _AnimatedCustomButton({
+    required this.bgImage,
+    required this.iconPath,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_AnimatedCustomButton> createState() => _AnimatedCustomButtonState();
+}
+
+class _AnimatedCustomButtonState extends State<_AnimatedCustomButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: SizedBox(
+          height: 68,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  widget.bgImage,
+                  fit: BoxFit.fill,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    widget.iconPath,
+                    width: 24,
+                    height: 24,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    widget.label,
+                    style: const TextStyle(
+                      fontFamily: 'BMJUA',
+                      fontSize: 18,
+                      color: Color(0xFF4E342E),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -106,13 +106,26 @@ class _EnhancedCharacterRoomWidgetState
     // ?대?吏 誘몃━ 濡쒕뱶?섏뿬 源쒕묀??諛⑹?
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        precacheImage(const AssetImage('assets/images/Face_Wink.png'), context);
         precacheImage(
-            const AssetImage('assets/images/Face_Sleep.png'), context);
+            ResizeImage(const AssetImage('assets/images/Face_Wink.png'),
+                width: 300),
+            context);
         precacheImage(
-            const AssetImage('assets/images/Face_Drool.png'), context);
-        precacheImage(const AssetImage('assets/images/Egg_Wing.png'), context);
-        precacheImage(const AssetImage('assets/images/Egg_Wing2.png'), context);
+            ResizeImage(const AssetImage('assets/images/Face_Sleep.png'),
+                width: 300),
+            context);
+        precacheImage(
+            ResizeImage(const AssetImage('assets/images/Face_Drool.png'),
+                width: 300),
+            context);
+        precacheImage(
+            ResizeImage(const AssetImage('assets/images/Egg_Wing.png'),
+                width: 800),
+            context);
+        precacheImage(
+            ResizeImage(const AssetImage('assets/images/Egg_Wing2.png'),
+                width: 800),
+            context);
       }
     });
   }
@@ -305,6 +318,7 @@ class _EnhancedCharacterRoomWidgetState
                   child: Image.asset(
                     'assets/images/Ceiling.png',
                     fit: BoxFit.cover,
+                    cacheWidth: 1080,
                   ),
                 ),
                 // 야간 모드 천장 오버레이 제거 (색상 조정만 사용)
@@ -461,7 +475,10 @@ class _EnhancedCharacterRoomWidgetState
                   image: (floorAsset.imagePath != null &&
                           !floorAsset.imagePath!.endsWith('.svg'))
                       ? DecorationImage(
-                          image: AssetImage(floorAsset.imagePath!),
+                          image: ResizeImage(
+                            AssetImage(floorAsset.imagePath!),
+                            width: 1080,
+                          ),
                           repeat: ImageRepeat.repeat,
                           alignment: Alignment.topCenter,
                           scale: 5.0,
@@ -543,7 +560,8 @@ class _EnhancedCharacterRoomWidgetState
               wallpaperAsset.imagePath!,
               width: totalWidth,
               height: totalHeight,
-              fit: BoxFit.fill, // ?꾩껜 ?곸뿭 苑?梨꾩슦湲?
+              fit: BoxFit.fill,
+              cacheWidth: 1080,
             )
           : (wallpaperAsset.id == 'black_stripe'
               ? Stack(
@@ -974,6 +992,7 @@ class _EnhancedCharacterRoomWidgetState
               width: width * 0.9,
               height: height * 0.9,
               fit: BoxFit.contain,
+              cacheWidth: 300,
               errorBuilder: (context, error, stackTrace) {
                 // Fallback to icon if image fails to load
                 return Icon(asset.icon,
@@ -1026,6 +1045,7 @@ class _EnhancedCharacterRoomWidgetState
                   widget.characterLevel >= 3 ? charWidth * 2 : charWidth * 1.2,
               height: widget.characterLevel >= 3 ? charHeight * 2 : charHeight,
               fit: BoxFit.contain,
+              cacheWidth: 800,
             ),
 
           // 2. Base Body - Static layer to prevent flickering
@@ -1034,6 +1054,7 @@ class _EnhancedCharacterRoomWidgetState
             width: charWidth,
             height: charHeight,
             fit: BoxFit.contain,
+            cacheWidth: 500,
           ),
 
           // 3. Expression Layer - Only cross-fade the face
@@ -1051,6 +1072,7 @@ class _EnhancedCharacterRoomWidgetState
               height: charHeight,
               fit: BoxFit.contain,
               key: const ValueKey('face_normal'),
+              cacheWidth: 300,
             ),
             secondChild: Image.asset(
               isAwake
@@ -1060,6 +1082,7 @@ class _EnhancedCharacterRoomWidgetState
               height: charHeight,
               fit: BoxFit.contain,
               key: const ValueKey('face_tapped'),
+              cacheWidth: 300,
             ),
           ),
 
@@ -1153,7 +1176,10 @@ class _EnhancedCharacterRoomWidgetState
             alignment: Alignment.center,
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/icons/Bubble_Icon.png'),
+                image: ResizeImage(
+                  AssetImage('assets/icons/Bubble_Icon.png'),
+                  width: 150,
+                ),
                 fit: BoxFit.contain,
               ),
             ),

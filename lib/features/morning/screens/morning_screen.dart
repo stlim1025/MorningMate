@@ -18,6 +18,7 @@ import '../widgets/store_button.dart';
 import '../widgets/diary_button.dart';
 import '../widgets/decoration_button.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
+import '../widgets/header_image_button.dart';
 
 class MorningScreen extends StatefulWidget {
   const MorningScreen({super.key});
@@ -377,6 +378,7 @@ class _MorningScreenState extends State<MorningScreen>
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: textColor,
                     fontWeight: FontWeight.bold,
+                    fontFamily: 'BMJUA',
                     shadows: [
                       Shadow(
                         color: shadowColor,
@@ -396,6 +398,7 @@ class _MorningScreenState extends State<MorningScreen>
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: textColor.withOpacity(0.9),
                     fontWeight: FontWeight.w600,
+                    fontFamily: 'BMJUA',
                     shadows: [
                       Shadow(
                         color: shadowColor,
@@ -423,60 +426,27 @@ class _MorningScreenState extends State<MorningScreen>
                   final notifications = snapshot.data ?? [];
                   final hasUnread =
                       notifications.any((notification) => !notification.isRead);
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: shadowColor.withOpacity(0.25),
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.notifications_outlined,
-                            color: textColor,
-                          ),
-                          onPressed: () {
-                            context.pushNamed('notification');
-                          },
-                        ),
-                      ),
-                      if (hasUnread)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: colorScheme.error,
-                              shape: BoxShape.circle,
-                              border:
-                                  Border.all(color: Colors.white, width: 1.5),
-                            ),
-                          ),
-                        ),
-                    ],
+                  return HeaderImageButton(
+                    imagePath: hasUnread
+                        ? 'assets/icons/Alerm_Red.png'
+                        : 'assets/icons/Alerm_Button.png',
+                    onTap: () {
+                      context.pushNamed('notification');
+                    },
                   );
                 },
               ),
               const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: shadowColor.withOpacity(0.25),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.settings, color: textColor),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsScreen(),
-                      ),
-                    );
-                  },
-                ),
+              HeaderImageButton(
+                imagePath: 'assets/icons/Setting_button.png',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),

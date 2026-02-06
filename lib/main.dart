@@ -36,8 +36,12 @@ void main() async {
 
   // Firebase 초기화
   await Firebase.initializeApp();
-  // 👇 광고 SDK 초기화 (필수)
-  await MobileAds.instance.initialize();
+  // 👇 광고 SDK 초기화 (필수) - 오류 발생 시 앱 실행이 중단되지 않도록 예외 처리
+  try {
+    MobileAds.instance.initialize();
+  } catch (e) {
+    debugPrint('광고 SDK 초기화 실패: $e');
+  }
   if (kIsWeb) {
     await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
   }

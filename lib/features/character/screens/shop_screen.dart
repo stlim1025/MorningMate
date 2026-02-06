@@ -398,33 +398,26 @@ class _ShopScreenState extends State<ShopScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Center(
-                                child: Container(
-                                  width: 80,
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                    color: (item.color ??
-                                            colorScheme.primaryButton)
-                                        .withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: item.imagePath != null
-                                      ? Padding(
-                                          padding: const EdgeInsets.all(12.0),
-                                          child:
-                                              item.imagePath!.endsWith('.svg')
-                                                  ? SvgPicture.asset(
-                                                      item.imagePath!,
-                                                    )
-                                                  : Image.asset(item.imagePath!,
-                                                      cacheWidth: 150),
-                                        )
-                                      : Icon(
-                                          item.icon,
-                                          size: 40,
-                                          color: item.color ??
-                                              colorScheme.primaryButton,
-                                        ),
-                                ),
+                                child: item.imagePath != null
+                                    ? SizedBox(
+                                        width: 100,
+                                        height: 100,
+                                        child: item.imagePath!.endsWith('.svg')
+                                            ? SvgPicture.asset(
+                                                item.imagePath!,
+                                                fit: BoxFit.contain,
+                                              )
+                                            : Image.asset(
+                                                item.imagePath!,
+                                                fit: BoxFit.contain,
+                                              ),
+                                      )
+                                    : Icon(
+                                        item.icon,
+                                        size: 60,
+                                        color: item.color ??
+                                            colorScheme.primaryButton,
+                                      ),
                               ),
                               const SizedBox(height: 16),
                               Text('${item.name}을(를) 구매하시겠습니까?'),
@@ -487,35 +480,27 @@ class _ShopScreenState extends State<ShopScreen> {
                                   children: [
                                     const SizedBox(height: 16),
                                     Center(
-                                      child: Container(
-                                        width: 100,
-                                        height: 100,
-                                        decoration: BoxDecoration(
-                                          color: (item.color ??
-                                                  colorScheme.primaryButton)
-                                              .withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: item.imagePath != null
-                                            ? Padding(
-                                                padding:
-                                                    const EdgeInsets.all(16.0),
-                                                child: item.imagePath!
-                                                        .endsWith('.svg')
-                                                    ? SvgPicture.asset(
-                                                        item.imagePath!,
-                                                      )
-                                                    : Image.asset(
-                                                        item.imagePath!,
-                                                        cacheWidth: 300),
-                                              )
-                                            : Icon(
-                                                item.icon,
-                                                size: 60,
-                                                color: item.color ??
-                                                    colorScheme.primaryButton,
-                                              ),
-                                      ),
+                                      child: item.imagePath != null
+                                          ? SizedBox(
+                                              width: 120,
+                                              height: 120,
+                                              child: item.imagePath!
+                                                      .endsWith('.svg')
+                                                  ? SvgPicture.asset(
+                                                      item.imagePath!,
+                                                      fit: BoxFit.contain,
+                                                    )
+                                                  : Image.asset(
+                                                      item.imagePath!,
+                                                      fit: BoxFit.contain,
+                                                    ),
+                                            )
+                                          : Icon(
+                                              item.icon,
+                                              size: 100,
+                                              color: item.color ??
+                                                  colorScheme.primaryButton,
+                                            ),
                                     ),
                                     const SizedBox(height: 24),
                                     Text(

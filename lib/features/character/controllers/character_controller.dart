@@ -20,9 +20,7 @@ enum CharacterState {
 class CharacterController extends ChangeNotifier {
   final UserService _userService;
 
-  CharacterController(this._userService) {
-    loadRewardedAd();
-  }
+  CharacterController(this._userService);
 
   // 상태 변수
   UserModel? _currentUser;

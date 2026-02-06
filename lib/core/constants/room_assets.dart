@@ -349,12 +349,6 @@ class RoomAssets {
         icon: Icons.texture,
         imagePath: 'assets/images/Peach_Break.png'),
     RoomAsset(
-        id: 'wood_tile',
-        name: '나무 타일',
-        price: 200,
-        icon: Icons.texture,
-        imagePath: 'assets/images/Wood_Tile.png'),
-    RoomAsset(
         id: 'pink_carpet',
         name: '핑크 카펫',
         price: 200,

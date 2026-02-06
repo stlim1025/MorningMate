@@ -19,6 +19,7 @@ enum AppDialogKey {
   purchaseComplete,
   levelUp,
   deleteStickyNote,
+  writeMemo,
 }
 
 class AppDialogAction {
@@ -216,6 +217,12 @@ class AppDialog {
                 ),
               ],
         );
+      case AppDialogKey.writeMemo:
+        return AppDialogConfig(
+          title: '메모 작성',
+          content: content,
+          actions: actions ?? const [],
+        );
     }
   }
 
@@ -252,11 +259,13 @@ class AppDialog {
   ) {
     // '탈퇴' actions are excluded to keep their specific red styling.
     // 'Brown' buttons (isPrimary) come here, along with specific labels.
-    final isConfirmStyle = (action.isPrimary && action.label != '탈퇴') ||
-        ['확인', '변경', '구매', '전송', '수락', '등록', '요청'].contains(action.label);
+    // '계속 작성'은 '취소'와 같은 스타일(아니오 등의 부정적 의미)로 처리하기 위해 isConfirmStyle에서 제외
+    final isConfirmStyle = action.isPrimary ||
+        ['확인', '변경', '구매', '전송', '수락', '등록', '요청', '탈퇴'].contains(action.label);
 
-    // 'Cancel' or 'Close' style buttons.
-    final isCancelStyle = ['취소', '닫기', '거절', '아니오'].contains(action.label);
+    // 'Cancel' or 'Close' style buttons. Includes '계속 작성'
+    final isCancelStyle =
+        ['취소', '닫기', '거절', '아니오', '계속 작성'].contains(action.label);
 
     if (isConfirmStyle || isCancelStyle) {
       final imagePath = isConfirmStyle
@@ -516,6 +525,8 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
                                           .textTheme
                                           .bodyMedium
                                           ?.color,
+                                  fontFamily: 'BMJUA', // 팝업 내용에도 폰트 적용
+                                  fontSize: 18,
                                 ),
                                 child: config.content!,
                               ),
