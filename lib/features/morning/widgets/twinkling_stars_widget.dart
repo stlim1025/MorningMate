@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class TwinklingStarsWidget extends StatefulWidget {
   final int starCount;
-  const TwinklingStarsWidget({super.key, this.starCount = 60});
+  const TwinklingStarsWidget({super.key, this.starCount = 40});
 
   @override
   State<TwinklingStarsWidget> createState() => _TwinklingStarsWidgetState();

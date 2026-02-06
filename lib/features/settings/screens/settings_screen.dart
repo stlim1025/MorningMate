@@ -272,6 +272,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             'assets/images/branch.png',
                             width: 14,
                             height: 14,
+                            cacheWidth: 56,
                           ),
                           const SizedBox(width: 4),
                           Text(

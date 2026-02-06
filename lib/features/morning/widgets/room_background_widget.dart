@@ -39,13 +39,6 @@ class RoomBackgroundWidget extends StatelessWidget {
               alignment: Alignment.topCenter,
             ),
           ),
-
-        // 3. 별 및 별똥별 효과 (푸른달, 별이 빛나는 밤 테마에서만 적용)
-        if (decoration.backgroundId == 'starry_night' ||
-            decoration.backgroundId == 'blue_moon')
-          const Positioned.fill(
-            child: TwinklingStarsWidget(starCount: 100),
-          ),
       ],
     );
 

@@ -62,6 +62,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       'assets/images/branch.png',
                       width: 20,
                       height: 20,
+                      cacheWidth: 80,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -183,7 +184,7 @@ class _ShopScreenState extends State<ShopScreen> {
                 Row(
                   children: [
                     Image.asset('assets/images/branch.png',
-                        width: 16, height: 16),
+                        width: 16, height: 16, cacheWidth: 64),
                     const SizedBox(width: 4),
                     const Text(
                       '+10 가지',
@@ -446,6 +447,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                     'assets/images/branch.png',
                                     width: 18,
                                     height: 18,
+                                    cacheWidth: 72,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -546,6 +548,7 @@ class _ShopScreenState extends State<ShopScreen> {
                             'assets/images/branch.png',
                             width: 14,
                             height: 14,
+                            cacheWidth: 56,
                           ),
                           const SizedBox(width: 4),
                           Text('${item.price}',

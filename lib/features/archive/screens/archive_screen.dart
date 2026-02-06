@@ -344,6 +344,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               child: Image.asset(
                 'assets/images/Archive_Background.png',
                 fit: BoxFit.fill,
+                cacheWidth: 800,
               ),
             ),
             Padding(

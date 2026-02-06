@@ -203,6 +203,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                               width: 70,
                                               height: 42,
                                               fit: BoxFit.fill,
+                                              cacheWidth: 140,
                                             ),
                                             Padding(
                                               padding:
@@ -278,6 +279,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                             width: double.infinity,
                                             height: 90,
                                             fit: BoxFit.fill,
+                                            cacheWidth: 600,
                                           ),
                                           Padding(
                                             padding:
@@ -669,6 +671,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                       child: Image.asset(
                         'assets/items/StickyNote.png',
                         fit: BoxFit.contain,
+                        cacheWidth: 640,
                       ),
                     ),
                     // 2. 텍스트 내용 (중앙)
@@ -725,6 +728,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                   : 'assets/images/Pink_Heart_Empty.png',
                               width: 24,
                               height: 24,
+                              cacheWidth: 48,
                             ),
                             const SizedBox(width: 4),
                             Text(
