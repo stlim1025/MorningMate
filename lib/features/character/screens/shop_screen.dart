@@ -369,7 +369,7 @@ class _ShopScreenState extends State<ShopScreen> {
                           ? SvgPicture.asset(
                               item.imagePath!,
                             )
-                          : Image.asset(item.imagePath!),
+                          : Image.asset(item.imagePath!, cacheWidth: 150),
                     )
                   : Icon(item.icon,
                       color: item.color ?? colorScheme.primaryButton, size: 28),
@@ -410,12 +410,13 @@ class _ShopScreenState extends State<ShopScreen> {
                                   child: item.imagePath != null
                                       ? Padding(
                                           padding: const EdgeInsets.all(12.0),
-                                          child: item.imagePath!
-                                                  .endsWith('.svg')
-                                              ? SvgPicture.asset(
-                                                  item.imagePath!,
-                                                )
-                                              : Image.asset(item.imagePath!),
+                                          child:
+                                              item.imagePath!.endsWith('.svg')
+                                                  ? SvgPicture.asset(
+                                                      item.imagePath!,
+                                                    )
+                                                  : Image.asset(item.imagePath!,
+                                                      cacheWidth: 150),
                                         )
                                       : Icon(
                                           item.icon,
@@ -505,7 +506,8 @@ class _ShopScreenState extends State<ShopScreen> {
                                                         item.imagePath!,
                                                       )
                                                     : Image.asset(
-                                                        item.imagePath!),
+                                                        item.imagePath!,
+                                                        cacheWidth: 300),
                                               )
                                             : Icon(
                                                 item.icon,

@@ -740,6 +740,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
                                     )
                                   : Image.asset(
                                       p.imagePath!,
+                                      cacheWidth: 150,
                                       fit: BoxFit.contain,
                                       errorBuilder:
                                           (context, error, stackTrace) {
@@ -815,7 +816,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
                 color: color ?? colorScheme.shadowColor.withOpacity(0.05),
                 image: (imagePath != null && !imagePath.endsWith('.svg'))
                     ? DecorationImage(
-                        image: AssetImage(imagePath),
+                        image: ResizeImage(AssetImage(imagePath), width: 200),
                         fit: BoxFit.cover,
                       )
                     : null,

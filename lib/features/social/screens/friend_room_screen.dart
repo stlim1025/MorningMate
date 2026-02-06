@@ -197,7 +197,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                           alignment: Alignment.center,
                                           children: [
                                             Image.asset(
-                                              'assets/images/Button_Background.png',
+                                              'assets/images/Item_Background.png',
                                               width: 70,
                                               height: 42,
                                               fit: BoxFit.fill,
