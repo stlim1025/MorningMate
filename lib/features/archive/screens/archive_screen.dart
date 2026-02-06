@@ -344,7 +344,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               child: Image.asset(
                 'assets/images/Archive_Background.png',
                 fit: BoxFit.fill,
-                cacheWidth: 800,
+                cacheWidth: 400,
               ),
             ),
             Padding(
@@ -751,7 +751,7 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                 child: Image.asset(
                   'assets/images/Archive_Background.png',
                   fit: BoxFit.fill,
-                  cacheWidth: 800, // Optimized
+                  cacheWidth: 400, // Optimized
                 ),
               ),
               // Content

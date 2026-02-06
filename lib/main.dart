@@ -31,6 +31,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 저사양 기기를 위한 이미지 캐시 제한 설정
+  PaintingBinding.instance.imageCache.maximumSize = 50; // 최대 50개 이미지
+  PaintingBinding.instance.imageCache.maximumSizeBytes =
+      50 * 1024 * 1024; // 50MB
+
   // 날짜 형식 초기화 (한국어)
   await initializeDateFormatting('ko_KR', null);
 

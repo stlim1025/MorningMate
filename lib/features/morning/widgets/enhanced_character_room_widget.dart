@@ -658,19 +658,7 @@ class _EnhancedCharacterRoomWidgetState
               },
             );
 
-      // 잠들어있을 때 아주 살짝만 어둡게 처리
-      if (!widget.isAwake) {
-        imageWidget = ColorFiltered(
-          colorFilter: ColorFilter.mode(
-            Colors.black.withOpacity(0.08),
-            BlendMode.darken,
-          ),
-          child: Opacity(
-            opacity: 0.95,
-            child: imageWidget,
-          ),
-        );
-      }
+      // 밤 모드 어두운 효과는 morning_screen.dart에서 전체 오버레이로 처리됨
 
       return imageWidget;
     }
@@ -702,7 +690,7 @@ class _EnhancedCharacterRoomWidgetState
                   widget.characterLevel >= 3 ? charWidth * 2 : charWidth * 1.2,
               height: widget.characterLevel >= 3 ? charHeight * 2 : charHeight,
               fit: BoxFit.contain,
-              cacheWidth: 800,
+              cacheWidth: 400,
             ),
 
           // 2. Base Body - Static layer to prevent flickering
@@ -983,7 +971,7 @@ class Room3DBackground extends StatelessWidget {
                   child: Image.asset(
                     'assets/images/Ceiling.png',
                     fit: BoxFit.cover,
-                    cacheWidth: 1080,
+                    cacheWidth: 540,
                   ),
                 ),
               ],
@@ -1141,7 +1129,7 @@ class Room3DBackground extends StatelessWidget {
                       ? DecorationImage(
                           image: ResizeImage(
                             AssetImage(floorAsset.imagePath!),
-                            width: 1080,
+                            width: 540,
                           ),
                           repeat: ImageRepeat.repeat,
                           alignment: Alignment.topCenter,
@@ -1224,7 +1212,7 @@ class Room3DBackground extends StatelessWidget {
               width: totalWidth,
               height: totalHeight,
               fit: BoxFit.fill,
-              cacheWidth: 1080,
+              cacheWidth: 540,
             )
           : (wallpaperAsset.id == 'black_stripe'
               ? Stack(

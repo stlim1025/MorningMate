@@ -64,7 +64,7 @@ class _MorningScreenState extends State<MorningScreen>
                   child: Image.asset(
                     'assets/items/StickyNote.png',
                     fit: BoxFit.contain,
-                    cacheWidth: 800,
+                    cacheWidth: 400,
                   ),
                 ),
                 // 2. 텍스트 내용 (중앙)
@@ -208,6 +208,16 @@ class _MorningScreenState extends State<MorningScreen>
                   todaysMood: morningController.todayDiary?.mood,
                 ),
               ),
+
+              // 1.5. 밤 모드 전체 오버레이 (잠들어있을 때 방 전체를 어둡게)
+              if (!isAwake)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Container(
+                      color: Colors.black.withOpacity(0.30),
+                    ),
+                  ),
+                ),
 
               // 2. Subtle Top Overlay for UI readability
               Positioned(

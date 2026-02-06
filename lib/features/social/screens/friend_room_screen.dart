@@ -126,6 +126,16 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                   ),
                 ),
 
+              // 1.5. 밤 모드 전체 오버레이 (친구가 자고 있을 때 방 전체를 어둡게)
+              if (!isAwake && _friend != null && !_isLoading)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Container(
+                      color: Colors.black.withOpacity(0.30),
+                    ),
+                  ),
+                ),
+
               // 2. UI Overlay
               SafeArea(
                 child: _isLoading
@@ -279,7 +289,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                             width: double.infinity,
                                             height: 90,
                                             fit: BoxFit.fill,
-                                            cacheWidth: 600,
+                                            cacheWidth: 300,
                                           ),
                                           Padding(
                                             padding:
@@ -671,7 +681,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                       child: Image.asset(
                         'assets/items/StickyNote.png',
                         fit: BoxFit.contain,
-                        cacheWidth: 640,
+                        cacheWidth: 320,
                       ),
                     ),
                     // 2. 텍스트 내용 (중앙)

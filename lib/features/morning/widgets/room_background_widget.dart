@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../data/models/room_decoration_model.dart';
-import 'twinkling_stars_widget.dart';
 
 class RoomBackgroundWidget extends StatelessWidget {
   final RoomDecorationModel decoration;
@@ -42,16 +41,7 @@ class RoomBackgroundWidget extends StatelessWidget {
       ],
     );
 
-    // 잠들어있을 때 창문 배경도 살짝 어둡게 처리
-    if (!isAwake && backgroundImagePath != null) {
-      backgroundContent = ColorFiltered(
-        colorFilter: ColorFilter.mode(
-          Colors.black.withOpacity(0.15),
-          BlendMode.darken,
-        ),
-        child: backgroundContent,
-      );
-    }
+    // 밤 모드 어두운 효과는 morning_screen.dart에서 전체 오버레이로 처리됨
 
     return backgroundContent;
   }
