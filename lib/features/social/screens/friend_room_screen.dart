@@ -141,68 +141,85 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                               // Header
                               Padding(
                                 padding: const EdgeInsets.all(16.0),
-                                child: Row(
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(Icons.arrow_back,
-                                          color: textColor),
-                                      onPressed: () => Navigator.pop(context),
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '${_friend!.nickname}',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleLarge
-                                                ?.copyWith(
-                                                  color: textColor,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '${_friend!.consecutiveDays}일 연속 기록 중 🔥',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  color: textColor
-                                                      .withOpacity(0.8),
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // 레벨 표시 버튼
-                                    Stack(
-                                      alignment: Alignment.center,
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final isSmallScreen =
+                                        constraints.maxWidth < 350;
+                                    return Row(
                                       children: [
-                                        Image.asset(
-                                          'assets/images/Button_Background.png',
-                                          width: 100,
-                                          height: 60,
-                                          fit: BoxFit.fill,
+                                        IconButton(
+                                          icon: Icon(Icons.arrow_back,
+                                              color: textColor),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
                                         ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 2),
-                                          child: Text(
-                                            'Lv.${_friend!.characterLevel}',
-                                            style: const TextStyle(
-                                              fontFamily: 'BMJUA',
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF4E342E),
-                                            ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${_friend!.nickname}',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.copyWith(
+                                                      color: textColor,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              if (!isSmallScreen) ...[
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  '${_friend!.consecutiveDays}일 연속 기록 중 🔥',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.copyWith(
+                                                        color: textColor
+                                                            .withOpacity(0.8),
+                                                      ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ],
                                           ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        // 레벨 표시 버튼
+                                        Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Image.asset(
+                                              'assets/images/Button_Background.png',
+                                              width: 70,
+                                              height: 42,
+                                              fit: BoxFit.fill,
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.only(top: 2),
+                                              child: Text(
+                                                'Lv.${_friend!.characterLevel}',
+                                                style: const TextStyle(
+                                                  fontFamily: 'BMJUA',
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF4E342E),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
-                                    ),
-                                  ],
+                                    );
+                                  },
                                 ),
                               ),
 

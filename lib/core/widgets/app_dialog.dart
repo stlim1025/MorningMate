@@ -458,90 +458,121 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Container(
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                image: const DecorationImage(
-                  image: AssetImage('assets/images/Popup_Background.png'),
-                  fit: BoxFit.fill,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                    24, 40, 24, 28), // 상단 패딩을 늘려 전체적으로 내림
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    if (config.title.isNotEmpty) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (config.leading != null) ...[
-                            config.leading!,
-                            const SizedBox(width: 10),
-                          ],
-                          Text(
-                            config.title,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontFamily: 'BMJUA',
-                              fontSize: 23,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF4E342E), // Dark Brown
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                    // Content
-                    if (config.content != null)
-                      DefaultTextStyle.merge(
-                        style: TextStyle(
-                          color: colors?.dialogBody ??
-                              Theme.of(context).textTheme.bodyMedium?.color,
-                        ),
-                        child: config.content!,
-                      ),
-                    if (_errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          _errorMessage!,
-                          style: TextStyle(
-                            color: colors?.error ?? Colors.red,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Background Container with rounded corners
+                Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Background Image
+                      Positioned.fill(
+                        child: Image.asset(
+                          'assets/images/Popup_Background.png',
+                          fit: BoxFit.fill,
                         ),
                       ),
-                    // Actions
-                    if (config.actions.isNotEmpty) ...[
-                      const SizedBox(height: 24),
+                      // Content
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Row(
-                          mainAxisAlignment:
-                              config.actionsAlignment ?? MainAxisAlignment.end,
-                          children: config.actions
-                              .map((action) => Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 4),
-                                      child: AppDialog._buildActionButton(
-                                          context, action, colors),
+                        padding: const EdgeInsets.fromLTRB(
+                            24, 40, 24, 28), // 상단 패딩을 늘려 전체적으로 내림
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Title
+                            if (config.title.isNotEmpty) ...[
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (config.leading != null) ...[
+                                    config.leading!,
+                                    const SizedBox(width: 10),
+                                  ],
+                                  Text(
+                                    config.title,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontFamily: 'BMJUA',
+                                      fontSize: 23,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF4E342E), // Dark Brown
                                     ),
-                                  ))
-                              .toList(),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                            // Content
+                            if (config.content != null)
+                              DefaultTextStyle.merge(
+                                style: TextStyle(
+                                  color: colors?.dialogBody ??
+                                      Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.color,
+                                ),
+                                child: config.content!,
+                              ),
+                            if (_errorMessage != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Text(
+                                  _errorMessage!,
+                                  style: TextStyle(
+                                    color: colors?.error ?? Colors.red,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            // Actions
+                            if (config.actions.isNotEmpty) ...[
+                              const SizedBox(height: 24),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                child: Row(
+                                  mainAxisAlignment: config.actionsAlignment ??
+                                      MainAxisAlignment.end,
+                                  children: config.actions
+                                      .map((action) => Expanded(
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 4),
+                                              child:
+                                                  AppDialog._buildActionButton(
+                                                      context, action, colors),
+                                            ),
+                                          ))
+                                      .toList(),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
+                // Sticker Image (왼쪽 위) - 배경 Container 밖에 배치
+                Positioned(
+                  top: -25,
+                  left: -10,
+                  child: Image.asset(
+                    'assets/images/Popup_Sticker.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
