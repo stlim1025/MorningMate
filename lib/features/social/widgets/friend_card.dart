@@ -170,6 +170,8 @@ class FriendCard extends StatelessWidget {
             // Define responsive sizes
             final double avatarRadius = cardWidth * 0.22;
             final double fontSizeLarge = cardWidth * 0.22;
+            final double moodIconSize =
+                cardWidth * 0.45; // Increased size for emoticon
             final double fontSizeMedium = cardWidth * 0.12;
             final double fontSizeSmall = cardWidth * 0.09;
             final double fontSizeTiny = cardWidth * 0.08;
@@ -219,8 +221,8 @@ class FriendCard extends StatelessWidget {
                                       : moodAsset != null
                                           ? Image.asset(
                                               moodAsset,
-                                              width: fontSizeLarge,
-                                              height: fontSizeLarge,
+                                              width: moodIconSize,
+                                              height: moodIconSize,
                                               fit: BoxFit.contain,
                                             )
                                           : Text(
