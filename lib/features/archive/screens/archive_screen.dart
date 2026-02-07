@@ -259,25 +259,24 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               margin: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(12),
+                shape: BoxShape.circle,
                 border: Border.all(
                   color: const Color(0xFF8D6E63),
-                  width: 1,
+                  width: 1.5,
                 ),
               ),
               child: Center(
-                child: Text(
-                  diary != null
-                      ? _getMoodEmoji(diary.mood ?? '')
-                      : '${day.day}',
-                  style: TextStyle(
-                    fontFamily: 'NanumPenScript-Regular',
-                    color:
-                        diary != null ? Colors.white : const Color(0xFF4E342E),
-                    fontSize: diary != null ? 24 : 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: diary != null
+                    ? _buildMoodWidget(diary.mood ?? '', 40)
+                    : Text(
+                        '${day.day}',
+                        style: TextStyle(
+                          fontFamily: 'NanumPenScript-Regular',
+                          color: const Color(0xFF4E342E),
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             );
           },
@@ -295,17 +294,17 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 borderRadius: BorderRadius.circular(20), // 비정형 느낌을 위해 약간 둥글게
               ),
               child: Center(
-                child: Text(
-                  diary != null
-                      ? _getMoodEmoji(diary.mood ?? '')
-                      : '${day.day}',
-                  style: TextStyle(
-                    fontFamily: 'NanumPenScript-Regular',
-                    color: colorScheme.textPrimary,
-                    fontSize: diary != null ? 24 : 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: diary != null
+                    ? _buildMoodWidget(diary.mood ?? '', 40)
+                    : Text(
+                        '${day.day}',
+                        style: TextStyle(
+                          fontFamily: 'NanumPenScript-Regular',
+                          color: colorScheme.textPrimary, // Fixed color
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             );
           },
@@ -322,10 +321,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         shape: BoxShape.circle,
       ),
       child: Center(
-        child: Text(
-          _getMoodEmoji(mood ?? ''),
-          style: const TextStyle(fontSize: 24),
-        ),
+        child: _buildMoodWidget(mood ?? '', 40),
       ),
     );
   }
@@ -387,7 +383,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       diary: diary,
       onTap: () => _viewDiaryContent(diary),
       dateText: DateFormat('M월 d일 기록').format(diary.dateOnly),
-      moodEmoji: _getMoodEmoji(diary.mood ?? ''),
+      moodWidget: _buildMoodWidget(diary.mood ?? '', 48), // Increased size
     );
   }
 
@@ -432,23 +428,26 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     }
   }
 
-  String _getMoodEmoji(String mood) {
-    if (mood.isEmpty) return '📝';
-    final emojiRegex = RegExp(
-        r'[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]',
-        unicode: true);
-    if (emojiRegex.hasMatch(mood)) return mood;
+  Widget _buildMoodWidget(String mood, double size) {
+    if (mood.isEmpty) {
+      return Text('📝', style: TextStyle(fontSize: size));
+    }
     switch (mood) {
       case 'happy':
-        return '😊';
+        return Image.asset('assets/imoticon/Imoticon_Happy.png',
+            width: size, height: size);
       case 'neutral':
-        return '😐';
+        return Image.asset('assets/imoticon/Imoticon_Normal.png',
+            width: size, height: size);
       case 'sad':
-        return '😢';
+        return Image.asset('assets/imoticon/Imoticon_Sad.png',
+            width: size, height: size);
       case 'excited':
-        return '🤩';
+        return Image.asset('assets/imoticon/Imoticon_Love.png',
+            width: size, height: size);
       default:
-        return '📝';
+        // Check for emoji or just display text
+        return Text(mood, style: TextStyle(fontSize: size));
     }
   }
 
@@ -695,13 +694,13 @@ class _AnimatedDiaryCard extends StatefulWidget {
   final DiaryModel diary;
   final VoidCallback onTap;
   final String dateText;
-  final String moodEmoji;
+  final Widget moodWidget;
 
   const _AnimatedDiaryCard({
     required this.diary,
     required this.onTap,
     required this.dateText,
-    required this.moodEmoji,
+    required this.moodWidget,
   });
 
   @override
@@ -764,10 +763,7 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                     // Top: Emoji + Date
                     Row(
                       children: [
-                        Text(
-                          widget.moodEmoji,
-                          style: const TextStyle(fontSize: 24),
-                        ),
+                        widget.moodWidget,
                         const SizedBox(width: 12),
                         Text(
                           widget.dateText,

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../character/widgets/character_display.dart';
 import '../controllers/morning_controller.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -26,7 +27,7 @@ class _WritingScreenState extends State<WritingScreen> {
   final FocusNode _focusNode = FocusNode();
   bool _enableBlur = false;
   bool _didLoadSettings = false;
-  String? _selectedMood;
+  String? _selectedMood = 'neutral';
 
   @override
   void initState() {
@@ -70,496 +71,376 @@ class _WritingScreenState extends State<WritingScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: colorScheme.iconPrimary),
-          onPressed: () async {
-            final confirmed = await _showExitConfirmation(context);
-            if (confirmed == true && context.mounted) {
-              context.go('/morning');
-            }
-          },
-        ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.edit_note, color: colorScheme.primaryButton, size: 28),
-            const SizedBox(width: 8),
-            Text(
-              '오늘의 일기',
-              style: TextStyle(
-                color: colorScheme.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              _enableBlur ? Icons.visibility_off : Icons.visibility,
-              color: colorScheme.iconPrimary,
-            ),
-            onPressed: () {
-              setState(() {
-                _enableBlur = !_enableBlur;
-                _textController.blurEnabled = _enableBlur;
-              });
-            },
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              colorScheme.awakeGradientStart,
-              colorScheme.awakeGradientMid,
-              colorScheme.awakeGradientEnd,
-            ],
+    // Use LayoutBuilder to get the full height constraint initially or use MediaQuery
+
+    return Stack(
+      children: [
+        // 1. Static Background Image
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/Diary_Background.png',
+            fit: BoxFit.cover,
           ),
         ),
-        child: SafeArea(
-          child: PopScope(
-            canPop: false,
-            onPopInvokedWithResult: (didPop, result) async {
-              if (didPop) return;
-              final confirmed = await _showExitConfirmation(context);
-              if (confirmed == true && context.mounted) {
-                context.go('/morning');
-              }
-            },
-            child: Consumer<MorningController>(
-              builder: (context, controller, child) {
-                return SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      _buildDateAndProgress(controller, colorScheme),
-                      const SizedBox(height: 16),
-                      if (widget.initialQuestion != null)
-                        _buildQuestionCard(colorScheme),
-                      const SizedBox(height: 16),
-                      _buildMoodSelection(colorScheme),
-                      const SizedBox(height: 16),
-                      _buildWritingArea(context, colorScheme),
-                      _buildBottomActions(context, controller, colorScheme),
-                    ],
+        // 2. Scaffold with transparent background and resizing enabled
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          resizeToAvoidBottomInset: true,
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final screenHeight = MediaQuery.of(context).size.height;
+              const maxWidth = 600.0;
+              final contentWidth = constraints.maxWidth > maxWidth
+                  ? maxWidth
+                  : constraints.maxWidth;
+
+              // Estimate middle row height based on contentWidth
+              // (contentWidth - 48 (padding) - 12 (gap)) * (4/7)
+              final availableRowWidth = contentWidth - 60;
+              final middleRowHeight = (availableRowWidth * 4 / 7);
+
+              // Header ~ 100, Min Writing Area ~ 260
+              final minContentHeight = 100 + middleRowHeight + 260;
+
+              final scrollHeight = minContentHeight > screenHeight
+                  ? minContentHeight
+                  : screenHeight;
+
+              return SingleChildScrollView(
+                child: Center(
+                  child: SizedBox(
+                    width: contentWidth,
+                    height: scrollHeight,
+                    child: SafeArea(
+                      child: PopScope(
+                        canPop: false,
+                        onPopInvokedWithResult: (didPop, result) async {
+                          if (didPop) return;
+                          final confirmed =
+                              await _showExitConfirmation(context);
+                          if (confirmed == true && context.mounted) {
+                            context.go('/morning');
+                          }
+                        },
+                        child: Consumer<MorningController>(
+                          builder: (context, controller, child) {
+                            return Column(
+                              children: [
+                                _buildHeader(context, colorScheme, controller),
+                                // Reduced spacing
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        flex: 4,
+                                        child: _buildQuestionCard(colorScheme),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        flex: 3,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              top:
+                                                  30), // Lowered emoticon section
+                                          child:
+                                              _buildMoodSelection(colorScheme),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child:
+                                      _buildWritingArea(context, colorScheme),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildDateAndProgress(
-      MorningController controller, AppColorScheme colorScheme) {
+  Widget _buildHeader(BuildContext context, AppColorScheme colorScheme,
+      MorningController controller) {
     final now = DateTime.now();
     final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
     final weekday = weekdays[now.weekday - 1];
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
+    return Padding(
+      padding:
+          const EdgeInsets.fromLTRB(8, 16, 8, 4), // Reduced horizontal padding
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Date Icon with Text Overlay
+          Stack(
+            alignment: Alignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryButton.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.calendar_today,
-                      color: colorScheme.primaryButton,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              Image.asset('assets/images/Date_Icon.png',
+                  width: 190, height: 50, fit: BoxFit.fill),
+              Positioned(
+                left: 20,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 16,
+                        color: colorScheme.textPrimary,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        '${now.year}년 ${now.month}월 ${now.day}일',
+                        '${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')} ($weekday)',
                         style: TextStyle(
+                          fontFamily: 'BMJUA',
                           color: colorScheme.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        '$weekday요일',
-                        style: TextStyle(
-                          color: colorScheme.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
                     ],
-                  ),
-                ],
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colorScheme.cardAccent.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${controller.charCount}자 • ${_formatDuration(controller.writingDuration)}',
-                  style: TextStyle(
-                    color: colorScheme.cardAccent,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: controller.getProgress(),
-              minHeight: 6,
-              backgroundColor: colorScheme.textHint.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                _getProgressColor(controller.getProgress(), colorScheme),
+          Row(
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.only(top: 10), // Align with save button
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _enableBlur = !_enableBlur;
+                      _textController.blurEnabled = _enableBlur;
+                    });
+                  },
+                  child: Image.asset(
+                    _enableBlur
+                        ? 'assets/icons/Blur_ToggleOn.png'
+                        : 'assets/icons/Blur_ToggleOff.png',
+                    width: 80,
+                    height: 38,
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: GestureDetector(
+                  onTap: controller.isGoalReached()
+                      ? () => _completeDiary(context, controller, colorScheme)
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                '조금만 더 작성해주세요!',
+                                style: TextStyle(fontFamily: 'BMJUA'),
+                              ),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                  child: Opacity(
+                    opacity: controller.isGoalReached() ? 1.0 : 0.5,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/Confirm_Button.png',
+                          width: 110,
+                          height: 44,
+                          fit: BoxFit.fill,
+                        ),
+                        const Text(
+                          '저장하기',
+                          style: TextStyle(
+                            fontFamily: 'BMJUA',
+                            color: Color(0xFF5D4037), // Brown color
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Color _getProgressColor(double progress, AppColorScheme colorScheme) {
-    if (progress < 0.3) {
-      return colorScheme.error.withOpacity(0.7);
-    } else if (progress < 0.7) {
-      return colorScheme.warning;
-    } else {
-      return colorScheme.success;
-    }
-  }
-
   Widget _buildQuestionCard(AppColorScheme colorScheme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.accent.withOpacity(0.15),
-            colorScheme.accent.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.accent.withOpacity(0.25),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return AspectRatio(
+      aspectRatio: 1.0,
+      child: Container(
+        // Reduced padding to align content better
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Today_Question.png'),
+            fit: BoxFit.contain,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.lightbulb,
-              color: colorScheme.pointStar,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+        ),
+        child: Center(
+          child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   '오늘의 질문',
                   style: TextStyle(
-                    color: colorScheme.accent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontFamily: 'BMJUA',
+                    color: colorScheme.textSecondary.withOpacity(0.8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.initialQuestion!,
+                  widget.initialQuestion ?? '...',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
+                    fontFamily: 'BMJUA',
                     color: colorScheme.textPrimary,
                     fontSize: 15,
-                    height: 1.4,
                     fontWeight: FontWeight.w500,
+                    height: 1.3,
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildMoodSelection(AppColorScheme colorScheme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildMoodButton(
+                'assets/imoticon/Imoticon_Happy.png', 'happy', colorScheme),
+            const SizedBox(width: 8),
+            _buildMoodButton(
+                'assets/imoticon/Imoticon_Normal.png', 'neutral', colorScheme),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildMoodButton(
+                'assets/imoticon/Imoticon_Sad.png', 'sad', colorScheme),
+            const SizedBox(width: 8),
+            _buildMoodButton(
+                'assets/imoticon/Imoticon_Love.png', 'excited', colorScheme),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMoodButton(
+      String assetPath, String mood, AppColorScheme colorScheme) {
+    final isSelected = _selectedMood == mood;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedMood = mood;
+          });
+        },
+        child: AspectRatio(
+          aspectRatio: 1.0,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none, // Allow overflow for pin
             children: [
-              Icon(
-                Icons.sentiment_satisfied_alt,
-                color: colorScheme.primaryButton,
-                size: 20,
+              // Use Popup_Background.png as requested
+              Image.asset(
+                'assets/images/Popup_Background.png',
+                fit: BoxFit.fill,
               ),
-              const SizedBox(width: 8),
-              Text(
-                '오늘의 기분',
-                style: TextStyle(
-                  color: colorScheme.textSecondary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.asset(assetPath, fit: BoxFit.contain),
+              ),
+              if (isSelected)
+                Positioned(
+                  top: -8,
+                  right: -8,
+                  child: Image.asset(
+                    'assets/images/Red_Pin.png',
+                    width: 30, // Appropriate size for a pin
+                    height: 30,
+                  ),
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMoodButton('😊', 'happy', colorScheme),
-              _buildMoodButton('😐', 'neutral', colorScheme),
-              _buildMoodButton('😢', 'sad', colorScheme),
-              _buildMoodButton('🤩', 'excited', colorScheme),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildWritingArea(BuildContext context, AppColorScheme colorScheme) {
     return Container(
-      constraints: BoxConstraints(
-        minHeight: MediaQuery.of(context).size.height * 0.45,
-      ),
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CustomPaint(
-                painter: LinedPaperPainter(
-                  lineColor: colorScheme.textHint.withOpacity(0.2),
-                  marginColor: colorScheme.secondary.withOpacity(0.3),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 24, 20),
-              child: TextField(
-                controller: _textController,
-                focusNode: _focusNode,
-                maxLines: null,
-                autofocus: true,
-                style: TextStyle(
-                  color: colorScheme.textPrimary,
-                  fontSize: 17,
-                  height: 1.8,
-                  letterSpacing: 0.3,
-                ),
-                cursorColor: colorScheme.primaryButton,
-                decoration: InputDecoration(
-                  hintText: '오늘의 생각을 자유롭게 적어보세요...',
-                  hintStyle: TextStyle(
-                    color: colorScheme.textHint.withOpacity(0.6),
-                    fontSize: 17,
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                ),
-              ),
-            ),
-            // The text blur is now handled by _BlurTextEditingController
-            // Background overlay to make area feeling uniform when blur is active
-            if (_enableBlur && _textController.text.isNotEmpty)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Container(
-                    color: Theme.of(context).cardColor.withOpacity(0.05),
-                  ),
-                ),
-              ),
-          ],
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/Note_Background.png'),
+          fit: BoxFit.fill,
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomActions(BuildContext context, MorningController controller,
-      AppColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: controller.isGoalReached()
-                  ? () => _completeDiary(context, controller, colorScheme)
-                  : null,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: colorScheme.primaryButton,
-                disabledBackgroundColor: colorScheme.textHint.withOpacity(0.3),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: controller.isGoalReached() ? 4 : 0,
-                shadowColor: colorScheme.primaryButton.withOpacity(0.4),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    controller.isGoalReached()
-                        ? Icons.check_circle
-                        : Icons.edit,
-                    color: colorScheme.primaryButtonForeground,
-                    size: 22,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    controller.isGoalReached() ? '작성 완료' : '조금만 더 작성해주세요',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.primaryButtonForeground,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMoodButton(
-      String emoji, String mood, AppColorScheme colorScheme) {
-    final isSelected = _selectedMood == mood;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedMood = mood;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primaryButton.withOpacity(0.2)
-              : Theme.of(context).cardColor,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected
-                ? colorScheme.primaryButton
-                : colorScheme.textHint.withOpacity(0.2),
-            width: 2,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: colorScheme.primaryButton.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
+      padding:
+          const EdgeInsets.fromLTRB(28, 20, 28, 40), // Added bottom padding
+      child: TextField(
+        controller: _textController,
+        focusNode: _focusNode,
+        maxLines: null,
+        style: TextStyle(
+          fontFamily: 'BMJUA',
+          color: colorScheme.textPrimary,
+          fontSize: 18,
+          height: 1.8,
         ),
-        child: Text(
-          emoji,
-          style: const TextStyle(fontSize: 28),
+        cursorColor: colorScheme.primaryButton,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          filled: false,
+          hintText: '지금 머릿속에 떠오르는 생각을 자유롭게 적어보세요.',
+          hintStyle: TextStyle(
+            fontFamily: 'BMJUA',
+            color: colorScheme.textHint.withOpacity(0.6),
+            fontSize: 18,
+          ),
         ),
       ),
     );
@@ -590,107 +471,74 @@ class _WritingScreenState extends State<WritingScreen> {
 
   Future<void> _showCompletionDialog(
       BuildContext context, AppColorScheme colorScheme) async {
-    return showDialog(
+    final characterController = context.read<CharacterController>();
+    final level = characterController.currentUser?.characterLevel ?? 1;
+
+    return AppDialog.show(
       context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Text(
-            '🎉 작성 완료!',
-            style: TextStyle(
-              color: colorScheme.textPrimary,
-              fontWeight: FontWeight.bold,
+      key: AppDialogKey.diaryCompletion,
+      content: SizedBox(
+        width: double.infinity,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center, // Center align content
+          children: [
+            _WakeUpAnimationWidget(characterLevel: level),
+            const SizedBox(height: 4),
+            Text(
+              '캐릭터가 깨어났어요!',
+              style: TextStyle(
+                fontFamily: 'BMJUA',
+                color: colorScheme.textSecondary,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: colorScheme.success.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_circle,
-                  color: colorScheme.success,
-                  size: 80,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '캐릭터가 깨어났어요!',
-                style: TextStyle(
-                  color: colorScheme.textSecondary,
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Consumer<CharacterController>(
-                builder: (context, controller, child) {
-                  return Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: colorScheme.twig.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 8),
+            Consumer<CharacterController>(
+              builder: (context, controller, child) {
+                return Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/Item_Background.png'),
+                      fit: BoxFit.fill,
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset(
-                          'assets/images/branch.png',
-                          width: 20,
-                          height: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '+${10 + (controller.currentUser?.consecutiveDays ?? 0) * 2} 가지 획득',
-                          style: TextStyle(
-                            color: colorScheme.twig,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.primaryButton,
-                  foregroundColor: colorScheme.primaryButtonForeground,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
                   ),
-                  elevation: 2,
-                ),
-                child: const Text(
-                  '확인',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'assets/images/branch.png',
+                        width: 20,
+                        height: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '+${10 + (controller.currentUser?.consecutiveDays ?? 0) * 2} 가지 획득',
+                        style: TextStyle(
+                          fontFamily: 'BMJUA',
+                          color: colorScheme.twig,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ],
-        );
-      },
+        ),
+      ),
+      actions: [
+        AppDialogAction(
+          label: '확인',
+          isPrimary: true,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 
@@ -698,7 +546,10 @@ class _WritingScreenState extends State<WritingScreen> {
     return AppDialog.show<bool>(
       context: context,
       key: AppDialogKey.exitWriting,
-      content: const Text('작성 중인 내용은 저장되지 않습니다.'),
+      content: const Text(
+        '작성 중인 내용은 저장되지 않습니다.',
+        style: TextStyle(fontFamily: 'BMJUA'),
+      ),
       actions: [
         AppDialogAction(
           label: '계속 작성',
@@ -711,12 +562,6 @@ class _WritingScreenState extends State<WritingScreen> {
         ),
       ],
     );
-  }
-
-  String _formatDuration(int seconds) {
-    final minutes = seconds ~/ 60;
-    final secs = seconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 }
 
@@ -789,35 +634,55 @@ class _BlurTextEditingController extends TextEditingController {
   }
 }
 
-class LinedPaperPainter extends CustomPainter {
-  final Color lineColor;
-  final Color marginColor;
-
-  LinedPaperPainter({required this.lineColor, required this.marginColor});
+class _WakeUpAnimationWidget extends StatefulWidget {
+  final int characterLevel;
+  const _WakeUpAnimationWidget({required this.characterLevel});
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 1;
+  State<_WakeUpAnimationWidget> createState() => _WakeUpAnimationWidgetState();
+}
 
-    final lineSpacing = 32.0;
-    final topPadding = 16.0;
+class _WakeUpAnimationWidgetState extends State<_WakeUpAnimationWidget> {
+  bool _isAwake = false;
 
-    for (double y = topPadding + lineSpacing;
-        y < size.height;
-        y += lineSpacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    final marginPaint = Paint()
-      ..color = marginColor
-      ..strokeWidth = 2;
-    canvas.drawLine(const Offset(32, 0), Offset(32, size.height), marginPaint);
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) {
+        setState(() {
+          _isAwake = true;
+        });
+      }
+    });
   }
 
   @override
-  bool shouldRepaint(covariant LinedPaperPainter oldDelegate) =>
-      oldDelegate.lineColor != lineColor ||
-      oldDelegate.marginColor != marginColor;
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 150,
+      width: 150,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return ScaleTransition(scale: animation, child: child);
+        },
+        child: _isAwake
+            ? CharacterDisplay(
+                key: const ValueKey('awake'),
+                isAwake: true,
+                characterLevel: widget.characterLevel,
+                size: 150,
+                enableAnimation: true,
+              )
+            : CharacterDisplay(
+                key: const ValueKey('asleep'),
+                isAwake: false,
+                characterLevel: widget.characterLevel,
+                size: 150,
+                enableAnimation: true,
+              ),
+      ),
+    );
+  }
 }

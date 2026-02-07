@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 import 'package:provider/provider.dart';
 import '../../../data/models/diary_model.dart';
 import '../../morning/controllers/morning_controller.dart';
@@ -28,9 +28,16 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _currentDate = widget.initialDate;
+    // Normalize to date only (00:00:00)
+    _currentDate = DateTime(
+      widget.initialDate.year,
+      widget.initialDate.month,
+      widget.initialDate.day,
+    );
     _loadCurrentDiary();
   }
+
+  // ... (previous methods)
 
   void _loadCurrentDiary() {
     try {
@@ -83,10 +90,16 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   }
 
   void _navigateToNext() {
-    final tomorrow = _currentDate.add(const Duration(days: 1));
-    if (tomorrow.isBefore(DateTime.now().add(const Duration(seconds: 1)))) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final nextDate = _currentDate.add(const Duration(days: 1));
+
+    // Normalize comparison
+    final nextDateOnly = DateTime(nextDate.year, nextDate.month, nextDate.day);
+
+    if (!nextDateOnly.isAfter(today)) {
       setState(() {
-        _currentDate = tomorrow;
+        _currentDate = nextDateOnly;
       });
       _loadCurrentDiary();
     }
@@ -95,6 +108,9 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   void _navigateToPrevious() {
     setState(() {
       _currentDate = _currentDate.subtract(const Duration(days: 1));
+      // Normalize just in case, though subtract returns same time
+      _currentDate =
+          DateTime(_currentDate.year, _currentDate.month, _currentDate.day);
     });
     _loadCurrentDiary();
   }
@@ -102,324 +118,323 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    final isTodayOrFuture = _currentDate.year >= DateTime.now().year &&
-        _currentDate.month >= DateTime.now().month &&
-        _currentDate.day >= DateTime.now().day;
-    final hasNext = !isTodayOrFuture;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final current =
+        DateTime(_currentDate.year, _currentDate.month, _currentDate.day);
+    final hasNext = current.isBefore(today);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        iconTheme: Theme.of(context).iconTheme,
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new,
-              color: colorScheme.iconPrimary, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
+    return Stack(
+      children: [
+        // 1. Static Background Image
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/Diary_Background.png',
+            fit: BoxFit.cover,
+          ),
         ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.menu_book, color: colorScheme.primaryButton, size: 24),
-            const SizedBox(width: 8),
-            Text(
-              '기록 보기',
-              style: TextStyle(
-                color: colorScheme.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        // 2. Scaffold with transparent background
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final screenHeight = MediaQuery.of(context).size.height;
+              const maxWidth = 600.0;
+              final contentWidth = constraints.maxWidth > maxWidth
+                  ? maxWidth
+                  : constraints.maxWidth;
+
+              // Estimate middle row height based on contentWidth
+              final availableRowWidth = contentWidth - 60;
+              final middleRowHeight = (availableRowWidth * 4 / 7);
+              final minContentHeight = 100 + middleRowHeight + 260;
+              final scrollHeight = minContentHeight > screenHeight
+                  ? minContentHeight
+                  : screenHeight;
+
+              return SingleChildScrollView(
+                child: Center(
+                  child: SizedBox(
+                    width: contentWidth,
+                    height: scrollHeight,
+                    child: SafeArea(
+                      child: Column(
+                        children: [
+                          _buildHeader(context, colorScheme),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 4,
+                                  child: _buildQuestionCard(colorScheme),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  flex: 3,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 30),
+                                    child: _buildMoodSelection(colorScheme),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildWritingArea(context, colorScheme),
+                          ),
+                          // Bottom Navigation Buttons
+                          const SizedBox(height: 14),
+                          _buildBottomNavigation(hasNext, colorScheme),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            _buildHeader(colorScheme),
-            const SizedBox(height: 16),
-            if (_currentDiary?.promptQuestion != null)
-              _buildQuestionCard(colorScheme),
-            const SizedBox(height: 16),
-            Expanded(
-              child: _buildDiaryContentArea(colorScheme),
-            ),
-            _buildBottomSection(hasNext, colorScheme),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
-  Widget _buildHeader(AppColorScheme colorScheme) {
-    final weekday = DateFormat('E', 'ko_KR').format(_currentDate);
+  Widget _buildHeader(BuildContext context, AppColorScheme colorScheme) {
+    final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    final weekday = weekdays[_currentDate.weekday - 1];
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
+          // Date Icon with Text Overlay
+          Stack(
+            alignment: Alignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryButton.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.calendar_today,
-                  color: colorScheme.primaryButton,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+              Image.asset('assets/images/Date_Icon.png',
+                  width: 190, height: 50, fit: BoxFit.fill),
+              Positioned(
+                left: 20,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 16,
+                        color: colorScheme.textPrimary,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        DateFormat('yyyy년 M월 d일').format(_currentDate),
+                        '${_currentDate.year}.${_currentDate.month.toString().padLeft(2, '0')}.${_currentDate.day.toString().padLeft(2, '0')} ($weekday)',
                         style: TextStyle(
+                          fontFamily: 'BMJUA',
                           color: colorScheme.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (_currentDiary != null) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          DateFormat('HH:mm').format(_currentDiary!.createdAt),
-                          style: TextStyle(
-                            color: colorScheme.textSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
-                  Text(
-                    '$weekday요일',
+                ),
+              ),
+            ],
+          ),
+          // Close Button
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/Cancel_Button.png',
+                    width: 80,
+                    height: 38,
+                    fit: BoxFit.fill,
+                  ),
+                  const Text(
+                    '닫기',
                     style: TextStyle(
-                      color: colorScheme.textSecondary,
-                      fontSize: 13,
+                      fontFamily: 'BMJUA',
+                      color: Color(0xFF5D4037),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-          if (_currentDiary?.mood != null)
-            Text(
-              _getMoodEmoji(_currentDiary!.mood!),
-              style: const TextStyle(fontSize: 28),
             ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildQuestionCard(AppColorScheme colorScheme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.accent.withOpacity(0.15),
-            colorScheme.accent.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.accent.withOpacity(0.25),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return AspectRatio(
+      aspectRatio: 1.0,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Today_Question.png'),
+            fit: BoxFit.contain,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.lightbulb,
-              color: colorScheme.pointStar,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+        ),
+        child: Center(
+          child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   '오늘의 질문',
                   style: TextStyle(
-                    color: colorScheme.accent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontFamily: 'BMJUA',
+                    color: colorScheme.textSecondary.withOpacity(0.8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _currentDiary?.promptQuestion ?? '',
+                  _currentDiary?.promptQuestion ?? '질문이 없습니다.',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
+                    fontFamily: 'BMJUA',
                     color: colorScheme.textPrimary,
                     fontSize: 15,
-                    height: 1.4,
                     fontWeight: FontWeight.w500,
+                    height: 1.3,
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildDiaryContentArea(AppColorScheme colorScheme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+  Widget _buildMoodSelection(AppColorScheme colorScheme) {
+    final selectedMood = _currentDiary?.mood;
+    if (selectedMood == null) return const SizedBox.shrink();
+
+    String assetPath;
+    switch (selectedMood) {
+      case 'happy':
+        assetPath = 'assets/imoticon/Imoticon_Happy.png';
+        break;
+      case 'neutral':
+        assetPath = 'assets/imoticon/Imoticon_Normal.png';
+        break;
+      case 'sad':
+        assetPath = 'assets/imoticon/Imoticon_Sad.png';
+        break;
+      case 'excited':
+        assetPath = 'assets/imoticon/Imoticon_Love.png';
+        break;
+      default:
+        assetPath = 'assets/imoticon/Imoticon_Normal.png';
+    }
+
+    return Center(
+      child: SizedBox(
+        width: 140, // Increased size for background
+        height: 140,
         child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
-            CustomPaint(
-              painter: LinedPaperPainter(
-                lineColor: colorScheme.textHint.withOpacity(0.2),
-                marginColor: colorScheme.secondary.withOpacity(0.3),
-              ),
-              size: Size.infinite,
+            Image.asset(
+              'assets/images/Popup_Background.png',
+              fit: BoxFit.fill,
             ),
-            if (_isLoading)
-              Center(
-                  child: CircularProgressIndicator(
-                      color: colorScheme.primaryButton))
-            else if (_currentDiary == null)
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.event_busy,
-                      size: 64,
-                      color: colorScheme.textHint.withOpacity(0.3),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '이 날은 일기를 작성하지 않았습니다',
-                      style: TextStyle(
-                        color: colorScheme.textSecondary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: AnimatedOpacity(
-                  opacity: _isLoading ? 0.0 : 1.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: Text(
-                    _decryptedContent,
-                    style: TextStyle(
-                      color: colorScheme.textPrimary,
-                      fontSize: 17,
-                      height: 1.8,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Image.asset(
+                assetPath,
+                fit: BoxFit.contain,
               ),
+            ),
+            Positioned(
+              top: -8,
+              right: -8,
+              child: Image.asset(
+                'assets/images/Red_Pin.png',
+                width: 40,
+                height: 40,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBottomSection(bool hasNext, AppColorScheme colorScheme) {
+  Widget _buildWritingArea(BuildContext context, AppColorScheme colorScheme) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_currentDiary != null)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildInfoChip(Icons.text_fields,
-                    '${_currentDiary?.wordCount}자', colorScheme),
-                const SizedBox(width: 12),
-                _buildInfoChip(
-                    Icons.timer,
-                    '${_currentDiary!.writingDuration ~/ 60}분 ${_currentDiary!.writingDuration % 60}초',
-                    colorScheme),
-              ],
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/Note_Background.png'),
+          fit: BoxFit.fill,
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(55, 40, 28, 20),
+      child: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: colorScheme.primaryButton,
+              ),
             )
-          else
-            const SizedBox(height: 38), // Space for alignment
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildNavButton(
-                onPressed: _navigateToPrevious,
-                icon: Icons.arrow_back_ios_new,
-                label: '이전 날짜',
-                enabled: true,
-                colorScheme: colorScheme,
-              ),
-              _buildNavButton(
-                onPressed: hasNext ? _navigateToNext : null,
-                icon: Icons.arrow_forward_ios,
-                label: '다음 날짜',
-                enabled: hasNext,
-                isRight: true,
-                colorScheme: colorScheme,
-              ),
-            ],
+          : _currentDiary == null
+              ? Center(
+                  child: Text(
+                    '작성된 일기가 없습니다.',
+                    style: TextStyle(
+                      fontFamily: 'BMJUA',
+                      color: colorScheme.textHint,
+                      fontSize: 18,
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  child: Text(
+                    _decryptedContent,
+                    style: TextStyle(
+                      fontFamily: 'BMJUA',
+                      color: colorScheme.textPrimary,
+                      fontSize: 18,
+                      height: 1.8,
+                    ),
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildBottomNavigation(bool hasNext, AppColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 14),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildNavButton(
+            onPressed: _navigateToPrevious,
+            label: '이전',
+            icon: Icons.arrow_back_ios_new,
+            enabled: true,
+          ),
+          _buildNavButton(
+            onPressed: hasNext ? _navigateToNext : null,
+            label: '다음',
+            icon: Icons.arrow_forward_ios,
+            enabled: hasNext,
+            isRight: true,
           ),
         ],
       ),
@@ -428,50 +443,49 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
 
   Widget _buildNavButton({
     required VoidCallback? onPressed,
-    required IconData icon,
     required String label,
+    required IconData icon,
     required bool enabled,
-    required AppColorScheme colorScheme,
     bool isRight = false,
   }) {
-    return Opacity(
-      opacity: enabled ? 1.0 : 0.3,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: onPressed,
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.5,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadowColor.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+          width: 80,
+          height: 40,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/Item_Background.png'),
+              fit: BoxFit.fill,
+            ),
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: isRight
                 ? [
                     Text(
                       label,
-                      style: TextStyle(
-                        color: colorScheme.primaryButton,
+                      style: const TextStyle(
+                        fontFamily: 'BMJUA',
+                        color: Color(0xFF5D4037),
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Icon(icon, size: 16, color: colorScheme.primaryButton),
+                    const SizedBox(width: 4),
+                    Icon(icon, size: 14, color: const Color(0xFF5D4037)),
                   ]
                 : [
-                    Icon(icon, size: 16, color: colorScheme.primaryButton),
-                    const SizedBox(width: 8),
+                    Icon(icon, size: 14, color: const Color(0xFF5D4037)),
+                    const SizedBox(width: 4),
                     Text(
                       label,
-                      style: TextStyle(
-                        color: colorScheme.primaryButton,
+                      style: const TextStyle(
+                        fontFamily: 'BMJUA',
+                        color: Color(0xFF5D4037),
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -481,78 +495,4 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
       ),
     );
   }
-
-  Widget _buildInfoChip(
-      IconData icon, String label, AppColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.primaryButton.withOpacity(0.5)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: colorScheme.primaryButton),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: colorScheme.primaryButton,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getMoodEmoji(String mood) {
-    switch (mood) {
-      case 'happy':
-        return '😊';
-      case 'neutral':
-        return '😐';
-      case 'sad':
-        return '😢';
-      case 'excited':
-        return '🤩';
-      default:
-        return mood;
-    }
-  }
-}
-
-class LinedPaperPainter extends CustomPainter {
-  final Color lineColor;
-  final Color marginColor;
-
-  LinedPaperPainter({required this.lineColor, required this.marginColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 1;
-
-    final lineSpacing = 32.0;
-    final topPadding = 24.0;
-
-    for (double y = topPadding + lineSpacing;
-        y < size.height;
-        y += lineSpacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    final marginPaint = Paint()
-      ..color = marginColor
-      ..strokeWidth = 2;
-    canvas.drawLine(const Offset(40, 0), Offset(40, size.height), marginPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant LinedPaperPainter oldDelegate) =>
-      oldDelegate.lineColor != lineColor ||
-      oldDelegate.marginColor != marginColor;
 }

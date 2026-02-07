@@ -156,6 +156,15 @@ class MorningController extends ChangeNotifier {
       final diary = await _diaryService.getDiaryByDate(userId, DateTime.now());
       if (diary != null) {
         _todayDiary = diary;
+      } else {
+        // Firestore에 데이터가 없다면(삭제됨), 로컬 상태도 초기화
+        if (_todayDiary != null) {
+          _todayDiary = null;
+          // 로컬 파일도 삭제하여 싱크 맞춤
+          if (await file.exists()) {
+            await file.delete();
+          }
+        }
       }
     } catch (e) {
       print('오늘의 일기 확인 오류: $e');

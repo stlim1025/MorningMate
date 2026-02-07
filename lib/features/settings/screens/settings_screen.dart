@@ -662,32 +662,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
+            child: PopupTextField(
               controller: controller,
-              style: TextStyle(color: colorScheme.textPrimary),
-              decoration: InputDecoration(
-                hintText: '새 닉네임 입력',
-                hintStyle: TextStyle(color: colorScheme.textHint),
-                filled: true,
-                fillColor: Colors.black.withOpacity(0.04),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      BorderSide(color: colorScheme.primaryButton, width: 1.5),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
+              hintText: '새 닉네임 입력',
               maxLength: 10,
             ),
           ),
@@ -868,33 +845,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextFormField(
+              child: PopupTextField(
                 controller: currentPasswordController,
                 obscureText: true,
-                style: TextStyle(color: colorScheme.textPrimary),
-                decoration: InputDecoration(
-                  hintText: '현재 비밀번호',
-                  hintStyle: TextStyle(color: colorScheme.textHint),
-                  filled: true,
-                  fillColor: Colors.black.withOpacity(0.04),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.textHint.withOpacity(0.2)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.textHint.withOpacity(0.2)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.primaryButton, width: 1.5),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
+                hintText: '현재 비밀번호',
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return '현재 비밀번호를 입력해주세요';
@@ -906,33 +860,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextFormField(
+              child: PopupTextField(
                 controller: newPasswordController,
                 obscureText: true,
-                style: TextStyle(color: colorScheme.textPrimary),
-                decoration: InputDecoration(
-                  hintText: '새 비밀번호 (6자 이상)',
-                  hintStyle: TextStyle(color: colorScheme.textHint),
-                  filled: true,
-                  fillColor: Colors.black.withOpacity(0.04),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.textHint.withOpacity(0.2)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.textHint.withOpacity(0.2)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.primaryButton, width: 1.5),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
+                hintText: '새 비밀번호 (6자 이상)',
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return '새 비밀번호를 입력해주세요';
@@ -947,33 +878,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextFormField(
+              child: PopupTextField(
                 controller: confirmPasswordController,
                 obscureText: true,
-                style: TextStyle(color: colorScheme.textPrimary),
-                decoration: InputDecoration(
-                  hintText: '비밀번호 확인',
-                  hintStyle: TextStyle(color: colorScheme.textHint),
-                  filled: true,
-                  fillColor: Colors.black.withOpacity(0.04),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.textHint.withOpacity(0.2)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.textHint.withOpacity(0.2)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.primaryButton, width: 1.5),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
+                hintText: '비밀번호 확인',
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return '비밀번호 확인을 입력해주세요';
@@ -1078,33 +986,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const Text('정말로 탈퇴하시겠습니까?\n모든 데이터가 영구적으로 삭제됩니다.'),
           const SizedBox(height: 16),
-          TextField(
+          PopupTextField(
             controller: passwordController,
             obscureText: true,
-            style: TextStyle(color: colorScheme.textPrimary),
-            decoration: InputDecoration(
-              hintText: '비밀번호 확인',
-              hintStyle: TextStyle(color: colorScheme.textHint),
-              filled: true,
-              fillColor: Colors.black.withOpacity(0.04),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: colorScheme.primaryButton, width: 1.5),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
+            hintText: '비밀번호 확인',
           ),
           const SizedBox(height: 16),
           ValueListenableBuilder<bool>(

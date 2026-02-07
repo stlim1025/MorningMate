@@ -14,53 +14,55 @@ class CustomBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 80, // Fixed height for transparency and background
+      // Height removed to adapt to safe area
       decoration: const BoxDecoration(
         image: DecorationImage(
-          image: ResizeImage(AssetImage('assets/images/Down_Tab2.png'),
-              width: 1080),
+          image: AssetImage('assets/images/Down_Tab2.png'),
           fit: BoxFit.fill,
         ),
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _TabItem(
-              iconPath: 'assets/icons/Home_Icon.png',
-              label: '홈',
-              width: 32,
-              height: 32,
-              isSelected: currentIndex == 0,
-              onTap: () => _handleNavigation(context, 0),
-            ),
-            _TabItem(
-              iconPath: 'assets/icons/Charactor_Icon.png',
-              label: '캐릭터',
-              width: 45,
-              height: 32,
-              isSelected: currentIndex == 1,
-              onTap: () => _handleNavigation(context, 1),
-            ),
-            _TabItem(
-              iconPath: 'assets/icons/Friend_Icon.png',
-              label: '친구',
-              width: 45,
-              height: 32,
-              isSelected: currentIndex == 2,
-              onTap: () => _handleNavigation(context, 2),
-            ),
-            _TabItem(
-              iconPath: 'assets/icons/Calander_Icon.png',
-              label: '기록',
-              width: 40,
-              height: 32,
-              isSelected: currentIndex == 3,
-              onTap: () => _handleNavigation(context, 3),
-            ),
-          ],
+        child: SizedBox(
+          height: 60, // Fixed content height
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _TabItem(
+                iconPath: 'assets/icons/Home_Icon.png',
+                label: '홈',
+                width: 32,
+                height: 32,
+                isSelected: currentIndex == 0,
+                onTap: () => _handleNavigation(context, 0),
+              ),
+              _TabItem(
+                iconPath: 'assets/icons/Charactor_Icon.png',
+                label: '캐릭터',
+                width: 45,
+                height: 32,
+                isSelected: currentIndex == 1,
+                onTap: () => _handleNavigation(context, 1),
+              ),
+              _TabItem(
+                iconPath: 'assets/icons/Friend_Icon.png',
+                label: '친구',
+                width: 45,
+                height: 32,
+                isSelected: currentIndex == 2,
+                onTap: () => _handleNavigation(context, 2),
+              ),
+              _TabItem(
+                iconPath: 'assets/icons/Calander_Icon.png',
+                label: '기록',
+                width: 40,
+                height: 32,
+                isSelected: currentIndex == 3,
+                onTap: () => _handleNavigation(context, 3),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -148,35 +150,31 @@ class _TabItemState extends State<_TabItem>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 6),
-              // Flexible로 감싸서 오버플로우 방지
-              Flexible(
-                child: Image.asset(
-                  widget.iconPath,
-                  width: widget.width,
-                  height: widget.height,
-                  fit: BoxFit.contain,
-                  cacheWidth: 100, // Optimize memory for small icons
-                  opacity: widget.isSelected
-                      ? const AlwaysStoppedAnimation(1.0)
-                      : const AlwaysStoppedAnimation(0.5),
-                ),
+              Image.asset(
+                widget.iconPath,
+                width: widget.width,
+                height: widget.height,
+                fit: BoxFit.contain,
+                filterQuality:
+                    FilterQuality.high, // Improve rendering on high-res screens
+                // Removed cacheWidth to prevent pixelation on high-res screens
+                opacity: widget.isSelected
+                    ? const AlwaysStoppedAnimation(1.0)
+                    : const AlwaysStoppedAnimation(0.5),
               ),
               const SizedBox(height: 2),
-              // 텍스트도 Flexible로 감싸서 잘리지 않도록
-              Flexible(
-                child: Text(
-                  widget.label,
-                  style: TextStyle(
-                    fontFamily: 'BMJUA',
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: widget.isSelected
-                        ? const Color(0xFF4E342E)
-                        : const Color(0xFF4E342E).withOpacity(0.5),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontFamily: 'BMJUA',
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: widget.isSelected
+                      ? const Color(0xFF4E342E)
+                      : const Color(0xFF4E342E).withOpacity(0.5),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
             ],

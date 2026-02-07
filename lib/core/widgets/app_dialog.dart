@@ -20,6 +20,7 @@ enum AppDialogKey {
   levelUp,
   deleteStickyNote,
   writeMemo,
+  diaryCompletion,
 }
 
 class AppDialogAction {
@@ -221,6 +222,14 @@ class AppDialog {
         return AppDialogConfig(
           title: '메모 작성',
           content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.diaryCompletion:
+        return AppDialogConfig(
+          title: '🎉 작성 완료!',
+          showConfetti: true,
+          content: content,
+          actionsAlignment: MainAxisAlignment.center,
           actions: actions ?? const [],
         );
     }
@@ -462,130 +471,148 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
         ],
         _AppDialogErrorScope(
           setError: (msg) => setState(() => _errorMessage = msg),
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Background Container with rounded corners
-                Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Background Image
-                      Positioned.fill(
-                        child: Image.asset(
-                          'assets/images/Popup_Background.png',
-                          fit: BoxFit.fill,
-                          cacheWidth: 800, // Optimized
+          child: Builder(
+            builder: (dialogContext) => Dialog(
+              backgroundColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Background Container with rounded corners
+                  Container(
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Stack(
+                      children: [
+                        // Background Image
+                        Positioned.fill(
+                          child: Image.asset(
+                            'assets/images/Popup_Background.png',
+                            fit: BoxFit.fill,
+                            cacheWidth: 800, // Optimized
+                          ),
                         ),
-                      ),
-                      // Content
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                            24, 40, 24, 28), // 상단 패딩을 늘려 전체적으로 내림
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Title
-                            if (config.title.isNotEmpty) ...[
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (config.leading != null) ...[
-                                    config.leading!,
-                                    const SizedBox(width: 10),
+                        // Content
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                              24, 40, 24, 28), // 상단 패딩을 늘려 전체적으로 내림
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Title
+                              if (config.title.isNotEmpty) ...[
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (config.leading != null) ...[
+                                      config.leading!,
+                                      const SizedBox(width: 10),
+                                    ],
+                                    Text(
+                                      config.title,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontFamily: 'BMJUA',
+                                        fontSize: 23,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF4E342E), // Dark Brown
+                                      ),
+                                    ),
                                   ],
-                                  Text(
-                                    config.title,
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                              // Content
+                              if (config.content != null)
+                                DefaultTextStyle.merge(
+                                  style: TextStyle(
+                                    color: colors?.dialogBody ??
+                                        Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color,
+                                    fontFamily: 'BMJUA', // 팝업 내용에도 폰트 적용
+                                    fontSize: 18,
+                                  ),
+                                  child: config.content!,
+                                ),
+                              if (_errorMessage != null)
+                                Container(
+                                  width: double.infinity,
+                                  margin:
+                                      const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 8, horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFDD8D8),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: const Color(0xFFD32F2F)
+                                            .withOpacity(0.5)),
+                                  ),
+                                  child: Text(
+                                    _errorMessage!,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
-                                      fontFamily: 'BMJUA',
-                                      fontSize: 23,
+                                      color: Color(0xFFD32F2F),
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF4E342E), // Dark Brown
+                                      fontFamily: 'BMJUA',
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                            ],
-                            // Content
-                            if (config.content != null)
-                              DefaultTextStyle.merge(
-                                style: TextStyle(
-                                  color: colors?.dialogBody ??
-                                      Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.color,
-                                  fontFamily: 'BMJUA', // 팝업 내용에도 폰트 적용
-                                  fontSize: 18,
                                 ),
-                                child: config.content!,
-                              ),
-                            if (_errorMessage != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Text(
-                                  _errorMessage!,
-                                  style: TextStyle(
-                                    color: colors?.error ?? Colors.red,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
+                              // Actions
+                              if (config.actions.isNotEmpty) ...[
+                                const SizedBox(height: 24),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        config.actionsAlignment ??
+                                            MainAxisAlignment.end,
+                                    children: config.actions
+                                        .map((action) => Expanded(
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 4),
+                                                child: AppDialog
+                                                    ._buildActionButton(
+                                                        dialogContext,
+                                                        action,
+                                                        colors),
+                                              ),
+                                            ))
+                                        .toList(),
                                   ),
                                 ),
-                              ),
-                            // Actions
-                            if (config.actions.isNotEmpty) ...[
-                              const SizedBox(height: 24),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: Row(
-                                  mainAxisAlignment: config.actionsAlignment ??
-                                      MainAxisAlignment.end,
-                                  children: config.actions
-                                      .map((action) => Expanded(
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 4),
-                                              child:
-                                                  AppDialog._buildActionButton(
-                                                      context, action, colors),
-                                            ),
-                                          ))
-                                      .toList(),
-                                ),
-                              ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                // Sticker Image (왼쪽 위) - 배경 Container 밖에 배치
-                Positioned(
-                  top: -25,
-                  left: -10,
-                  child: Image.asset(
-                    'assets/images/Popup_Sticker.png',
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.contain,
-                    cacheWidth: 300, // Optimized
+                  // Sticker Image (왼쪽 위) - 배경 Container 밖에 배치
+                  Positioned(
+                    top: -25,
+                    left: -10,
+                    child: Image.asset(
+                      'assets/images/Popup_Sticker.png',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.contain,
+                      cacheWidth: 300, // Optimized
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -684,6 +711,116 @@ class _ImageActionButtonState extends State<_ImageActionButton> {
           ),
         );
       },
+    );
+  }
+}
+
+class PopupTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hintText;
+  final bool obscureText;
+  final int? maxLines;
+  final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
+  final FormFieldValidator<String>? validator;
+  final int? maxLength;
+
+  const PopupTextField({
+    super.key,
+    required this.controller,
+    required this.hintText,
+    this.obscureText = false,
+    this.maxLines = 1,
+    this.keyboardType,
+    this.onChanged,
+    this.validator,
+    this.maxLength,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Determine height based on maxLines
+    final double height = (maxLines ?? 1) == 1 ? 60.0 : 120.0;
+
+    return Container(
+      height: height,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/TextBox_Background.png'),
+          fit: BoxFit.fill,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: maxLines == 1 ? Alignment.center : Alignment.topLeft,
+      child: validator != null
+          ? TextFormField(
+              controller: controller,
+              obscureText: obscureText,
+              maxLines: maxLines,
+              keyboardType: keyboardType,
+              style: const TextStyle(
+                color: Color(0xFF4E342E),
+                fontFamily: 'BMJUA',
+                fontSize: 18,
+              ),
+              onChanged: onChanged,
+              validator: validator,
+              maxLength: maxLength,
+              decoration: InputDecoration(
+                hintText: hintText,
+                hintStyle: TextStyle(
+                  color: const Color(0xFF4E342E).withOpacity(0.5),
+                  fontFamily: 'BMJUA',
+                  fontSize: 16,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorStyle: const TextStyle(
+                  fontFamily: 'BMJUA',
+                  color: Colors.red,
+                  fontSize: 12,
+                ),
+                isDense: true,
+                contentPadding: maxLines == 1
+                    ? EdgeInsets.zero
+                    : const EdgeInsets.symmetric(vertical: 16),
+                filled: false,
+                fillColor: Colors.transparent,
+                counterText: '',
+              ),
+            )
+          : TextField(
+              controller: controller,
+              obscureText: obscureText,
+              maxLines: maxLines,
+              keyboardType: keyboardType,
+              style: const TextStyle(
+                color: Color(0xFF4E342E),
+                fontFamily: 'BMJUA',
+                fontSize: 18,
+              ),
+              onChanged: onChanged,
+              maxLength: maxLength,
+              decoration: InputDecoration(
+                hintText: hintText,
+                hintStyle: TextStyle(
+                  color: const Color(0xFF4E342E).withOpacity(0.5),
+                  fontFamily: 'BMJUA',
+                  fontSize: 16,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                isDense: true,
+                contentPadding: maxLines == 1
+                    ? EdgeInsets.zero
+                    : const EdgeInsets.symmetric(vertical: 16),
+                filled: false,
+                fillColor: Colors.transparent,
+                counterText: '',
+              ),
+            ),
     );
   }
 }

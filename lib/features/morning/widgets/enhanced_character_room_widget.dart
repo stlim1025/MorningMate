@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../data/models/room_decoration_model.dart';
+import '../../character/widgets/character_display.dart';
 import 'room_background_widget.dart';
 
 class EnhancedCharacterRoomWidget extends StatefulWidget {
@@ -480,8 +481,13 @@ class _EnhancedCharacterRoomWidgetState
                               transform: Matrix4.identity()
                                 ..translate(0.0, verticalOffset)
                                 ..scale(scaleX, scaleY),
-                              child: _buildCharacter(
-                                  isAwake, colorScheme, charSize),
+                              child: CharacterDisplay(
+                                isAwake: isAwake,
+                                characterLevel: widget.characterLevel,
+                                size: charSize,
+                                isTapped: _isTapped,
+                                enableAnimation: true,
+                              ),
                             ),
                             // Mood Bubble (따라 움직이도록 verticalOffset 적용)
                             if (widget.todaysMood != null && isAwake)
@@ -667,103 +673,6 @@ class _EnhancedCharacterRoomWidgetState
         color: Colors.blueGrey, size: (width < height ? width : height) * 0.7);
   }
 
-  Widget _buildCharacter(
-      bool isAwake, AppColorScheme colorScheme, double size) {
-    // Shared dimensions for the character components
-    final double charWidth = size * 0.80;
-    final double charHeight = size * 0.75;
-
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        clipBehavior: Clip.none,
-        children: [
-          // 1. Wings (Level 2+) - Static layer to prevent flickering
-          if (widget.characterLevel >= 2)
-            Image.asset(
-              widget.characterLevel >= 3
-                  ? 'assets/images/Egg_Wing2.png'
-                  : 'assets/images/Egg_Wing.png',
-              width:
-                  widget.characterLevel >= 3 ? charWidth * 2 : charWidth * 1.2,
-              height: widget.characterLevel >= 3 ? charHeight * 2 : charHeight,
-              fit: BoxFit.contain,
-              cacheWidth: 400,
-            ),
-
-          // 2. Base Body - Static layer to prevent flickering
-          Image.asset(
-            isAwake ? 'assets/images/Body.png' : 'assets/images/Sleep_Body.png',
-            width: charWidth,
-            height: charHeight,
-            fit: BoxFit.contain,
-            cacheWidth: 500,
-          ),
-
-          // 3. Expression Layer - Only cross-fade the face
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 200),
-            alignment: Alignment.center,
-            crossFadeState: _isTapped
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            firstChild: Image.asset(
-              isAwake
-                  ? 'assets/images/Face_Default.png'
-                  : 'assets/images/Face_Sleep.png',
-              width: charWidth,
-              height: charHeight,
-              fit: BoxFit.contain,
-              key: const ValueKey('face_normal'),
-              cacheWidth: 300,
-            ),
-            secondChild: Image.asset(
-              isAwake
-                  ? 'assets/images/Face_Wink.png'
-                  : 'assets/images/Face_Drool.png',
-              width: charWidth,
-              height: charHeight,
-              fit: BoxFit.contain,
-              key: const ValueKey('face_tapped'),
-              cacheWidth: 300,
-            ),
-          ),
-
-          // Zzz animation (if sleeping)
-          if (!isAwake)
-            Positioned(
-              top: -size * 0.05,
-              right: size * 0.05,
-              child: AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(
-                      10 * (1 - _animationController.value),
-                      -20 * _animationController.value,
-                    ),
-                    child: Opacity(
-                      opacity: (1 - _animationController.value).clamp(0.0, 1.0),
-                      child: const Text(
-                        'Z',
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   bool _isPropValid(RoomPropModel prop) {
     if (prop.type != 'sticky_note') return true;
     if (prop.metadata == null || prop.metadata!['createdAt'] == null) {
@@ -784,28 +693,54 @@ class _EnhancedCharacterRoomWidgetState
   }
 
   Widget _buildMoodBubble(String mood, double charSize) {
-    // 이모티콘 맵핑 (ArchiveScreen과 일치)
-    String getMoodEmoji(String mood) {
-      if (mood.isEmpty) return '📝';
-      final emojiRegex = RegExp(
-          r'[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]',
-          unicode: true);
-      if (emojiRegex.hasMatch(mood)) return mood;
-      switch (mood) {
-        case 'happy':
-          return '😊';
-        case 'neutral':
-          return '😐';
-        case 'sad':
-          return '😢';
-        case 'excited':
-          return '🤩';
-        default:
-          return '📝';
-      }
-    }
+    Widget moodContent;
 
-    final emoji = getMoodEmoji(mood);
+    switch (mood) {
+      case 'happy':
+        moodContent = Image.asset(
+          'assets/imoticon/Imoticon_Happy.png',
+          width: charSize * 0.4,
+          height: charSize * 0.4,
+          fit: BoxFit.contain,
+        );
+        break;
+      case 'neutral':
+        moodContent = Image.asset(
+          'assets/imoticon/Imoticon_Normal.png',
+          width: charSize * 0.4,
+          height: charSize * 0.4,
+          fit: BoxFit.contain,
+        );
+        break;
+      case 'sad':
+        moodContent = Image.asset(
+          'assets/imoticon/Imoticon_Sad.png',
+          width: charSize * 0.4,
+          height: charSize * 0.4,
+          fit: BoxFit.contain,
+        );
+        break;
+      case 'excited':
+        moodContent = Image.asset(
+          'assets/imoticon/Imoticon_Love.png',
+          width: charSize * 0.4,
+          height: charSize * 0.4,
+          fit: BoxFit.contain,
+        );
+        break;
+      default:
+        String emoji = '📝';
+        final emojiRegex = RegExp(
+            r'[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]',
+            unicode: true);
+        if (emojiRegex.hasMatch(mood)) emoji = mood;
+        moodContent = Text(
+          emoji,
+          style: TextStyle(
+            fontSize: charSize * 0.25,
+          ),
+        );
+    }
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.8, end: 1.0),
@@ -828,12 +763,7 @@ class _EnhancedCharacterRoomWidgetState
                 fit: BoxFit.contain,
               ),
             ),
-            child: Text(
-              emoji,
-              style: TextStyle(
-                fontSize: charSize * 0.25,
-              ),
-            ),
+            child: moodContent,
           ),
         );
       },

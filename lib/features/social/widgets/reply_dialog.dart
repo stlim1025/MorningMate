@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/widgets/app_dialog.dart';
+
 import '../../auth/controllers/auth_controller.dart';
 import '../../notification/controllers/notification_controller.dart';
 
@@ -25,34 +26,10 @@ class ReplyDialog {
       key: AppDialogKey.guestbook,
       content: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: TextField(
+        child: PopupTextField(
           controller: messageController,
+          hintText: '$receiverNickname님께 답장하기',
           maxLines: 3,
-          autofocus: true,
-          style: TextStyle(color: colorScheme.textPrimary),
-          decoration: InputDecoration(
-            hintText: '$receiverNickname님께 답장하기',
-            hintStyle: TextStyle(color: colorScheme.textHint),
-            filled: true,
-            fillColor: Colors.black.withOpacity(0.04),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: colorScheme.primaryButton, width: 1.5),
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
         ),
       ),
       actions: [

@@ -58,6 +58,8 @@ class SocialController extends ChangeNotifier {
   List<Map<String, dynamic>> _friendRequests = []; // 친구 요청 목록
   // 친구 기상 상태 캐싱 (friendId -> isAwake)
   final Map<String, bool> _friendsAwakeStatus = {};
+  // 친구 오늘의 기분 캐싱 (friendId -> mood)
+  final Map<String, String?> _friendsMood = {};
 
   List<UserModel> get friends => _friends;
   List<Map<String, dynamic>> get friendRequests => _friendRequests;
@@ -81,6 +83,11 @@ class SocialController extends ChangeNotifier {
     }
 
     return false;
+  }
+
+  // 친구의 오늘의 기분을 가져오는 메서드
+  String? getFriendMood(String friendId) {
+    return _friendsMood[friendId];
   }
 
   Future<bool> refreshFriendAwakeStatus(String friendId) async {
@@ -142,7 +149,8 @@ class SocialController extends ChangeNotifier {
   // 친구 목록 로드
   Future<void> loadFriends(String userId) async {
     _isLoading = true;
-    Future.microtask(() => notifyListeners());
+    // Notify only if necessary to show loading spinner immediately6
+    notifyListeners();
 
     // 기존 스트림 구독 취소
     await _friendRequestSubscription?.cancel();
@@ -159,11 +167,11 @@ class SocialController extends ChangeNotifier {
         notifyListeners();
       });
 
-      // 3. 각 친구의 기상 상태(일기 작성 여부) 확인 및 캐싱
-      for (var friend in _friends) {
+      // 3. 각 친구의 기상 상태(일기 작성 여부) 확인 및 캐싱 (병렬 처리)
+      await Future.wait(_friends.map((friend) async {
         final isAwake = await hasFriendWrittenToday(friend.uid);
         _friendsAwakeStatus[friend.uid] = isAwake;
-      }
+      }));
     } catch (e) {
       print('친구 목록 로드 오류: $e');
     }
@@ -390,7 +398,15 @@ class SocialController extends ChangeNotifier {
         friendId,
         DateTime.now(), // 로컬 시간 기준
       );
-      return diary?.isCompleted ?? false;
+      final isCompleted = diary?.isCompleted ?? false;
+
+      if (isCompleted) {
+        _friendsMood[friendId] = diary?.mood;
+      } else {
+        _friendsMood[friendId] = null;
+      }
+
+      return isCompleted;
     } catch (e) {
       print('친구 일기 확인 오류: $e');
       return false;
@@ -406,6 +422,7 @@ class SocialController extends ChangeNotifier {
     _friends = [];
     _friendRequests = [];
     _friendsAwakeStatus.clear();
+    _friendsMood.clear();
     _wakeUpCooldowns.clear();
     _cheerCooldowns.clear();
     _isLoading = false;
