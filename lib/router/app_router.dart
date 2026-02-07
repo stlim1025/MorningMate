@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:alarm/alarm.dart';
 import 'dart:async';
 
 import '../features/auth/screens/login_screen.dart';
@@ -18,7 +19,12 @@ import '../features/settings/screens/settings_screen.dart';
 import '../features/settings/screens/notification_settings_screen.dart';
 import '../features/settings/screens/terms_of_service_screen.dart';
 import '../features/settings/screens/privacy_policy_screen.dart';
+import '../features/alarm/screens/alarm_screen.dart';
+import '../features/alarm/screens/alarm_ring_screen.dart';
+
 import '../data/models/diary_model.dart';
+import 'package:alarm/alarm.dart';
+import '../features/alarm/screens/alarm_ring_screen.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -144,6 +150,21 @@ class AppRouter {
             builder: (context, state) => const PrivacyPolicyScreen(),
           ),
         ],
+      ),
+
+      // Alarm Routes
+      GoRoute(
+        path: '/alarm',
+        name: 'alarm',
+        builder: (context, state) => const AlarmScreen(),
+      ),
+      GoRoute(
+        path: '/alarm-ring',
+        name: 'alarm-ring',
+        builder: (context, state) {
+          final alarmSettings = state.extra as AlarmSettings;
+          return AlarmRingScreen(alarmSettings: alarmSettings);
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -45,6 +45,7 @@ dependencies:
   table_calendar: ^3.0.9
   package_info_plus: ^9.0.0
   confetti: ^0.8.0
+  alarm: ^4.0.0
 
   #Ads
   google_mobile_ads: ^5.1.0
@@ -68,6 +69,7 @@ flutter:
     - assets/animations/
     - assets/icons/
     - assets/items/
+    - assets/sounds/
   
   fonts:
     - family: Pretendard

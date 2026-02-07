@@ -12,6 +12,7 @@ import 'services/user_service.dart';
 import 'services/diary_service.dart';
 import 'services/friend_service.dart';
 import 'services/question_service.dart';
+import 'services/alarm_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/morning/controllers/morning_controller.dart';
 import 'features/character/controllers/character_controller.dart';
@@ -47,6 +48,30 @@ void main() async {
   } catch (e) {
     debugPrint('광고 SDK 초기화 실패: $e');
   }
+
+  // 알람 서비스 초기화
+  await AlarmService.init();
+  AlarmService.setAlarmListener((alarmSettings) {
+    debugPrint('Alarm Ringing: ${alarmSettings.id}');
+    final router = AppRouter.router;
+
+    // 안전하게 현재 경로 확인
+    String currentRoute = '';
+    try {
+      if (router.routerDelegate.currentConfiguration.isNotEmpty) {
+        currentRoute =
+            router.routerDelegate.currentConfiguration.last.matchedLocation;
+      }
+    } catch (e) {
+      debugPrint('Error getting current route: $e');
+    }
+
+    if (currentRoute != '/alarm-ring') {
+      debugPrint('Navigating to Alarm Ring Screen');
+      router.push('/alarm-ring', extra: alarmSettings);
+    }
+  });
+
   if (kIsWeb) {
     await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
   }
@@ -72,6 +97,7 @@ class _MorningMateAppState extends State<MorningMateApp> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final rootContext = AppRouter.navigatorKey.currentContext;
       if (rootContext == null) {

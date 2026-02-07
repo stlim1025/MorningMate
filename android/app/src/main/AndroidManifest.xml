@@ -5,6 +5,8 @@
         android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -34,8 +36,35 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713"/>
+        <!-- 알람 동작 용 포그라운드 서비스 Start -->
+        <service
+            android:name="com.gdelataillade.alarm.services.AlarmService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false" />
+        <receiver
+            android:name="com.gdelataillade.alarm.receivers.AlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.gdelataillade.alarm.receivers.RebootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <!-- 알람 동작 용 포그라운드 서비스 End -->
+
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- 알람 기능 권한 -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- 알람 기능 권한 -->
+
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../controllers/morning_controller.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../alarm/screens/alarm_screen.dart';
 import '../../settings/screens/settings_screen.dart';
 import '../../notification/controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
@@ -426,8 +427,24 @@ class _MorningScreenState extends State<MorningScreen>
               ],
             ),
           ),
+
           Row(
             children: [
+              const SizedBox(width: 8),
+              // 알람 버튼
+              HeaderImageButton(
+                imagePath: 'assets/icons/Alarm_Button_Icon.png',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AlarmScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 8), // 아이콘 사이 간격
+              // 알림 버튼
               StreamBuilder<List<NotificationModel>>(
                 stream: userId == null
                     ? const Stream.empty()
@@ -449,6 +466,7 @@ class _MorningScreenState extends State<MorningScreen>
                 },
               ),
               const SizedBox(width: 8),
+              // 설정 버튼
               HeaderImageButton(
                 imagePath: 'assets/icons/Setting_button.png',
                 onTap: () {

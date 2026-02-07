@@ -80,7 +80,7 @@ class _WritingScreenState extends State<WritingScreen> {
           onPressed: () async {
             final confirmed = await _showExitConfirmation(context);
             if (confirmed == true && context.mounted) {
-              context.pop();
+              context.go('/morning');
             }
           },
         ),
@@ -135,7 +135,7 @@ class _WritingScreenState extends State<WritingScreen> {
               if (didPop) return;
               final confirmed = await _showExitConfirmation(context);
               if (confirmed == true && context.mounted) {
-                Navigator.of(context).pop();
+                context.go('/morning');
               }
             },
             child: Consumer<MorningController>(
