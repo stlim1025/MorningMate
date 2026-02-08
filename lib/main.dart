@@ -44,6 +44,11 @@ void main() async {
   // Firebase 초기화
   await Firebase.initializeApp();
 
+  // 알람 서비스 초기화 (리스너는 앱 상태 초기화 시 등록)
+  await AlarmService.init();
+  final bool isAlarmFiring = AlarmService.ringingAlarm != null;
+  final String initialRoute = isAlarmFiring ? '/alarm-ring' : '/splash';
+
   // 광고 SDK 초기화
   try {
     MobileAds.instance.initialize();
@@ -58,17 +63,15 @@ void main() async {
     debugPrint('Persistence Error: $e');
   }
 
-  // 알람 서비스 초기화 (리스너는 앱 상태 초기화 시 등록)
-  await AlarmService.init();
-
   // FCM 백그라운드 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  runApp(const MorningMateApp());
+  runApp(MorningMateApp(initialRoute: initialRoute));
 }
 
 class MorningMateApp extends StatefulWidget {
-  const MorningMateApp({super.key});
+  final String initialRoute;
+  const MorningMateApp({super.key, required this.initialRoute});
 
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
@@ -112,21 +115,19 @@ class _MorningMateAppState extends State<MorningMateApp> {
     );
 
     // 3. Router 초기화 (AuthController 의존성 주입)
-    _router = AppRouter.createRouter(_authController);
+    _router = AppRouter.createRouter(_authController, widget.initialRoute);
 
     // 4. 알람 리스너 설정 (Router 사용)
     AlarmService.setAlarmListener((alarmSettings) {
-      debugPrint('Alarm Ringing: ${alarmSettings.id}');
+      final context = AppRouter.navigatorKey.currentContext;
+      if (context == null) return;
 
-      // 안전하게 현재 경로 확인 및 이동
-      try {
-        final currentRoute =
-            _router.routerDelegate.currentConfiguration.last.matchedLocation;
-        if (currentRoute != '/alarm-ring') {
-          _router.push('/alarm-ring', extra: alarmSettings);
-        }
-      } catch (e) {
-        debugPrint('Error navigating to alarm screen: $e');
+      final router = GoRouter.of(context);
+      // 현재 이미 알람 화면이 아니면 이동
+      if (!router.routerDelegate.currentConfiguration.uri
+          .toString()
+          .contains('alarm-ring')) {
+        router.push('/alarm-ring', extra: alarmSettings);
       }
     });
 

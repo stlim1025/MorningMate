@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:alarm/alarm.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../services/alarm_service.dart';
 import '../screens/alarm_ring_screen.dart';
@@ -13,17 +14,53 @@ class AlarmScreen extends StatefulWidget {
   State<AlarmScreen> createState() => _AlarmScreenState();
 }
 
-class _AlarmScreenState extends State<AlarmScreen> {
+class _AlarmScreenState extends State<AlarmScreen> with WidgetsBindingObserver {
   AlarmSettings? _activeAlarm;
   bool _isLoading = true;
+  bool _hasPermissions = false;
 
   @override
   void initState() {
     super.initState();
-    _loadSingleAlarm();
+    // 💡 앱 상태 변화 감지 등록 (설정창에서 돌아오는 것 확인용)
+    WidgetsBinding.instance.addObserver(this);
+    _initializeScreen();
   }
 
-  // 1. 기존 알람 로드 및 없으면 바로 선택창 띄우기
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // 💡 사용자가 앱 설정에서 권한을 변경하고 돌아왔을 때 자동으로 재체크
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _initializeScreen();
+    }
+  }
+
+  // 초기화 로직: 권한 체크 -> 데이터 로드
+  Future<void> _initializeScreen() async {
+    setState(() => _isLoading = true);
+
+    // 1. 권한 체크
+    final isGranted = await AlarmService.checkPermissions();
+
+    setState(() {
+      _hasPermissions = isGranted;
+    });
+
+    // 2. 권한이 있을 때만 알람 데이터 로드
+    if (isGranted) {
+      await _loadSingleAlarm();
+    } else {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // 기존 알람 로드 및 없으면 바로 선택창 띄우기
   Future<void> _loadSingleAlarm() async {
     final alarms = await AlarmService.getAlarms();
     setState(() {
@@ -31,15 +68,14 @@ class _AlarmScreenState extends State<AlarmScreen> {
       _isLoading = false;
     });
 
-    // 설정된 알람이 없으면 페이지 진입 시 바로 시간 선택창 오픈
-    if (_activeAlarm == null) {
+    if (_activeAlarm == null && mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _selectAndScheduleAlarm();
       });
     }
   }
 
-  // 2. 시간 선택 및 알람 등록 로직
+  // 시간 선택 및 알람 등록 로직
   Future<void> _selectAndScheduleAlarm() async {
     final TimeOfDay? selectedTime = await showTimePicker(
       context: context,
@@ -63,21 +99,20 @@ class _AlarmScreenState extends State<AlarmScreen> {
         selectedTime.minute,
       );
 
-      // 이미 지난 시간이라면 내일로 설정
       if (alarmDateTime.isBefore(now)) {
         alarmDateTime = alarmDateTime.add(const Duration(days: 1));
       }
 
-      // 기존 알람이 있다면 삭제 (하나만 유지)
       if (_activeAlarm != null) {
         await AlarmService.stopAlarm(_activeAlarm!.id);
       }
 
-      // 새 알람 등록 (단일 관리를 위해 ID를 고정하거나 간단하게 생성)
       const int singleAlarmId = 888;
+      // 💡 androidFullScreenIntent 옵션은 AlarmService.scheduleAlarm 내부에서
+      // true로 설정되어 있는지 반드시 확인하세요.
       await AlarmService.scheduleAlarm(time: alarmDateTime, id: singleAlarmId);
 
-      _loadSingleAlarm(); // 상태 새로고침
+      _loadSingleAlarm();
     }
   }
 
@@ -85,6 +120,17 @@ class _AlarmScreenState extends State<AlarmScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
+    // 1. 로딩 중 UI
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // 2. 💡 권한 미부여 시 봉쇄 UI
+    if (!_hasPermissions) {
+      return _buildPermissionLockState(colorScheme);
+    }
+
+    // 3. 권한 부여 시 정상 UI
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -100,49 +146,80 @@ class _AlarmScreenState extends State<AlarmScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              // 테스트용 더미 알람 데이터 생성
               final dummySettings = AlarmSettings(
-                id: 999, // 테스트용 ID
+                id: 999,
                 dateTime: DateTime.now(),
-                assetAudioPath: 'assets/audio/alarm.mp3',
+                assetAudioPath: 'assets/sounds/alarm.mp3',
+                androidFullScreenIntent: true, // 잠금화면 테스트용
                 notificationSettings: const NotificationSettings(
                   title: '기상 시간이에요!',
                   body: '캐릭터가 당신을 기다리고 있어요 🐥',
                 ),
               );
-
-              // 알람 해제 화면으로 강제 이동
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      AlarmRingScreen(alarmSettings: dummySettings),
-                ),
-              );
+              context.push('/alarm-ring', extra: dummySettings);
             },
-            child: const Text(
-              'Ring Test',
-              style: TextStyle(
-                  color: Colors.redAccent, fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Ring Test',
+                style: TextStyle(
+                    color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: _activeAlarm == null
-                    ? _buildEmptyState(colorScheme)
-                    : _buildSingleAlarmCard(
-                        context, _activeAlarm!, colorScheme),
-              ),
-            ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: _activeAlarm == null
+              ? _buildEmptyState(colorScheme)
+              : _buildSingleAlarmCard(context, _activeAlarm!, colorScheme),
+        ),
+      ),
     );
   }
 
-  // 단일 알람 카드 UI
+  // 💡 권한 잠금 화면 UI
+  Widget _buildPermissionLockState(AppColorScheme colorScheme) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('접근 권한 필요')),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_person_outlined,
+                size: 80, color: colorScheme.error),
+            const SizedBox(height: 24),
+            Text(
+              '알람을 사용하려면 권한이 필요합니다.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 18,
+                  color: colorScheme.textPrimary,
+                  fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '알림, 다른 앱 위에 표시, 정확한 알람 설정 권한이 모두 허용되어야 알람 기능을 이용할 수 있습니다.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () => openAppSettings(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primaryButton,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('시스템 설정창 열기',
+                  style: TextStyle(color: Colors.white, fontSize: 16)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSingleAlarmCard(BuildContext context, AlarmSettings settings,
       AppColorScheme colorScheme) {
     final timeText = DateFormat.jm().format(settings.dateTime);
@@ -152,7 +229,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: _selectAndScheduleAlarm, // 누르면 시간 수정
+          onTap: _selectAndScheduleAlarm,
           child: Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
@@ -170,11 +247,9 @@ class _AlarmScreenState extends State<AlarmScreen> {
               children: [
                 Icon(Icons.alarm, color: colorScheme.primaryButton, size: 48),
                 const SizedBox(height: 16),
-                Text(
-                  dayText,
-                  style:
-                      TextStyle(color: colorScheme.textSecondary, fontSize: 16),
-                ),
+                Text(dayText,
+                    style: TextStyle(
+                        color: colorScheme.textSecondary, fontSize: 16)),
                 const SizedBox(height: 8),
                 Text(
                   timeText,
@@ -186,16 +261,14 @@ class _AlarmScreenState extends State<AlarmScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  '터치하여 시간 수정',
-                  style: TextStyle(color: colorScheme.textHint, fontSize: 14),
-                ),
+                Text('터치하여 시간 수정',
+                    style:
+                        TextStyle(color: colorScheme.textHint, fontSize: 14)),
               ],
             ),
           ),
         ),
         const SizedBox(height: 40),
-        // 알람 삭제(해제) 버튼
         TextButton.icon(
           onPressed: () async {
             await AlarmService.stopAlarm(settings.id);

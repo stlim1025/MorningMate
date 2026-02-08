@@ -1,36 +1,46 @@
 import 'package:alarm/alarm.dart';
 import 'dart:async';
+import 'package:permission_handler/permission_handler.dart';
 
 class AlarmService {
-  static StreamSubscription<AlarmSettings>? _ringSubscription;
-  static bool _isNavigating = false; // 💡 화면 이동 중복 방지 플래그
+  static AlarmSettings? _ringingAlarm;
+  static AlarmSettings? get ringingAlarm => _ringingAlarm;
+  static void Function(AlarmSettings)? _externalListener;
 
   static Future<void> init() async {
     await Alarm.init();
-  }
 
-  static void setAlarmListener(Function(AlarmSettings) onRing) {
-    _ringSubscription?.cancel();
-    _ringSubscription = null;
+    Alarm.ringStream.stream.listen((settings) {
+      _ringingAlarm = settings; // 현재 울리는 알람 캐싱
 
-    _ringSubscription = Alarm.ringStream.stream.listen((settings) {
-      onRing(settings);
+      if (_externalListener != null) {
+        _externalListener!(settings);
+      }
     });
   }
 
-  // 앱 종료 시 호출하거나 초기화할 때 사용
-  static void dispose() {
-    _ringSubscription?.cancel();
-    _ringSubscription = null;
+  static void setAlarmListener(void Function(AlarmSettings) onRing) {
+    // UI에서 넘겨준 함수를 변수에 담아둡니다.
+    _externalListener = onRing;
+
+    // 💡 레이스 컨디션 해결: 리스너가 등록되는 시점에 이미 알람이 울리고 있다면 즉시 호출
+    if (_ringingAlarm != null) {
+      onRing(_ringingAlarm!);
+    }
   }
 
-  // 알람 예약
+  static Future<bool> checkPermissions() async {
+    //에 명시된 필수 권한들 체크
+    return await Permission.notification.isGranted &&
+        await Permission.systemAlertWindow.isGranted &&
+        await Permission.scheduleExactAlarm.isGranted;
+  }
+
   static Future<void> scheduleAlarm({
     required int id,
     required DateTime time,
     String? label,
   }) async {
-    // 💡 중요: 설정하려는 시간이 과거라면 내일로 변경
     DateTime alarmTime = time;
     if (alarmTime.isBefore(DateTime.now())) {
       alarmTime = alarmTime.add(const Duration(days: 1));
@@ -39,14 +49,15 @@ class AlarmService {
     final alarmSettings = AlarmSettings(
       id: id,
       dateTime: alarmTime,
-      assetAudioPath: 'assets/sounds/alarm.mp3', // 실제 파일 경로 확인 필수
+      assetAudioPath: 'assets/sounds/alarm.mp3',
       loopAudio: true,
       vibrate: true,
       volume: 0.8,
+      // 💡 잠금화면 돌파를 위한 필수 옵션
+      androidFullScreenIntent: true,
       notificationSettings: NotificationSettings(
         title: '모닝 메이트',
-        body:
-            '${alarmTime.hour}:${alarmTime.minute.toString().padLeft(2, '0')} 오늘의 일기를 작성해볼까요?',
+        body: '오늘의 일기를 작성해볼까요?',
         stopButton: '알람 끄기',
       ),
     );
@@ -54,18 +65,17 @@ class AlarmService {
     await Alarm.set(alarmSettings: alarmSettings);
   }
 
-  // 모든 알람 목록 가져오기
   static Future<List<AlarmSettings>> getAlarms() async {
     final rawAlarms = await Alarm.getAlarms();
-
     final List<AlarmSettings> alarms = List.from(rawAlarms);
-
     alarms.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-
     return alarms;
   }
 
   static Future<void> stopAlarm(int id) async {
+    if (_ringingAlarm?.id == id) {
+      _ringingAlarm = null;
+    }
     await Alarm.stop(id);
   }
 }

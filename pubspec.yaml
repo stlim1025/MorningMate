@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  permission_handler: ^11.3.1
+
   
   # Firebase
   firebase_core: ^3.6.0
@@ -63,7 +65,6 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
-  
   assets:
     - assets/images/
     - assets/animations/

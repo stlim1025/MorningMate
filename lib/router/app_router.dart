@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
 import 'package:alarm/alarm.dart';
+import 'package:morning_mate/services/alarm_service.dart';
 import 'dart:async';
 
 import '../features/auth/screens/auth_wrapper.dart';
@@ -32,42 +33,54 @@ class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
-  static GoRouter createRouter(AuthController authController) {
+  static GoRouter createRouter(
+      AuthController authController, String initialRoute) {
     return GoRouter(
       navigatorKey: navigatorKey,
-      initialLocation: '/splash', // 🚨 시작 위치를 스플래시로 변경
+      initialLocation: initialRoute,
       refreshListenable: authController, // AuthController 변경 감지
       redirect: (context, state) {
-        // 🚨 2. 로딩 중(파이어베이스 확인 중)이면 무조건 스플래시 유지
+        final String location = state.uri.toString();
+
+        if (AlarmService.ringingAlarm != null) {
+          if (!location.contains('alarm-ring')) {
+            return '/alarm-ring';
+          }
+          return null;
+        }
+
         if (!authController.isAuthCheckDone) {
           return '/splash';
         }
 
         final isLoggedIn = authController.userModel != null;
-        final isGoingToLogin = state.matchedLocation == '/login' ||
-            state.matchedLocation == '/signup';
-        final isGoingToSplash = state.matchedLocation == '/splash';
 
-        // 3. 로딩 끝남 & 로그인 되어 있음
+        // 2. 로그인 성공 시 메인으로 보내는 로직 수정
         if (isLoggedIn) {
-          // 스플래시나 로그인 화면에 있었다면 -> 메인(morning)으로
-          if (isGoingToSplash ||
-              isGoingToLogin ||
-              state.matchedLocation == '/') {
+          // 💡 이미 알람 화면에 있다면 절대로 /morning으로 보내면 안 됨!
+          if (location.contains('alarm-ring') || location.contains('writing')) {
+            return null;
+          }
+
+          if (location == '/splash' ||
+              location == '/login' ||
+              location == '/signup' ||
+              location == '/') {
             return '/morning';
           }
         }
         // 4. 로딩 끝남 & 로그인 안 되어 있음
         else {
           // 로그인하러 가는 게 아니라면 -> 로그인 화면으로
-          if (!isGoingToLogin && !isGoingToSplash) {
+          if (location != '/login' && location != '/splash') {
             // !isGoingToSplash 추가: 로딩 끝난 직후 /splash에 있으면 /login으로 보내야 함.
-            // 위 로직에서 isLoggedIn이 false면 여기로 옴.
+            // 위 로직에서 isLoggedI
+            // n이 false면 여기로 옴.
             // 만약 현재 /splash라면 /login으로 가야함.
             // 만약 isGoingToLogin이면 null 반환(통과).
             return '/login';
           }
-          if (isGoingToSplash) {
+          if (location == '/splash') {
             return '/login';
           }
         }
@@ -200,9 +213,28 @@ class AppRouter {
         ),
         GoRoute(
           path: '/alarm-ring',
-          name: 'alarm-ring',
           builder: (context, state) {
-            final alarmSettings = state.extra as AlarmSettings;
+            AlarmSettings? alarmSettings;
+
+            if (state.extra is AlarmSettings) {
+              alarmSettings = state.extra as AlarmSettings;
+            } else if (state.extra is Map<String, dynamic>) {
+              // 💡 종료 상태에서 진입 시 Map으로 들어오므로 수동 변환
+              alarmSettings =
+                  AlarmSettings.fromJson(state.extra as Map<String, dynamic>);
+            } else {
+              // 데이터가 없으면 서비스에서 현재 울리는 알람 참조
+              alarmSettings = AlarmService.ringingAlarm;
+            }
+
+            // 🚨 여전히 null이면 MorningScreen으로 보내지 말고 '로딩/빈화면'을 띄우세요.
+            // 여기서 MorningScreen()을 호출하면 의존성 때문에 또 터질 수 있습니다.
+            if (alarmSettings == null) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
             return AlarmRingScreen(alarmSettings: alarmSettings);
           },
         ),
