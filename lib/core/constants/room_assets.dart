@@ -205,6 +205,12 @@ class RoomAssets {
         icon: Icons.scatter_plot, // Dots
         color: Color(0xFFFFF9C4),
         imagePath: 'assets/images/Colorful_hexagon.png'),
+    RoomAsset(
+        id: 'Space_Background',
+        name: '우주',
+        price: 100,
+        icon: Icons.scatter_plot, // Dots
+        imagePath: 'assets/images/Space_Background.png'),
   ];
 
   static const List<RoomAsset> backgrounds = [
@@ -270,12 +276,39 @@ class RoomAssets {
       aspectRatio: 1.8,
     ),
     RoomAsset(
+      id: 'space_desk',
+      name: '우주 책상',
+      price: 200,
+      icon: Icons.table_restaurant,
+      imagePath: 'assets/items/Space_Desk.png',
+      sizeMultiplier: 1.2,
+      aspectRatio: 1.8,
+    ),
+    RoomAsset(
       id: 'wood_chair',
       name: '원목 의자',
       price: 200,
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/Wood_Chair.png',
       sizeMultiplier: 1.2,
+      aspectRatio: 1.8,
+    ),
+    RoomAsset(
+      id: 'space_chair',
+      name: '우주 의자',
+      price: 200,
+      icon: Icons.table_restaurant,
+      imagePath: 'assets/items/Space_Chair.png',
+      sizeMultiplier: 1.2,
+      aspectRatio: 1.8,
+    ),
+    RoomAsset(
+      id: 'space_bed',
+      name: '우주 침대',
+      price: 200,
+      icon: Icons.table_restaurant,
+      imagePath: 'assets/items/Space_bed.png',
+      sizeMultiplier: 2.0,
       aspectRatio: 1.8,
     ),
     RoomAsset(
