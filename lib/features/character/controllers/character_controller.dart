@@ -5,6 +5,7 @@ import '../../../services/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/room_decoration_model.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 // 캐릭터 상태 정의 - 6단계로 확장
 enum CharacterState {
@@ -541,8 +542,10 @@ class CharacterController extends ChangeNotifier {
         if (_currentUser != null) {
           await watchAdAndGetPoints(_currentUser!.uid);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('광고 시청 보상으로 10 가지를 획득했습니다!')),
+            // 팝업 표시
+            await AppDialog.show(
+              context: context,
+              key: AppDialogKey.adReward,
             );
           }
         }

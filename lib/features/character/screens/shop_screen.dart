@@ -33,28 +33,64 @@ class _ShopScreenState extends State<ShopScreen> {
     }
 
     return Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: ResizeImage(AssetImage('assets/images/Ceiling.png'),
-                width: 1080),
-            fit: BoxFit.fill,
-          ),
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: ResizeImage(AssetImage('assets/images/Store_Background.png'),
+              width: 1080),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: DefaultTextStyle(
+        style: const TextStyle(
+          fontFamily: 'BMJUA',
+          color: Colors.black87, // 기본 텍스트 색상
         ),
         child: Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
-            title:
-                const Text('상점', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text(
+              '상점',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontFamily: 'BMJUA',
+                color: Colors.black87,
+              ),
+            ),
             centerTitle: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
+            leading: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.only(left: 16), // 오른쪽으로 살짝 이동
+                color: Colors.transparent,
+                child: Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    Image.asset(
+                      'assets/icons/X_Button.png',
+                      width: 55,
+                      height: 55,
+                      fit: BoxFit.contain,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            leadingWidth: 72, // 터치 영역 및 이동 공간 확보
             actions: [
               Container(
-                margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: colorScheme.shadowColor.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(20),
+                margin: const EdgeInsets.only(
+                    right: 16, top: 6, bottom: 6), // 마진을 줄여 높이 확보
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 8), // 패딩을 늘려 배경 크기 확대
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/Item_Background.png'),
+                    fit: BoxFit.fill,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -67,15 +103,20 @@ class _ShopScreenState extends State<ShopScreen> {
                     const SizedBox(width: 4),
                     Text(
                       '${user.points}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'BMJUA',
+                        color: Colors.black87,
+                      ),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '가지',
                       style: TextStyle(
                         fontSize: 12,
-                        color: colorScheme.textSecondary,
+                        color: Colors.black54,
                         fontWeight: FontWeight.w500,
+                        fontFamily: 'BMJUA',
                       ),
                     ),
                   ],
@@ -93,35 +134,36 @@ class _ShopScreenState extends State<ShopScreen> {
                     user, colorScheme, context.read<CharacterController>()),
                 const SizedBox(height: 24),
 
-                _buildSectionHeader('테마', Icons.palette),
+                _buildSectionHeader('테마'),
                 const SizedBox(height: 16),
                 _buildThemeGrid(user, characterController, colorScheme),
                 const SizedBox(height: 32),
-                _buildSectionHeader('벽지', Icons.wallpaper),
+                _buildSectionHeader('벽지'),
                 const SizedBox(height: 16),
                 _buildWallpaperGrid(user, characterController, colorScheme),
                 const SizedBox(height: 32),
-                _buildSectionHeader('배경', Icons.landscape),
+                _buildSectionHeader('배경'),
                 const SizedBox(height: 16),
                 _buildBackgroundGrid(user, characterController, colorScheme),
                 const SizedBox(height: 32),
-                _buildSectionHeader('소품', Icons.auto_awesome),
+                _buildSectionHeader('소품'),
                 const SizedBox(height: 16),
                 _buildPropGrid(user, characterController, colorScheme),
                 const SizedBox(height: 32),
-                _buildSectionHeader('바닥', Icons.grid_on),
+                _buildSectionHeader('바닥'),
                 const SizedBox(height: 16),
                 _buildFloorGrid(user, characterController, colorScheme),
               ],
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _buildAdButton(
       user, AppColorScheme colorScheme, CharacterController controller) {
     // 오늘 광고 시청 횟수 제한 체크 (로컬)
-    // 실제 로직은 컨트롤러의 watchAdAndGetPoints에서도 체크하지만 UI 업데이트를 위해 여기서도 체크
     int currentCount = user.adRewardCount;
     final now = DateTime.now();
     final lastDate = user.lastAdRewardDate;
@@ -137,35 +179,23 @@ class _ShopScreenState extends State<ShopScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.indigo.shade400,
-            Colors.deepPurple.shade500,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+      // 메모 이미지의 비율과 패딩 고려 (배경 이미지에 내용이 잘 들어가도록)
+      padding: const EdgeInsets.symmetric(
+          horizontal: 32, vertical: 16), // 세로 패딩 24 -> 16 축소
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/Memo.png'),
+          fit: BoxFit.fill,
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.deepPurple.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.play_arrow_rounded,
-                color: Colors.white, size: 32),
+          // 아이콘 혹은 이미지
+          Image.asset(
+            'assets/icons/Megaphone_Icon.png',
+            width: 40,
+            height: 40,
+            fit: BoxFit.contain,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -175,31 +205,34 @@ class _ShopScreenState extends State<ShopScreen> {
                 const Text(
                   '광고 보고 가지 받기',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
+                    color: Color(0xFF5D4037), // 갈색 계열 (메모지에 어울리는)
+                    fontSize: 16, // 18 -> 16 축소
                     fontWeight: FontWeight.bold,
+                    fontFamily: 'BMJUA',
                   ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Image.asset('assets/images/branch.png',
-                        width: 16, height: 16, cacheWidth: 64),
+                        width: 14, height: 14, cacheWidth: 56), // 16 -> 14 축소
                     const SizedBox(width: 4),
                     const Text(
                       '+10 가지',
                       style: TextStyle(
-                        color: Colors.yellowAccent,
-                        fontSize: 14,
+                        color: Color(0xFF8D6E63),
+                        fontSize: 14, // 16 -> 14 축소
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'BMJUA',
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '($currentCount/10)',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 12,
+                      style: const TextStyle(
+                        color: Color(0xFF8D6E63),
+                        fontSize: 12, // 14 -> 12 축소
+                        fontFamily: 'BMJUA',
                       ),
                     ),
                   ],
@@ -207,35 +240,61 @@ class _ShopScreenState extends State<ShopScreen> {
               ],
             ),
           ),
-          ElevatedButton(
-            onPressed: isLimitReached || controller.isAdLoading
+          // 보기 버튼 (Confirm_Button.png)
+          GestureDetector(
+            onTap: isLimitReached || controller.isAdLoading
                 ? null
                 : () => controller.showRewardedAd(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.deepPurple,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            child: Opacity(
+              opacity: isLimitReached || controller.isAdLoading ? 0.5 : 1.0,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/Confirm_Button.png',
+                    width: 70, // 적절한 크기 조절
+                    height: 40,
+                    fit: BoxFit.fill,
+                  ),
+                  Text(
+                    isLimitReached ? '완료' : '보기',
+                    style: const TextStyle(
+                      color: Color(0xFF5D4037), // 갈색으로 변경
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      fontFamily: 'BMJUA',
+                    ),
+                  ),
+                ],
               ),
-              elevation: 0,
             ),
-            child: Text(isLimitReached ? '완료' : '보기'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.blueGrey),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  Widget _buildSectionHeader(String title) {
+    return Container(
+      width: 100,
+      height: 40,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/icons/Store_Tab.png'),
+          fit: BoxFit.fill,
         ),
-      ],
+      ),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.only(bottom: 5, left: 24), // 왼쪽 여백 12 -> 24로 증가
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'KyoboHandwriting2024psw', // 폰트 변경
+          color: Color(0xFF5D4037),
+        ),
+      ),
     );
   }
 
@@ -336,159 +395,86 @@ class _ShopScreenState extends State<ShopScreen> {
     required Future<void> Function() onPurchase,
     required AppColorScheme colorScheme,
   }) {
+    // 상품마다 고정된 랜덤 배경 이미지를 사용하기 위해 hashCode를 활용
+    final cardIndex = (item.hashCode % 6) + 1;
+    final cardBgImage = 'assets/icons/Friend_Card$cardIndex.png';
+
     return Builder(builder: (context) {
       final canAfford =
           context.read<CharacterController>().currentUser!.points >= item.price;
 
-      return Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color:
-                    (item.color ?? colorScheme.primaryButton).withOpacity(0.1),
-                shape: BoxShape.circle,
+      return Stack(
+        children: [
+          Container(
+            // 배경 이미지 비율에 맞춰 내용을 배치
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(cardBgImage),
+                fit: BoxFit.fill,
               ),
-              child: item.imagePath != null
-                  ? Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: item.imagePath!.endsWith('.svg')
-                          ? SvgPicture.asset(
-                              item.imagePath!,
-                            )
-                          : Image.asset(item.imagePath!, cacheWidth: 150),
-                    )
-                  : Icon(item.icon,
-                      color: item.color ?? colorScheme.primaryButton, size: 28),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              item.name,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 30,
-              child: ElevatedButton(
-                onPressed: isPurchased
-                    ? null
-                    : () async {
-                        final shouldPurchase = await AppDialog.show<bool>(
-                          context: context,
-                          key: AppDialogKey.purchase,
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Center(
-                                child: item.imagePath != null
-                                    ? SizedBox(
-                                        width: 100,
-                                        height: 100,
-                                        child: item.imagePath!.endsWith('.svg')
-                                            ? SvgPicture.asset(
-                                                item.imagePath!,
-                                                fit: BoxFit.contain,
-                                              )
-                                            : Image.asset(
-                                                item.imagePath!,
-                                                fit: BoxFit.contain,
-                                              ),
-                                      )
-                                    : Icon(
-                                        item.icon,
-                                        size: 60,
-                                        color: item.color ??
-                                            colorScheme.primaryButton,
-                                      ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text('${item.name}을(를) 구매하시겠습니까?'),
-                              const SizedBox(height: 12),
-                              if (!canAfford) ...[
-                                const SizedBox(height: 12),
-                                Text(
-                                  '가지가 부족합니다.',
-                                  style: TextStyle(
-                                    color: colorScheme.error,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          actions: [
-                            AppDialogAction(
-                              label: '${item.price}',
-                              labelWidget: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/images/branch.png',
-                                    width: 18,
-                                    height: 18,
-                                    cacheWidth: 72,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '${item.price}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      height: 1.1,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              isPrimary: true,
-                              isFullWidth: true,
-                              isEnabled:
-                                  AlwaysStoppedAnimation<bool>(canAfford),
-                              onPressed: (context) =>
-                                  Navigator.pop(context, true),
-                            ),
-                          ],
-                        );
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                // 아이템 이미지
+                Container(
+                  width: 40, // 56 -> 40 축소
+                  height: 40, // 56 -> 40 축소
+                  alignment: Alignment.center,
+                  child: item.imagePath != null
+                      ? (item.imagePath!.endsWith('.svg')
+                          ? SvgPicture.asset(item.imagePath!,
+                              fit: BoxFit.contain)
+                          : Image.asset(item.imagePath!,
+                              cacheWidth: 150, fit: BoxFit.contain))
+                      : Icon(item.icon,
+                          color: item.color ?? colorScheme.primaryButton,
+                          size: 24), // 32 -> 24 축소
+                ),
+                const SizedBox(height: 8),
+                // 아이템 이름
+                Text(
+                  item.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'BMJUA',
+                    color: Color(0xFF5D4037),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const Spacer(),
 
-                        if (shouldPurchase == true) {
-                          try {
-                            await onPurchase();
-                            if (context.mounted) {
-                              await AppDialog.show(
-                                context: context,
-                                key: AppDialogKey.purchaseComplete,
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    const SizedBox(height: 16),
-                                    Center(
-                                      child: item.imagePath != null
-                                          ? SizedBox(
-                                              width: 120,
-                                              height: 120,
-                                              child: item.imagePath!
-                                                      .endsWith('.svg')
+                // 구매 버튼 (WakeUp_Button.png 배경)
+                GestureDetector(
+                  onTap: isPurchased
+                      ? null
+                      : () async {
+                          final shouldPurchase = await AppDialog.show<bool>(
+                            context: context,
+                            key: AppDialogKey.purchase,
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Center(
+                                  child: item.imagePath != null
+                                      ? SizedBox(
+                                          width: 100,
+                                          height: 100,
+                                          child:
+                                              item.imagePath!.endsWith('.svg')
                                                   ? SvgPicture.asset(
                                                       item.imagePath!,
                                                       fit: BoxFit.contain,
@@ -497,69 +483,204 @@ class _ShopScreenState extends State<ShopScreen> {
                                                       item.imagePath!,
                                                       fit: BoxFit.contain,
                                                     ),
-                                            )
-                                          : Icon(
-                                              item.icon,
-                                              size: 100,
-                                              color: item.color ??
-                                                  colorScheme.primaryButton,
-                                            ),
+                                        )
+                                      : Icon(
+                                          item.icon,
+                                          size: 60,
+                                          color: item.color ??
+                                              colorScheme.primaryButton,
+                                        ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  '${item.name}을(를) 구매하시겠습니까?',
+                                  style: const TextStyle(fontFamily: 'BMJUA'),
+                                ),
+                                const SizedBox(height: 12),
+                                if (!canAfford) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    '가지가 부족합니다.',
+                                    style: TextStyle(
+                                      color: colorScheme.error,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'BMJUA',
                                     ),
-                                    const SizedBox(height: 24),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            actions: [
+                              AppDialogAction(
+                                label: '${item.price}',
+                                labelWidget: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/branch.png',
+                                      width: 18,
+                                      height: 18,
+                                      cacheWidth: 72,
+                                    ),
+                                    const SizedBox(width: 6),
                                     Text(
-                                      '${item.name}을(를) 구매했습니다.',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(fontSize: 16),
+                                      '${item.price}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.1,
+                                        fontFamily: 'BMJUA',
+                                      ),
                                     ),
-                                    const SizedBox(height: 8),
                                   ],
                                 ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(e
-                                        .toString()
-                                        .replaceFirst('Exception: ', '')),
-                                    backgroundColor: colorScheme.error),
-                              );
+                                isPrimary: true,
+                                isFullWidth: true,
+                                isEnabled:
+                                    AlwaysStoppedAnimation<bool>(canAfford),
+                                onPressed: (context) =>
+                                    Navigator.pop(context, true),
+                              ),
+                            ],
+                          );
+
+                          if (shouldPurchase == true) {
+                            try {
+                              await onPurchase();
+                              if (context.mounted) {
+                                await AppDialog.show(
+                                  context: context,
+                                  key: AppDialogKey.purchaseComplete,
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      Center(
+                                        child: item.imagePath != null
+                                            ? SizedBox(
+                                                width: 120,
+                                                height: 120,
+                                                child: item.imagePath!
+                                                        .endsWith('.svg')
+                                                    ? SvgPicture.asset(
+                                                        item.imagePath!,
+                                                        fit: BoxFit.contain,
+                                                      )
+                                                    : Image.asset(
+                                                        item.imagePath!,
+                                                        fit: BoxFit.contain,
+                                                      ),
+                                              )
+                                            : Icon(
+                                                item.icon,
+                                                size: 100,
+                                                color: item.color ??
+                                                    colorScheme.primaryButton,
+                                              ),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      Text(
+                                        '${item.name}을(를) 구매했습니다.',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                            fontSize: 16, fontFamily: 'BMJUA'),
+                                      ),
+                                      const SizedBox(height: 8),
+                                    ],
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                        e
+                                            .toString()
+                                            .replaceFirst('Exception: ', ''),
+                                        style: const TextStyle(
+                                            fontFamily: 'BMJUA'),
+                                      ),
+                                      backgroundColor: colorScheme.error),
+                                );
+                              }
                             }
                           }
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  backgroundColor: isPurchased
-                      ? Colors.grey.shade200
-                      : colorScheme.primaryButton,
-                  foregroundColor: isPurchased ? Colors.grey : Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  elevation: 0,
-                ),
-                child: isPurchased
-                    ? const Text('완료', style: TextStyle(fontSize: 11))
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        },
+                  child: Opacity(
+                    opacity: isPurchased ? 0.7 : 1.0,
+                    child: SizedBox(
+                      width: double
+                          .infinity, // 너비를 약간 제한하여 너무 뚱뚱해지지 않게 함 (필요 시 조절)
+                      height: 20, // 높이를 36 -> 30으로 줄임
+                      child: Stack(
+                        alignment: Alignment.center,
                         children: [
                           Image.asset(
-                            'assets/images/branch.png',
-                            width: 14,
-                            height: 14,
-                            cacheWidth: 56,
+                            'assets/icons/WakeUp_Button.png',
+                            width: double.infinity,
+                            height: 30,
+                            fit: BoxFit.fill,
+                            filterQuality:
+                                FilterQuality.none, // 픽셀 깨짐 방지 (선명하게)
                           ),
-                          const SizedBox(width: 4),
-                          Text('${item.price}',
-                              style: const TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold)),
+                          Center(
+                            child: isPurchased
+                                ? const Text(
+                                    '보유중',
+                                    style: TextStyle(
+                                      fontSize: 11, // 폰트 사이즈 살짝 축소
+                                      color: Color(0xFF5D4037), // 갈색으로 변경
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'BMJUA',
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/branch.png',
+                                        width: 12, // 아이콘 사이즈 살짝 축소
+                                        height: 12,
+                                        cacheWidth: 48,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${item.price}',
+                                        style: const TextStyle(
+                                          fontSize: 12, // 폰트 사이즈 살짝 축소
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF5D4037), // 갈색으로 변경
+                                          fontFamily: 'BMJUA',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
                         ],
                       ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isPurchased)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Image.asset(
+                'assets/icons/purchase_Icon.png',
+                width:
+                    36, // 28 -> 40 (slightly smaller than full card but bigger) - Let's use 36 or 40. User said "bigger".
+                height: 36,
+                fit: BoxFit.contain,
               ),
             ),
-          ],
-        ),
+        ],
       );
     });
   }

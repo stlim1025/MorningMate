@@ -21,6 +21,7 @@ enum AppDialogKey {
   deleteStickyNote,
   writeMemo,
   diaryCompletion,
+  adReward,
 }
 
 class AppDialogAction {
@@ -231,6 +232,41 @@ class AppDialog {
           content: content,
           actionsAlignment: MainAxisAlignment.center,
           actions: actions ?? const [],
+        );
+      case AppDialogKey.adReward:
+        return AppDialogConfig(
+          title: '가지 획득!',
+          showConfetti: true,
+          content: content ??
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/branch.png',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '광고 시청 보상으로\n10 가지를 획득했습니다!',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label: '확인',
+                  isPrimary: true,
+                  isFullWidth: true,
+                  onPressed: (context) => Navigator.pop(context),
+                ),
+              ],
         );
     }
   }
