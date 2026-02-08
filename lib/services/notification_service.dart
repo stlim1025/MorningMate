@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../core/widgets/floating_notification.dart';
 import '../router/app_router.dart';
 
@@ -115,13 +116,13 @@ class NotificationService {
         case 'friendRequest':
           // 친구 요청 - 알림 화면으로 이동
           print('새로운 친구 요청이 있습니다.');
-          AppRouter.router.go('/notification');
+          AppRouter.navigatorKey.currentContext?.go('/notification');
           break;
         case 'friend_accept':
         case 'friendAccept':
         case 'friend_reject':
         case 'friendReject':
-          AppRouter.router.go('/notification');
+          AppRouter.navigatorKey.currentContext?.go('/notification');
           break;
         case 'morning_reminder':
           // 아침 알림 - 작성 화면으로 이동
@@ -284,24 +285,26 @@ class NotificationService {
   void _handleNotificationTapFromData(Map<String, dynamic>? data) {
     if (data == null) return;
     final String? type = data['type'];
+    final String? senderId = data['senderId'] ?? data['sender_id'];
 
     // 깨우기 알림(wakeUp)은 FloatingNotification.onTap에서 이미 _dismiss()를 호출하므로
     // 추가적인 navigation 없이 알림만 지워지는 효과를 냅니다.
 
-    if (type == 'friend_request' ||
-        type == 'friendRequest' ||
-        type == 'friend_accept' ||
-        type == 'friendAccept' ||
-        type == 'friend_reject' ||
-        type == 'friendReject' ||
-        type == 'cheer_message' ||
-        type == 'cheerMessage' ||
-        type == 'wake_up' ||
-        type == 'wakeUp' ||
+    if (type == 'friend_request' || type == 'friend_accept') {
+      if (senderId != null) {
+        AppRouter.navigatorKey.currentContext?.push('/friend/$senderId');
+      }
+    } else if (type == 'wake_up') {
+      // 기상 알림인 경우 메인 화면으로 이동
+      AppRouter.navigatorKey.currentContext?.push('/morning');
+    } else if (type == 'cheer_message') {
+      if (senderId != null) {
+        AppRouter.navigatorKey.currentContext?.push('/friend/$senderId');
+      }
+    } else if (type == 'friend_reject' ||
         type == 'morning_diary' ||
-        type == 'morningDiary' ||
         type == 'morning_reminder') {
-      AppRouter.router.go('/notification');
+      AppRouter.navigatorKey.currentContext?.push('/notification');
     }
   }
 

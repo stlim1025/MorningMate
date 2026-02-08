@@ -30,6 +30,10 @@ class AuthController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _currentUser != null;
 
+  // ✨ [추가] 초기 인증 체크가 끝났는지 확인하는 플래그
+  bool _isAuthCheckDone = false;
+  bool get isAuthCheckDone => _isAuthCheckDone;
+
   @override
   void dispose() {
     _authSubscription?.cancel();
@@ -42,19 +46,26 @@ class AuthController extends ChangeNotifier {
     _userStreamSubscription?.cancel();
 
     if (user != null) {
+      // FCM 토큰 갱신 리스너 등록
       _notificationService.setOnTokenRefreshHandler(
         (token) => _userService.updateFcmToken(user.uid, token),
       );
+
+      // 🚨 [핵심 수정] 스트림 연결 전에, '단건 조회'로 데이터를 먼저 확실히 가져옵니다.
+      try {
+        final initialUserData = await _userService.getUser(user.uid);
+        if (initialUserData != null) {
+          _userModel = initialUserData;
+        }
+      } catch (e) {
+        debugPrint("초기 유저 정보 로드 실패: $e");
+      }
 
       // 사용자 데이터 실시간 감시
       _userStreamSubscription =
           _userService.getUserStream(user.uid).listen((model) {
         if (model == null && _currentUser != null && !_isDeletingAccount) {
-          // 문서가 삭제되었다면 (즉, 계정이 삭제되었다면) 강제 로그아웃
-          // 직접 탈퇴 중인 경우에는 수동으로 처리하므로 건너뜁니다.
-          debugPrint(
-              'User document not found (snapshot is null), but maintaining session.');
-          // signOut(); // 앱 초기 진입 시 로딩 지연 등으로 인해 로그아웃되는 문제 방지
+          debugPrint('User document missing...');
         } else {
           _userModel = model;
           notifyListeners();
@@ -65,8 +76,11 @@ class AuthController extends ChangeNotifier {
     } else {
       _notificationService.setOnTokenRefreshHandler(null);
       _userModel = null;
-      notifyListeners();
     }
+
+    // ✨ [추가] 모든 로직이 끝났으므로 "확인 완료" 도장을 찍습니다.
+    _isAuthCheckDone = true;
+    notifyListeners();
   }
 
   void updateUserModel(UserModel? userModel) {

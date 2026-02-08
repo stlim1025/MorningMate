@@ -430,7 +430,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   Widget _buildMoodWidget(String mood, double size) {
     if (mood.isEmpty) {
-      return Text('📝', style: TextStyle(fontSize: size));
+      return Text('📝', style: TextStyle(fontSize: size * 0.8));
     }
     switch (mood) {
       case 'happy':

@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 import 'router/app_router.dart';
 import 'services/auth_service.dart';
@@ -42,40 +43,23 @@ void main() async {
 
   // Firebase 초기화
   await Firebase.initializeApp();
-  // 👇 광고 SDK 초기화 (필수) - 오류 발생 시 앱 실행이 중단되지 않도록 예외 처리
+
+  // 광고 SDK 초기화
   try {
     MobileAds.instance.initialize();
   } catch (e) {
     debugPrint('광고 SDK 초기화 실패: $e');
   }
 
-  // 알람 서비스 초기화
-  await AlarmService.init();
-  AlarmService.setAlarmListener((alarmSettings) {
-    debugPrint('Alarm Ringing: ${alarmSettings.id}');
-    final router = AppRouter.router;
-
-    // 안전하게 현재 경로 확인
-    String currentRoute = '';
-    try {
-      if (router.routerDelegate.currentConfiguration.isNotEmpty) {
-        currentRoute =
-            router.routerDelegate.currentConfiguration.last.matchedLocation;
-      }
-    } catch (e) {
-      debugPrint('Error getting current route: $e');
-    }
-
-    if (currentRoute != '/alarm-ring') {
-      debugPrint('Navigating to Alarm Ring Screen');
-      router.push('/alarm-ring', extra: alarmSettings);
-    }
-  });
-
-  if (kIsWeb) {
+  // 로그인 상태 유지 설정 (모든 플랫폼에서 명시적으로 LOCAL 설정 시도)
+  try {
     await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+  } catch (e) {
+    debugPrint('Persistence Error: $e');
   }
-  await FirebaseAuth.instance.authStateChanges().first;
+
+  // 알람 서비스 초기화 (리스너는 앱 상태 초기화 시 등록)
+  await AlarmService.init();
 
   // FCM 백그라운드 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -94,18 +78,68 @@ class MorningMateApp extends StatefulWidget {
 }
 
 class _MorningMateAppState extends State<MorningMateApp> {
+  late final AuthService _authService;
+  late final UserService _userService;
+  late final NotificationService _notificationService;
+  late final DiaryService _diaryService;
+  late final QuestionService _questionService;
+  late final FriendService _friendService;
+
+  late final AuthController _authController;
+  late final GoRouter _router;
+
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rootContext = AppRouter.navigatorKey.currentContext;
-      if (rootContext == null) {
-        return;
+    // 1. 서비스 초기화
+    _authService = AuthService();
+    _userService = UserService();
+    _notificationService = NotificationService();
+    _notificationService
+        .setScaffoldMessengerKey(MorningMateApp.scaffoldMessengerKey);
+    _notificationService.setNavigatorKey(AppRouter.navigatorKey);
+
+    _diaryService = DiaryService();
+    _questionService = QuestionService();
+    _friendService = FriendService(_userService);
+
+    // 2. AuthController 초기화 (서비스 의존성 주입)
+    _authController = AuthController(
+      _authService,
+      _userService,
+      _notificationService,
+    );
+
+    // 3. Router 초기화 (AuthController 의존성 주입)
+    _router = AppRouter.createRouter(_authController);
+
+    // 4. 알람 리스너 설정 (Router 사용)
+    AlarmService.setAlarmListener((alarmSettings) {
+      debugPrint('Alarm Ringing: ${alarmSettings.id}');
+
+      // 안전하게 현재 경로 확인 및 이동
+      try {
+        final currentRoute =
+            _router.routerDelegate.currentConfiguration.last.matchedLocation;
+        if (currentRoute != '/alarm-ring') {
+          _router.push('/alarm-ring', extra: alarmSettings);
+        }
+      } catch (e) {
+        debugPrint('Error navigating to alarm screen: $e');
       }
-      rootContext
-          .read<CharacterController>()
-          .loadRewardedAd(context: rootContext);
+    });
+
+    // 5. 광고 로드 (화면 빌드 후)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 이 시점에는 context가 유효함 (하지만 Provider.value로 주입된 서비스/컨트롤러 사용 권장)
+      // CharacterController는 아래 ProxyProvider를 통해 생성되므로,
+      // 여기서는 직접 접근하기보다 Route가 세팅된 후 화면 진입 시 처리하는 것이 안전할 수 있음.
+      // 기존 로직 유지:
+      // final rootContext = AppRouter.navigatorKey.currentContext;
+      // ...
+      // 하지만 여기서 바로 호출하기는 어려움 (CharacterController가 아직 생성되지 않았을 수 있음 - build 실행 전)
+      // 따라서 build 내의 Consumer/WidgetsBinding을 유지하거나 생략.
     });
   }
 
@@ -113,52 +147,31 @@ class _MorningMateAppState extends State<MorningMateApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Services
-        Provider<AuthService>(
-          create: (_) => AuthService(),
-        ),
-        Provider<NotificationService>(
-          create: (_) {
-            final service = NotificationService();
-            service
-                .setScaffoldMessengerKey(MorningMateApp.scaffoldMessengerKey);
-            service.setNavigatorKey(AppRouter.navigatorKey);
-            return service;
-          },
-        ),
-        Provider<UserService>(
-          create: (_) => UserService(),
-        ),
-        Provider<DiaryService>(
-          create: (_) => DiaryService(),
-        ),
-        Provider<QuestionService>(
-          create: (_) => QuestionService(),
-        ),
-        Provider<FriendService>(
-          create: (context) => FriendService(context.read<UserService>()),
-        ),
+        // Services (이미 생성된 인스턴스 주입)
+        Provider.value(value: _authService),
+        Provider.value(value: _notificationService),
+        Provider.value(value: _userService),
+        Provider.value(value: _diaryService),
+        Provider.value(value: _questionService),
+        Provider.value(value: _friendService),
 
         // Controllers
-        ChangeNotifierProvider<AuthController>(
-          create: (context) => AuthController(
-            context.read<AuthService>(),
-            context.read<UserService>(),
-            context.read<NotificationService>(),
-          ),
-        ),
+        // AuthController (이미 생성된 인스턴스 주입)
+        ChangeNotifierProvider.value(value: _authController),
+
+        // ProxyManagers (의존성 있는 컨트롤러들은 기존대로 Proxy 사용)
         ChangeNotifierProxyProvider<AuthController, MorningController>(
           create: (context) => MorningController(
-            context.read<DiaryService>(),
-            context.read<QuestionService>(),
-            context.read<UserService>(),
+            _diaryService,
+            _questionService,
+            _userService,
           ),
           update: (context, auth, previous) {
             final controller = previous ??
                 MorningController(
-                  context.read<DiaryService>(),
-                  context.read<QuestionService>(),
-                  context.read<UserService>(),
+                  _diaryService,
+                  _questionService,
+                  _userService,
                 );
             if (auth.userModel == null) {
               controller.clear();
@@ -167,12 +180,9 @@ class _MorningMateAppState extends State<MorningMateApp> {
           },
         ),
         ChangeNotifierProxyProvider<AuthController, CharacterController>(
-          create: (context) => CharacterController(
-            context.read<UserService>(),
-          ),
+          create: (context) => CharacterController(_userService),
           update: (context, auth, previous) {
-            final controller =
-                previous ?? CharacterController(context.read<UserService>());
+            final controller = previous ?? CharacterController(_userService);
             if (auth.userModel == null) {
               controller.clear();
             } else {
@@ -182,16 +192,10 @@ class _MorningMateAppState extends State<MorningMateApp> {
           },
         ),
         ChangeNotifierProxyProvider<AuthController, SocialController>(
-          create: (context) => SocialController(
-            context.read<FriendService>(),
-            context.read<DiaryService>(),
-          ),
+          create: (context) => SocialController(_friendService, _diaryService),
           update: (context, auth, previous) {
-            final controller = previous ??
-                SocialController(
-                  context.read<FriendService>(),
-                  context.read<DiaryService>(),
-                );
+            final controller =
+                previous ?? SocialController(_friendService, _diaryService);
             if (auth.userModel == null) {
               controller.clear();
             }
@@ -216,17 +220,29 @@ class _MorningMateAppState extends State<MorningMateApp> {
           },
         ),
       ],
-      child: Consumer<ThemeController>(
-        builder: (context, themeController, child) {
-          return MaterialApp.router(
-            title: 'Morning Mate',
-            debugShowCheckedModeBanner: false,
-            theme: themeController.themeData,
-            scaffoldMessengerKey: MorningMateApp.scaffoldMessengerKey,
-            routerConfig: AppRouter.router,
-          );
-        },
-      ),
+      child: Builder(// ThemeController 접근을 위해 Builder 또는 Consumer 사용
+          builder: (context) {
+        // 광고 로드 (Context 접근 가능)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          try {
+            context
+                .read<CharacterController>()
+                .loadRewardedAd(context: context);
+          } catch (_) {}
+        });
+
+        return Consumer<ThemeController>(
+          builder: (context, themeController, child) {
+            return MaterialApp.router(
+              title: 'Morning Mate',
+              debugShowCheckedModeBanner: false,
+              theme: themeController.themeData,
+              scaffoldMessengerKey: MorningMateApp.scaffoldMessengerKey,
+              routerConfig: _router, // 생성된 라우터 사용
+            );
+          },
+        );
+      }),
     );
   }
 }
