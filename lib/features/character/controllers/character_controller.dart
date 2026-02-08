@@ -439,6 +439,31 @@ class CharacterController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 이모티콘 구매
+  Future<void> purchaseEmoticon(
+      String userId, String emoticonId, int price) async {
+    if (_currentUser == null) return;
+    if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
+    if (_currentUser!.purchasedEmoticonIds.contains(emoticonId)) {
+      throw Exception('이미 구매한 이모티콘입니다');
+    }
+
+    final newPurchasedEmoticons =
+        List<String>.from(_currentUser!.purchasedEmoticonIds)..add(emoticonId);
+    final newPoints = _currentUser!.points - price;
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+      'purchasedEmoticonIds': newPurchasedEmoticons,
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      purchasedEmoticonIds: newPurchasedEmoticons,
+    );
+    notifyListeners();
+  }
+
   // 바닥 구매
   Future<void> purchaseFloor(String userId, String floorId, int price) async {
     if (_currentUser == null) return;
@@ -475,6 +500,29 @@ class CharacterController extends ChangeNotifier {
     });
 
     _currentUser = _currentUser!.copyWith(currentThemeId: themeId);
+    notifyListeners();
+  }
+
+  // 활성 이모티콘 설정
+  Future<void> updateActiveEmoticons(
+      String userId, List<String> emoticonIds) async {
+    if (_currentUser == null) return;
+    if (emoticonIds.length > 4) {
+      throw Exception('이모티콘은 최대 4개까지만 선택할 수 있습니다.');
+    }
+
+    // 모두 구매한 이모티콘인지 확인
+    for (final id in emoticonIds) {
+      if (!_currentUser!.purchasedEmoticonIds.contains(id)) {
+        throw Exception('구매하지 않은 이모티콘이 포함되어 있습니다: $id');
+      }
+    }
+
+    await _userService.updateUser(userId, {
+      'activeEmoticonIds': emoticonIds,
+    });
+
+    _currentUser = _currentUser!.copyWith(activeEmoticonIds: emoticonIds);
     notifyListeners();
   }
 

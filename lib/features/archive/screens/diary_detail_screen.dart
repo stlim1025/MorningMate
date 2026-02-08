@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/models/diary_model.dart';
 import '../../morning/controllers/morning_controller.dart';
+import '../../../core/constants/room_assets.dart';
 import '../../../core/theme/app_color_scheme.dart';
 
 class DiaryDetailScreen extends StatefulWidget {
@@ -321,56 +322,43 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   }
 
   Widget _buildMoodSelection(AppColorScheme colorScheme) {
-    final selectedMood = _currentDiary?.mood;
-    if (selectedMood == null) return const SizedBox.shrink();
-
-    String assetPath;
-    switch (selectedMood) {
-      case 'happy':
-        assetPath = 'assets/imoticon/Imoticon_Happy.png';
-        break;
-      case 'neutral':
-        assetPath = 'assets/imoticon/Imoticon_Normal.png';
-        break;
-      case 'sad':
-        assetPath = 'assets/imoticon/Imoticon_Sad.png';
-        break;
-      case 'excited':
-        assetPath = 'assets/imoticon/Imoticon_Love.png';
-        break;
-      default:
-        assetPath = 'assets/imoticon/Imoticon_Normal.png';
-    }
+    final moods = _currentDiary?.moods ?? [];
+    if (moods.isEmpty) return const SizedBox.shrink();
 
     return Center(
-      child: SizedBox(
-        width: 140, // Increased size for background
-        height: 140,
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            Image.asset(
-              'assets/images/Popup_Background.png',
-              fit: BoxFit.fill,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Image.asset(
-                assetPath,
-                fit: BoxFit.contain,
+      child: Container(
+        height: 100,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: moods.map((moodId) {
+            final emoticon = RoomAssets.emoticons.firstWhere(
+              (e) => e.id == moodId,
+              orElse: () =>
+                  RoomAssets.emoticons[1], // Default to neutral/normal
+            );
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: SizedBox(
+                width: 70,
+                height: 70,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/Popup_Background.png',
+                      fit: BoxFit.fill,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child:
+                          Image.asset(emoticon.imagePath!, fit: BoxFit.contain),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Positioned(
-              top: -8,
-              right: -8,
-              child: Image.asset(
-                'assets/images/Red_Pin.png',
-                width: 40,
-                height: 40,
-              ),
-            ),
-          ],
+            );
+          }).toList(),
         ),
       ),
     );

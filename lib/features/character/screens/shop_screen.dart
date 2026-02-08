@@ -29,11 +29,24 @@ class _ShopScreenState extends State<ShopScreen> {
     final user = characterController.currentUser;
 
     if (user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFFDF7E2), // 로딩 중 배경색 (깜빡임 방지)
+          image: DecorationImage(
+            image: ResizeImage(AssetImage('assets/images/Store_Background.png'),
+                width: 1080),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: const Scaffold(
+          backgroundColor: Colors.transparent,
+        ),
+      );
     }
 
     return Container(
       decoration: const BoxDecoration(
+        color: Color(0xFFFDF7E2), // 이미지 로딩 전 배경색 (깜빡임 방지)
         image: DecorationImage(
           image: ResizeImage(AssetImage('assets/images/Store_Background.png'),
               width: 1080),
@@ -43,7 +56,7 @@ class _ShopScreenState extends State<ShopScreen> {
       child: DefaultTextStyle(
         style: const TextStyle(
           fontFamily: 'BMJUA',
-          color: Colors.black87, // 기본 텍스트 색상
+          color: Colors.black87,
         ),
         child: Scaffold(
           backgroundColor: Colors.transparent,
@@ -134,9 +147,9 @@ class _ShopScreenState extends State<ShopScreen> {
                     user, colorScheme, context.read<CharacterController>()),
                 const SizedBox(height: 24),
 
-                _buildSectionHeader('테마'),
+                _buildSectionHeader('이모티콘'),
                 const SizedBox(height: 16),
-                _buildThemeGrid(user, characterController, colorScheme),
+                _buildEmoticonGrid(user, characterController, colorScheme),
                 const SizedBox(height: 32),
                 _buildSectionHeader('벽지'),
                 const SizedBox(height: 16),
@@ -298,16 +311,16 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  Widget _buildThemeGrid(user, characterController, colorScheme) {
-    final purchasableThemes =
-        RoomAssets.themes.where((t) => t.price > 0).toList();
-    return _buildGrid(purchasableThemes, (item) {
-      final isPurchased = user.purchasedThemeIds.contains(item.id);
+  Widget _buildEmoticonGrid(user, characterController, colorScheme) {
+    final purchasableEmoticons =
+        RoomAssets.emoticons.where((e) => e.price > 0).toList();
+    return _buildGrid(purchasableEmoticons, (item) {
+      final isPurchased = user.purchasedEmoticonIds.contains(item.id);
       return _buildShopItem(
         item: item,
         isPurchased: isPurchased,
         onPurchase: () =>
-            characterController.purchaseTheme(user.uid, item.id, item.price),
+            characterController.purchaseEmoticon(user.uid, item.id, item.price),
         colorScheme: colorScheme,
       );
     });

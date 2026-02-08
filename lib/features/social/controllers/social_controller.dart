@@ -400,8 +400,9 @@ class SocialController extends ChangeNotifier {
       );
       final isCompleted = diary?.isCompleted ?? false;
 
-      if (isCompleted) {
-        _friendsMood[friendId] = diary?.mood;
+      if (isCompleted && diary != null) {
+        _friendsMood[friendId] =
+            diary.moods.isNotEmpty ? diary.moods.first : null;
       } else {
         _friendsMood[friendId] = null;
       }

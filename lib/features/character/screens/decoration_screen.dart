@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_color_scheme.dart';
-import '../../../core/theme/theme_controller.dart';
 import '../../../core/constants/room_assets.dart';
 import '../controllers/character_controller.dart';
 import '../../morning/controllers/morning_controller.dart';
 import '../../morning/widgets/enhanced_character_room_widget.dart';
 
 import '../../../data/models/room_decoration_model.dart';
-import '../../../core/theme/app_theme_type.dart';
 import '../../../core/widgets/app_dialog.dart';
 
 class DecorationScreen extends StatefulWidget {
@@ -21,12 +19,10 @@ class DecorationScreen extends StatefulWidget {
 
 class _DecorationScreenState extends State<DecorationScreen> {
   late ValueNotifier<RoomDecorationModel> _decorationNotifier;
-  String _selectedCategory =
-      'background'; // 'theme', 'background', 'wallpaper', 'props'
+  String _selectedCategory = 'background'; // 'background', 'wallpaper', 'props'
   int? _selectedPropIndex; // Track selected prop for editing
-  String? _currentUserThemeId;
-  late AppThemeType _originalThemeType;
   bool? _previewIsAwake;
+  late List<String> _selectedEmoticonIds;
 
   Future<String?> _showStickyNoteInput(BuildContext context) async {
     final controller = TextEditingController();
@@ -66,7 +62,6 @@ class _DecorationScreenState extends State<DecorationScreen> {
   void initState() {
     super.initState();
     final controller = context.read<CharacterController>();
-    final themeController = context.read<ThemeController>();
 
     var initialDecoration =
         controller.currentUser?.roomDecoration ?? RoomDecorationModel();
@@ -77,8 +72,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
     if (validProps.length != initialDecoration.props.length) {
       initialDecoration = initialDecoration.copyWith(props: validProps);
     }
-    _currentUserThemeId = controller.currentUser?.currentThemeId;
-    _originalThemeType = themeController.themeType;
+    _selectedEmoticonIds =
+        List<String>.from(controller.currentUser?.activeEmoticonIds ?? []);
     _decorationNotifier = ValueNotifier<RoomDecorationModel>(initialDecoration);
   }
 
@@ -92,7 +87,6 @@ class _DecorationScreenState extends State<DecorationScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final characterController = context.read<CharacterController>();
-    final themeController = context.read<ThemeController>();
     final user = characterController.currentUser;
 
     if (user == null) {
@@ -103,12 +97,21 @@ class _DecorationScreenState extends State<DecorationScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        iconTheme: IconThemeData(color: colorScheme.primaryButton),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Image.asset(
+            'assets/icons/X_Button.png',
+            width: 40,
+            height: 40,
+          ),
+        ),
         title: Text(
           '방 꾸미기',
           style: TextStyle(
-            color: colorScheme.primaryButton,
+            color: colorScheme.textPrimary,
             fontWeight: FontWeight.bold,
+            fontFamily: 'BMJUA',
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
@@ -116,28 +119,17 @@ class _DecorationScreenState extends State<DecorationScreen> {
         backgroundColor: Colors.transparent,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: TextButton(
-              onPressed: () async {
+            padding: const EdgeInsets.only(right: 12.0),
+            child: GestureDetector(
+              onTap: () async {
                 try {
-                  // 테마 저장 (변경된 경우에만)
-                  if (_currentUserThemeId != null &&
-                      _currentUserThemeId != user.currentThemeId) {
-                    await characterController.setTheme(
-                        user.uid, _currentUserThemeId!);
-                  }
+                  // 활성 이모티콘 저장
+                  await characterController.updateActiveEmoticons(
+                      user.uid, _selectedEmoticonIds);
 
                   // 방 꾸미기 설정 저장
                   await characterController.updateRoomDecoration(
                       user.uid, _decorationNotifier.value);
-
-                  // 저장 성공 시 originalThemeType을 현재 선택된 테마로 업데이트하여
-                  // PopScope에서 복구되지 않도록 함
-                  if (context.mounted) {
-                    final newThemeType =
-                        context.read<ThemeController>().themeType;
-                    _originalThemeType = newThemeType;
-                  }
 
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -155,226 +147,234 @@ class _DecorationScreenState extends State<DecorationScreen> {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                          content: Text(
-                              '저장 실패: ${e.toString().replaceFirst('Exception: ', '')}'),
-                          backgroundColor: colorScheme.error),
+                        content: Text(
+                            '저장 실패: ${e.toString().replaceFirst('Exception: ', '')}'),
+                        backgroundColor: colorScheme.error,
+                      ),
                     );
                   }
                 }
               },
-              child: Text(
-                '저장',
-                style: TextStyle(
-                  color: colorScheme.primaryButton,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              child: Container(
+                width: 70,
+                height: 35,
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/Confirm_Button.png'),
+                    fit: BoxFit.fill,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  '저장',
+                  style: TextStyle(
+                    color: Color(0xFF5D4E37),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    fontFamily: 'BMJUA',
+                  ),
                 ),
               ),
             ),
           ),
         ],
       ),
-      body: PopScope(
-        canPop: true,
-        onPopInvokedWithResult: (didPop, result) async {
-          if (didPop) {
-            // 저장하지 않고 나가는 경우 테마 복구
-            if (_originalThemeType != themeController.themeType) {
-              await themeController.setTheme(_originalThemeType);
-            }
-          }
-        },
-        child: Column(
-          children: [
-            // 1. Interactive Preview Area
-            Expanded(
-              flex: 14,
-              child: ValueListenableBuilder<RoomDecorationModel>(
-                valueListenable: _decorationNotifier,
-                builder: (context, decoration, child) {
-                  final controller = context.read<CharacterController>();
-                  final morningController = context.watch<MorningController>();
+      body: Column(
+        children: [
+          // 1. Interactive Preview Area
+          Expanded(
+            flex: 14,
+            child: ValueListenableBuilder<RoomDecorationModel>(
+              valueListenable: _decorationNotifier,
+              builder: (context, decoration, child) {
+                final controller = context.read<CharacterController>();
+                final morningController = context.watch<MorningController>();
 
-                  // Use preview state or actual state if preview state is not yet set
-                  _previewIsAwake ??= morningController.hasDiaryToday;
-                  final isAwakePreview = _previewIsAwake!;
+                // Use preview state or actual state if preview state is not yet set
+                _previewIsAwake ??= morningController.hasDiaryToday;
+                final isAwakePreview = _previewIsAwake!;
 
-                  return Stack(
-                    children: [
-                      // 1. Room Interior (Full Screen)
-                      Positioned.fill(
-                        child: EnhancedCharacterRoomWidget(
-                          isAwake: isAwakePreview,
-                          characterLevel:
-                              controller.currentUser?.characterLevel ?? 1,
-                          consecutiveDays:
-                              controller.currentUser?.consecutiveDays ?? 0,
-                          roomDecoration: decoration,
-                          hideProps: false,
-                          showBorder: false,
-                          bottomPadding: 0,
-                          currentAnimation: controller.currentAnimation,
-                          isPropEditable: true, // 항상 소품 편집 가능
-                          selectedPropIndex: _selectedPropIndex, // 항상 선택 표시
-                          onPropChanged: (index, newProp) {
+                return Stack(
+                  children: [
+                    // 1. Room Interior (Full Screen)
+                    Positioned.fill(
+                      child: EnhancedCharacterRoomWidget(
+                        isAwake: isAwakePreview,
+                        characterLevel:
+                            controller.currentUser?.characterLevel ?? 1,
+                        consecutiveDays:
+                            controller.currentUser?.consecutiveDays ?? 0,
+                        roomDecoration: decoration,
+                        hideProps: false,
+                        showBorder: false,
+                        bottomPadding: 0,
+                        currentAnimation: controller.currentAnimation,
+                        isPropEditable: true, // 항상 소품 편집 가능
+                        selectedPropIndex: _selectedPropIndex, // 항상 선택 표시
+                        onPropChanged: (index, newProp) {
+                          final newProps =
+                              List<RoomPropModel>.from(decoration.props);
+                          newProps[index] = newProp;
+                          _decorationNotifier.value =
+                              decoration.copyWith(props: newProps);
+                        },
+                        onPropTap: (prop) {
+                          final index = decoration.props.indexOf(prop);
+                          if (index != -1) {
+                            // Bring selected prop to front (end of list = top layer)
                             final newProps =
                                 List<RoomPropModel>.from(decoration.props);
-                            newProps[index] = newProp;
+                            final selectedProp = newProps.removeAt(index);
+                            newProps.add(selectedProp);
+
                             _decorationNotifier.value =
                                 decoration.copyWith(props: newProps);
-                          },
-                          onPropTap: (prop) {
-                            final index = decoration.props.indexOf(prop);
-                            if (index != -1) {
-                              // Bring selected prop to front (end of list = top layer)
-                              final newProps =
-                                  List<RoomPropModel>.from(decoration.props);
-                              final selectedProp = newProps.removeAt(index);
-                              newProps.add(selectedProp);
 
-                              _decorationNotifier.value =
-                                  decoration.copyWith(props: newProps);
-
-                              setState(() {
-                                _selectedPropIndex = newProps.length - 1;
-                              });
-                            }
-                          },
-                          onPropDelete: (index) async {
-                            final prop = decoration.props[index];
-                            if (prop.type == 'sticky_note') {
-                              final confirm = await AppDialog.show<bool>(
-                                context: context,
-                                key: AppDialogKey.deleteStickyNote,
-                              );
-                              if (confirm != true) return;
-                            }
-
-                            final newProps =
-                                List<RoomPropModel>.from(decoration.props);
-                            newProps.removeAt(index);
-                            _decorationNotifier.value =
-                                decoration.copyWith(props: newProps);
                             setState(() {
-                              _selectedPropIndex = null;
+                              _selectedPropIndex = newProps.length - 1;
                             });
-                          },
-                        ),
+                          }
+                        },
+                        onPropDelete: (index) async {
+                          final prop = decoration.props[index];
+                          if (prop.type == 'sticky_note') {
+                            final confirm = await AppDialog.show<bool>(
+                              context: context,
+                              key: AppDialogKey.deleteStickyNote,
+                            );
+                            if (confirm != true) return;
+                          }
+
+                          final newProps =
+                              List<RoomPropModel>.from(decoration.props);
+                          newProps.removeAt(index);
+                          _decorationNotifier.value =
+                              decoration.copyWith(props: newProps);
+                          setState(() {
+                            _selectedPropIndex = null;
+                          });
+                        },
                       ),
+                    ),
 
-                      // 2. Day/Night Preview Toggle Button
-                      Positioned(
-                        top: 100, // Below App Bar
-                        left: 20,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _previewIsAwake = !isAwakePreview;
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.35),
-                              borderRadius: BorderRadius.circular(20),
-                              border:
-                                  Border.all(color: Colors.white24, width: 1),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  isAwakePreview
-                                      ? Icons.wb_sunny_rounded
-                                      : Icons.nightlight_round,
-                                  color: isAwakePreview
-                                      ? Colors.orangeAccent
-                                      : Colors.yellowAccent,
-                                  size: 18,
+                    // 2. Day/Night Preview Toggle Button
+                    Positioned(
+                      top: 100, // Below App Bar
+                      left: 20,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _previewIsAwake = !isAwakePreview;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.35),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white24, width: 1),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isAwakePreview
+                                    ? Icons.wb_sunny_rounded
+                                    : Icons.nightlight_round,
+                                color: isAwakePreview
+                                    ? Colors.orangeAccent
+                                    : Colors.yellowAccent,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                isAwakePreview ? '미리보기: 낮' : '미리보기: 밤',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  isAwakePreview ? '미리보기: 낮' : '미리보기: 밤',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                  ],
+                );
+              },
             ),
-            // 2. Bottom Control Area
-            Expanded(
-              flex: 10,
-              child: Container(
-                decoration: BoxDecoration(
-                  image: const DecorationImage(
-                    image: ResizeImage(AssetImage('assets/images/Ceiling.png'),
-                        width: 1080),
-                    fit: BoxFit.fill,
+          ),
+          // 2. Bottom Control Area
+          Expanded(
+            flex: 10,
+            child: Container(
+              decoration: BoxDecoration(
+                image: const DecorationImage(
+                  image: ResizeImage(
+                      AssetImage('assets/images/Popup_Background.png'),
+                      width: 1080),
+                  fit: BoxFit.fill,
+                ),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(32)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 25,
+                    offset: const Offset(0, -5),
                   ),
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(32)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 25,
-                      offset: const Offset(0, -5),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 10, bottom: 4),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.shadowColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 10, bottom: 4),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colorScheme.shadowColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    _buildCategoryTabs(colorScheme),
-                    const Divider(height: 1, thickness: 0.5),
-                    Expanded(
-                      child: _buildCategoryContent(
-                          user, themeController, colorScheme),
-                    ),
-                  ],
-                ),
+                  ),
+                  _buildCategoryTabs(colorScheme),
+                  const Divider(height: 1, thickness: 0.5),
+                  Expanded(
+                    child: _buildCategoryContent(user, colorScheme),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildCategoryTabs(AppColorScheme colorScheme) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          _buildTabItem(
-              'background', '배경', Icons.landscape_outlined, colorScheme),
-          const SizedBox(width: 8),
-          _buildTabItem('wallpaper', '벽지', Icons.wallpaper, colorScheme),
-          const SizedBox(width: 8),
-          _buildTabItem('props', '소품', Icons.auto_awesome_motion, colorScheme),
-          const SizedBox(width: 8),
-          _buildTabItem('floor', '바닥', Icons.grid_on_outlined, colorScheme),
-          const SizedBox(width: 8),
-          _buildTabItem('theme', '테마', Icons.palette_outlined, colorScheme),
-        ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          children: [
+            _buildTabItem(
+                'background', '배경', Icons.landscape_outlined, colorScheme),
+            const SizedBox(width: 8),
+            _buildTabItem('wallpaper', '벽지', Icons.wallpaper, colorScheme),
+            const SizedBox(width: 8),
+            _buildTabItem(
+                'props', '소품', Icons.auto_awesome_motion, colorScheme),
+            const SizedBox(width: 8),
+            _buildTabItem('floor', '바닥', Icons.grid_on_outlined, colorScheme),
+            const SizedBox(width: 8),
+            _buildTabItem(
+                'emoticon', '이모티콘', Icons.emoji_emotions, colorScheme),
+          ],
+        ),
       ),
     );
   }
@@ -386,12 +386,15 @@ class _DecorationScreenState extends State<DecorationScreen> {
       onTap: () => setState(() => _selectedCategory = id),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 18),
         decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primaryButton
-              : colorScheme.shadowColor.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16),
+          image: DecorationImage(
+            image: AssetImage(isSelected
+                ? 'assets/images/Confirm_Button.png'
+                : 'assets/images/Cancel_Button.png'),
+            fit: BoxFit.fill,
+          ),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -399,15 +402,20 @@ class _DecorationScreenState extends State<DecorationScreen> {
             Icon(
               icon,
               size: 16,
-              color: isSelected ? Colors.white : colorScheme.textSecondary,
+              color: isSelected
+                  ? const Color(0xFF8B7355)
+                  : const Color(0xFF5D4E37),
             ),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? Colors.white : colorScheme.textSecondary,
+                color: isSelected
+                    ? const Color(0xFF8B7355)
+                    : const Color(0xFF5D4E37),
+                fontFamily: 'KyoboHandwriting2024psw',
               ),
             ),
           ],
@@ -416,11 +424,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
     );
   }
 
-  Widget _buildCategoryContent(
-      user, themeController, AppColorScheme colorScheme) {
+  Widget _buildCategoryContent(user, AppColorScheme colorScheme) {
     switch (_selectedCategory) {
-      case 'theme':
-        return _buildThemeList(user, themeController, colorScheme);
       case 'background':
         return _buildBackgroundList(user, colorScheme);
       case 'wallpaper':
@@ -429,46 +434,11 @@ class _DecorationScreenState extends State<DecorationScreen> {
         return _buildPropList(user, colorScheme);
       case 'floor':
         return _buildFloorList(user, colorScheme);
+      case 'emoticon':
+        return _buildEmoticonList(user, colorScheme);
       default:
         return const SizedBox();
     }
-  }
-
-  Widget _buildThemeList(user, themeController, AppColorScheme colorScheme) {
-    final purchased = RoomAssets.themes
-        .where((t) => user.purchasedThemeIds.contains(t.id))
-        .toList();
-
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.75,
-      ),
-      itemCount: purchased.length,
-      itemBuilder: (context, index) {
-        final t = purchased[index];
-        final isSelected = _currentUserThemeId == t.id;
-        return _buildSelectionCard(
-          label: t.name,
-          icon: t.icon,
-          imagePath: t.imagePath,
-          color: t.color ??
-              (isSelected ? colorScheme.success : colorScheme.backgroundLight),
-          isSelected: isSelected,
-          onTap: () async {
-            setState(() => _currentUserThemeId = t.id);
-            // 미리보기용으로 테마 적용 (Firestore 저장 안함)
-            if (t.themeType != null) {
-              await themeController.setTheme(t.themeType!);
-            }
-          },
-          colorScheme: colorScheme,
-        );
-      },
-    );
   }
 
   Widget _buildBackgroundList(user, AppColorScheme colorScheme) {
@@ -789,12 +759,62 @@ class _DecorationScreenState extends State<DecorationScreen> {
     );
   }
 
+  Widget _buildEmoticonList(user, AppColorScheme colorScheme) {
+    final availableEmoticons = RoomAssets.emoticons
+        .where((e) => user.purchasedEmoticonIds.contains(e.id))
+        .toList();
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.75,
+      ),
+      itemCount: availableEmoticons.length,
+      itemBuilder: (context, index) {
+        final emoticon = availableEmoticons[index];
+        final selIndex = _selectedEmoticonIds.indexOf(emoticon.id);
+        final isSelected = selIndex != -1;
+
+        return _buildSelectionCard(
+          label: emoticon.name,
+          imagePath: emoticon.imagePath,
+          icon: emoticon.icon,
+          isSelected: isSelected,
+          badgeText: isSelected ? (selIndex + 1).toString() : null,
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                _selectedEmoticonIds.remove(emoticon.id);
+              } else {
+                if (_selectedEmoticonIds.length >= 4) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('이모티콘은 최대 4개까지만 선택할 수 있습니다.'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                  return;
+                }
+                _selectedEmoticonIds.add(emoticon.id);
+              }
+            });
+          },
+          colorScheme: colorScheme,
+        );
+      },
+    );
+  }
+
   Widget _buildSelectionCard({
     required String label,
     Color? color,
     IconData? icon,
     String? imagePath,
     required bool isSelected,
+    String? badgeText,
     required VoidCallback onTap,
     required AppColorScheme colorScheme,
   }) {
@@ -850,9 +870,19 @@ class _DecorationScreenState extends State<DecorationScreen> {
                     if (isSelected)
                       Container(
                         color: Colors.black26,
-                        child: const Center(
-                          child: Icon(Icons.check_circle,
-                              color: Colors.white, size: 32),
+                        child: Center(
+                          child: badgeText != null
+                              ? Text(
+                                  badgeText,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'BMJUA',
+                                  ),
+                                )
+                              : const Icon(Icons.check_circle,
+                                  color: Colors.white, size: 32),
                         ),
                       ),
                   ],

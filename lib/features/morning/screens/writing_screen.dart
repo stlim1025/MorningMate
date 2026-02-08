@@ -8,6 +8,7 @@ import '../controllers/morning_controller.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/theme/app_color_scheme.dart';
+import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
 
 class WritingScreen extends StatefulWidget {
@@ -27,7 +28,7 @@ class _WritingScreenState extends State<WritingScreen> {
   final FocusNode _focusNode = FocusNode();
   bool _enableBlur = false;
   bool _didLoadSettings = false;
-  String? _selectedMood = 'neutral';
+  final List<String> _selectedMoods = [];
 
   @override
   void initState() {
@@ -383,27 +384,47 @@ class _WritingScreenState extends State<WritingScreen> {
   }
 
   Widget _buildMoodSelection(AppColorScheme colorScheme) {
+    final characterController = context.read<CharacterController>();
+    final user = characterController.currentUser;
+    if (user == null) return const SizedBox();
+
+    final activeIds = user.activeEmoticonIds;
+    final activeEmoticons = activeIds.map((id) {
+      return RoomAssets.emoticons.firstWhere(
+        (e) => e.id == id,
+        orElse: () => RoomAssets.emoticons[0],
+      );
+    }).toList();
+
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildMoodButton(
-                'assets/imoticon/Imoticon_Happy.png', 'happy', colorScheme),
+            if (activeEmoticons.length > 0)
+              _buildMoodButton(activeEmoticons[0].imagePath!,
+                  activeEmoticons[0].id, colorScheme),
+            if (activeEmoticons.length <= 0) const Expanded(child: SizedBox()),
             const SizedBox(width: 8),
-            _buildMoodButton(
-                'assets/imoticon/Imoticon_Normal.png', 'neutral', colorScheme),
+            if (activeEmoticons.length > 1)
+              _buildMoodButton(activeEmoticons[1].imagePath!,
+                  activeEmoticons[1].id, colorScheme),
+            if (activeEmoticons.length <= 1) const Expanded(child: SizedBox()),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildMoodButton(
-                'assets/imoticon/Imoticon_Sad.png', 'sad', colorScheme),
+            if (activeEmoticons.length > 2)
+              _buildMoodButton(activeEmoticons[2].imagePath!,
+                  activeEmoticons[2].id, colorScheme),
+            if (activeEmoticons.length <= 2) const Expanded(child: SizedBox()),
             const SizedBox(width: 8),
-            _buildMoodButton(
-                'assets/imoticon/Imoticon_Love.png', 'excited', colorScheme),
+            if (activeEmoticons.length > 3)
+              _buildMoodButton(activeEmoticons[3].imagePath!,
+                  activeEmoticons[3].id, colorScheme),
+            if (activeEmoticons.length <= 3) const Expanded(child: SizedBox()),
           ],
         ),
       ],
@@ -411,22 +432,37 @@ class _WritingScreenState extends State<WritingScreen> {
   }
 
   Widget _buildMoodButton(
-      String assetPath, String mood, AppColorScheme colorScheme) {
-    final isSelected = _selectedMood == mood;
+      String assetPath, String moodId, AppColorScheme colorScheme) {
+    final isSelected = _selectedMoods.contains(moodId);
     return Expanded(
       child: GestureDetector(
         onTap: () {
           setState(() {
-            _selectedMood = mood;
+            if (isSelected) {
+              _selectedMoods.remove(moodId);
+            } else {
+              if (_selectedMoods.length < 4) {
+                _selectedMoods.add(moodId);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      '이모티콘은 최대 4개까지만 선택할 수 있어요!',
+                      style: TextStyle(fontFamily: 'BMJUA'),
+                    ),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              }
+            }
           });
         },
         child: AspectRatio(
           aspectRatio: 1.0,
           child: Stack(
             alignment: Alignment.center,
-            clipBehavior: Clip.none, // Allow overflow for pin
+            clipBehavior: Clip.none,
             children: [
-              // Use Popup_Background.png as requested
               Image.asset(
                 'assets/images/Popup_Background.png',
                 fit: BoxFit.fill,
@@ -441,7 +477,7 @@ class _WritingScreenState extends State<WritingScreen> {
                   right: -8,
                   child: Image.asset(
                     'assets/images/Red_Pin.png',
-                    width: 30, // Appropriate size for a pin
+                    width: 30,
                     height: 30,
                   ),
                 ),
@@ -503,7 +539,7 @@ class _WritingScreenState extends State<WritingScreen> {
     final success = await controller.saveDiary(
       userId: userId,
       content: _textController.text,
-      mood: _selectedMood,
+      moods: _selectedMoods,
     );
 
     if (success && context.mounted) {

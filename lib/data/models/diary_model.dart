@@ -8,7 +8,7 @@ class DiaryModel {
   final String? encryptedContent; // 로컬에 암호화 저장, Firestore에는 메타데이터만
   final int wordCount;
   final int writingDuration; // 작성 시간 (초)
-  final String? mood; // 'happy', 'neutral', 'sad', 'excited' 등
+  final List<String> moods; // ['happy', 'neutral', 'sad', 'excited'] 등
   final bool isCompleted;
   final DateTime createdAt;
   final String? promptQuestion; // 사용한 랜덤 질문
@@ -21,7 +21,7 @@ class DiaryModel {
     this.encryptedContent,
     this.wordCount = 0,
     this.writingDuration = 0,
-    this.mood,
+    this.moods = const [],
     this.isCompleted = false,
     required this.createdAt,
     this.promptQuestion,
@@ -31,6 +31,15 @@ class DiaryModel {
   factory DiaryModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final date = (data['date'] as Timestamp).toDate();
+
+    // mood (이전 버전)와 moods (새 버전) 호환성 처리
+    List<String> moodsList = [];
+    if (data['moods'] != null) {
+      moodsList = List<String>.from(data['moods']);
+    } else if (data['mood'] != null) {
+      moodsList = [data['mood'] as String];
+    }
+
     return DiaryModel(
       id: doc.id,
       userId: data['userId'] ?? '',
@@ -39,7 +48,7 @@ class DiaryModel {
       encryptedContent: data['encryptedContent'], // 암호화된 내용도 가져오기
       wordCount: data['wordCount'] ?? 0,
       writingDuration: data['writingDuration'] ?? 0,
-      mood: data['mood'],
+      moods: moodsList,
       isCompleted: data['isCompleted'] ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       promptQuestion: data['promptQuestion'],
@@ -55,7 +64,7 @@ class DiaryModel {
       'encryptedContent': encryptedContent, // 암호화된 내용 저장
       'wordCount': wordCount,
       'writingDuration': writingDuration,
-      'mood': mood,
+      'moods': moods,
       'isCompleted': isCompleted,
       'createdAt': Timestamp.fromDate(createdAt),
       'promptQuestion': promptQuestion,
@@ -70,7 +79,7 @@ class DiaryModel {
     String? encryptedContent,
     int? wordCount,
     int? writingDuration,
-    String? mood,
+    List<String>? moods,
     bool? isCompleted,
     DateTime? createdAt,
     String? promptQuestion,
@@ -83,7 +92,7 @@ class DiaryModel {
       encryptedContent: encryptedContent ?? this.encryptedContent,
       wordCount: wordCount ?? this.wordCount,
       writingDuration: writingDuration ?? this.writingDuration,
-      mood: mood ?? this.mood,
+      moods: moods ?? this.moods,
       isCompleted: isCompleted ?? this.isCompleted,
       createdAt: createdAt ?? this.createdAt,
       promptQuestion: promptQuestion ?? this.promptQuestion,

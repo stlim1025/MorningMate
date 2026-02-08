@@ -69,6 +69,67 @@ class RoomAssets {
     ),
   ];
 
+  static const List<RoomAsset> emoticons = [
+    // 기본 이모티콘 (무료)
+    RoomAsset(
+      id: 'happy',
+      name: '행복',
+      price: 0,
+      icon: Icons.sentiment_satisfied_alt,
+      imagePath: 'assets/imoticon/Imoticon_Happy.png',
+    ),
+    RoomAsset(
+      id: 'normal',
+      name: '평범',
+      price: 0,
+      icon: Icons.sentiment_neutral,
+      imagePath: 'assets/imoticon/Imoticon_Normal.png',
+    ),
+    RoomAsset(
+      id: 'sad',
+      name: '슬픔',
+      price: 0,
+      icon: Icons.sentiment_dissatisfied,
+      imagePath: 'assets/imoticon/Imoticon_Sad.png',
+    ),
+    RoomAsset(
+      id: 'love',
+      name: '사랑',
+      price: 0,
+      icon: Icons.favorite,
+      imagePath: 'assets/imoticon/Imoticon_Love.png',
+    ),
+    // 판매용 이모티콘
+    RoomAsset(
+      id: 'angry',
+      name: '화남',
+      price: 100,
+      icon: Icons.mood_bad,
+      imagePath: 'assets/imoticon/Imoticon_Angry.png',
+    ),
+    RoomAsset(
+      id: 'awkward',
+      name: '당황',
+      price: 100,
+      icon: Icons.sick,
+      imagePath: 'assets/imoticon/Imoticon_Awkward.png',
+    ),
+    RoomAsset(
+      id: 'move',
+      name: '감동',
+      price: 100,
+      icon: Icons.emoji_emotions,
+      imagePath: 'assets/imoticon/Imoticon_Move.png',
+    ),
+    RoomAsset(
+      id: 'sleep',
+      name: '졸림',
+      price: 100,
+      icon: Icons.bedtime,
+      imagePath: 'assets/imoticon/Imoticon_Sleep.png',
+    ),
+  ];
+
   static const List<RoomAsset> wallpapers = [
     RoomAsset(
         id: 'default',

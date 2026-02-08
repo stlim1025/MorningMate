@@ -235,7 +235,7 @@ class MorningController extends ChangeNotifier {
   Future<bool> saveDiary({
     required String userId,
     required String content,
-    String? mood,
+    List<String>? moods,
   }) async {
     if (_writingTimer != null) {
       _writingTimer!.cancel();
@@ -266,7 +266,7 @@ class MorningController extends ChangeNotifier {
         encryptedContent: encryptedContent, // 암호화된 내용 포함
         wordCount: _charCount, // 글자 수 저장
         writingDuration: _writingDuration,
-        mood: mood,
+        moods: moods ?? [],
         isCompleted: true,
         createdAt: now,
         promptQuestion: _currentQuestion,

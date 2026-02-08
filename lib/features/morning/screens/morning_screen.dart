@@ -206,7 +206,10 @@ class _MorningScreenState extends State<MorningScreen>
                   context,
                   isAwake,
                   characterController,
-                  todaysMood: morningController.todayDiary?.mood,
+                  todaysMood:
+                      (morningController.todayDiary?.moods.isNotEmpty ?? false)
+                          ? morningController.todayDiary?.moods.first
+                          : null,
                 ),
               ),
 
@@ -427,7 +430,6 @@ class _MorningScreenState extends State<MorningScreen>
               ],
             ),
           ),
-
           Row(
             children: [
               const SizedBox(width: 8),

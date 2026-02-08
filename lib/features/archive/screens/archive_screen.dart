@@ -514,7 +514,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           defaultBuilder: (context, day, focusedDay) {
             final diary = _getDiaryForDay(day);
             if (diary != null) {
-              return _buildDayWithEmoji(day, diary.mood);
+              return _buildDayWithEmoji(
+                  day, diary.moods.isNotEmpty ? diary.moods.first : null);
             }
             return Center(
               child: Text(
@@ -542,7 +543,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               ),
               child: Center(
                 child: diary != null
-                    ? _buildMoodWidget(diary.mood ?? '', 40)
+                    ? _buildMoodWidget(
+                        diary.moods.isNotEmpty ? diary.moods.first : '', 40)
                     : Text(
                         '${day.day}',
                         style: TextStyle(
@@ -570,7 +572,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               ),
               child: Center(
                 child: diary != null
-                    ? _buildMoodWidget(diary.mood ?? '', 40)
+                    ? _buildMoodWidget(
+                        diary.moods.isNotEmpty ? diary.moods.first : '', 40)
                     : Text(
                         '${day.day}',
                         style: TextStyle(
@@ -658,7 +661,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       diary: diary,
       onTap: () => _viewDiaryContent(diary),
       dateText: DateFormat('M월 d일 기록').format(diary.dateOnly),
-      moodWidget: _buildMoodWidget(diary.mood ?? '', 48), // Increased size
+      moodWidget: _buildMoodWidget(
+          diary.moods.isNotEmpty ? diary.moods.first : '',
+          48), // Increased size
     );
   }
 

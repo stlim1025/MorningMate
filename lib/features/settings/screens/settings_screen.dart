@@ -3,8 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
-import '../../../core/theme/app_theme_type.dart';
-import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
@@ -110,8 +108,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // 앱 설정
                 _buildSectionTitle('앱 설정', colorScheme),
                 const SizedBox(height: 12),
-                _buildThemeSelectionTile(context, colorScheme),
-                const SizedBox(height: 8),
                 _buildWritingBlurTile(context, authController, colorScheme),
                 const SizedBox(height: 8),
                 _buildSettingsTile(
@@ -491,100 +487,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   colorScheme,
                 ),
         activeColor: colorScheme.primaryButton,
-      ),
-    );
-  }
-
-  Widget _buildThemeSelectionTile(
-      BuildContext context, AppColorScheme colorScheme) {
-    final themeController = context.watch<ThemeController>();
-    final themeOptions = [
-      const _ThemeOption(
-        type: AppThemeType.light,
-        icon: Icons.wb_sunny_outlined,
-        title: '기본 테마',
-        subtitle: '따뜻한 베이지 톤',
-      ),
-      const _ThemeOption(
-        type: AppThemeType.dark,
-        icon: Icons.dark_mode,
-        title: '다크 테마',
-        subtitle: '눈의 피로를 줄이는 어두운 테마',
-      ),
-      const _ThemeOption(
-        type: AppThemeType.sky,
-        icon: Icons.cloud_outlined,
-        title: '하늘 테마',
-        subtitle: '맑고 청량한 하늘색 테마',
-      ),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: List.generate(themeOptions.length, (index) {
-          final option = themeOptions[index];
-          return Column(
-            children: [
-              if (index > 0)
-                Divider(
-                  height: 1,
-                  color: Theme.of(context).dividerColor.withOpacity(0.1),
-                ),
-              RadioListTile<AppThemeType>(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                value: option.type,
-                groupValue: themeController.themeType,
-                onChanged: (value) {
-                  if (value != null) {
-                    themeController.setTheme(value);
-                  }
-                },
-                secondary: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryButton.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    option.icon,
-                    color: colorScheme.primaryButton,
-                    size: 24,
-                  ),
-                ),
-                title: Text(
-                  option.title,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.textPrimary,
-                      ),
-                ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    option.subtitle,
-                    style: TextStyle(
-                      color: colorScheme.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                activeColor: colorScheme.primaryButton,
-              ),
-            ],
-          );
-        }),
       ),
     );
   }
@@ -1100,18 +1002,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
       duration: const Duration(seconds: 2),
     );
   }
-}
-
-class _ThemeOption {
-  final AppThemeType type;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _ThemeOption({
-    required this.type,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
 }
