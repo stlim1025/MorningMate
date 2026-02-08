@@ -136,7 +136,7 @@ class RoomAssets {
         name: '기본',
         price: 0,
         icon: Icons.check_box_outline_blank, // Plain
-        imagePath: 'assets/images/Default_wall.png'),
+        imagePath: 'assets/images/wallpapers/Default_wall.png'),
     RoomAsset(
         id: 'classic',
         name: '클래식',
@@ -149,21 +149,21 @@ class RoomAssets {
         price: 100,
         icon: Icons.view_week, // Vertical stripes
         color: Color(0xFFB3E5FC),
-        imagePath: 'assets/images/SpliteSky.png'),
+        imagePath: 'assets/images/wallpapers/SpliteSky.png'),
     RoomAsset(
         id: 'check',
         name: '체크',
         price: 100,
         icon: Icons.grid_4x4, // Checks
         color: Color(0xFFC8E6C9),
-        imagePath: 'assets/images/CheckGreen.png'),
+        imagePath: 'assets/images/wallpapers/CheckGreen.png'),
     RoomAsset(
         id: 'dot',
         name: '도트',
         price: 100,
         icon: Icons.scatter_plot, // Dots
         color: Color(0xFFFFF9C4),
-        imagePath: 'assets/images/DotPink.png'),
+        imagePath: 'assets/images/wallpapers/DotPink.png'),
     RoomAsset(
         id: 'dark_wall',
         name: '다크벽지',
@@ -176,21 +176,21 @@ class RoomAssets {
         price: 100,
         icon: Icons.scatter_plot, // Dots
         color: Color(0xFFFFF9C4),
-        imagePath: 'assets/images/FlowerSky.png'),
+        imagePath: 'assets/images/wallpapers/FlowerSky.png'),
     RoomAsset(
         id: 'pink_lace',
         name: '핑크레이스',
         price: 100,
         icon: Icons.scatter_plot, // Dots
         color: Color(0xFFFFF9C4),
-        imagePath: 'assets/images/PinkLace.png'),
+        imagePath: 'assets/images/wallpapers/PinkLace.png'),
     RoomAsset(
         id: 'red_heart',
         name: '빨간하트',
         price: 100,
         icon: Icons.scatter_plot, // Dots
         color: Color(0xFFFFF9C4),
-        imagePath: 'assets/images/RedHeart.png'),
+        imagePath: 'assets/images/wallpapers/RedHeart.png'),
     RoomAsset(
         id: 'white_cloud',
         name: '흰구름',
@@ -204,13 +204,19 @@ class RoomAssets {
         price: 100,
         icon: Icons.scatter_plot, // Dots
         color: Color(0xFFFFF9C4),
-        imagePath: 'assets/images/Colorful_hexagon.png'),
+        imagePath: 'assets/images/wallpapers/Colorful_hexagon.png'),
     RoomAsset(
         id: 'Space_Background',
         name: '우주',
         price: 100,
         icon: Icons.scatter_plot, // Dots
-        imagePath: 'assets/images/Space_Background.png'),
+        imagePath: 'assets/images/wallpapers/Space_Background.png'),
+    RoomAsset(
+        id: 'Castle_Stone_Wall',
+        name: '중세 성 벽지',
+        price: 100,
+        icon: Icons.scatter_plot, // Dots
+        imagePath: 'assets/images/wallpapers/Castle_Stone_Wall.png'),
   ];
 
   static const List<RoomAsset> backgrounds = [
@@ -222,21 +228,21 @@ class RoomAssets {
         price: 300,
         icon: Icons.circle,
         color: Colors.blueAccent,
-        imagePath: 'assets/images/BlueMoon.png'),
+        imagePath: 'assets/images/backgrounds/BlueMoon.png'),
     RoomAsset(
         id: 'golden_sun',
         name: '황금 태양',
         price: 300,
         icon: Icons.wb_sunny,
         color: Colors.orangeAccent,
-        imagePath: 'assets/images/SunShine.png'),
+        imagePath: 'assets/images/backgrounds/SunShine.png'),
     RoomAsset(
         id: 'starry_night',
         name: '별이 빛나는 밤',
         price: 300,
         icon: Icons.star,
         color: Colors.indigo,
-        imagePath: 'assets/images/NightMoon.png'),
+        imagePath: 'assets/images/backgrounds/NightMoon.png'),
   ];
 
   static const List<RoomAsset> props = [
@@ -417,36 +423,42 @@ class RoomAssets {
         name: '나무 바닥',
         price: 150,
         icon: Icons.view_quilt,
-        imagePath: 'assets/images/Wood_tile1.png'),
+        imagePath: 'assets/images/floors/Wood_tile1.png'),
     RoomAsset(
         id: 'wood2',
         name: '나무 바닥2',
         price: 150,
         icon: Icons.view_quilt,
-        imagePath: 'assets/images/Wood_Tile2.png'),
+        imagePath: 'assets/images/floors/Wood_Tile2.png'),
     RoomAsset(
         id: 'pink_wood',
         name: '핑크 나무 바닥',
         price: 200,
         icon: Icons.texture,
-        imagePath: 'assets/images/Pink_Wood.png'),
+        imagePath: 'assets/images/floors/Pink_Wood.png'),
     RoomAsset(
         id: 'peach_break',
         name: '피치피치',
         price: 200,
         icon: Icons.texture,
-        imagePath: 'assets/images/Peach_Break.png'),
+        imagePath: 'assets/images/floors/Peach_Break.png'),
     RoomAsset(
         id: 'pink_carpet',
         name: '핑크 카펫',
         price: 200,
         icon: Icons.texture,
-        imagePath: 'assets/images/Pink_Carpet.png'),
+        imagePath: 'assets/images/floors/Pink_Carpet.png'),
     RoomAsset(
         id: 'alokdalok',
         name: '알록달록',
         price: 100,
         icon: Icons.scatter_plot, // Dots
-        imagePath: 'assets/images/alokdalok.png'),
+        imagePath: 'assets/images/floors/alokdalok.png'),
+    RoomAsset(
+        id: 'castle_stone',
+        name: '중세 성 바닥',
+        price: 300,
+        icon: Icons.star,
+        imagePath: 'assets/images/floors/Castle_Stone_Floor.png'),
   ];
 }

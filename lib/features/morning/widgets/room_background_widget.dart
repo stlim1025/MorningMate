@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:morning_mate/core/constants/room_assets.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../data/models/room_decoration_model.dart';
 
@@ -47,15 +48,15 @@ class RoomBackgroundWidget extends StatelessWidget {
   }
 
   String? _backgroundImagePath(String backgroundId) {
-    switch (backgroundId) {
-      case 'blue_moon':
-        return 'assets/images/BlueMoon.png';
-      case 'golden_sun':
-        return 'assets/images/SunShine.png';
-      case 'starry_night':
-        return 'assets/images/NightMoon.png';
-      default:
-        return null;
+    List<RoomAsset> assets = RoomAssets.backgrounds;
+    try {
+      final asset = RoomAssets.backgrounds.firstWhere(
+            (item) => item.id == backgroundId,
+      );
+      return asset.imagePath ?? null;
+    } catch (e) {
+      // 해당 ID가 리스트에 없을 경우 예외 처리
+      return null;
     }
   }
 }
