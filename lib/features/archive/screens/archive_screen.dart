@@ -10,6 +10,7 @@ import '../../character/controllers/character_controller.dart'; // Import Charac
 import '../../../data/models/diary_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
+import '../../character/widgets/character_display.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -24,6 +25,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   CalendarFormat _calendarFormat = CalendarFormat.month;
+  bool _isSettingsPressed = false;
 
   @override
   void initState() {
@@ -130,18 +132,27 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           Text(
             '마이페이지',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: colorScheme.textPrimary,
+                  color: const Color(0xFF4E342E), // Dark brown color
                   fontWeight: FontWeight.bold,
                   fontFamily: 'BMJUA',
                   fontSize: 24,
                 ),
           ),
-          IconButton(
-            onPressed: () => context.push('/settings'),
-            icon: Icon(
-              Icons.settings,
-              color: colorScheme.iconPrimary,
-              size: 28,
+          GestureDetector(
+            onTapDown: (_) => setState(() => _isSettingsPressed = true),
+            onTapUp: (_) {
+              setState(() => _isSettingsPressed = false);
+              context.push('/settings');
+            },
+            onTapCancel: () => setState(() => _isSettingsPressed = false),
+            child: Transform.scale(
+              scale: _isSettingsPressed ? 0.95 : 1.0,
+              child: Image.asset(
+                'assets/icons/Setting_button.png',
+                width: 40, // 50 -> 40 축소
+                height: 40,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ],
@@ -158,108 +169,88 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadowColor.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+          padding: const EdgeInsets.symmetric(
+              horizontal: 20, vertical: 16), // Reduced vertical padding
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/Archive_Background.png'),
+              fit: BoxFit.fill,
+            ),
+            // borderRadius, boxShadow 제거 (이미지 자체 형태 유지)
           ),
           child: Column(
             children: [
               Row(
                 children: [
-                  // 프로필 이미지 (이니셜)
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          colorScheme.cardAccent.withOpacity(0.8),
-                          colorScheme.secondaryButton.withOpacity(0.8),
-                        ],
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.cardAccent.withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        user?.nickname?.substring(0, 1).toUpperCase() ?? 'U',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                  // Character Display (Current Character)
+                  SizedBox(
+                    width: 80,
+                    height: 80,
+                    child: CharacterDisplay(
+                      isAwake: true, // Always show awake/happy state in profile
+                      characterLevel: user?.characterLevel ?? 1,
+                      size: 80,
+                      enableAnimation: true,
                     ),
                   ),
                   const SizedBox(width: 16),
 
-                  // 유저 정보 텍스트
+                  // User Info Text
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           user?.nickname ?? '사용자',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: colorScheme.textPrimary,
+                            fontFamily: 'BMJUA',
+                            color: Color(0xFF4E342E),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2), // Reduced spacing
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: 6,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: colorScheme.cardAccent.withOpacity(0.15),
+                            color: Colors.white.withOpacity(0.5),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             'Lv. ${user?.characterLevel ?? 1}',
-                            style: TextStyle(
-                              color: colorScheme.cardAccent,
+                            style: const TextStyle(
+                              color: Color(0xFF8D6E63),
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
+                              fontFamily: 'BMJUA',
                             ),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        // 작성 여부 배지
+                        const SizedBox(height: 4), // Reduced spacing
+                        // 작성 여부 배지 (Date_Icon.png 배경)
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: hasWritten
-                                ? colorScheme.success.withOpacity(0.15)
-                                : colorScheme.textHint.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(6),
+                          width: 75, // 크기 축소 (가로)
+                          height: 32, // 크기 축소 (세로)
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('assets/images/Memo.png'),
+                              fit: BoxFit.fill,
+                              filterQuality: FilterQuality.none,
+                            ),
                           ),
                           child: Text(
-                            hasWritten ? '오늘 작성 완료 ✨' : '오늘 미작성 ✍️',
-                            style: TextStyle(
-                              color: hasWritten
-                                  ? colorScheme.success
-                                  : colorScheme.textHint,
+                            hasWritten
+                                ? '작성 완료 ✨'
+                                : '미작성 ✍️', // 텍스트 간소화 (공간 제약 고려)
+                            style: const TextStyle(
+                              color: Color(0xFF5D4037),
+                              fontFamily: 'BMJUA',
                               fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -267,40 +258,47 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     ),
                   ),
 
-                  // 포인트 정보 박스
+                  // Point Info Box with TextBox_Background
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.twig.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: colorScheme.twig.withOpacity(0.3),
-                        width: 1,
+                    width: 120, // 가로로 길게 설정
+                    height: 36, // 높이 축소 (48 -> 36)
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image:
+                            AssetImage('assets/images/TextBox_Background.png'),
+                        fit: BoxFit.fill,
+                        filterQuality: FilterQuality.none,
                       ),
                     ),
-                    child: Column(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
                           'assets/images/branch.png',
-                          width: 24,
-                          height: 24,
-                          cacheWidth: 100,
+                          width: 18, // 22 -> 18 축소
+                          height: 18,
+                          cacheWidth: 72,
+                          filterQuality: FilterQuality.none,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(width: 8),
                         Text(
                           '${user?.points ?? 0}',
-                          style: TextStyle(
-                            color: colorScheme.textPrimary,
+                          style: const TextStyle(
+                            color: Color(0xFF5D4037),
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontFamily: 'BMJUA',
+                            fontSize: 14, // 16 -> 14 축소
                           ),
                         ),
-                        Text(
+                        const SizedBox(width: 4),
+                        const Text(
                           '가지',
                           style: TextStyle(
-                            color: colorScheme.textSecondary,
-                            fontSize: 12,
+                            color: Color(0xFF8D6E63),
+                            fontFamily: 'BMJUA',
+                            fontSize: 12, // 14 -> 12 축소
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
@@ -1116,36 +1114,56 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                             child: Text(
                               widget.diary.promptQuestion!,
                               style: const TextStyle(
-                                fontFamily: 'NanumPenScript-Regular',
-                                fontSize: 18,
-                                color: Color(0xFF5D4037),
-                                height: 1.2,
+                                fontFamily: 'BMJUA',
+                                fontSize: 16,
+                                color: Color(0xFF4E342E),
+                                height: 1.4,
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      // Divider 2
-                      CustomPaint(
-                        size: const Size(double.infinity, 1),
-                        painter: _DottedLinePainter(),
-                      ),
-                      const SizedBox(height: 16),
                     ],
-                    // Content Preview
-                    const Text(
-                      '터치하여 내용을 확인하세요',
-                      style: TextStyle(
-                        fontFamily: 'NanumPenScript-Regular',
-                        fontSize: 18,
-                        color: Color(0xFF3E2723),
-                        height: 1.4,
+                    // Divider 2
+                    CustomPaint(
+                      size: const Size(double.infinity, 1),
+                      painter: _DottedLinePainter(),
+                    ),
+                    const SizedBox(height: 16),
+                    // Bottom: View Content
+                    Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Color(0xFF4E342E),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            padding: const EdgeInsets.only(bottom: 1),
+                            child: const Text(
+                              '일기 내용 보기',
+                              style: TextStyle(
+                                fontFamily: 'BMJUA',
+                                fontSize: 18,
+                                color: Color(0xFF4E342E),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 20,
+                            color: Color(0xFF4E342E),
+                          ),
+                        ],
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
