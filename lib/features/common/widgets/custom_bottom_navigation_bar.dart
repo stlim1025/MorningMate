@@ -55,7 +55,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
               ),
               _TabItem(
                 iconPath: 'assets/icons/Calander_Icon.png',
-                label: '기록',
+                label: '마이페이지',
                 width: 40,
                 height: 32,
                 isSelected: currentIndex == 3,

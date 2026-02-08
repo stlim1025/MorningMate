@@ -6,6 +6,7 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../services/diary_service.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../character/controllers/character_controller.dart'; // Import CharacterController
 import '../../../data/models/diary_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
@@ -67,8 +68,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     }
   }
 
+  bool _hasWrittenToday() {
+    return _getDiaryForDay(DateTime.now()) != null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
@@ -82,10 +89,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // 헤더
-              _buildHeader(context),
+              // 헤더 (마이페이지 + 설정 버튼)
+              _buildHeader(context, colorScheme),
 
-              // 달력
+              // 메인 컨텐츠
               if (_isLoading)
                 const Expanded(
                   child: Center(child: CircularProgressIndicator()),
@@ -95,11 +102,12 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        _buildCalendar(),
-                        const SizedBox(height: 16),
-                        if (_selectedDay != null) _buildSelectedDayInfo(),
-                        const SizedBox(height: 24),
-                        _buildMyMemosButton(),
+                        // 프로필 섹션 (유저 정보 + 포인트)
+                        _buildProfileSection(context, colorScheme),
+                        const SizedBox(height: 20),
+
+                        // 일기 작성 정보 (캘린더)
+                        _buildCalendarSection(context, colorScheme),
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -113,46 +121,315 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+  Widget _buildHeader(BuildContext context, AppColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '기록',
+            '마이페이지',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: colorScheme.textPrimary,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'BMJUA',
+                  fontSize: 24,
                 ),
           ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Image.asset(
-                'assets/images/Cancel_Button.png',
-                width: 50,
-                height: 30,
-                fit: BoxFit.fill,
-                cacheWidth: 150, // Optimized
-              ),
-              Text(
-                '${_diaries.where((d) => d.dateOnly.year == _focusedDay.year && d.dateOnly.month == _focusedDay.month).length}개',
-                style: const TextStyle(
-                  color: Color(0xFF4E342E),
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'BMJUA',
-                  fontSize: 14,
-                ),
-              ),
-            ],
+          IconButton(
+            onPressed: () => context.push('/settings'),
+            icon: Icon(
+              Icons.settings,
+              color: colorScheme.iconPrimary,
+              size: 28,
+            ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildProfileSection(
+      BuildContext context, AppColorScheme colorScheme) {
+    return Consumer<AuthController>(
+      builder: (context, authController, child) {
+        final user = authController.userModel;
+        final hasWritten = _hasWrittenToday();
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadowColor.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  // 프로필 이미지 (이니셜)
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          colorScheme.cardAccent.withOpacity(0.8),
+                          colorScheme.secondaryButton.withOpacity(0.8),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.cardAccent.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        user?.nickname?.substring(0, 1).toUpperCase() ?? 'U',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // 유저 정보 텍스트
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user?.nickname ?? '사용자',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.cardAccent.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Lv. ${user?.characterLevel ?? 1}',
+                            style: TextStyle(
+                              color: colorScheme.cardAccent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        // 작성 여부 배지
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: hasWritten
+                                ? colorScheme.success.withOpacity(0.15)
+                                : colorScheme.textHint.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            hasWritten ? '오늘 작성 완료 ✨' : '오늘 미작성 ✍️',
+                            style: TextStyle(
+                              color: hasWritten
+                                  ? colorScheme.success
+                                  : colorScheme.textHint,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 포인트 정보 박스
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.twig.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: colorScheme.twig.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Image.asset(
+                          'assets/images/branch.png',
+                          width: 24,
+                          height: 24,
+                          cacheWidth: 100,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${user?.points ?? 0}',
+                          style: TextStyle(
+                            color: colorScheme.textPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          '가지',
+                          style: TextStyle(
+                            color: colorScheme.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCharacterSection(
+      BuildContext context, AppColorScheme colorScheme) {
+    return Consumer<CharacterController>(
+      builder: (context, controller, child) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadowColor.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '캐릭터 정보',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'BMJUA',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 캐릭터 아이콘
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryButton.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getCharacterIcon(controller.characterState),
+                      size: 48,
+                      color: colorScheme.primaryButton,
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+
+                  // 캐릭터 상태 텍스트
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getStateName(controller.characterState),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        controller.currentAnimation,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colorScheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCalendarSection(
+      BuildContext context, AppColorScheme colorScheme) {
+    return Column(
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          alignment: Alignment.centerLeft,
+          child: Text(
+            '일기 작성 정보',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'BMJUA',
+              color: colorScheme.textPrimary,
+            ),
+          ),
+        ),
+
+        // 기존 캘린더
+        _buildCalendar(),
+        const SizedBox(height: 16),
+
+        // 선택된 날짜 정보
+        if (_selectedDay != null) _buildSelectedDayInfo(),
+
+        const SizedBox(height: 24),
+        _buildMyMemosButton(),
+      ],
+    );
+  }
+
+  // --- 기존 캘린더 및 관련 위젯 메서드 재사용 ---
 
   Widget _buildCalendar() {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
@@ -621,6 +898,44 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       },
     );
   }
+
+  IconData _getCharacterIcon(CharacterState state) {
+    switch (state) {
+      case CharacterState.egg:
+        return Icons.egg;
+      case CharacterState.cracking:
+        return Icons.egg_alt;
+      case CharacterState.hatching:
+        return Icons.cruelty_free;
+      case CharacterState.baby:
+        return Icons.pets;
+      case CharacterState.young:
+        return Icons.flutter_dash;
+      case CharacterState.adult:
+        return Icons.flight;
+      case CharacterState.sleeping:
+        return Icons.bedtime;
+    }
+  }
+
+  String _getStateName(CharacterState state) {
+    switch (state) {
+      case CharacterState.egg:
+        return '알 🥚';
+      case CharacterState.cracking:
+        return '금이 간 알 🥚✨';
+      case CharacterState.hatching:
+        return '부화 중 🐣';
+      case CharacterState.baby:
+        return '새끼 새 🐥';
+      case CharacterState.young:
+        return '아기 새 🐦';
+      case CharacterState.adult:
+        return '귀여운 새 🕊️';
+      case CharacterState.sleeping:
+        return '수면 중 💤';
+    }
+  }
 }
 
 class _AnimatedImageButton extends StatefulWidget {
@@ -801,56 +1116,36 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                             child: Text(
                               widget.diary.promptQuestion!,
                               style: const TextStyle(
-                                fontFamily: 'BMJUA',
-                                fontSize: 16,
-                                color: Color(0xFF4E342E),
-                                height: 1.4,
+                                fontFamily: 'NanumPenScript-Regular',
+                                fontSize: 18,
+                                color: Color(0xFF5D4037),
+                                height: 1.2,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                    ],
-                    // Divider 2
-                    CustomPaint(
-                      size: const Size(double.infinity, 1),
-                      painter: _DottedLinePainter(),
-                    ),
-                    const SizedBox(height: 16),
-                    // Bottom: View Content
-                    Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            decoration: const BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Color(0xFF4E342E),
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                            padding: const EdgeInsets.only(bottom: 1),
-                            child: const Text(
-                              '일기 내용 보기',
-                              style: TextStyle(
-                                fontFamily: 'BMJUA',
-                                fontSize: 18,
-                                color: Color(0xFF4E342E),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 20,
-                            color: Color(0xFF4E342E),
-                          ),
-                        ],
+                      // Divider 2
+                      CustomPaint(
+                        size: const Size(double.infinity, 1),
+                        painter: _DottedLinePainter(),
                       ),
+                      const SizedBox(height: 16),
+                    ],
+                    // Content Preview
+                    const Text(
+                      '터치하여 내용을 확인하세요',
+                      style: TextStyle(
+                        fontFamily: 'NanumPenScript-Regular',
+                        fontSize: 18,
+                        color: Color(0xFF3E2723),
+                        height: 1.4,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -868,11 +1163,11 @@ class _DottedLinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = const Color(0xFF8D6E63).withOpacity(0.5)
-      ..strokeWidth = 1.5
+      ..strokeWidth = 1
       ..strokeCap = StrokeCap.round;
 
-    const dashWidth = 5.0;
-    const dashSpace = 5.0;
+    const dashWidth = 4.0;
+    const dashSpace = 4.0;
     double startX = 0;
 
     while (startX < size.width) {
