@@ -407,10 +407,10 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                   child: Text(
                     _decryptedContent,
                     style: TextStyle(
-                      fontFamily: 'BMJUA',
+                      fontFamily: 'KyoboHandwriting2024psw',
                       color: colorScheme.textPrimary,
-                      fontSize: 18,
-                      height: 1.8,
+                      fontSize: 20,
+                      height: 1.6,
                     ),
                   ),
                 ),

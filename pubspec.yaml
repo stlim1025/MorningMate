@@ -84,3 +84,6 @@ flutter:
     - family: BMJUA
       fonts:
         - asset: assets/fonts/BMJUA_ttf.ttf
+    - family: KyoboHandwriting2024psw
+      fonts:
+        - asset: assets/fonts/KyoboHandwriting2024psw.ttf

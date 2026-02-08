@@ -724,6 +724,7 @@ class PopupTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final FormFieldValidator<String>? validator;
   final int? maxLength;
+  final bool autofocus;
 
   const PopupTextField({
     super.key,
@@ -735,6 +736,7 @@ class PopupTextField extends StatelessWidget {
     this.onChanged,
     this.validator,
     this.maxLength,
+    this.autofocus = false,
   });
 
   @override
@@ -754,6 +756,7 @@ class PopupTextField extends StatelessWidget {
       alignment: maxLines == 1 ? Alignment.center : Alignment.topLeft,
       child: validator != null
           ? TextFormField(
+              autofocus: autofocus,
               controller: controller,
               obscureText: obscureText,
               maxLines: maxLines,
@@ -791,6 +794,7 @@ class PopupTextField extends StatelessWidget {
               ),
             )
           : TextField(
+              autofocus: autofocus,
               controller: controller,
               obscureText: obscureText,
               maxLines: maxLines,

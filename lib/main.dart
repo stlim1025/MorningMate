@@ -205,11 +205,13 @@ class _MorningMateAppState extends State<MorningMateApp> {
           create: (_) => ThemeController(),
           update: (context, auth, previous) {
             final controller = previous ?? ThemeController();
-            if (auth.userModel != null) {
-              controller.syncWithUserTheme(auth.userModel!.currentThemeId);
-            } else {
-              controller.resetToDefault();
-            }
+            Future.microtask(() {
+              if (auth.userModel != null) {
+                controller.syncWithUserTheme(auth.userModel!.currentThemeId);
+              } else {
+                controller.resetToDefault();
+              }
+            });
             return controller;
           },
         ),

@@ -52,7 +52,9 @@ class AuthController extends ChangeNotifier {
         if (model == null && _currentUser != null && !_isDeletingAccount) {
           // 문서가 삭제되었다면 (즉, 계정이 삭제되었다면) 강제 로그아웃
           // 직접 탈퇴 중인 경우에는 수동으로 처리하므로 건너뜁니다.
-          signOut();
+          debugPrint(
+              'User document not found (snapshot is null), but maintaining session.');
+          // signOut(); // 앱 초기 진입 시 로딩 지연 등으로 인해 로그아웃되는 문제 방지
         } else {
           _userModel = model;
           notifyListeners();

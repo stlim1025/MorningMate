@@ -106,63 +106,76 @@ class _WritingScreenState extends State<WritingScreen> {
                   ? minContentHeight
                   : screenHeight;
 
-              return SingleChildScrollView(
-                child: Center(
-                  child: SizedBox(
-                    width: contentWidth,
-                    height: scrollHeight,
-                    child: SafeArea(
-                      child: PopScope(
-                        canPop: false,
-                        onPopInvokedWithResult: (didPop, result) async {
-                          if (didPop) return;
-                          final confirmed =
-                              await _showExitConfirmation(context);
-                          if (confirmed == true && context.mounted) {
-                            context.go('/morning');
-                          }
-                        },
-                        child: Consumer<MorningController>(
-                          builder: (context, controller, child) {
-                            return Column(
-                              children: [
+              return SafeArea(
+                child: PopScope(
+                  canPop: false,
+                  onPopInvokedWithResult: (didPop, result) async {
+                    if (didPop) return;
+                    final confirmed = await _showExitConfirmation(context);
+                    if (confirmed == true && context.mounted) {
+                      context.go('/morning');
+                    }
+                  },
+                  child: Consumer<MorningController>(
+                    builder: (context, controller, child) {
+                      return Column(
+                        children: [
+                          // Fixed Header
+                          SizedBox(
+                            width: contentWidth,
+                            child:
                                 _buildHeader(context, colorScheme, controller),
-                                // Reduced spacing
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 24),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                          ),
+                          // Scrollable Content
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Center(
+                                child: SizedBox(
+                                  width: contentWidth,
+                                  height:
+                                      scrollHeight - 140, // Header approx 140
+                                  child: Column(
                                     children: [
-                                      Expanded(
-                                        flex: 4,
-                                        child: _buildQuestionCard(colorScheme),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        flex: 3,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              top:
-                                                  30), // Lowered emoticon section
-                                          child:
-                                              _buildMoodSelection(colorScheme),
+                                      // Reduced spacing
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 24),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              flex: 4,
+                                              child: _buildQuestionCard(
+                                                  colorScheme),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              flex: 3,
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    top:
+                                                        30), // Lowered emoticon section
+                                                child: _buildMoodSelection(
+                                                    colorScheme),
+                                              ),
+                                            ),
+                                          ],
                                         ),
+                                      ),
+                                      Expanded(
+                                        child: _buildWritingArea(
+                                            context, colorScheme),
                                       ),
                                     ],
                                   ),
                                 ),
-                                Expanded(
-                                  child:
-                                      _buildWritingArea(context, colorScheme),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               );
@@ -182,9 +195,108 @@ class _WritingScreenState extends State<WritingScreen> {
     return Padding(
       padding:
           const EdgeInsets.fromLTRB(8, 16, 8, 4), // Reduced horizontal padding
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Back Button
+              GestureDetector(
+                onTap: () async {
+                  final confirmed = await _showExitConfirmation(context);
+                  if (confirmed == true && context.mounted) {
+                    context.go('/morning');
+                  }
+                },
+                child: SizedBox(
+                  width: 44, // 고정된 레이아웃 영역 (터치 영역)
+                  height: 44, // 아래 콘텐츠를 밀어내지 않음
+                  child: Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none, // 이미지가 영역을 벗어나도 잘리지 않게 설정
+                    children: [
+                      Image.asset(
+                        'assets/icons/X_Button.png',
+                        width: 55, // 시각적으로 더 크게 표시
+                        height: 55,
+                        fit: BoxFit.contain,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Action Buttons (Blur & Save)
+              Row(
+                children: [
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(top: 0), // Align with save button
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _enableBlur = !_enableBlur;
+                          _textController.blurEnabled = _enableBlur;
+                        });
+                      },
+                      child: Image.asset(
+                        _enableBlur
+                            ? 'assets/icons/Blur_ToggleOn.png'
+                            : 'assets/icons/Blur_ToggleOff.png',
+                        width: 80,
+                        height: 38,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 0),
+                    child: GestureDetector(
+                      onTap: controller.isGoalReached()
+                          ? () =>
+                              _completeDiary(context, controller, colorScheme)
+                          : () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    '조금만 더 작성해주세요!',
+                                    style: TextStyle(fontFamily: 'BMJUA'),
+                                  ),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                      child: Opacity(
+                        opacity: controller.isGoalReached() ? 1.0 : 0.5,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/Confirm_Button.png',
+                              width: 110,
+                              height: 44,
+                              fit: BoxFit.fill,
+                            ),
+                            const Text(
+                              '저장하기',
+                              style: TextStyle(
+                                fontFamily: 'BMJUA',
+                                color: Color(0xFF5D4037), // Brown color
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12), // Spacing between back button and date
           // Date Icon with Text Overlay
           Stack(
             alignment: Alignment.center,
@@ -214,72 +326,6 @@ class _WritingScreenState extends State<WritingScreen> {
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.only(top: 10), // Align with save button
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _enableBlur = !_enableBlur;
-                      _textController.blurEnabled = _enableBlur;
-                    });
-                  },
-                  child: Image.asset(
-                    _enableBlur
-                        ? 'assets/icons/Blur_ToggleOn.png'
-                        : 'assets/icons/Blur_ToggleOff.png',
-                    width: 80,
-                    height: 38,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: GestureDetector(
-                  onTap: controller.isGoalReached()
-                      ? () => _completeDiary(context, controller, colorScheme)
-                      : () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                '조금만 더 작성해주세요!',
-                                style: TextStyle(fontFamily: 'BMJUA'),
-                              ),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        },
-                  child: Opacity(
-                    opacity: controller.isGoalReached() ? 1.0 : 0.5,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/images/Confirm_Button.png',
-                          width: 110,
-                          height: 44,
-                          fit: BoxFit.fill,
-                        ),
-                        const Text(
-                          '저장하기',
-                          style: TextStyle(
-                            fontFamily: 'BMJUA',
-                            color: Color(0xFF5D4037), // Brown color
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
@@ -422,10 +468,10 @@ class _WritingScreenState extends State<WritingScreen> {
         focusNode: _focusNode,
         maxLines: null,
         style: TextStyle(
-          fontFamily: 'BMJUA',
+          fontFamily: 'KyoboHandwriting2024psw',
           color: colorScheme.textPrimary,
-          fontSize: 18,
-          height: 1.8,
+          fontSize: 20, // Slightly larger for handwriting font readability
+          height: 1.6,
         ),
         cursorColor: colorScheme.primaryButton,
         decoration: InputDecoration(
@@ -437,9 +483,9 @@ class _WritingScreenState extends State<WritingScreen> {
           filled: false,
           hintText: '지금 머릿속에 떠오르는 생각을 자유롭게 적어보세요.',
           hintStyle: TextStyle(
-            fontFamily: 'BMJUA',
+            fontFamily: 'KyoboHandwriting2024psw',
             color: colorScheme.textHint.withOpacity(0.6),
-            fontSize: 18,
+            fontSize: 20,
           ),
         ),
       ),

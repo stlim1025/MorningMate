@@ -29,57 +29,37 @@ class _DecorationScreenState extends State<DecorationScreen> {
   bool? _previewIsAwake;
 
   Future<String?> _showStickyNoteInput(BuildContext context) async {
-    String text = '';
-    return AppDialog.show<String>(
-      context: context,
-      key: AppDialogKey.writeMemo,
-      content: Builder(
-        builder: (context) {
-          final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-          return TextField(
-            autofocus: true,
-            maxLength: 50,
-            decoration: InputDecoration(
-              hintText: '짧은 메시지를 남겨보세요',
-              hintStyle: TextStyle(color: colorScheme.textHint),
-              counterStyle: TextStyle(color: colorScheme.textSecondary),
-              filled: true,
-              fillColor: Colors.black.withOpacity(0.04),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: colorScheme.textHint.withOpacity(0.2)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: colorScheme.primaryButton, width: 1.5),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            style: TextStyle(color: colorScheme.textPrimary),
-            onChanged: (value) => text = value,
-          );
-        },
-      ),
-      actions: [
-        AppDialogAction(
-          label: '취소',
-          onPressed: (context) => Navigator.pop(context),
+    final controller = TextEditingController();
+
+    try {
+      return await AppDialog.show<String>(
+        context: context,
+        key: AppDialogKey.writeMemo,
+        content: PopupTextField(
+          autofocus: true,
+          controller: controller,
+          hintText: '짧은 메시지를 남겨보세요',
+          maxLength: 50,
+          maxLines: 3,
         ),
-        AppDialogAction(
-          label: '확인',
-          isPrimary: true,
-          onPressed: (context) => Navigator.pop(context, text),
-        ),
-      ],
-    );
+        actions: [
+          AppDialogAction(
+            label: '취소',
+            onPressed: (context) => Navigator.pop(context),
+          ),
+          AppDialogAction(
+            label: '확인',
+            isPrimary: true,
+            onPressed: (context) => Navigator.pop(context, controller.text),
+          ),
+        ],
+      );
+    } finally {
+      // 팝업 닫힘 애니메이션(약 200ms)이 끝난 뒤 해제하여 'disposed controller' 에러 방지
+      Future.delayed(const Duration(milliseconds: 300), () {
+        controller.dispose();
+      });
+    }
   }
 
   @override
