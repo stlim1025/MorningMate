@@ -105,10 +105,10 @@ class _DecorationScreenState extends State<DecorationScreen> {
             height: 40,
           ),
         ),
-        title: Text(
+        title: const Text(
           '방 꾸미기',
           style: TextStyle(
-            color: colorScheme.textPrimary,
+            color: Color(0xFF4E342E),
             fontWeight: FontWeight.bold,
             fontFamily: 'BMJUA',
             fontSize: 20,
@@ -310,38 +310,30 @@ class _DecorationScreenState extends State<DecorationScreen> {
           Expanded(
             flex: 10,
             child: Container(
-              decoration: BoxDecoration(
-                image: const DecorationImage(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
                   image: ResizeImage(
-                      AssetImage('assets/images/Popup_Background.png'),
+                      AssetImage('assets/images/DecorationList_Background.png'),
                       width: 1080),
                   fit: BoxFit.fill,
                 ),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(32)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 25,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
               ),
               child: Column(
                 children: [
                   Container(
-                    margin: const EdgeInsets.only(top: 10, bottom: 4),
+                    margin: const EdgeInsets.only(top: 6, bottom: 2),
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
                       color: colorScheme.shadowColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   _buildCategoryTabs(colorScheme),
-                  const Divider(height: 1, thickness: 0.5),
                   Expanded(
-                    child: _buildCategoryContent(user, colorScheme),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 30.0),
+                      child: _buildCategoryContent(user, colorScheme),
+                    ),
                   ),
                 ],
               ),
@@ -357,7 +349,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
@@ -386,7 +378,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
       onTap: () => setState(() => _selectedCategory = id),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 18),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage(isSelected
@@ -401,21 +393,17 @@ class _DecorationScreenState extends State<DecorationScreen> {
           children: [
             Icon(
               icon,
-              size: 16,
+              size: 14,
               color: isSelected
                   ? const Color(0xFF8B7355)
                   : const Color(0xFF5D4E37),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected
-                    ? const Color(0xFF8B7355)
-                    : const Color(0xFF5D4E37),
-                fontFamily: 'KyoboHandwriting2024psw',
+                fontFamily: 'BMJUA',
+                fontSize: 12,
               ),
             ),
           ],
@@ -451,7 +439,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
         return GridView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
             crossAxisSpacing: 8,
@@ -491,7 +479,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
         return GridView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
             crossAxisSpacing: 8,
@@ -528,7 +516,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
         return GridView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 12,
@@ -550,6 +538,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
                 _decorationNotifier.value = decoration.copyWith(floorId: f.id);
               },
               colorScheme: colorScheme,
+              fontSize: 13,
             );
           },
         );
@@ -579,7 +568,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
             user.lastStickyNoteDate!.day == now.day;
 
         return GridView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
             crossAxisSpacing: 8,
@@ -665,92 +654,81 @@ class _DecorationScreenState extends State<DecorationScreen> {
                   );
                 }
               },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AspectRatio(
-                    aspectRatio: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: exists
-                            ? colorScheme.success.withOpacity(0.08)
-                            : colorScheme.shadowColor.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: exists
-                              ? colorScheme.success
-                              : colorScheme.shadowColor.withOpacity(0.1),
-                          width: exists ? 3.5 : 1.5,
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(
+                        'assets/icons/Friend_Card${(p.name.hashCode.abs() % 6) + 1}.png',
+                      ),
+                      fit: BoxFit.fill,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (p.imagePath != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 18, vertical: 26),
+                          child: p.imagePath!.endsWith('.svg')
+                              ? SvgPicture.asset(
+                                  p.imagePath!,
+                                  fit: BoxFit.contain,
+                                )
+                              : Image.asset(
+                                  p.imagePath!,
+                                  cacheWidth: 150,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(p.icon,
+                                        color: exists
+                                            ? colorScheme.success
+                                            : Colors.blueGrey,
+                                        size: 24);
+                                  },
+                                ),
+                        )
+                      else
+                        Icon(p.icon,
+                            color:
+                                exists ? colorScheme.success : Colors.blueGrey,
+                            size: 24),
+                      if (exists)
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: Image.asset(
+                            'assets/images/Red_Pin.png',
+                            width: 24,
+                            height: 24,
+                          ),
                         ),
-                        boxShadow: [
-                          if (exists)
-                            BoxShadow(
-                              color: colorScheme.success.withOpacity(0.3),
-                              blurRadius: 15,
-                              spreadRadius: 1,
-                            ),
-                        ],
+                      Positioned(
+                        bottom: 8,
+                        left: 4,
+                        right: 4,
+                        child: Text(
+                          p.name,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'BMJUA',
+                            fontSize: 10,
+                            fontWeight:
+                                exists ? FontWeight.bold : FontWeight.normal,
+                            color: exists
+                                ? colorScheme.success
+                                : colorScheme.textSecondary,
+                          ),
+                        ),
                       ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          if (p.imagePath != null)
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: p.imagePath!.endsWith('.svg')
-                                  ? SvgPicture.asset(
-                                      p.imagePath!,
-                                      fit: BoxFit.contain,
-                                    )
-                                  : Image.asset(
-                                      p.imagePath!,
-                                      cacheWidth: 150,
-                                      fit: BoxFit.contain,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return Icon(p.icon,
-                                            color: exists
-                                                ? colorScheme.success
-                                                : Colors.blueGrey,
-                                            size: 28);
-                                      },
-                                    ),
-                            )
-                          else
-                            Icon(p.icon,
-                                color: exists
-                                    ? colorScheme.success
-                                    : Colors.blueGrey,
-                                size: 28),
-                          if (exists)
-                            Positioned(
-                              top: 2,
-                              right: 2,
-                              child: Icon(Icons.check_circle,
-                                  color: colorScheme.success, size: 16),
-                            ),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  Flexible(
-                    child: Text(
-                      p.name,
-                      maxLines: 1,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight:
-                            exists ? FontWeight.bold : FontWeight.normal,
-                        color: exists
-                            ? colorScheme.success
-                            : colorScheme.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             );
           },
@@ -765,7 +743,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
         .toList();
 
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
         crossAxisSpacing: 8,
@@ -789,15 +767,6 @@ class _DecorationScreenState extends State<DecorationScreen> {
               if (isSelected) {
                 _selectedEmoticonIds.remove(emoticon.id);
               } else {
-                if (_selectedEmoticonIds.length >= 4) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('이모티콘은 최대 4개까지만 선택할 수 있습니다.'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                  return;
-                }
                 _selectedEmoticonIds.add(emoticon.id);
               }
             });
@@ -817,92 +786,98 @@ class _DecorationScreenState extends State<DecorationScreen> {
     String? badgeText,
     required VoidCallback onTap,
     required AppColorScheme colorScheme,
+    double fontSize = 10,
+    double bottom = 12,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        children: [
-          AspectRatio(
-            aspectRatio: 1.0,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: color ?? colorScheme.shadowColor.withOpacity(0.05),
-                image: (imagePath != null && !imagePath.endsWith('.svg'))
-                    ? DecorationImage(
-                        image: ResizeImage(AssetImage(imagePath), width: 200),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected
-                      ? colorScheme.success
-                      : colorScheme.shadowColor.withOpacity(0.1),
-                  width: isSelected ? 3.5 : 1.5,
-                ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: colorScheme.success.withOpacity(0.3),
-                          blurRadius: 15,
-                          spreadRadius: 1,
-                        )
-                      ]
-                    : [],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (imagePath != null && imagePath.endsWith('.svg'))
-                      Positioned.fill(
-                        child: SvgPicture.asset(
-                          imagePath,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    if (icon != null && imagePath == null)
-                      Icon(icon,
-                          size: 38,
-                          color: isSelected ? Colors.white : Colors.blueGrey),
-                    if (isSelected)
-                      Container(
-                        color: Colors.black26,
-                        child: Center(
-                          child: badgeText != null
-                              ? Text(
-                                  badgeText,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'BMJUA',
-                                  ),
-                                )
-                              : const Icon(Icons.check_circle,
-                                  color: Colors.white, size: 32),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(
+              'assets/icons/Friend_Card${(label.hashCode.abs() % 6) + 1}.png',
             ),
+            fit: BoxFit.fill,
           ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            maxLines: 1,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? colorScheme.success : colorScheme.textPrimary,
-            ),
+          borderRadius: BorderRadius.zero,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.zero,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (imagePath != null)
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18.0, vertical: 26.0),
+                    child: imagePath.endsWith('.svg')
+                        ? SvgPicture.asset(
+                            imagePath,
+                            fit: BoxFit.contain,
+                          )
+                        : Image.asset(
+                            imagePath,
+                            width: 200,
+                            fit: BoxFit.contain,
+                          ),
+                  ),
+                ),
+              if (icon != null && imagePath == null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Icon(icon,
+                      size: 32,
+                      color: isSelected ? Colors.white : Colors.blueGrey),
+                ),
+              if (isSelected)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Image.asset(
+                    'assets/images/Red_Pin.png',
+                    width: 28,
+                    height: 28,
+                  ),
+                ),
+              if (isSelected && badgeText != null)
+                Container(
+                  color: Colors.black26,
+                  child: Center(
+                    child: Text(
+                      badgeText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'BMJUA',
+                      ),
+                    ),
+                  ),
+                ),
+              Positioned(
+                bottom: bottom,
+                left: 4,
+                right: 4,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'BMJUA',
+                    fontSize: fontSize,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected
+                        ? colorScheme.success
+                        : colorScheme.textPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

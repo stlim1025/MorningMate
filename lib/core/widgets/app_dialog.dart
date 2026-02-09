@@ -773,7 +773,10 @@ class PopupTextField extends StatelessWidget {
     this.validator,
     this.maxLength,
     this.autofocus = false,
+    this.errorText,
   });
+
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -827,6 +830,7 @@ class PopupTextField extends StatelessWidget {
                 filled: false,
                 fillColor: Colors.transparent,
                 counterText: '',
+                errorText: errorText,
               ),
             )
           : TextField(
@@ -859,6 +863,7 @@ class PopupTextField extends StatelessWidget {
                 filled: false,
                 fillColor: Colors.transparent,
                 counterText: '',
+                errorText: errorText,
               ),
             ),
     );

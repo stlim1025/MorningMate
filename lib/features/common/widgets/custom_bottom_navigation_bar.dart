@@ -13,58 +13,68 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // Height removed to adapt to safe area
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/Down_Tab2.png'),
-          fit: BoxFit.fill,
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 60, // Fixed content height
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _TabItem(
-                iconPath: 'assets/icons/Home_Icon.png',
-                label: '홈',
-                width: 32,
-                height: 32,
-                isSelected: currentIndex == 0,
-                onTap: () => _handleNavigation(context, 0),
-              ),
-              _TabItem(
-                iconPath: 'assets/icons/Charactor_Icon.png',
-                label: '캐릭터',
-                width: 45,
-                height: 32,
-                isSelected: currentIndex == 1,
-                onTap: () => _handleNavigation(context, 1),
-              ),
-              _TabItem(
-                iconPath: 'assets/icons/Friend_Icon.png',
-                label: '친구',
-                width: 45,
-                height: 32,
-                isSelected: currentIndex == 2,
-                onTap: () => _handleNavigation(context, 2),
-              ),
-              _TabItem(
-                iconPath: 'assets/icons/Calander_Icon.png',
-                label: '마이페이지',
-                width: 40,
-                height: 32,
-                isSelected: currentIndex == 3,
-                onTap: () => _handleNavigation(context, 3),
-              ),
-            ],
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      clipBehavior: Clip.none,
+      children: [
+        // 1. Background Image (Down_Tab.png)
+        Container(
+          width: double.infinity,
+          height: 60 + MediaQuery.of(context).padding.bottom,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/Down_Tab.png'),
+              fit: BoxFit.fill,
+            ),
           ),
         ),
-      ),
+        // 2. Tab Items (Protruding icons)
+        SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 90, // Increased height to cover protruding icons
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _TabItem(
+                  iconPath: 'assets/icons/Home_Icon.png',
+                  label: '홈',
+                  width: 38,
+                  height: 38,
+                  isSelected: currentIndex == 0,
+                  onTap: () => _handleNavigation(context, 0),
+                ),
+                _TabItem(
+                  iconPath: 'assets/icons/Challenge_Icon.png',
+                  label: '도전과제',
+                  width: 54,
+                  height: 38,
+                  isSelected: currentIndex == 1,
+                  onTap: () => _handleNavigation(context, 1),
+                ),
+                _TabItem(
+                  iconPath: 'assets/icons/Friend_Icon.png',
+                  label: '친구',
+                  width: 64,
+                  height: 45,
+                  isSelected: currentIndex == 2,
+                  labelOffset: -7,
+                  onTap: () => _handleNavigation(context, 2),
+                ),
+                _TabItem(
+                  iconPath: 'assets/icons/Calander_Icon.png',
+                  label: '마이페이지',
+                  width: 48,
+                  height: 38,
+                  isSelected: currentIndex == 3,
+                  onTap: () => _handleNavigation(context, 3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -75,7 +85,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
         context.go('/morning');
         break;
       case 1:
-        context.go('/character');
+        context.go('/challenge');
         break;
       case 2:
         context.go('/social');
@@ -93,6 +103,7 @@ class _TabItem extends StatefulWidget {
   final double width;
   final double height;
   final bool isSelected;
+  final double labelOffset;
   final VoidCallback onTap;
 
   const _TabItem({
@@ -101,6 +112,7 @@ class _TabItem extends StatefulWidget {
     required this.width,
     required this.height,
     required this.isSelected,
+    this.labelOffset = -4,
     required this.onTap,
   });
 
@@ -141,7 +153,8 @@ class _TabItemState extends State<_TabItem>
       },
       onTapCancel: () => _controller.reverse(),
       behavior: HitTestBehavior.opaque,
-      child: Padding(
+      child: Container(
+        color: Colors.transparent, // Ensure full area is hit-testable
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: ScaleTransition(
           scale: _scaleAnimation,
@@ -149,34 +162,54 @@ class _TabItemState extends State<_TabItem>
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 6),
-              Image.asset(
-                widget.iconPath,
-                width: widget.width,
-                height: widget.height,
-                fit: BoxFit.contain,
-                filterQuality:
-                    FilterQuality.high, // Improve rendering on high-res screens
-                // Removed cacheWidth to prevent pixelation on high-res screens
-                opacity: widget.isSelected
-                    ? const AlwaysStoppedAnimation(1.0)
-                    : const AlwaysStoppedAnimation(0.5),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontFamily: 'BMJUA',
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: widget.isSelected
-                      ? const Color(0xFF4E342E)
-                      : const Color(0xFF4E342E).withOpacity(0.5),
+              Transform.translate(
+                offset: const Offset(0, -6),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Subtle shadow layer
+                    Transform.translate(
+                      offset: const Offset(1, 1),
+                      child: Image.asset(
+                        widget.iconPath,
+                        width: widget.width,
+                        height: widget.height,
+                        fit: BoxFit.contain,
+                        color: Colors.black.withOpacity(0.2),
+                        colorBlendMode: BlendMode.srcIn,
+                      ),
+                    ),
+                    // Main icon
+                    Image.asset(
+                      widget.iconPath,
+                      width: widget.width,
+                      height: widget.height,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                      opacity: widget.isSelected
+                          ? const AlwaysStoppedAnimation(1.0)
+                          : const AlwaysStoppedAnimation(0.5),
+                    ),
+                  ],
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 0),
+              Transform.translate(
+                offset: Offset(0, widget.labelOffset),
+                child: Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontFamily: 'BMJUA',
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: widget.isSelected
+                        ? const Color(0xFF4E342E)
+                        : const Color(0xFF4E342E).withOpacity(0.5),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),

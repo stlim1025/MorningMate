@@ -18,6 +18,7 @@ import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
 import '../../common/widgets/room_action_button.dart';
+import '../../../core/widgets/memo_notification.dart';
 
 class FriendRoomScreen extends StatefulWidget {
   final String friendId;
@@ -98,6 +99,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
     final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
 
     return Scaffold(
+      extendBody: true,
       body: Consumer<SocialController>(
         builder: (context, socialController, child) {
           final isAwake = _friendAwakeStatus ??
@@ -123,6 +125,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                     onPropTap: (prop) => _showFriendMemoDialog(prop),
                     colorScheme: colorScheme,
                     isDarkMode: isDarkMode,
+                    bottomPadding: 45 + MediaQuery.of(context).padding.bottom,
                   ),
                 ),
 
@@ -246,91 +249,94 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                 Positioned(
                   left: 0,
                   right: 0,
-                  bottom: 15,
+                  bottom: 0,
                   child: SafeArea(
-                    child: Consumer<SocialController>(
-                      builder: (context, socialController, child) {
-                        final remaining = socialController
-                            .cheerCooldownRemaining(_friend!.uid);
-                        final seconds =
-                            (remaining.inMilliseconds / 1000).ceil();
-                        final isCooldown = seconds > 0;
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 30),
+                      child: Consumer<SocialController>(
+                        builder: (context, socialController, child) {
+                          final remaining = socialController
+                              .cheerCooldownRemaining(_friend!.uid);
+                          final seconds =
+                              (remaining.inMilliseconds / 1000).ceil();
+                          final isCooldown = seconds > 0;
 
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            // 응원 메시지 보내기 버튼 (왼쪽)
-                            Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 20, right: 10),
-                                child: GestureDetector(
-                                  onTapDown: isCooldown
-                                      ? null
-                                      : (_) => _buttonController.forward(),
-                                  onTapUp: isCooldown
-                                      ? null
-                                      : (_) {
-                                          _buttonController.reverse();
-                                          _showGuestbookDialog(colorScheme);
-                                        },
-                                  onTapCancel: isCooldown
-                                      ? null
-                                      : () => _buttonController.reverse(),
-                                  child: ScaleTransition(
-                                    scale: _scaleAnimation,
-                                    child: Opacity(
-                                      opacity: isCooldown ? 0.6 : 1.0,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/Button_Background2.png',
-                                            width: double.infinity,
-                                            height: 90,
-                                            fit: BoxFit.fill,
-                                            cacheWidth: 300,
-                                          ),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 6),
-                                            child: Text(
-                                              isCooldown
-                                                  ? '$seconds초 후 재전송'
-                                                  : '응원메시지 보내기',
-                                              style: TextStyle(
-                                                fontFamily: 'BMJUA',
-                                                fontSize: 23,
-                                                fontWeight: FontWeight.bold,
-                                                color: isCooldown
-                                                    ? const Color(0xFF4E342E)
-                                                        .withOpacity(0.5)
-                                                    : const Color(0xFF4E342E),
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              // 응원 메시지 보내기 버튼 (왼쪽)
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 20, right: 10),
+                                  child: GestureDetector(
+                                    onTapDown: isCooldown
+                                        ? null
+                                        : (_) => _buttonController.forward(),
+                                    onTapUp: isCooldown
+                                        ? null
+                                        : (_) {
+                                            _buttonController.reverse();
+                                            _showGuestbookDialog(colorScheme);
+                                          },
+                                    onTapCancel: isCooldown
+                                        ? null
+                                        : () => _buttonController.reverse(),
+                                    child: ScaleTransition(
+                                      scale: _scaleAnimation,
+                                      child: Opacity(
+                                        opacity: isCooldown ? 0.6 : 1.0,
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Image.asset(
+                                              'assets/images/Button_Background2.png',
+                                              width: double.infinity,
+                                              height: 90,
+                                              fit: BoxFit.fill,
+                                              cacheWidth: 300,
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.only(top: 6),
+                                              child: Text(
+                                                isCooldown
+                                                    ? '$seconds초 후 재전송'
+                                                    : '응원메시지 보내기',
+                                                style: TextStyle(
+                                                  fontFamily: 'BMJUA',
+                                                  fontSize: 23,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isCooldown
+                                                      ? const Color(0xFF4E342E)
+                                                          .withOpacity(0.5)
+                                                      : const Color(0xFF4E342E),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            // 보낸 기록 버튼 (오른쪽)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 20),
-                              child: RoomActionButton(
-                                iconPath: 'assets/icons/SendRecord_Icon.png',
-                                label: '보낸기록',
-                                size: 90,
-                                onTap: () {
-                                  _showSentMessagesDialog(colorScheme);
-                                },
+                              // 보낸 기록 버튼 (오른쪽)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 20),
+                                child: RoomActionButton(
+                                  iconPath: 'assets/icons/SendRecord_Icon.png',
+                                  label: '보낸기록',
+                                  size: 90,
+                                  onTap: () {
+                                    _showSentMessagesDialog(colorScheme);
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        );
-                      },
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -387,34 +393,11 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
+              PopupTextField(
                 controller: messageController,
                 maxLines: 3,
-                style: TextStyle(color: colorScheme.textPrimary),
-                decoration: InputDecoration(
-                  hintText: '친구에게 응원의 메시지를 남겨주세요',
-                  hintStyle: TextStyle(color: colorScheme.textHint),
-                  filled: true,
-                  fillColor: Colors.black.withOpacity(0.04),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.textHint.withOpacity(0.2)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.textHint.withOpacity(0.2)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                        color: colorScheme.primaryButton, width: 1.5),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  errorText: errorText,
-                ),
+                hintText: '친구에게 응원의 메시지를 남겨주세요',
+                errorText: errorText,
                 onChanged: (_) {
                   if (errorNotifier.value != null) {
                     errorNotifier.value = null;
@@ -457,13 +440,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
             socialController.startCheerCooldown(_friend!.uid);
 
             final friendId = _friend!.uid;
-            final messenger = ScaffoldMessenger.of(parentContext);
-            messenger.showSnackBar(
-              SnackBar(
-                content: const Text('응원 메시지를 보냈습니다! 💌'),
-                backgroundColor: colorScheme.success,
-              ),
-            );
+            MemoNotification.show(parentContext, '응원 메시지를 보냈습니다! 💌');
 
             // 3. 실제 전송은 백그라운드에서 진행
             unawaited(() async {
@@ -494,12 +471,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
               } catch (e) {
                 debugPrint('응원 메시지 전송 오류: $e');
                 if (parentContext.mounted) {
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: const Text('응원 메시지 전송에 실패했습니다.'),
-                      backgroundColor: colorScheme.error,
-                    ),
-                  );
+                  MemoNotification.show(parentContext, '응원 메시지 전송에 실패했습니다.');
                 }
               }
             }());

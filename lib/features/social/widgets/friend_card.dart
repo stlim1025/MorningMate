@@ -7,6 +7,7 @@ import '../../../core/theme/app_color_scheme.dart';
 import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../character/widgets/character_display.dart';
+import '../../../core/widgets/memo_notification.dart';
 
 class FriendCard extends StatelessWidget {
   final UserModel friend;
@@ -30,14 +31,7 @@ class FriendCard extends StatelessWidget {
 
     final friendId = friend.uid;
     final friendNickname = friend.nickname;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('$friendNickname님을 깨웠습니다! ⏰'),
-        backgroundColor: colorScheme.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    MemoNotification.show(context, '$friendNickname님을 깨웠습니다! ⏰');
 
     // 3. 실제 전송은 백그라운드에서 진행
     unawaited(() async {
@@ -51,13 +45,7 @@ class FriendCard extends StatelessWidget {
       } catch (e) {
         debugPrint('깨우기 요청 실패: $e');
         if (context.mounted) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: const Text('깨우기 요청 실패'),
-              backgroundColor: colorScheme.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          MemoNotification.show(context, '깨우기 요청 실패');
         }
       }
     }());

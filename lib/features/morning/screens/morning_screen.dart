@@ -181,6 +181,7 @@ class _MorningScreenState extends State<MorningScreen>
     final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
 
     return Scaffold(
+      extendBody: true,
       body: Consumer<MorningController>(
         builder: (context, morningController, child) {
           final isAwake = morningController.hasDiaryToday;
@@ -206,10 +207,7 @@ class _MorningScreenState extends State<MorningScreen>
                   context,
                   isAwake,
                   characterController,
-                  todaysMood:
-                      (morningController.todayDiary?.moods.isNotEmpty ?? false)
-                          ? morningController.todayDiary?.moods.first
-                          : null,
+                  morningController,
                 ),
               ),
 
@@ -250,15 +248,21 @@ class _MorningScreenState extends State<MorningScreen>
               // 3. 상점/꾸미기 버튼 (왼쪽)
               Positioned(
                 left: 20,
-                bottom: isAwake ? 15 : 120, // 일기 작성 후에는 하단 탭 바로 위, 작성 전에는 위쪽
+                bottom: 0,
                 child: SafeArea(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const DecorationButton(),
-                      const SizedBox(height: 8),
-                      const StoreButton(),
-                    ],
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        bottom: isAwake
+                            ? 30
+                            : 125), // Adjusted bottom from 62 to 30
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const DecorationButton(),
+                        const SizedBox(height: 8),
+                        const StoreButton(),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -268,11 +272,14 @@ class _MorningScreenState extends State<MorningScreen>
                 Positioned(
                   left: 0,
                   right: 0,
-                  bottom: 15, // 하단 탭 바 바로 위
+                  bottom: 0,
                   child: SafeArea(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          bottom: 30,
+                          left: 20,
+                          right: 20), // Tab(60) + tighter margin
+                      child: Center(
                         child: DiaryButton(
                           onTap: () async {
                             if (morningController.currentQuestion == null) {
@@ -291,6 +298,7 @@ class _MorningScreenState extends State<MorningScreen>
 
               // 4. Main Content (헤더, 하단 섹션 오버레이)
               SafeArea(
+                bottom: true,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -490,12 +498,14 @@ class _MorningScreenState extends State<MorningScreen>
   Widget _buildEnhancedCharacterRoom(
     BuildContext context,
     bool isAwake,
-    CharacterController characterController, {
-    String? todaysMood,
-  }) {
+    CharacterController characterController,
+    MorningController morningController,
+  ) {
     final isDarkMode =
         Provider.of<ThemeController>(context, listen: false).isDarkMode;
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+
+    final bottomPadding = 30 + MediaQuery.of(context).padding.bottom;
 
     return EnhancedCharacterRoomWidget(
       key: const ValueKey('main_character_room'),
@@ -507,7 +517,10 @@ class _MorningScreenState extends State<MorningScreen>
       roomDecoration: characterController.currentUser?.roomDecoration,
       currentAnimation: characterController.currentAnimation,
       onPropTap: (prop) => _showMemoDialog(prop),
-      todaysMood: todaysMood,
+      todaysMood: (morningController.todayDiary?.moods.isNotEmpty ?? false)
+          ? morningController.todayDiary?.moods.first
+          : null,
+      bottomPadding: bottomPadding,
     );
   }
 

@@ -66,7 +66,7 @@ class _ShopScreenState extends State<ShopScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontFamily: 'BMJUA',
-                color: Colors.black87,
+                color: Color(0xFF4E342E),
               ),
             ),
             centerTitle: true,

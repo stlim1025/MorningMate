@@ -507,9 +507,7 @@ class CharacterController extends ChangeNotifier {
   Future<void> updateActiveEmoticons(
       String userId, List<String> emoticonIds) async {
     if (_currentUser == null) return;
-    if (emoticonIds.length > 4) {
-      throw Exception('이모티콘은 최대 4개까지만 선택할 수 있습니다.');
-    }
+    // Limit removed as per user request (4 or more allowed)
 
     // 모두 구매한 이모티콘인지 확인
     for (final id in emoticonIds) {
