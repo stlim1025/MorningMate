@@ -10,8 +10,9 @@ import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
 import '../features/morning/screens/morning_screen.dart';
 import '../features/morning/screens/writing_screen.dart';
-import '../features/character/screens/character_room_screen.dart';
+import '../features/challenge/screens/challenge_screen.dart';
 import '../features/character/screens/decoration_screen.dart';
+import '../features/character/screens/shop_screen.dart';
 import '../features/social/screens/social_screen.dart';
 import '../features/social/screens/friend_room_screen.dart';
 import '../features/notification/screens/notification_screen.dart';
@@ -129,18 +130,22 @@ class AppRouter {
           },
         ),
 
-        // Character Routes
         GoRoute(
-          path: '/character',
-          name: 'character',
-          builder: (context, state) => const CharacterRoomScreen(),
-          routes: [
-            GoRoute(
-              path: 'decoration',
-              name: 'decoration',
-              builder: (context, state) => const DecorationScreen(),
-            ),
-          ],
+          path: '/decoration',
+          name: 'decoration',
+          builder: (context, state) => const DecorationScreen(),
+        ),
+        GoRoute(
+          path: '/shop',
+          name: 'shop',
+          builder: (context, state) => const ShopScreen(),
+        ),
+
+        // Challenge Routes
+        GoRoute(
+          path: '/challenge',
+          name: 'challenge',
+          builder: (context, state) => const ChallengeScreen(),
         ),
 
         // Social Routes

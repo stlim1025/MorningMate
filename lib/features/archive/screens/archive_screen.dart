@@ -11,6 +11,7 @@ import '../../../data/models/diary_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
 import '../../character/widgets/character_display.dart';
+import '../../../core/constants/room_assets.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -79,6 +80,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: Colors.transparent,
       body: Container(
         decoration: const BoxDecoration(
@@ -89,6 +91,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           ),
         ),
         child: SafeArea(
+          bottom: false, // Allow background/content to extend lower
           child: Column(
             children: [
               // 헤더 (마이페이지 + 설정 버튼)
@@ -110,7 +113,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
                         // 일기 작성 정보 (캘린더)
                         _buildCalendarSection(context, colorScheme),
-                        const SizedBox(height: 40),
+                        const SizedBox(
+                            height:
+                                70), // Reduced from 100 to let content sit lower
                       ],
                     ),
                   ),
@@ -663,7 +668,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       dateText: DateFormat('M월 d일 기록').format(diary.dateOnly),
       moodWidget: _buildMoodWidget(
           diary.moods.isNotEmpty ? diary.moods.first : '',
-          48), // Increased size
+          64), // Increased size from 48 to 64
     );
   }
 
@@ -712,23 +717,24 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     if (mood.isEmpty) {
       return Text('📝', style: TextStyle(fontSize: size * 0.8));
     }
-    switch (mood) {
-      case 'happy':
-        return Image.asset('assets/imoticon/Imoticon_Happy.png',
-            width: size, height: size);
-      case 'neutral':
-        return Image.asset('assets/imoticon/Imoticon_Normal.png',
-            width: size, height: size);
-      case 'sad':
-        return Image.asset('assets/imoticon/Imoticon_Sad.png',
-            width: size, height: size);
-      case 'excited':
-        return Image.asset('assets/imoticon/Imoticon_Love.png',
-            width: size, height: size);
-      default:
-        // Check for emoji or just display text
-        return Text(mood, style: TextStyle(fontSize: size));
-    }
+
+    try {
+      final emoticon = RoomAssets.emoticons.firstWhere(
+        (e) => e.id == mood,
+        orElse: () => RoomAssets.emoticons[1], // Default to normal
+      );
+
+      if (emoticon.imagePath != null) {
+        return Image.asset(
+          emoticon.imagePath!,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+        );
+      }
+    } catch (_) {}
+
+    return Text(mood, style: TextStyle(fontSize: size * 0.8));
   }
 
   Widget _buildMyMemosButton() {
@@ -760,138 +766,189 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           builder: (context, scrollController) {
             return Container(
               decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: ResizeImage(
-                      AssetImage('assets/images/MyNote_Background.png'),
-                      width: 800),
-                  fit: BoxFit.fill,
-                ),
+                color: Colors.transparent,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              child: Column(
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
                 children: [
-                  const SizedBox(height: 80),
-                  Expanded(
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(userId)
-                          .collection('memos')
-                          .orderBy('createdAt', descending: true)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }
-
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.note_alt_outlined,
-                                    size: 48, color: Colors.grey.shade300),
-                                const SizedBox(height: 16),
-                                Text(
-                                  '작성한 메모가 없습니다',
-                                  style: TextStyle(color: Colors.grey.shade500),
-                                ),
-                              ],
+                  // Fixed Background Image
+                  Positioned.fill(
+                    child: Image.asset(
+                      'assets/images/MyNote_Background.png',
+                      fit: BoxFit.fill,
+                      cacheWidth: 800,
+                    ),
+                  ),
+                  // Scrollable Content
+                  CustomScrollView(
+                    controller: scrollController,
+                    slivers: [
+                      // Header Section
+                      SliverToBoxAdapter(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 55),
+                            const Text(
+                              '내 메모',
+                              style: TextStyle(
+                                fontFamily: 'BMJUA',
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4E342E),
+                              ),
                             ),
-                          );
-                        }
+                            const SizedBox(height: 12),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 40),
+                              child: CustomPaint(
+                                size: const Size(double.infinity, 1),
+                                painter: _DottedLinePainter(),
+                              ),
+                            ),
+                            const SizedBox(height: 15),
+                          ],
+                        ),
+                      ),
+                      // Memo List or Empty State
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(userId)
+                            .collection('memos')
+                            .orderBy('createdAt', descending: true)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const SliverToBoxAdapter(
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 50),
+                                child:
+                                    Center(child: CircularProgressIndicator()),
+                              ),
+                            );
+                          }
 
-                        final memos = snapshot.data!.docs;
-
-                        return ListView.builder(
-                          controller: scrollController,
-                          itemCount: memos.length,
-                          padding: const EdgeInsets.all(20),
-                          itemBuilder: (context, index) {
-                            final data =
-                                memos[index].data() as Map<String, dynamic>;
-                            final content = data['content'] as String? ?? '';
-                            final heartCount = data['heartCount'] as int? ?? 0;
-                            final createdAt =
-                                data['createdAt'] as String? ?? '';
-
-                            DateTime? date;
-                            try {
-                              date = DateTime.parse(createdAt);
-                            } catch (_) {}
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(24),
-                              decoration: const BoxDecoration(
-                                image: DecorationImage(
-                                  image: ResizeImage(
-                                      AssetImage('assets/images/Memo.png'),
-                                      width: 800),
-                                  fit: BoxFit.fill,
+                          if (!snapshot.hasData ||
+                              snapshot.data!.docs.isEmpty) {
+                            return SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 100),
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.note_alt_outlined,
+                                        size: 48, color: Colors.grey.shade300),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      '작성한 메모가 없습니다',
+                                      style: TextStyle(
+                                          color: Colors.grey.shade500),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Column(
+                            );
+                          }
+
+                          final memos = snapshot.data!.docs;
+
+                          return SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final data = memos[index].data()
+                                      as Map<String, dynamic>;
+                                  final content =
+                                      data['content'] as String? ?? '';
+                                  final heartCount =
+                                      data['heartCount'] as int? ?? 0;
+                                  final createdAt =
+                                      data['createdAt'] as String? ?? '';
+
+                                  DateTime? date;
+                                  try {
+                                    date = DateTime.parse(createdAt);
+                                  } catch (_) {}
+
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    padding: const EdgeInsets.all(24),
+                                    decoration: const BoxDecoration(
+                                      image: DecorationImage(
+                                        image: ResizeImage(
+                                            AssetImage(
+                                                'assets/images/Memo.png'),
+                                            width: 800),
+                                        fit: BoxFit.fill,
+                                      ),
+                                    ),
+                                    child: Row(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          content,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            height: 1.4,
-                                            color: Colors.black87,
-                                            fontFamily:
-                                                'NanumPenScript-Regular',
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                content,
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  height: 1.4,
+                                                  color: Colors.black87,
+                                                  fontFamily:
+                                                      'NanumPenScript-Regular',
+                                                ),
+                                              ),
+                                              if (date != null) ...[
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  DateFormat('yyyy.MM.dd')
+                                                      .format(date),
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.black45,
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
                                           ),
                                         ),
-                                        if (date != null) ...[
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            DateFormat('yyyy.MM.dd')
-                                                .format(date),
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.black45,
+                                        const SizedBox(width: 12),
+                                        Column(
+                                          children: [
+                                            Image.asset(
+                                              'assets/images/Pink_Heart.png',
+                                              width: 20,
+                                              height: 20,
+                                              cacheWidth: 100, // Optimized
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '$heartCount',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: Color(0xFFFF8EAB),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Column(
-                                    children: [
-                                      Image.asset(
-                                        'assets/images/Pink_Heart.png',
-                                        width: 20,
-                                        height: 20,
-                                        cacheWidth: 100, // Optimized
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '$heartCount',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                          color: Color(0xFFFF8EAB),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                  );
+                                },
+                                childCount: memos.length,
                               ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

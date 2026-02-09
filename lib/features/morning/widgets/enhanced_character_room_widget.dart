@@ -209,7 +209,7 @@ class _EnhancedCharacterRoomWidgetState
         width: width,
         height: height,
         alignment: Alignment.topCenter,
-        padding: EdgeInsets.only(bottom: widget.bottomPadding),
+        // Removed padding to allow floor to extend behind tab bar
         decoration: widget.showBorder
             ? BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
@@ -233,13 +233,18 @@ class _EnhancedCharacterRoomWidgetState
           children: [
             // 3D 諛??대? (諛붾떏, 踰? 李쎈Ц)
             RepaintBoundary(
-              child: Room3DBackground(
-                isAwake: widget.isAwake,
-                colorScheme: colorScheme,
-                decoration: decoration,
+              child: SizedBox(
                 width: width,
-                height: renderHeight,
-                isDarkMode: widget.isDarkMode,
+                height: height,
+                child: Room3DBackground(
+                  isAwake: widget.isAwake,
+                  colorScheme: colorScheme,
+                  decoration: decoration,
+                  width: width,
+                  height: renderHeight, // Logical height for walls/corner
+                  fullHeight: height, // Full height for floor extension
+                  isDarkMode: widget.isDarkMode,
+                ),
               ),
             ),
 
@@ -489,14 +494,15 @@ class _EnhancedCharacterRoomWidgetState
                                 enableAnimation: true,
                               ),
                             ),
-                            // Mood Bubble (따라 움직이도록 verticalOffset 적용)
-                            if (widget.todaysMood != null && isAwake)
+                            // Mood Bubble
+                            if (isAwake && widget.todaysMood != null)
                               Positioned(
-                                top: -charSize * 0.6 +
-                                    verticalOffset, // 애니메이션 적용
+                                top: -charSize * 0.6 + verticalOffset,
                                 right: -charSize * 0.4,
                                 child: _buildMoodBubble(
-                                    widget.todaysMood!, charSize),
+                                  widget.todaysMood!,
+                                  charSize,
+                                ),
                               ),
                           ],
                         );
@@ -704,6 +710,7 @@ class _EnhancedCharacterRoomWidgetState
           fit: BoxFit.contain,
         );
         break;
+      case 'normal':
       case 'neutral':
         moodContent = Image.asset(
           'assets/imoticon/Imoticon_Normal.png',
@@ -720,9 +727,42 @@ class _EnhancedCharacterRoomWidgetState
           fit: BoxFit.contain,
         );
         break;
+      case 'love':
       case 'excited':
         moodContent = Image.asset(
           'assets/imoticon/Imoticon_Love.png',
+          width: charSize * 0.4,
+          height: charSize * 0.4,
+          fit: BoxFit.contain,
+        );
+        break;
+      case 'angry':
+        moodContent = Image.asset(
+          'assets/imoticon/Imoticon_Angry.png',
+          width: charSize * 0.4,
+          height: charSize * 0.4,
+          fit: BoxFit.contain,
+        );
+        break;
+      case 'awkward':
+        moodContent = Image.asset(
+          'assets/imoticon/Imoticon_Awkward.png',
+          width: charSize * 0.4,
+          height: charSize * 0.4,
+          fit: BoxFit.contain,
+        );
+        break;
+      case 'move':
+        moodContent = Image.asset(
+          'assets/imoticon/Imoticon_Move.png',
+          width: charSize * 0.4,
+          height: charSize * 0.4,
+          fit: BoxFit.contain,
+        );
+        break;
+      case 'sleep':
+        moodContent = Image.asset(
+          'assets/imoticon/Imoticon_Sleep.png',
           width: charSize * 0.4,
           height: charSize * 0.4,
           fit: BoxFit.contain,
@@ -827,6 +867,7 @@ class Room3DBackground extends StatelessWidget {
   final RoomDecorationModel decoration;
   final double width;
   final double height;
+  final double fullHeight; // Added to extend floor
   final bool isDarkMode;
 
   const Room3DBackground({
@@ -836,6 +877,7 @@ class Room3DBackground extends StatelessWidget {
     required this.decoration,
     required this.width,
     required this.height,
+    required this.fullHeight,
     required this.isDarkMode,
   });
 
@@ -888,8 +930,12 @@ class Room3DBackground extends StatelessWidget {
           ),
         ),
 
-        // 1. 천장 (Ceiling)
-        Positioned.fill(
+        // 1. 천장 (Ceiling) - logical height 기준
+        Positioned(
+          left: 0,
+          top: 0,
+          right: 0,
+          height: height, // Up to logical height
           child: ClipPath(
             clipper: _CeilingClipper(
               hLineYTop: hLineYTop,
@@ -1035,8 +1081,12 @@ class Room3DBackground extends StatelessWidget {
           ),
         ),
 
-        // 4. 바닥 (Floor)
-        Positioned.fill(
+        // 4. 바닥 (Floor) - Physical full height까지 확장
+        Positioned(
+          left: 0,
+          top: 0,
+          right: 0,
+          bottom: 0, // Fill the full height SizedBox
           child: ClipPath(
             clipper: _FloorClipper(
               vLineX: vLineX,

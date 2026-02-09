@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../character/screens/shop_screen.dart';
+import 'package:go_router/go_router.dart';
 import '../../common/widgets/room_action_button.dart';
 
 class StoreButton extends StatelessWidget {
@@ -11,10 +11,7 @@ class StoreButton extends StatelessWidget {
       iconPath: 'assets/icons/Store_Icon.png',
       label: '상점',
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ShopScreen()),
-        );
+        context.push('/shop');
       },
     );
   }

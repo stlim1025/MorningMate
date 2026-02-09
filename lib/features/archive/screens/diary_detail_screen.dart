@@ -165,19 +165,13 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  flex: 4,
                                   child: _buildQuestionCard(colorScheme),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  flex: 3,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 30),
-                                    child: _buildMoodSelection(colorScheme),
-                                  ),
+                                  child: _buildMoodSelection(colorScheme),
                                 ),
                               ],
                             ),
@@ -325,38 +319,68 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     final moods = _currentDiary?.moods ?? [];
     if (moods.isEmpty) return const SizedBox.shrink();
 
-    return Center(
-      child: Container(
-        height: 100,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return AspectRatio(
+      aspectRatio: 1.0,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0), // 외부 여백을 주어 배경 이미지 자체의 크기를 줄임
+        child: moods.length == 1
+            ? _buildSingleMood(moods.first)
+            : _buildMultipleMoods(moods),
+      ),
+    );
+  }
+
+  Widget _buildSingleMood(String moodId) {
+    final emoticon = RoomAssets.emoticons.firstWhere(
+      (e) => e.id == moodId,
+      orElse: () => RoomAssets.emoticons[1],
+    );
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Image.asset(
+          'assets/images/Popup_Background.png',
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.fill,
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12.0), // 배경이 작아졌으므로 내부 여백은 다시 줄임
+          child: Image.asset(
+            emoticon.imagePath!,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMultipleMoods(List<String> moods) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/Popup_Background.png'),
+          fit: BoxFit.fill,
+        ),
+      ),
+      child: Center(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          runAlignment: WrapAlignment.center,
+          spacing: 4,
+          runSpacing: 4,
           children: moods.map((moodId) {
             final emoticon = RoomAssets.emoticons.firstWhere(
               (e) => e.id == moodId,
-              orElse: () =>
-                  RoomAssets.emoticons[1], // Default to neutral/normal
+              orElse: () => RoomAssets.emoticons[1],
             );
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: SizedBox(
-                width: 70,
-                height: 70,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/Popup_Background.png',
-                      fit: BoxFit.fill,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child:
-                          Image.asset(emoticon.imagePath!, fit: BoxFit.contain),
-                    ),
-                  ],
-                ),
-              ),
+            return SizedBox(
+              width: moods.length <= 2 ? 60 : 45,
+              height: moods.length <= 2 ? 60 : 45,
+              child: Image.asset(emoticon.imagePath!, fit: BoxFit.contain),
             );
           }).toList(),
         ),

@@ -29,6 +29,8 @@ class _WritingScreenState extends State<WritingScreen> {
   bool _enableBlur = false;
   bool _didLoadSettings = false;
   final List<String> _selectedMoods = [];
+  final PageController _pageController = PageController();
+  int _currentMoodPage = 0;
 
   @override
   void initState() {
@@ -44,6 +46,14 @@ class _WritingScreenState extends State<WritingScreen> {
     _textController.addListener(() {
       morningController.updateCharCount(_textController.text);
     });
+
+    final characterController = context.read<CharacterController>();
+    final activeIds = characterController.currentUser?.activeEmoticonIds ?? [];
+    if (activeIds.isNotEmpty) {
+      _selectedMoods.add(activeIds.first);
+    } else {
+      _selectedMoods.add('normal');
+    }
   }
 
   @override
@@ -66,6 +76,7 @@ class _WritingScreenState extends State<WritingScreen> {
   void dispose() {
     _textController.dispose();
     _focusNode.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -146,17 +157,17 @@ class _WritingScreenState extends State<WritingScreen> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Expanded(
-                                              flex: 4,
+                                              flex: 10,
                                               child: _buildQuestionCard(
                                                   colorScheme),
                                             ),
                                             const SizedBox(width: 12),
                                             Expanded(
-                                              flex: 3,
+                                              flex: 9,
                                               child: Padding(
                                                 padding: const EdgeInsets.only(
                                                     top:
-                                                        30), // Lowered emoticon section
+                                                        12), // Slightly increased top padding
                                                 child: _buildMoodSelection(
                                                     colorScheme),
                                               ),
@@ -396,37 +407,97 @@ class _WritingScreenState extends State<WritingScreen> {
       );
     }).toList();
 
+    if (activeEmoticons.isEmpty) return const SizedBox();
+
+    final int pageCount = (activeEmoticons.length / 4).ceil();
+
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            if (activeEmoticons.length > 0)
-              _buildMoodButton(activeEmoticons[0].imagePath!,
-                  activeEmoticons[0].id, colorScheme),
-            if (activeEmoticons.length <= 0) const Expanded(child: SizedBox()),
-            const SizedBox(width: 8),
-            if (activeEmoticons.length > 1)
-              _buildMoodButton(activeEmoticons[1].imagePath!,
-                  activeEmoticons[1].id, colorScheme),
-            if (activeEmoticons.length <= 1) const Expanded(child: SizedBox()),
-          ],
+        AspectRatio(
+          aspectRatio: 1.0,
+          child: PageView.builder(
+            controller: _pageController,
+            clipBehavior:
+                Clip.hardEdge, // Prevent transition bleed into other areas
+            onPageChanged: (index) {
+              setState(() {
+                _currentMoodPage = index;
+              });
+            },
+            itemCount: pageCount,
+            itemBuilder: (context, pageIndex) {
+              final start = pageIndex * 4;
+              final end = (start + 4 > activeEmoticons.length)
+                  ? activeEmoticons.length
+                  : start + 4;
+              final pageEmoticons = activeEmoticons.sublist(start, end);
+
+              return Padding(
+                padding: const EdgeInsets.all(
+                    12.0), // Padding to safely contain pins within the clipped PageView
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildMoodButton(pageEmoticons[0].imagePath!,
+                              pageEmoticons[0].id, colorScheme),
+                          const SizedBox(width: 8),
+                          if (pageEmoticons.length > 1)
+                            _buildMoodButton(pageEmoticons[1].imagePath!,
+                                pageEmoticons[1].id, colorScheme)
+                          else
+                            const Expanded(child: SizedBox()),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (pageEmoticons.length > 2)
+                            _buildMoodButton(pageEmoticons[2].imagePath!,
+                                pageEmoticons[2].id, colorScheme)
+                          else
+                            const Expanded(child: SizedBox()),
+                          const SizedBox(width: 8),
+                          if (pageEmoticons.length > 3)
+                            _buildMoodButton(pageEmoticons[3].imagePath!,
+                                pageEmoticons[3].id, colorScheme)
+                          else
+                            const Expanded(child: SizedBox()),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            if (activeEmoticons.length > 2)
-              _buildMoodButton(activeEmoticons[2].imagePath!,
-                  activeEmoticons[2].id, colorScheme),
-            if (activeEmoticons.length <= 2) const Expanded(child: SizedBox()),
-            const SizedBox(width: 8),
-            if (activeEmoticons.length > 3)
-              _buildMoodButton(activeEmoticons[3].imagePath!,
-                  activeEmoticons[3].id, colorScheme),
-            if (activeEmoticons.length <= 3) const Expanded(child: SizedBox()),
-          ],
-        ),
+        if (pageCount > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(pageCount, (index) {
+                return Container(
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentMoodPage == index
+                        ? const Color(0xFF5D4037)
+                        : const Color(0xFF5D4037).withOpacity(0.3),
+                  ),
+                );
+              }),
+            ),
+          ),
       ],
     );
   }
@@ -438,50 +509,38 @@ class _WritingScreenState extends State<WritingScreen> {
       child: GestureDetector(
         onTap: () {
           setState(() {
-            if (isSelected) {
-              _selectedMoods.remove(moodId);
-            } else {
-              if (_selectedMoods.length < 4) {
-                _selectedMoods.add(moodId);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      '이모티콘은 최대 4개까지만 선택할 수 있어요!',
-                      style: TextStyle(fontFamily: 'BMJUA'),
-                    ),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              }
-            }
+            _selectedMoods.clear();
+            _selectedMoods.add(moodId);
           });
         },
-        child: AspectRatio(
-          aspectRatio: 1.0,
-          child: Stack(
-            alignment: Alignment.center,
-            clipBehavior: Clip.none,
-            children: [
-              Image.asset(
-                'assets/images/Popup_Background.png',
-                fit: BoxFit.fill,
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Image.asset(assetPath, fit: BoxFit.contain),
-              ),
-              if (isSelected)
-                Positioned(
-                  top: -8,
-                  right: -8,
-                  child: Image.asset(
-                    'assets/images/Red_Pin.png',
-                    width: 30,
-                    height: 30,
-                  ),
+        child: Opacity(
+          opacity: isSelected ? 1.0 : 0.6,
+          child: AspectRatio(
+            aspectRatio: 1.0,
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Image.asset(
+                  'assets/images/Popup_Background.png',
+                  fit: BoxFit.fill,
                 ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Image.asset(assetPath, fit: BoxFit.contain),
+                ),
+                if (isSelected)
+                  Positioned(
+                    top: -8,
+                    right: -8,
+                    child: Image.asset(
+                      'assets/images/Red_Pin.png',
+                      width: 30,
+                      height: 30,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

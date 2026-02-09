@@ -32,7 +32,7 @@ class UserModel {
   final List<String> purchasedPropIds; // 구매한 소품 ID 목록
   final List<String> purchasedFloorIds; // 구매한 바닥 ID 목록
   final List<String> purchasedEmoticonIds; // 구매한 이모티콘 ID 목록
-  final List<String> activeEmoticonIds; // 활성화된 이모티콘 ID 목록 (최대 4개)
+  final List<String> activeEmoticonIds; // 활성화된 이모티콘 ID 목록
   final String currentThemeId; // 현재 선택된 테마 ID
   final RoomDecorationModel roomDecoration;
 

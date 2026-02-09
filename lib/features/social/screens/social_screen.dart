@@ -56,6 +56,7 @@ class _SocialScreenState extends State<SocialScreen> {
         userId == null ? null : socialController.getFriendsStream(userId);
 
     return Scaffold(
+      extendBody: true,
       extendBodyBehindAppBar: true,
       backgroundColor: const Color(0xFFFFF9F0), // Prevent black flash
       appBar: AppBar(
@@ -120,6 +121,7 @@ class _SocialScreenState extends State<SocialScreen> {
           ),
         ),
         child: SafeArea(
+          bottom: true, // Handle system bottom padding
           child: StreamBuilder<List<UserModel>>(
             stream: friendsStream,
             initialData: socialController.friends,
@@ -236,7 +238,8 @@ class _SocialScreenState extends State<SocialScreen> {
                       if (hasFriends)
                         Expanded(
                           child: GridView.builder(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.fromLTRB(
+                                16, 16, 16, 80), // Added bottom padding (80)
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 3,
@@ -252,6 +255,7 @@ class _SocialScreenState extends State<SocialScreen> {
                             },
                           ),
                         ),
+                      if (!hasFriends) const SizedBox(height: 80),
                     ],
                   ),
                 ],

@@ -12,7 +12,7 @@ class DecorationButton extends StatelessWidget {
       label: '꾸미기',
       size: 53, // 원래 width가 53이었음
       onTap: () {
-        context.push('/character/decoration');
+        context.push('/decoration');
       },
     );
   }
