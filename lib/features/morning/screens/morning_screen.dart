@@ -254,7 +254,7 @@ class _MorningScreenState extends State<MorningScreen>
                     padding: EdgeInsets.only(
                         bottom: isAwake
                             ? 30
-                            : 125), // Adjusted bottom from 62 to 30
+                            : 105), // Adjusted bottom from 125 to 75
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -276,7 +276,7 @@ class _MorningScreenState extends State<MorningScreen>
                   child: SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.only(
-                          bottom: 30,
+                          bottom: 10,
                           left: 20,
                           right: 20), // Tab(60) + tighter margin
                       child: Center(
