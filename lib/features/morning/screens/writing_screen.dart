@@ -28,7 +28,7 @@ class _WritingScreenState extends State<WritingScreen> {
   final FocusNode _focusNode = FocusNode();
   bool _enableBlur = false;
   bool _didLoadSettings = false;
-  final List<String> _selectedMoods = [];
+  final List<String> _selectedMoods = ['normal'];
 
   @override
   void initState() {
@@ -156,7 +156,7 @@ class _WritingScreenState extends State<WritingScreen> {
                                               child: Padding(
                                                 padding: const EdgeInsets.only(
                                                     top:
-                                                        30), // Lowered emoticon section
+                                                        15), // Lowered emoticon section
                                                 child: _buildMoodSelection(
                                                     colorScheme),
                                               ),
@@ -438,50 +438,38 @@ class _WritingScreenState extends State<WritingScreen> {
       child: GestureDetector(
         onTap: () {
           setState(() {
-            if (isSelected) {
-              _selectedMoods.remove(moodId);
-            } else {
-              if (_selectedMoods.length < 4) {
-                _selectedMoods.add(moodId);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      '이모티콘은 최대 4개까지만 선택할 수 있어요!',
-                      style: TextStyle(fontFamily: 'BMJUA'),
-                    ),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              }
-            }
+            _selectedMoods.clear();
+            _selectedMoods.add(moodId);
           });
         },
-        child: AspectRatio(
-          aspectRatio: 1.0,
-          child: Stack(
-            alignment: Alignment.center,
-            clipBehavior: Clip.none,
-            children: [
-              Image.asset(
-                'assets/images/Popup_Background.png',
-                fit: BoxFit.fill,
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Image.asset(assetPath, fit: BoxFit.contain),
-              ),
-              if (isSelected)
-                Positioned(
-                  top: -8,
-                  right: -8,
-                  child: Image.asset(
-                    'assets/images/Red_Pin.png',
-                    width: 30,
-                    height: 30,
-                  ),
+        child: Opacity(
+          opacity: isSelected ? 1.0 : 0.6,
+          child: AspectRatio(
+            aspectRatio: 1.0,
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Image.asset(
+                  'assets/images/Popup_Background.png',
+                  fit: BoxFit.fill,
                 ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Image.asset(assetPath, fit: BoxFit.contain),
+                ),
+                if (isSelected)
+                  Positioned(
+                    top: -8,
+                    right: -8,
+                    child: Image.asset(
+                      'assets/images/Red_Pin.png',
+                      width: 30,
+                      height: 30,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

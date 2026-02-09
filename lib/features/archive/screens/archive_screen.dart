@@ -11,6 +11,7 @@ import '../../../data/models/diary_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
 import '../../character/widgets/character_display.dart';
+import '../../../core/constants/room_assets.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -663,7 +664,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       dateText: DateFormat('M월 d일 기록').format(diary.dateOnly),
       moodWidget: _buildMoodWidget(
           diary.moods.isNotEmpty ? diary.moods.first : '',
-          48), // Increased size
+          64), // Increased size from 48 to 64
     );
   }
 
@@ -712,23 +713,24 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     if (mood.isEmpty) {
       return Text('📝', style: TextStyle(fontSize: size * 0.8));
     }
-    switch (mood) {
-      case 'happy':
-        return Image.asset('assets/imoticon/Imoticon_Happy.png',
-            width: size, height: size);
-      case 'neutral':
-        return Image.asset('assets/imoticon/Imoticon_Normal.png',
-            width: size, height: size);
-      case 'sad':
-        return Image.asset('assets/imoticon/Imoticon_Sad.png',
-            width: size, height: size);
-      case 'excited':
-        return Image.asset('assets/imoticon/Imoticon_Love.png',
-            width: size, height: size);
-      default:
-        // Check for emoji or just display text
-        return Text(mood, style: TextStyle(fontSize: size));
-    }
+
+    try {
+      final emoticon = RoomAssets.emoticons.firstWhere(
+        (e) => e.id == mood,
+        orElse: () => RoomAssets.emoticons[1], // Default to normal
+      );
+
+      if (emoticon.imagePath != null) {
+        return Image.asset(
+          emoticon.imagePath!,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+        );
+      }
+    } catch (_) {}
+
+    return Text(mood, style: TextStyle(fontSize: size * 0.8));
   }
 
   Widget _buildMyMemosButton() {
