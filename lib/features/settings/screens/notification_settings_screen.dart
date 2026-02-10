@@ -17,7 +17,11 @@ class NotificationSettingsScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.iconPrimary),
+          icon: Image.asset(
+            'assets/icons/X_Button.png',
+            width: 40,
+            height: 40,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -39,68 +43,83 @@ class NotificationSettingsScreen extends StatelessWidget {
             children: [
               _buildSectionTitle('서비스 알림', colorScheme),
               const SizedBox(height: 12),
-              _buildNotiTile(
+              _buildOptionArea(
                 context,
-                '아침 일기 알림',
-                '아침마다 일기 작성을 잊지 않도록 알려드려요',
-                user.morningDiaryNoti,
-                (val) => _updateNoti(
-                    context, authController, {'morningDiaryNoti': val}),
-                colorScheme,
+                children: [
+                  _buildNotiTile(
+                    context,
+                    '아침 일기 알림',
+                    '아침마다 일기 작성을 잊지 않도록 알려드려요',
+                    user.morningDiaryNoti,
+                    (val) => _updateNoti(
+                        context, authController, {'morningDiaryNoti': val}),
+                    colorScheme,
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               _buildSectionTitle('활동 알림', colorScheme),
               const SizedBox(height: 12),
-              _buildNotiTile(
+              _buildOptionArea(
                 context,
-                '깨우기 알림',
-                '친구가 나를 깨웠을 때 알림을 받아요',
-                user.wakeUpNoti,
-                (val) =>
-                    _updateNoti(context, authController, {'wakeUpNoti': val}),
-                colorScheme,
-              ),
-              const SizedBox(height: 8),
-              _buildNotiTile(
-                context,
-                '응원 메시지 알림',
-                '친구가 응원 메시지를 남겼을 때 알림을 받아요',
-                user.cheerMessageNoti,
-                (val) => _updateNoti(
-                    context, authController, {'cheerMessageNoti': val}),
-                colorScheme,
+                children: [
+                  _buildNotiTile(
+                    context,
+                    '깨우기 알림',
+                    '친구가 나를 깨웠을 때 알림을 받아요',
+                    user.wakeUpNoti,
+                    (val) => _updateNoti(
+                        context, authController, {'wakeUpNoti': val}),
+                    colorScheme,
+                  ),
+                  _buildDivider(colorScheme),
+                  _buildNotiTile(
+                    context,
+                    '응원 메시지 알림',
+                    '친구가 응원 메시지를 남겼을 때 알림을 받아요',
+                    user.cheerMessageNoti,
+                    (val) => _updateNoti(
+                        context, authController, {'cheerMessageNoti': val}),
+                    colorScheme,
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               _buildSectionTitle('친구 알림', colorScheme),
               const SizedBox(height: 12),
-              _buildNotiTile(
+              _buildOptionArea(
                 context,
-                '친구 요청 알림',
-                '새로운 친구 요청이 오면 알려드려요',
-                user.friendRequestNoti,
-                (val) => _updateNoti(
-                    context, authController, {'friendRequestNoti': val}),
-                colorScheme,
-              ),
-              const SizedBox(height: 8),
-              _buildNotiTile(
-                context,
-                '친구 수락 알림',
-                '상대방이 내 친구 요청을 수락하면 알려드려요',
-                user.friendAcceptNoti,
-                (val) => _updateNoti(
-                    context, authController, {'friendAcceptNoti': val}),
-                colorScheme,
-              ),
-              const SizedBox(height: 8),
-              _buildNotiTile(
-                context,
-                '친구 거절 알림',
-                '내 친구 요청이 거절되었을 때 알림을 받아요',
-                user.friendRejectNoti,
-                (val) => _updateNoti(
-                    context, authController, {'friendRejectNoti': val}),
-                colorScheme,
+                children: [
+                  _buildNotiTile(
+                    context,
+                    '친구 요청 알림',
+                    '새로운 친구 요청이 오면 알려드려요',
+                    user.friendRequestNoti,
+                    (val) => _updateNoti(
+                        context, authController, {'friendRequestNoti': val}),
+                    colorScheme,
+                  ),
+                  _buildDivider(colorScheme),
+                  _buildNotiTile(
+                    context,
+                    '친구 수락 알림',
+                    '상대방이 내 친구 요청을 수락하면 알려드려요',
+                    user.friendAcceptNoti,
+                    (val) => _updateNoti(
+                        context, authController, {'friendAcceptNoti': val}),
+                    colorScheme,
+                  ),
+                  _buildDivider(colorScheme),
+                  _buildNotiTile(
+                    context,
+                    '친구 거절 알림',
+                    '내 친구 요청이 거절되었을 때 알림을 받아요',
+                    user.friendRejectNoti,
+                    (val) => _updateNoti(
+                        context, authController, {'friendRejectNoti': val}),
+                    colorScheme,
+                  ),
+                ],
               ),
             ],
           );
@@ -110,15 +129,32 @@ class NotificationSettingsScreen extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(String title, AppColorScheme colorScheme) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: colorScheme.textSecondary,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Transform.translate(
+        offset: const Offset(-10, 0),
+        child: Container(
+          width: 120,
+          height: 32,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/icons/Store_Tab.png'),
+              fit: BoxFit.fill,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 20),
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Color(0xFF4E342E),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'BMJUA',
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -132,41 +168,74 @@ class NotificationSettingsScreen extends StatelessWidget {
     Function(bool) onChanged,
     AppColorScheme colorScheme,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return SwitchListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: colorScheme.textPrimary,
+          fontSize: 16,
+          fontFamily: 'BMJUA',
+        ),
       ),
-      child: SwitchListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        title: Text(
-          title,
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          subtitle,
           style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: colorScheme.textPrimary,
-            fontSize: 16,
+            color: colorScheme.textSecondary,
+            fontSize: 13,
+            fontFamily: 'BMJUA',
           ),
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            subtitle,
-            style: TextStyle(
-              color: colorScheme.textSecondary,
-              fontSize: 13,
-            ),
-          ),
+      ),
+      value: value,
+      onChanged: onChanged,
+      activeColor: colorScheme.primaryButton,
+    );
+  }
+
+  Widget _buildOptionArea(BuildContext context,
+      {required List<Widget> children}) {
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/Option_Area.png'),
+          fit: BoxFit.fill,
         ),
-        value: value,
-        onChanged: onChanged,
-        activeColor: colorScheme.primaryButton,
+      ),
+      padding: const EdgeInsets.only(top: 30, bottom: 12),
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildDivider(AppColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final boxWidth = constraints.constrainWidth();
+          const dashWidth = 3.0;
+          const dashHeight = 1.0;
+          final dashCount = (boxWidth / (2 * dashWidth)).floor();
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(dashCount, (_) {
+              return SizedBox(
+                width: dashWidth,
+                height: dashHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4E342E).withOpacity(0.2),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }

@@ -192,13 +192,6 @@ class RoomAssets {
         color: Color(0xFFFFF9C4),
         imagePath: 'assets/images/wallpapers/RedHeart.png'),
     RoomAsset(
-        id: 'white_cloud',
-        name: '흰구름',
-        price: 100,
-        icon: Icons.scatter_plot, // Dots
-        color: Color(0xFFFFF9C4),
-        imagePath: 'assets/images/White_Cloud.png'),
-    RoomAsset(
         id: 'colorful_hexagon',
         name: '컬러풀육각형',
         price: 100,

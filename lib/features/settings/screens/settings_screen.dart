@@ -37,138 +37,175 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.iconPrimary),
+          icon: Image.asset(
+            'assets/icons/X_Button.png',
+            width: 40,
+            height: 40,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           '설정',
           style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
                 color: colorScheme.textPrimary,
+                fontFamily: 'BMJUA',
+                fontWeight: FontWeight.bold,
               ),
         ),
         centerTitle: true,
       ),
-      body: SafeArea(
-        child: Consumer<AuthController>(
-          builder: (context, authController, child) {
-            final user = authController.userModel;
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/Diary_Background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          SafeArea(
+            child: Consumer<AuthController>(
+              builder: (context, authController, child) {
+                final user = authController.userModel;
 
-            return ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                // 프로필 섹션
-                _buildProfileSection(context, user, colorScheme),
+                return ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    // 계정 설정
+                    _buildSectionTitle('계정', colorScheme),
+                    const SizedBox(height: 12),
+                    _buildOptionArea(
+                      context,
+                      children: [
+                        _buildSettingsTile(
+                          context,
+                          colorScheme,
+                          icon: Icons.person,
+                          title: '닉네임 변경',
+                          subtitle: user?.nickname ?? '',
+                          onTap: () => _showChangeNicknameDialog(
+                              context, user?.nickname ?? '', colorScheme),
+                        ),
+                        _buildDivider(colorScheme),
+                        _buildSettingsTile(
+                          context,
+                          colorScheme,
+                          icon: Icons.email,
+                          title: '이메일',
+                          subtitle: user?.email ?? '',
+                          onTap: null,
+                        ),
+                      ],
+                    ),
 
-                const SizedBox(height: 24),
+                    const SizedBox(height: 12),
 
-                // 계정 설정
-                _buildSectionTitle('계정', colorScheme),
-                const SizedBox(height: 12),
-                _buildSettingsTile(
-                  context,
-                  colorScheme,
-                  icon: Icons.person,
-                  title: '닉네임 변경',
-                  subtitle: user?.nickname ?? '',
-                  onTap: () => _showChangeNicknameDialog(
-                      context, user?.nickname ?? '', colorScheme),
-                ),
-                const SizedBox(height: 8),
-                _buildSettingsTile(
-                  context,
-                  colorScheme,
-                  icon: Icons.email,
-                  title: '이메일',
-                  subtitle: user?.email ?? '',
-                  onTap: null,
-                ),
+                    // 보안 설정
+                    _buildSectionTitle('보안', colorScheme),
+                    const SizedBox(height: 12),
+                    _buildOptionArea(
+                      context,
+                      children: [
+                        _buildBiometricTile(
+                            context, authController, colorScheme),
+                        _buildDivider(colorScheme),
+                        _buildSettingsTile(
+                          context,
+                          colorScheme,
+                          icon: Icons.lock,
+                          title: '비밀번호 변경',
+                          onTap: () =>
+                              _showChangePasswordDialog(context, colorScheme),
+                        ),
+                      ],
+                    ),
 
-                const SizedBox(height: 24),
+                    const SizedBox(height: 12),
 
-                // 보안 설정
-                _buildSectionTitle('보안', colorScheme),
-                const SizedBox(height: 12),
-                _buildBiometricTile(context, authController, colorScheme),
-                const SizedBox(height: 8),
-                _buildSettingsTile(
-                  context,
-                  colorScheme,
-                  icon: Icons.lock,
-                  title: '비밀번호 변경',
-                  onTap: () => _showChangePasswordDialog(context, colorScheme),
-                ),
+                    // 앱 설정
+                    _buildSectionTitle('앱 설정', colorScheme),
+                    const SizedBox(height: 12),
+                    _buildOptionArea(
+                      context,
+                      children: [
+                        _buildWritingBlurTile(
+                            context, authController, colorScheme),
+                        _buildDivider(colorScheme),
+                        _buildSettingsTile(
+                          context,
+                          colorScheme,
+                          icon: Icons.notifications,
+                          title: '알림 설정',
+                          onTap: () {
+                            context.push('/settings/notifications');
+                          },
+                        ),
+                      ],
+                    ),
 
-                const SizedBox(height: 24),
+                    const SizedBox(height: 12),
 
-                // 앱 설정
-                _buildSectionTitle('앱 설정', colorScheme),
-                const SizedBox(height: 12),
-                _buildWritingBlurTile(context, authController, colorScheme),
-                const SizedBox(height: 8),
-                _buildSettingsTile(
-                  context,
-                  colorScheme,
-                  icon: Icons.notifications,
-                  title: '알림 설정',
-                  onTap: () {
-                    context.push('/settings/notifications');
-                  },
-                ),
+                    // 정보
+                    _buildSectionTitle('정보', colorScheme),
+                    const SizedBox(height: 12),
+                    _buildOptionArea(
+                      context,
+                      children: [
+                        _buildSettingsTile(
+                          context,
+                          colorScheme,
+                          icon: Icons.info,
+                          title: '버전 정보',
+                          subtitle: _version.isEmpty ? '불러오는 중...' : _version,
+                          onTap: null,
+                        ),
+                        _buildDivider(colorScheme),
+                        _buildSettingsTile(
+                          context,
+                          colorScheme,
+                          icon: Icons.description,
+                          title: '이용약관',
+                          onTap: () {
+                            context.push('/settings/terms');
+                          },
+                        ),
+                        _buildDivider(colorScheme),
+                        _buildSettingsTile(
+                          context,
+                          colorScheme,
+                          icon: Icons.privacy_tip,
+                          title: '개인정보 처리방침',
+                          onTap: () {
+                            context.push('/settings/privacy');
+                          },
+                        ),
+                      ],
+                    ),
 
-                const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
-                // 정보
-                _buildSectionTitle('정보', colorScheme),
-                const SizedBox(height: 12),
-                _buildSettingsTile(
-                  context,
-                  colorScheme,
-                  icon: Icons.info,
-                  title: '버전 정보',
-                  subtitle: _version.isEmpty ? '불러오는 중...' : _version,
-                  onTap: null,
-                ),
-                const SizedBox(height: 8),
-                _buildSettingsTile(
-                  context,
-                  colorScheme,
-                  icon: Icons.description,
-                  title: '이용약관',
-                  onTap: () {
-                    context.push('/settings/terms');
-                  },
-                ),
-                const SizedBox(height: 8),
-                _buildSettingsTile(
-                  context,
-                  colorScheme,
-                  icon: Icons.privacy_tip,
-                  title: '개인정보 처리방침',
-                  onTap: () {
-                    context.push('/settings/privacy');
-                  },
-                ),
+                    // 로그아웃 버튼
+                    _buildLogoutButton(context, authController, colorScheme),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 16),
 
-                // 로그아웃 버튼
-                _buildLogoutButton(context, authController, colorScheme),
+                    // 회원탈퇴
+                    _buildDeleteAccountButton(
+                        context, authController, colorScheme),
 
-                const SizedBox(height: 16),
-
-                // 회원탈퇴
-                _buildDeleteAccountButton(context, authController, colorScheme),
-
-                const SizedBox(height: 40),
-              ],
-            );
-          },
-        ),
+                    const SizedBox(height: 40),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -293,15 +330,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSectionTitle(String title, AppColorScheme colorScheme) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: colorScheme.textSecondary,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Transform.translate(
+        offset: const Offset(-10, 0),
+        child: Container(
+          width: 120,
+          height: 32,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/icons/Store_Tab.png'),
+              fit: BoxFit.fill,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 20),
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Color(0xFF4E342E),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'BMJUA',
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -315,54 +369,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
     String? subtitle,
     VoidCallback? onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: colorScheme.iconPrimary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: colorScheme.iconPrimary, size: 24),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: colorScheme.iconPrimary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: colorScheme.iconPrimary, size: 24),
-        ),
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.textPrimary,
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.textPrimary,
+              fontFamily: 'BMJUA',
+            ),
+      ),
+      subtitle: subtitle != null
+          ? Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                subtitle,
+                style: TextStyle(
+                  color: colorScheme.textSecondary,
+                  fontSize: 13,
+                  fontFamily: 'BMJUA',
+                ),
               ),
+            )
+          : null,
+      trailing: onTap != null
+          ? Icon(
+              Icons.chevron_right,
+              color: colorScheme.textSecondary.withOpacity(0.5),
+            )
+          : null,
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildOptionArea(BuildContext context,
+      {required List<Widget> children}) {
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/Option_Area.png'),
+          fit: BoxFit.fill,
         ),
-        subtitle: subtitle != null
-            ? Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: colorScheme.textSecondary,
-                    fontSize: 13,
+      ),
+      padding: const EdgeInsets.only(top: 20, bottom: 15),
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildDivider(AppColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final boxWidth = constraints.constrainWidth();
+          const dashWidth = 3.0;
+          const dashHeight = 1.0;
+          final dashCount = (boxWidth / (2 * dashWidth)).floor();
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(dashCount, (_) {
+              return SizedBox(
+                width: dashWidth,
+                height: dashHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4E342E).withOpacity(0.2),
                   ),
                 ),
-              )
-            : null,
-        trailing: onTap != null
-            ? Icon(
-                Icons.chevron_right,
-                color: colorScheme.textSecondary.withOpacity(0.5),
-              )
-            : null,
-        onTap: onTap,
+              );
+            }),
+          );
+        },
       ),
     );
   }
@@ -372,60 +459,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = authController.userModel;
     final blurEnabled = user?.writingBlurEnabled ?? true;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return SwitchListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      secondary: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: colorScheme.iconPrimary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          Icons.visibility_off,
+          color: colorScheme.iconPrimary,
+          size: 24,
+        ),
       ),
-      child: SwitchListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        secondary: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: colorScheme.iconPrimary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.visibility_off,
-            color: colorScheme.iconPrimary,
-            size: 24,
-          ),
-        ),
-        title: Text(
-          '글 작성 블러 기본값',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.textPrimary,
-              ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            blurEnabled ? '작성 중인 글을 기본으로 블러 처리합니다' : '작성 중인 글을 기본으로 표시합니다',
-            style: TextStyle(
-              color: colorScheme.textSecondary,
-              fontSize: 13,
+      title: Text(
+        '글 작성 블러 기본값',
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.textPrimary,
+              fontFamily: 'BMJUA',
             ),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          blurEnabled ? '작성 중인 글을 기본으로 블러 처리합니다' : '작성 중인 글을 기본으로 표시합니다',
+          style: TextStyle(
+            color: colorScheme.textSecondary,
+            fontSize: 13,
+            fontFamily: 'BMJUA',
           ),
         ),
-        value: blurEnabled,
-        onChanged: user == null
-            ? null
-            : (value) => _updateWritingBlurSetting(
-                  context,
-                  authController,
-                  value,
-                  colorScheme,
-                ),
-        activeColor: colorScheme.primaryButton,
       ),
+      value: blurEnabled,
+      onChanged: user == null
+          ? null
+          : (value) => _updateWritingBlurSetting(
+                context,
+                authController,
+                value,
+                colorScheme,
+              ),
+      activeColor: colorScheme.primaryButton,
     );
   }
 
@@ -434,60 +510,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = authController.userModel;
     final biometricEnabled = user?.biometricEnabled ?? false;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return SwitchListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      secondary: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: colorScheme.iconPrimary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          Icons.fingerprint,
+          color: colorScheme.iconPrimary,
+          size: 24,
+        ),
       ),
-      child: SwitchListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        secondary: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: colorScheme.iconPrimary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.fingerprint,
-            color: colorScheme.iconPrimary,
-            size: 24,
-          ),
-        ),
-        title: Text(
-          '생체 인증',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.textPrimary,
-              ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            biometricEnabled ? '앱 실행과 일기 열기에 생체 인증이 필요합니다' : '생체 인증으로 앱을 보호합니다',
-            style: TextStyle(
-              color: colorScheme.textSecondary,
-              fontSize: 13,
+      title: Text(
+        '생체 인증',
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.textPrimary,
+              fontFamily: 'BMJUA',
             ),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          biometricEnabled ? '앱 실행과 일기 열기에 생체 인증이 필요합니다' : '생체 인증으로 앱을 보호합니다',
+          style: TextStyle(
+            color: colorScheme.textSecondary,
+            fontSize: 13,
+            fontFamily: 'BMJUA',
           ),
         ),
-        value: biometricEnabled,
-        onChanged: user == null
-            ? null
-            : (value) => _updateBiometricSetting(
-                  context,
-                  authController,
-                  value,
-                  colorScheme,
-                ),
-        activeColor: colorScheme.primaryButton,
       ),
+      value: biometricEnabled,
+      onChanged: user == null
+          ? null
+          : (value) => _updateBiometricSetting(
+                context,
+                authController,
+                value,
+                colorScheme,
+              ),
+      activeColor: colorScheme.primaryButton,
     );
   }
 

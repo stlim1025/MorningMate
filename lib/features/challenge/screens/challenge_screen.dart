@@ -127,39 +127,95 @@ class ChallengeScreen extends StatelessWidget {
   }
 
   Widget _buildHeaderProgress(int completed, int total) {
+    final double progressRatio = total > 0 ? completed / total : 0;
+    // 가득 찼을 때도 좌우 여백을 위해 끝까지 차지 않도록 조절
+    final double constrainedRatio = progressRatio * 0.94;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 35),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomRight,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                '도전과제 달성 수',
-                style: TextStyle(
-                  fontFamily: 'BMJUA',
-                  fontSize: 14,
-                  color: Color(0xFF4E342E),
+          // 1. 텍스트와 게이지 바 커테이너
+          Padding(
+            padding: const EdgeInsets.only(right: 25), // 상자와 겹칠 공간 확보
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 20, top: 4),
+                      child: Text(
+                        '도전과제 달성 수',
+                        style: TextStyle(
+                          fontFamily: 'BMJUA',
+                          fontSize: 14,
+                          color: Color(0xFF4E342E),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 20, top: 4),
+                      child: Text(
+                        '$completed / $total',
+                        style: const TextStyle(
+                          fontFamily: 'BMJUA',
+                          fontSize: 14,
+                          color: Color(0xFF4E342E),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Text(
-                '$completed / $total',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
-                  fontSize: 14,
-                  color: Color(0xFF4E342E),
+                const SizedBox(height: 8),
+                // 게이지 바 (배경 이미지 + 노란색 바 이미지)
+                Transform.translate(
+                  offset: const Offset(15, 0), // 우측으로 더 이동시켜 상자와 겹치게 함
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
+                    children: [
+                      // 배경 틀 (Empty)
+                      Image.asset(
+                        'assets/images/Challenge_ProgressBar_Empty.png',
+                        width: double.infinity,
+                        height: 22,
+                        fit: BoxFit.fill,
+                      ),
+                      // 노란 게이지 (ProgressBar)
+                      // 세로 중앙 배치를 위해 배경보다 높이를 낮게 설정
+                      Padding(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 5), // 끝부분 여백
+                        child: ClipRect(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: constrainedRatio,
+                            child: Image.asset(
+                              'assets/images/Challenge_ProgressBar.png',
+                              width: double.infinity,
+                              height: 12, // 배경보다 얇게 설정하여 세로 중앙에 오게 함
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: total > 0 ? completed / total : 0,
-              minHeight: 12,
-              backgroundColor: Colors.brown.withOpacity(0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+          // 2. 상자 이미지 (게이지 바 우측 상단에 겹치게 배치)
+          Positioned(
+            right: -15,
+            bottom: -8,
+            child: Image.asset(
+              'assets/icons/Challenge_Box.png',
+              width: 60,
+              height: 60,
+              fit: BoxFit.contain,
             ),
           ),
         ],

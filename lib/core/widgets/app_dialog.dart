@@ -774,9 +774,11 @@ class PopupTextField extends StatelessWidget {
     this.maxLength,
     this.autofocus = false,
     this.errorText,
+    this.fontFamily = 'BMJUA',
   });
 
   final String? errorText;
+  final String fontFamily;
 
   @override
   Widget build(BuildContext context) {
@@ -800,9 +802,9 @@ class PopupTextField extends StatelessWidget {
               obscureText: obscureText,
               maxLines: maxLines,
               keyboardType: keyboardType,
-              style: const TextStyle(
-                color: Color(0xFF4E342E),
-                fontFamily: 'BMJUA',
+              style: TextStyle(
+                color: const Color(0xFF4E342E),
+                fontFamily: fontFamily,
                 fontSize: 18,
               ),
               onChanged: onChanged,
@@ -812,14 +814,14 @@ class PopupTextField extends StatelessWidget {
                 hintText: hintText,
                 hintStyle: TextStyle(
                   color: const Color(0xFF4E342E).withOpacity(0.5),
-                  fontFamily: 'BMJUA',
+                  fontFamily: fontFamily,
                   fontSize: 16,
                 ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
-                errorStyle: const TextStyle(
-                  fontFamily: 'BMJUA',
+                errorStyle: TextStyle(
+                  fontFamily: fontFamily,
                   color: Colors.red,
                   fontSize: 12,
                 ),
@@ -839,9 +841,9 @@ class PopupTextField extends StatelessWidget {
               obscureText: obscureText,
               maxLines: maxLines,
               keyboardType: keyboardType,
-              style: const TextStyle(
-                color: Color(0xFF4E342E),
-                fontFamily: 'BMJUA',
+              style: TextStyle(
+                color: const Color(0xFF4E342E),
+                fontFamily: fontFamily,
                 fontSize: 18,
               ),
               onChanged: onChanged,
@@ -850,7 +852,7 @@ class PopupTextField extends StatelessWidget {
                 hintText: hintText,
                 hintStyle: TextStyle(
                   color: const Color(0xFF4E342E).withOpacity(0.5),
-                  fontFamily: 'BMJUA',
+                  fontFamily: fontFamily,
                   fontSize: 16,
                 ),
                 border: InputBorder.none,

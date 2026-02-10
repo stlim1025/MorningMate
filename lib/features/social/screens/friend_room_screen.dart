@@ -110,6 +110,10 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
           final textColor =
               (isAwake && !isDarkMode) ? const Color(0xFF2C3E50) : Colors.white;
 
+          final todaysMood = _friend != null
+              ? socialController.getFriendMood(_friend!.uid)
+              : null;
+
           return Stack(
             children: [
               // 1. Full Screen Room Background
@@ -125,6 +129,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                     onPropTap: (prop) => _showFriendMemoDialog(prop),
                     colorScheme: colorScheme,
                     isDarkMode: isDarkMode,
+                    todaysMood: todaysMood,
                     bottomPadding: 45 + MediaQuery.of(context).padding.bottom,
                   ),
                 ),
@@ -252,7 +257,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                   bottom: 0,
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.only(bottom: 30),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: Consumer<SocialController>(
                         builder: (context, socialController, child) {
                           final remaining = socialController
@@ -290,7 +295,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                           alignment: Alignment.center,
                                           children: [
                                             Image.asset(
-                                              'assets/images/Button_Background2.png',
+                                              'assets/images/Message_Button.png',
                                               width: double.infinity,
                                               height: 90,
                                               fit: BoxFit.fill,
@@ -327,7 +332,10 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                 child: RoomActionButton(
                                   iconPath: 'assets/icons/SendRecord_Icon.png',
                                   label: '보낸기록',
+                                  backgroundImagePath:
+                                      'assets/images/SendHistory_Button.png',
                                   size: 90,
+                                  iconSize: 45, // 아이콘 크기 살짝 줄임 (기존 54)
                                   onTap: () {
                                     _showSentMessagesDialog(colorScheme);
                                   },
@@ -397,6 +405,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                 controller: messageController,
                 maxLines: 3,
                 hintText: '친구에게 응원의 메시지를 남겨주세요',
+                fontFamily: 'KyoboHandwriting2024psw',
                 errorText: errorText,
                 onChanged: (_) {
                   if (errorNotifier.value != null) {
@@ -530,80 +539,78 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                     ? msg.message.split('\n').last
                     : msg.message;
 
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: msg.isRead
-                        ? colorScheme.secondary.withOpacity(0.08)
-                        : colorScheme.primaryButton.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: msg.isRead
-                          ? colorScheme.secondary.withOpacity(0.2)
-                          : colorScheme.primaryButton.withOpacity(0.1),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                return Stack(
+                  children: [
+                    // 배경 이미지
+                    Positioned.fill(
+                      child: Image.asset(
+                        'assets/images/Item_Background.png',
+                        fit: BoxFit.fill,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              actualMessage,
-                              style: TextStyle(
-                                color: colorScheme.textPrimary,
-                                fontSize: 15,
-                                height: 1.4,
-                                fontWeight: FontWeight.w500,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  actualMessage,
+                                  style: const TextStyle(
+                                    color: Color(0xFF4E342E),
+                                    fontSize: 17,
+                                    height: 1.4,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'KyoboHandwriting2024psw',
+                                  ),
+                                ),
                               ),
-                            ),
+                              if (msg.isRead) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF4E342E)
+                                        .withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_rounded,
+                                    size: 14,
+                                    color: Color(0xFF4E342E),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                          if (msg.isRead) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: colorScheme.success.withOpacity(0.12),
-                                shape: BoxShape.circle,
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Icon(Icons.access_time,
+                                  size: 12,
+                                  color:
+                                      const Color(0xFF4E342E).withOpacity(0.6)),
+                              const SizedBox(width: 4),
+                              Text(
+                                DateFormat('yyyy.MM.dd HH:mm')
+                                    .format(msg.createdAt),
+                                style: TextStyle(
+                                  color:
+                                      const Color(0xFF4E342E).withOpacity(0.6),
+                                  fontSize: 12,
+                                  fontFamily: 'BMJUA',
+                                ),
                               ),
-                              child: Icon(
-                                Icons.check_rounded,
-                                size: 14,
-                                color: colorScheme.success,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Icon(Icons.access_time,
-                              size: 12, color: colorScheme.textHint),
-                          const SizedBox(width: 4),
-                          Text(
-                            DateFormat('yyyy.MM.dd HH:mm')
-                                .format(msg.createdAt),
-                            style: TextStyle(
-                              color: colorScheme.textHint,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               },
             );

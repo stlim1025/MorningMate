@@ -17,12 +17,20 @@ class RoomActionButton extends StatefulWidget {
   /// 버튼 크기 (기본값: 56)
   final double size;
 
+  /// 버튼 배경 이미지 경로 (기본값: 'assets/icons/Button_Background.png')
+  final String? backgroundImagePath;
+
+  /// 아이콘 크기 (기본값: size * 0.6)
+  final double? iconSize;
+
   const RoomActionButton({
     super.key,
     required this.iconPath,
     required this.label,
     required this.onTap,
     this.size = 56,
+    this.backgroundImagePath,
+    this.iconSize,
   });
 
   @override
@@ -80,10 +88,11 @@ class _RoomActionButtonState extends State<RoomActionButton>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // 배경 이미지 (Button_Background.png)
+              // 배경 이미지
               Positioned.fill(
                 child: Image.asset(
-                  'assets/icons/Button_Background.png',
+                  widget.backgroundImagePath ??
+                      'assets/icons/Button_Background.png',
                   fit: BoxFit.fill,
                   cacheWidth: 200, // Optimize memory
                 ),
@@ -100,8 +109,8 @@ class _RoomActionButtonState extends State<RoomActionButton>
                       flex: 2,
                       child: Image.asset(
                         widget.iconPath,
-                        width: widget.size * 0.6,
-                        height: widget.size * 0.6,
+                        width: widget.iconSize ?? widget.size * 0.6,
+                        height: widget.iconSize ?? widget.size * 0.6,
                         fit: BoxFit.contain,
                         cacheWidth: 150, // Optimize memory
                       ),

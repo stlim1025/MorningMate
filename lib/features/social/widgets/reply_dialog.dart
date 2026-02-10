@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/widgets/app_dialog.dart';
 
 import '../../auth/controllers/auth_controller.dart';
 import '../../notification/controllers/notification_controller.dart';
+import '../../../core/widgets/memo_notification.dart';
 
 class ReplyDialog {
   static Future<void> show(
@@ -17,7 +17,6 @@ class ReplyDialog {
     VoidCallback? onSuccess,
   }) async {
     final messageController = TextEditingController();
-    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final authController = context.read<AuthController>();
     final notificationController = context.read<NotificationController>();
 
@@ -30,6 +29,7 @@ class ReplyDialog {
           controller: messageController,
           hintText: '$receiverNickname님께 답장하기',
           maxLines: 3,
+          fontFamily: 'KyoboHandwriting2024psw',
         ),
       ),
       actions: [
@@ -48,16 +48,10 @@ class ReplyDialog {
             if (userModel == null) return;
 
             try {
-              // 1. UI 즉시 반응: 다이얼로그 닫고 스낵바 표시
+              // 1. UI 즉시 반응: 다이얼로그 닫고 알림 표시
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('$receiverNickname님께 답장을 보냈습니다! 💌'),
-                  backgroundColor: colorScheme.success,
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              MemoNotification.show(
+                  context, '$receiverNickname님께 답장을 보냈습니다! 💌');
               onSuccess?.call();
 
               // 2. 실제 작업은 백그라운드에서 수행
