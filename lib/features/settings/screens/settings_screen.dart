@@ -602,9 +602,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Text(
           '회원탈퇴',
           style: TextStyle(
-            color: colorScheme.textSecondary,
+            color: const Color(0xFF5D4037),
             decoration: TextDecoration.underline,
-            fontSize: 14,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'BMJUA',
           ),
         ),
       ),

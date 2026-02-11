@@ -1,25 +1,16 @@
 {
+    "version": "0.2.0",
     "configurations": [
         {
-            "name": "Pixel 6",
+            "name": "MorningMate",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "Pixel 6 (Fixed)",
             "request": "launch",
             "type": "dart",
             "deviceId": "emulator-5554"
-        },
-        {
-            "name": "Pixel 7",
-            "request": "launch",
-            "type": "dart",
-            "deviceId": "emulator-5556"
-        }
-    ],
-    "compounds": [
-        {
-            "name": "All Devices",
-            "configurations": [
-                "Pixel 6",
-                "Pixel 7"
-            ]
         }
     ]
 }

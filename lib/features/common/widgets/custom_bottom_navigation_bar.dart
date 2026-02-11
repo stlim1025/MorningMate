@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,7 +21,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
         // 1. Background Image (Down_Tab.png)
         Container(
           width: double.infinity,
-          height: 60 + MediaQuery.of(context).padding.bottom,
+          height: (Platform.isIOS ? 50 : 60) +
+              MediaQuery.of(context).padding.bottom,
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/images/Down_Tab.png'),
@@ -32,7 +34,9 @@ class CustomBottomNavigationBar extends StatelessWidget {
         SafeArea(
           top: false,
           child: SizedBox(
-            height: 90, // Increased height to cover protruding icons
+            height: Platform.isIOS
+                ? 70
+                : 90, // Increased slightly for iOS to prevent overflow
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -57,7 +61,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   iconPath: 'assets/icons/Friend_Icon.png',
                   label: '친구',
                   width: 64,
-                  height: 45,
+                  height: 45, // Restored height
                   isSelected: currentIndex == 2,
                   labelOffset: -7,
                   onTap: () => _handleNavigation(context, 2),
