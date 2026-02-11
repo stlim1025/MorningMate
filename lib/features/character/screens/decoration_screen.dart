@@ -9,6 +9,7 @@ import '../../morning/widgets/enhanced_character_room_widget.dart';
 
 import '../../../data/models/room_decoration_model.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/memo_notification.dart';
 
 class DecorationScreen extends StatefulWidget {
   const DecorationScreen({super.key});
@@ -132,26 +133,13 @@ class _DecorationScreenState extends State<DecorationScreen> {
                       user.uid, _decorationNotifier.value);
 
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('설정이 저장되었습니다!'),
-                        backgroundColor: colorScheme.success,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    );
+                    MemoNotification.show(context, '설정이 저장되었습니다! ✨');
                     Navigator.pop(context);
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            '저장 실패: ${e.toString().replaceFirst('Exception: ', '')}'),
-                        backgroundColor: colorScheme.error,
-                      ),
-                    );
+                    MemoNotification.show(context,
+                        '저장 실패: ${e.toString().replaceFirst('Exception: ', '')}');
                   }
                 }
               },
@@ -604,23 +592,15 @@ class _DecorationScreenState extends State<DecorationScreen> {
                 if (p.id == 'sticky_note') {
                   // 오늘 이미 작성했는지 체크
                   if (isUsedToday) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('메모는 하루에 한 번만 작성할 수 있습니다.'),
-                        backgroundColor: colorScheme.error,
-                      ),
-                    );
+                    MemoNotification.show(
+                        context, '메모는 하루에 한 번만 작성할 수 있습니다. ✍️');
                     return;
                   }
 
                   // 인벤토리에 있는지 체크 (이미 배치된 걸 제거했다가 다시 넣는 경우 대비)
                   if (!user.purchasedPropIds.contains('sticky_note')) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('보관 중인 메모 노트가 없습니다. 상점에서 구매해 주세요.'),
-                        backgroundColor: colorScheme.error,
-                      ),
-                    );
+                    MemoNotification.show(
+                        context, '보관 중인 메모 노트가 없습니다. 상점에서 구매해 주세요. 📦');
                     return;
                   }
 

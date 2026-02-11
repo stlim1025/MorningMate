@@ -6,57 +6,32 @@ import 'app_theme_type.dart';
 
 class ThemeController extends ChangeNotifier {
   static const String _themeKey = 'themeType';
-  static const String _legacyDarkKey = 'isDarkMode';
-  AppThemeType _themeType = AppThemeType.light;
 
-  AppThemeType get themeType => _themeType;
+  AppThemeType get themeType => AppThemeType.light;
 
-  bool get isDarkMode => _themeType == AppThemeType.dark;
+  bool get isDarkMode => false;
 
-  ThemeData get themeData => AppTheme.themeFor(_themeType);
+  ThemeData get themeData => AppTheme.themeFor(AppThemeType.light);
 
   ThemeController() {
-    _loadTheme();
+    // 테마 리셋 (항상 라이트로)
+    _resetToLight();
   }
 
-  Future<void> _loadTheme() async {
+  Future<void> _resetToLight() async {
     final prefs = await SharedPreferences.getInstance();
-    final storedTheme = prefs.getString(_themeKey);
-    if (storedTheme != null) {
-      _themeType = AppThemeType.values.firstWhere(
-        (type) => type.name == storedTheme,
-        orElse: () => AppThemeType.light,
-      );
-    } else {
-      final isDarkMode = prefs.getBool(_legacyDarkKey) ?? false;
-      _themeType = isDarkMode ? AppThemeType.dark : AppThemeType.light;
-    }
-    notifyListeners();
+    await prefs.setString(_themeKey, AppThemeType.light.name);
   }
 
   Future<void> setTheme(AppThemeType themeType) async {
-    if (_themeType == themeType) return;
-    _themeType = themeType;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themeKey, themeType.name);
-    await prefs.setBool(_legacyDarkKey, themeType == AppThemeType.dark);
-    notifyListeners();
+    // 현재는 라이트 테마만 지원하므로 무시
   }
 
   Future<void> syncWithUserTheme(String? themeId) async {
-    if (themeId == null) return;
-
-    final themeType = AppThemeType.values.firstWhere(
-      (type) => type.name == themeId,
-      orElse: () => AppThemeType.light,
-    );
-
-    if (_themeType != themeType) {
-      await setTheme(themeType);
-    }
+    // 현재는 라이트 테마만 지원하므로 무시
   }
 
   Future<void> resetToDefault() async {
-    await setTheme(AppThemeType.light);
+    // 개발 단계에서 라이트로 강제 고정
   }
 }

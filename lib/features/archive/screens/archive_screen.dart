@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
 import '../../character/widgets/character_display.dart';
 import '../../../core/constants/room_assets.dart';
+import '../../../core/widgets/memo_notification.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -681,7 +682,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   Future<void> _viewDiaryContent(DiaryModel diary) async {
     final authController = context.read<AuthController>();
-    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final userId = authController.currentUser?.uid;
     if (userId == null) return;
 
@@ -690,16 +690,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       final authenticated = await authController.authenticateWithBiometric();
       if (!authenticated) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('생체 인증에 실패했습니다'),
-              backgroundColor: colorScheme.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
+          MemoNotification.show(context, '생체 인증에 실패했습니다. 🔒');
         }
         return;
       }

@@ -35,38 +35,6 @@ class RoomAssets {
       themeType: AppThemeType.light,
       color: Color(0xFFFFF9DB), // Warm Light
     ),
-    RoomAsset(
-      id: 'dark',
-      name: '다크',
-      price: 100,
-      icon: Icons.dark_mode,
-      themeType: AppThemeType.dark,
-      color: Color(0xFF2C3E50), // Dark Navy
-    ),
-    RoomAsset(
-      id: 'sky',
-      name: '하늘',
-      price: 100,
-      icon: Icons.wb_sunny_outlined,
-      themeType: AppThemeType.sky,
-      color: Color(0xFF87CEEB), // Sky Blue
-    ),
-    RoomAsset(
-      id: 'purple',
-      name: '퍼플',
-      price: 100,
-      icon: Icons.auto_awesome,
-      themeType: AppThemeType.purple,
-      color: Color(0xFFDCD6F7), // Light Purple
-    ),
-    RoomAsset(
-      id: 'pink',
-      name: '핑크',
-      price: 100,
-      icon: Icons.favorite,
-      themeType: AppThemeType.pink,
-      color: Color(0xFFFFC0CB), // Pink
-    ),
   ];
 
   static const List<RoomAsset> emoticons = [
@@ -333,8 +301,8 @@ class RoomAssets {
       name: '식물 화분',
       price: 120,
       icon: Icons.local_florist,
-      imagePath: 'assets/items/Pot1.svg',
-      sizeMultiplier: 0.8,
+      imagePath: 'assets/items/Pot.png',
+      sizeMultiplier: 0.6,
     ),
     RoomAsset(
       id: 'white_bear',

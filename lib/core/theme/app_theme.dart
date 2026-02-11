@@ -51,70 +51,8 @@ class AppTheme {
     appColorScheme: AppColorScheme.light,
   );
 
-  static const AppThemePalette _darkPalette = AppThemePalette(
-    brightness: Brightness.dark,
-    primary: AppColors.primary,
-    secondary: AppColors.secondary,
-    background: AppColors.backgroundDark,
-    card: AppColors.cardDark,
-    textPrimary: Color(0xFFE0E0E0),
-    iconColor: Colors.white70,
-    inputFill: AppColors.cardDark,
-    bottomNavBackground: AppColors.cardDark,
-    unselectedNavItemColor: Colors.grey,
-    appColorScheme: AppColorScheme.dark,
-    inputBorder: Color(0xFF424242),
-    inputHint: Color(0xFF9E9E9E),
-  );
-
-  static const AppThemePalette _skyPalette = AppThemePalette(
-    brightness: Brightness.light,
-    primary: AppColors.skyPrimary,
-    secondary: AppColors.skySecondary,
-    background: AppColors.skyBackground,
-    card: AppColors.skyCard,
-    textPrimary: AppColors.skyTextPrimary,
-    iconColor: AppColors.skyTextPrimary,
-    inputFill: Color(0xFFF4F9FF),
-    bottomNavBackground: Colors.white,
-    unselectedNavItemColor: Color(0xFF7F9FC9),
-    appColorScheme: AppColorScheme.sky,
-  );
-
-  static const AppThemePalette _purplePalette = AppThemePalette(
-    brightness: Brightness.light,
-    primary: AppColors.purplePrimary,
-    secondary: AppColors.purpleSecondary,
-    background: AppColors.purpleBackground,
-    card: Color(0xFFFCFAFF), // 연한 보라 틴트
-    textPrimary: AppColors.purpleTextPrimary,
-    iconColor: AppColors.purpleTextPrimary,
-    inputFill: Color(0xFFF1F0FF),
-    bottomNavBackground: Color(0xFFFCFAFF),
-    unselectedNavItemColor: Color(0xFFB4A5D1),
-    appColorScheme: AppColorScheme.purple,
-  );
-
-  static const AppThemePalette _pinkPalette = AppThemePalette(
-    brightness: Brightness.light,
-    primary: AppColors.pinkPrimary,
-    secondary: AppColors.pinkSecondary,
-    background: AppColors.pinkBackground,
-    card: Color(0xFFFFF9FB), // 연한 핑크 틴트
-    textPrimary: AppColors.pinkTextPrimary,
-    iconColor: AppColors.pinkTextPrimary,
-    inputFill: Color(0xFFFFF0F5),
-    bottomNavBackground: Color(0xFFFFF9FB),
-    unselectedNavItemColor: Color(0xFFD4A5B1),
-    appColorScheme: AppColorScheme.pink,
-  );
-
   static final Map<AppThemeType, AppThemePalette> _palettes = {
     AppThemeType.light: _lightPalette,
-    AppThemeType.dark: _darkPalette,
-    AppThemeType.sky: _skyPalette,
-    AppThemeType.purple: _purplePalette,
-    AppThemeType.pink: _pinkPalette,
   };
 
   static ThemeData themeFor(AppThemeType type) {
@@ -122,8 +60,6 @@ class AppTheme {
   }
 
   static ThemeData get lightTheme => themeFor(AppThemeType.light);
-  static ThemeData get darkTheme => themeFor(AppThemeType.dark);
-  static ThemeData get skyTheme => themeFor(AppThemeType.sky);
 
   static ThemeData _buildTheme(AppThemePalette palette) {
     final isDark = palette.brightness == Brightness.dark;

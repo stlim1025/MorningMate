@@ -10,6 +10,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/memo_notification.dart';
 
 class WritingScreen extends StatefulWidget {
   final String? initialQuestion;
@@ -269,15 +270,8 @@ class _WritingScreenState extends State<WritingScreen> {
                           ? () =>
                               _completeDiary(context, controller, colorScheme)
                           : () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    '조금만 더 작성해주세요!',
-                                    style: TextStyle(fontFamily: 'BMJUA'),
-                                  ),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
+                              MemoNotification.show(
+                                  context, '조금만 더 작성해주세요! ✍️');
                             },
                       child: Opacity(
                         opacity: controller.isGoalReached() ? 1.0 : 0.5,

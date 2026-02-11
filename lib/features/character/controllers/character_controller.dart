@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/room_decoration_model.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/memo_notification.dart';
 
 // 캐릭터 상태 정의 - 6단계로 확장
 enum CharacterState {
@@ -564,9 +565,7 @@ class CharacterController extends ChangeNotifier {
   void showRewardedAd(BuildContext context) {
     if (_rewardedAd == null) {
       loadRewardedAd(context: context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('광고가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.')),
-      );
+      MemoNotification.show(context, '광고가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요. 📺');
       return;
     }
 

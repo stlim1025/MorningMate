@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/memo_notification.dart';
 import '../controllers/character_controller.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -608,17 +609,11 @@ class _ShopScreenState extends State<ShopScreen> {
                               }
                             } catch (e) {
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text(
-                                        e
-                                            .toString()
-                                            .replaceFirst('Exception: ', ''),
-                                        style: const TextStyle(
-                                            fontFamily: 'BMJUA'),
-                                      ),
-                                      backgroundColor: colorScheme.error),
-                                );
+                                MemoNotification.show(
+                                    context,
+                                    e
+                                        .toString()
+                                        .replaceFirst('Exception: ', ''));
                               }
                             }
                           }

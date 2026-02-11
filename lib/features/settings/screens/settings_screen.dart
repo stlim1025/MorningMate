@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/memo_notification.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
 
@@ -558,40 +559,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildLogoutButton(BuildContext context, AuthController authController,
       AppColorScheme colorScheme) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ElevatedButton.icon(
-        onPressed: () =>
-            _showLogoutDialog(context, authController, colorScheme),
-        icon: const Icon(Icons.logout, size: 22),
-        label: const Text(
-          '로그아웃',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: () => _showLogoutDialog(context, authController, colorScheme),
+      child: Container(
+        width: double.infinity,
+        height: 55,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/TextBox_Background.png'),
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.none,
           ),
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).cardColor,
-          foregroundColor: colorScheme.error,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: colorScheme.error.withOpacity(0.3),
-              width: 1.5,
-            ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.logout, size: 20, color: Color(0xFF5D4037)),
+              const SizedBox(width: 8),
+              const Text(
+                '로그아웃',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'BMJUA',
+                  color: Color(0xFF5D4037),
+                ),
+              ),
+            ],
           ),
-          elevation: 0,
         ),
       ),
     );
@@ -701,10 +697,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 if (context.mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    _buildSnackBar('닉네임이 변경되었습니다', colorScheme,
-                        isSuccess: true),
-                  );
+                  MemoNotification.show(context, '닉네임이 변경되었습니다! ✨');
                 }
               } catch (e) {
                 if (context.mounted) {

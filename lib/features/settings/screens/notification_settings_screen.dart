@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
+import '../../../core/widgets/memo_notification.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
   const NotificationSettingsScreen({super.key});
@@ -266,9 +267,7 @@ class NotificationSettingsScreen extends StatelessWidget {
       );
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('설정 저장 중 오류가 발생했습니다: $e')),
-        );
+        MemoNotification.show(context, '설정 저장 중 오류가 발생했습니다. 다시 시도해 주세요. ⚠️');
       }
     }
   }
