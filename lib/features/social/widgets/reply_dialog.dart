@@ -83,6 +83,7 @@ class ReplyDialog {
                     receiverId,
                     message,
                     fcmSent: false,
+                    isReply: true,
                   );
                 } catch (e) {
                   debugPrint('답장 백그라운드 작업 오류: $e');

@@ -304,10 +304,11 @@ class ChallengeScreen extends StatelessWidget {
                   ),
                 )
               else
-                Icon(
-                  Icons.lock_outline,
-                  color: Colors.brown.withOpacity(0.3),
-                  size: 24,
+                Image.asset(
+                  'assets/icons/Lock_Icon.png',
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.contain,
                 ),
             ],
           ),

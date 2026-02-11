@@ -66,7 +66,7 @@ const normalizeNotificationType = (type) => {
     }
 };
 
-const buildNotificationContent = (type, message, senderNickname) => {
+const buildNotificationContent = (type, message, senderNickname, extraData) => {
     switch (type) {
         case "wake_up":
             return {
@@ -79,8 +79,11 @@ const buildNotificationContent = (type, message, senderNickname) => {
                 body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 보냈습니다! 👋`,
             };
         case "cheer_message":
+            const isReply = extraData && extraData.isReply === true;
             return {
-                title: `${senderNickname ?? "친구"}님이 응원 메시지를 보냈어요.`,
+                title: isReply
+                    ? `${senderNickname ?? "친구"}님이 답장을 보냈어요.`
+                    : `${senderNickname ?? "친구"}님이 응원 메시지를 보냈어요.`,
                 body: message ?? "응원 메시지가 도착했어요.",
             };
         case "friend_accept":
@@ -155,7 +158,8 @@ exports.sendNotificationOnCreate = onDocumentCreated("notifications/{notificatio
     const { title, body } = buildNotificationContent(
         normalizedType,
         data.message,
-        data.senderNickname
+        data.senderNickname,
+        data.data
     );
 
     const message = {

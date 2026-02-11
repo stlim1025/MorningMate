@@ -72,6 +72,19 @@ class _EnhancedCharacterRoomWidgetState
   double? _dragX;
   double? _dragY;
 
+  // Background Caching
+  Widget? _cachedBackgroundWidget;
+  RoomDecorationModel? _cachedDecorationForBg;
+  Size? _cachedSizeForBg;
+  bool? _cachedAwakeForBg;
+
+  // Prop Dragging State
+  String? _activeDragPropId;
+  double _startPropX = 0.0;
+  double _startPropY = 0.0;
+  double _startTouchX = 0.0;
+  double _startTouchY = 0.0;
+
   void _handleTap() {
     if (_isTapped) return;
     setState(() {
@@ -191,6 +204,39 @@ class _EnhancedCharacterRoomWidgetState
     super.dispose();
   }
 
+  Widget _buildCachedBackground(
+    double width,
+    double height,
+    double renderHeight,
+    RoomDecorationModel decoration,
+    AppColorScheme colorScheme,
+  ) {
+    if (_cachedBackgroundWidget != null &&
+        _cachedSizeForBg == Size(width, height) &&
+        _cachedAwakeForBg == widget.isAwake &&
+        _cachedDecorationForBg?.wallpaperId == decoration.wallpaperId &&
+        _cachedDecorationForBg?.floorId == decoration.floorId &&
+        _cachedDecorationForBg?.backgroundId == decoration.backgroundId) {
+      return _cachedBackgroundWidget!;
+    }
+
+    _cachedSizeForBg = Size(width, height);
+    _cachedAwakeForBg = widget.isAwake;
+    _cachedDecorationForBg = decoration;
+
+    _cachedBackgroundWidget = Room3DBackground(
+      isAwake: widget.isAwake,
+      colorScheme: colorScheme,
+      decoration: decoration, // Pass full decoration, but only IDs are used
+      width: width,
+      height: renderHeight,
+      fullHeight: height,
+      isDarkMode: widget.isDarkMode,
+    );
+
+    return _cachedBackgroundWidget!;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme =
@@ -231,19 +277,17 @@ class _EnhancedCharacterRoomWidgetState
         clipBehavior: widget.showBorder ? Clip.antiAlias : Clip.none,
         child: Stack(
           children: [
-            // 3D 諛??대? (諛붾떏, 踰? 李쎈Ц)
+            // 3D 룸 내부 (바닥, 벽, 천장 등)
             RepaintBoundary(
               child: SizedBox(
                 width: width,
                 height: height,
-                child: Room3DBackground(
-                  isAwake: widget.isAwake,
-                  colorScheme: colorScheme,
-                  decoration: decoration,
-                  width: width,
-                  height: renderHeight, // Logical height for walls/corner
-                  fullHeight: height, // Full height for floor extension
-                  isDarkMode: widget.isDarkMode,
+                child: _buildCachedBackground(
+                  width,
+                  height,
+                  renderHeight,
+                  decoration,
+                  colorScheme,
                 ),
               ),
             ),
@@ -253,7 +297,12 @@ class _EnhancedCharacterRoomWidgetState
               ...decoration.props.asMap().entries.map((entry) {
                 return _isPropValid(entry.value)
                     ? _buildPropFor3D(
-                        entry.value, entry.key, width, renderHeight)
+                        entry.value,
+                        entry.key,
+                        width,
+                        renderHeight,
+                        key: ValueKey(entry.value.id),
+                      )
                     : const SizedBox.shrink();
               }),
             ],
@@ -309,9 +358,10 @@ class _EnhancedCharacterRoomWidgetState
     );
   }
 
-  /// 3D 諛붾떏??Prop 諛곗튂 (?щ떎由ш섦 醫뚰몴怨?
+  /// 3D 바닥에 Prop 배치 (피타고라스 좌표계)
   Widget _buildPropFor3D(
-      RoomPropModel prop, int index, double width, double height) {
+      RoomPropModel prop, int index, double width, double height,
+      {Key? key}) {
     // Prop Dimensions with simple depth scaling
     final asset = RoomAssets.props.firstWhere(
       (p) => p.id == prop.type,
@@ -330,44 +380,42 @@ class _EnhancedCharacterRoomWidgetState
     final yPos = prop.y * height;
 
     // Visual Widget
-    Widget child = _getPropVisual(prop.type, propWidth, propHeight);
+    Widget visualChild = _getPropVisual(prop.type, propWidth, propHeight);
 
     // 1. Selection Visuals (Border + Delete Button)
     final isSelected =
         widget.isPropEditable && widget.selectedPropIndex == index;
+
+    Widget mainContent = visualChild;
+
     if (isSelected) {
-      child = Stack(
+      mainContent = Stack(
         clipBehavior: Clip.none,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                  color: widget.colorScheme?.primaryButton ?? Colors.blue,
-                  width: 2.0),
-              borderRadius: BorderRadius.circular(8),
+          // Nice Dashed Selection Box
+          CustomPaint(
+            painter: _SelectedPropPainter(
+              color:
+                  (widget.colorScheme?.primaryButton ?? const Color(0xFF8B7355))
+                      .withOpacity(0.8),
             ),
-            child: child,
+            child: Container(
+              padding: const EdgeInsets.all(8), // Padding so border is outside
+              child: visualChild,
+            ),
           ),
+          // X Button (Right Top)
           Positioned(
-            top: -12,
-            right: -12,
+            top: -18,
+            right: -18,
             child: GestureDetector(
               onTap: () => widget.onPropDelete?.call(index),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey.shade300),
-                  boxShadow: const [
-                    BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 4,
-                        offset: Offset(0, 2))
-                  ],
-                ),
-                child:
-                    const Icon(Icons.close, size: 14, color: Colors.redAccent),
+              behavior: HitTestBehavior.opaque,
+              child: Image.asset(
+                'assets/icons/X_Button.png',
+                width: 40,
+                height: 40,
+                fit: BoxFit.contain,
               ),
             ),
           ),
@@ -375,37 +423,62 @@ class _EnhancedCharacterRoomWidgetState
       );
     }
 
-    // 2. Interaction Logic
+    // Wrap with GestureDetector
+    Widget interactionWrapper;
     if (widget.isPropEditable) {
-      child = GestureDetector(
+      interactionWrapper = GestureDetector(
+        key: key,
         onTap: () => widget.onPropTap?.call(prop), // Select
-        // Select on generic touch down to improve responsiveness
-        onPanStart: (_) => widget.onPropTap?.call(prop),
+        // 드래그 시작 시 초기 상태 저장 (stale closure 방지)
+        onPanStart: (details) {
+          if (!isSelected) {
+            widget.onPropTap?.call(prop);
+          }
+          _activeDragPropId = prop.id;
+          _startPropX = prop.x;
+          _startPropY = prop.y;
+          _startTouchX = details.globalPosition.dx;
+          _startTouchY = details.globalPosition.dy;
+        },
         onPanUpdate: (details) {
           if (widget.onPropChanged == null) return;
+          // 다른 소품이 드래그 중이면 무시 (혹은 ID 체크)
+          if (_activeDragPropId != prop.id) return;
 
-          // Simple 2D drag: convert screen delta to normalized coordinates
-          final dPx = details.delta.dx / width;
-          final dPy = details.delta.dy / height;
+          // 시작점 기준 변화량 계산 (closure state에 의존하지 않음)
+          final dx = (details.globalPosition.dx - _startTouchX) / width;
+          final dy = (details.globalPosition.dy - _startTouchY) / height;
 
-          final newPx = (prop.x + dPx).clamp(0.0, 1.0);
-          final newPy = (prop.y + dPy).clamp(0.0, 1.0);
+          final newPx = (_startPropX + dx).clamp(0.0, 1.0);
+          final newPy = (_startPropY + dy).clamp(0.0, 1.0);
 
           widget.onPropChanged!(index, prop.copyWith(x: newPx, y: newPy));
         },
-        child: child,
+        onPanEnd: (_) {
+          _activeDragPropId = null;
+        },
+        child: mainContent,
       );
     } else {
-      child = GestureDetector(
+      interactionWrapper = GestureDetector(
+        key: key,
         onTap: () => widget.onPropTap?.call(prop),
-        child: child,
+        child: mainContent,
       );
     }
 
+    // If selected, we need to allow the X button (which is outside bounds) to be hit-tested.
+    // We add internal padding to the overall Positioned child to keep everything inside logical bounds.
+    final double padding = isSelected ? 30.0 : 0.0;
+
     return Positioned(
-      left: xPos - propWidth / 2,
-      top: yPos - propHeight / 2,
-      child: child,
+      key: key,
+      left: xPos - (propWidth / 2) - (isSelected ? 8 : 0) - padding,
+      top: yPos - (propHeight / 2) - (isSelected ? 8 : 0) - padding,
+      child: Padding(
+        padding: EdgeInsets.all(padding),
+        child: interactionWrapper,
+      ),
     );
   }
 
@@ -524,29 +597,24 @@ class _EnhancedCharacterRoomWidgetState
     _wanderTimer?.cancel();
     _movementStopTimer?.cancel();
 
-    // 현재 캐릭터의 실제 화면 위치를 역산
-    // _buildCharacterContainer3D의 렌더링 로직과 동일하게 계산
-    final hLineYBottom = height * 0.42;
-    final py = _verticalPosition.clamp(0.5, 1.0);
-    final px = _horizontalPosition.clamp(0.05, 0.95);
+    // 현재 캐릭터의 실제 화면 위치를 기반으로 계산 (자체 이동 중 클릭 시 순간이동 방지)
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final localPos = renderBox.globalToLocal(d.globalPosition);
 
-    // 화면상 캐릭터 중심 위치 계산 (렌더링 로직 역산)
-    final currentLeft =
-        (px * width - charSize / 2).clamp(0.0, width - charSize);
-    final currentTop = (py * height - charSize)
-        .clamp(hLineYBottom - charSize * 0.5, height - charSize);
-
-    // 화면 위치를 정규화 좌표로 변환 (캐릭터 중심 기준)
-    final screenCenterX = currentLeft + charSize / 2;
-    final screenCenterY = currentTop + charSize;
+    // 터치 포인트를 기준으로 캐릭터의 위치를 역산
+    // localPos: Container 기준 터치 좌표
+    // d.localPosition: 캐릭터 Widget 기준 터치 좌표 (Top-Left 0,0)
+    final currentVisualLeft = localPos.dx - d.localPosition.dx;
+    final currentVisualTop = localPos.dy - d.localPosition.dy;
 
     setState(() {
       _isDragging = true;
       _isFalling = false;
       _isMoving = true;
-      // 실제 화면 위치를 정규화하여 드래그 시작점으로 사용
-      _dragX = (screenCenterX / width).clamp(0.0, 1.0);
-      _dragY = (screenCenterY / height).clamp(0.0, 1.0);
+
+      // 역산된 위치를 정규화 좌표(_dragX, _dragY)로 변환
+      _dragX = ((currentVisualLeft + charSize / 2) / width).clamp(0.0, 1.0);
+      _dragY = ((currentVisualTop + charSize) / height).clamp(0.0, 1.0);
     });
   }
 
@@ -859,8 +927,6 @@ class _FloorClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
-/// 3D Room Background Layer (Walls, Floor, Ceiling)
-/// Extracted to prevent rebuilding deeply nested transforms/clippers on every frame during prop drag.
 class Room3DBackground extends StatelessWidget {
   final bool isAwake;
   final AppColorScheme colorScheme;
@@ -1236,4 +1302,41 @@ class Room3DBackground extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SelectedPropPainter extends CustomPainter {
+  final Color color;
+  _SelectedPropPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 8.0;
+    const dashSpace = 4.0;
+
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      const Radius.circular(12),
+    );
+
+    final path = Path()..addRRect(rrect);
+
+    for (final metric in path.computeMetrics()) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        canvas.drawPath(
+          metric.extractPath(distance, distance + dashWidth),
+          paint,
+        );
+        distance += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -52,6 +52,7 @@ class AppDialogConfig {
     this.actions = const [],
     this.actionsAlignment,
     this.showConfetti = false,
+    this.showCloseButton = false,
   });
 
   final String title;
@@ -60,6 +61,7 @@ class AppDialogConfig {
   final List<AppDialogAction> actions;
   final MainAxisAlignment? actionsAlignment;
   final bool showConfetti;
+  final bool showCloseButton;
 }
 
 class AppDialog {
@@ -144,6 +146,7 @@ class AppDialog {
         return AppDialogConfig(
           title: '아이템 구매',
           content: content,
+          showCloseButton: true,
           actions: actions ??
               [
                 AppDialogAction(
@@ -163,6 +166,7 @@ class AppDialog {
           content: content,
           actionsAlignment: MainAxisAlignment.center,
           showConfetti: true,
+          showCloseButton: true,
           actions: actions ??
               [
                 AppDialogAction(
@@ -647,6 +651,21 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
                       cacheWidth: 300, // Optimized
                     ),
                   ),
+                  // Close Button (오른쪽 위)
+                  if (config.showCloseButton)
+                    Positioned(
+                      top: -10,
+                      right: -10,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Image.asset(
+                          'assets/icons/X_Button.png',
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

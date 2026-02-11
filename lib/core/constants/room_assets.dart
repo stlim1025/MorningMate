@@ -261,6 +261,15 @@ class RoomAssets {
       aspectRatio: 1.8,
     ),
     RoomAsset(
+      id: 'wood_bed',
+      name: '원목 침대',
+      price: 100,
+      icon: Icons.note_alt_outlined,
+      imagePath: 'assets/items/Wood_Bed.png',
+      sizeMultiplier: 2.5,
+      aspectRatio: 1.0,
+    ),
+    RoomAsset(
       id: 'space_chair',
       name: '우주 의자',
       price: 200,
@@ -276,7 +285,7 @@ class RoomAssets {
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/Space_bed.png',
       sizeMultiplier: 2.0,
-      aspectRatio: 1.8,
+      aspectRatio: 1.0,
     ),
     RoomAsset(
       id: 'pogeun_sofa',

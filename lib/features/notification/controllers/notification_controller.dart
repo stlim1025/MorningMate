@@ -97,7 +97,7 @@ class NotificationController extends ChangeNotifier {
   // 응원 메시지(방명록) 보내기 -> 알림 생성
   Future<void> sendCheerMessage(
       String senderId, String senderNickname, String receiverId, String message,
-      {bool fcmSent = false}) async {
+      {bool fcmSent = false, bool isReply = false}) async {
     final notificationRef = _db.collection('notifications').doc();
 
     final notification = NotificationModel(
@@ -110,6 +110,7 @@ class NotificationController extends ChangeNotifier {
       createdAt: DateTime.now(),
       isRead: false,
       fcmSent: fcmSent,
+      data: isReply ? {'isReply': true} : null,
     );
 
     await notificationRef.set(notification.toFirestore());
