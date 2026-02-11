@@ -42,16 +42,28 @@ void main() async {
   await initializeDateFormatting('ko_KR', null);
 
   // Firebase 초기화
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+    debugPrint('Firebase 초기화 성공');
+  } catch (e) {
+    debugPrint('Firebase 초기화 실패: $e');
+  }
 
   // 알람 서비스 초기화 (리스너는 앱 상태 초기화 시 등록)
-  await AlarmService.init();
+  try {
+    await AlarmService.init();
+    debugPrint('알람 서비스 초기화 성공');
+  } catch (e) {
+    debugPrint('알람 서비스 초기화 실패: $e');
+  }
+
   final bool isAlarmFiring = AlarmService.ringingAlarm != null;
   final String initialRoute = isAlarmFiring ? '/alarm-ring' : '/splash';
 
   // 광고 SDK 초기화
   try {
     MobileAds.instance.initialize();
+    debugPrint('광고 SDK 초기화 성공');
   } catch (e) {
     debugPrint('광고 SDK 초기화 실패: $e');
   }

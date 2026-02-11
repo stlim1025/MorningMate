@@ -38,7 +38,7 @@ class NotificationService {
       alert: true,
       badge: true,
       sound: true,
-      criticalAlert: true, // iOS Critical Alert
+      criticalAlert: false, // iOS Critical Alert
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {

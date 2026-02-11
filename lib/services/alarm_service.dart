@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:alarm/alarm.dart';
 import 'dart:async';
 import 'package:permission_handler/permission_handler.dart';
@@ -30,10 +31,15 @@ class AlarmService {
   }
 
   static Future<bool> checkPermissions() async {
-    //에 명시된 필수 권한들 체크
-    return await Permission.notification.isGranted &&
-        await Permission.systemAlertWindow.isGranted &&
-        await Permission.scheduleExactAlarm.isGranted;
+    if (Platform.isIOS) {
+      // iOS는 알림 권한만 체크
+      return await Permission.notification.isGranted;
+    } else {
+      // Android 전용 권한들
+      return await Permission.notification.isGranted &&
+          await Permission.systemAlertWindow.isGranted &&
+          await Permission.scheduleExactAlarm.isGranted;
+    }
   }
 
   static Future<void> scheduleAlarm({
