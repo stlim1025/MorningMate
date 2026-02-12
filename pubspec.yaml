@@ -73,6 +73,7 @@ flutter:
     - assets/animations/
     - assets/icons/
     - assets/items/
+    - assets/items/Charactor/
     - assets/sounds/
     - assets/imoticon/
   

@@ -39,6 +39,8 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
     this.todaysMood,
     this.bottomPadding = 0,
     this.equippedCharacterItems,
+    this.visitorCharacterLevel,
+    this.visitorEquippedItems,
   });
 
   final bool isPropEditable;
@@ -48,6 +50,8 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
   final Function(int index)? onPropDelete;
   final String? todaysMood;
   final Map<String, dynamic>? equippedCharacterItems;
+  final int? visitorCharacterLevel;
+  final Map<String, dynamic>? visitorEquippedItems;
 
   @override
   State<EnhancedCharacterRoomWidget> createState() =>
@@ -69,6 +73,19 @@ class _EnhancedCharacterRoomWidgetState
   bool _isMoving = false;
   bool _isDragging = false;
   bool _isFalling = false;
+
+  // Visitor state
+  double _visitorHorizontalPosition = 0.3; // Start from left
+  double _visitorVerticalPosition = 0.6;
+  bool _visitorIsMoving = false;
+  Timer? _visitorWanderTimer;
+  Timer? _visitorMovementStopTimer;
+  bool _isVisitorDragging = false;
+  bool _isVisitorFalling = false;
+  double? _visitorDragX;
+  double? _visitorDragY;
+  bool _isVisitorTapped = false;
+  Timer? _visitorTapTimer;
 
   // 2D 화면 좌표 (0~1 정규화)
   double? _dragX;
@@ -166,6 +183,35 @@ class _EnhancedCharacterRoomWidgetState
     }
   }
 
+  void _moveVisitor() {
+    if (mounted && widget.isAwake) {
+      setState(() {
+        _visitorIsMoving = true;
+        _visitorHorizontalPosition = 0.1 + Random().nextDouble() * 0.8;
+        _visitorVerticalPosition = 0.45 + Random().nextDouble() * 0.5;
+      });
+
+      _visitorMovementStopTimer?.cancel();
+      _visitorMovementStopTimer = Timer(const Duration(milliseconds: 3500), () {
+        if (mounted) {
+          setState(() {
+            _visitorIsMoving = false;
+          });
+        }
+      });
+    }
+  }
+
+  void _startVisitorWandering() {
+    _visitorWanderTimer?.cancel();
+    _visitorMovementStopTimer?.cancel();
+    // Visitor follows their own logic, regardless of room awake status
+    _moveVisitor();
+    _visitorWanderTimer = Timer.periodic(const Duration(seconds: 7), (timer) {
+      _moveVisitor();
+    });
+  }
+
   void _startWandering() {
     _wanderTimer?.cancel();
     _movementStopTimer?.cancel();
@@ -182,6 +228,8 @@ class _EnhancedCharacterRoomWidgetState
   @override
   void didUpdateWidget(EnhancedCharacterRoomWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    // 1. Main Character wandering logic
     if (widget.isAwake != oldWidget.isAwake) {
       if (widget.isAwake) {
         _startWandering();
@@ -189,11 +237,26 @@ class _EnhancedCharacterRoomWidgetState
         _wanderTimer?.cancel();
         _movementStopTimer?.cancel();
         setState(() {
-          _horizontalPosition = 0.5; // Reset to center when sleeping
-          _verticalPosition = 0.5;
           _isMoving = false;
         });
       }
+    }
+
+    // 2. Visitor Character wandering logic (independent of isAwake)
+    if (widget.visitorCharacterLevel != oldWidget.visitorCharacterLevel) {
+      if (widget.visitorCharacterLevel != null) {
+        _startVisitorWandering();
+      } else {
+        _visitorWanderTimer?.cancel();
+        _visitorMovementStopTimer?.cancel();
+        setState(() {
+          _visitorIsMoving = false;
+        });
+      }
+    } else if (widget.visitorCharacterLevel != null &&
+        _visitorWanderTimer == null) {
+      // Ensure wandering starts if visitor is present but timer isn't running
+      _startVisitorWandering();
     }
   }
 
@@ -203,6 +266,9 @@ class _EnhancedCharacterRoomWidgetState
     _tapTimer?.cancel();
     _wanderTimer?.cancel();
     _movementStopTimer?.cancel();
+    _visitorTapTimer?.cancel();
+    _visitorWanderTimer?.cancel();
+    _visitorMovementStopTimer?.cancel();
     super.dispose();
   }
 
@@ -312,6 +378,11 @@ class _EnhancedCharacterRoomWidgetState
             // Character
             _buildCharacterContainer3D(
                 widget.isAwake, colorScheme, width, renderHeight),
+
+            // Visitor Character
+            if (widget.visitorCharacterLevel != null)
+              _buildVisitorCharacterContainer3D(true, colorScheme, width,
+                  renderHeight), // Visitant always awake
 
             // Level Up Effect
             if (widget.currentAnimation == 'evolve') _buildLevelUpEffect(size),
@@ -487,7 +558,6 @@ class _EnhancedCharacterRoomWidgetState
   /// 캐릭터 컨테이너 (2D 화면 좌표 기반)
   Widget _buildCharacterContainer3D(
       bool isAwake, AppColorScheme colorScheme, double width, double height) {
-    final hLineYBottom = height * 0.42;
     final charSize = (width + height) * 0.08;
 
     double currentLeft;
@@ -506,7 +576,7 @@ class _EnhancedCharacterRoomWidgetState
       // 단순 2D 매핑 (바닥 영역)
       currentLeft = (px * width - charSize / 2).clamp(0.0, width - charSize);
       currentTop = (py * height - charSize + (isAwake ? 0 : charSize * 0.3))
-          .clamp(hLineYBottom - charSize * 0.5, height - charSize);
+          .clamp(height * 0.42 - charSize * 0.5, height - charSize);
     }
 
     return Stack(
@@ -521,10 +591,16 @@ class _EnhancedCharacterRoomWidgetState
           left: currentLeft,
           top: currentTop,
           child: GestureDetector(
-            onTap: _handleTap,
-            onPanStart: (d) => _handleDragStart3D(d, width, height, charSize),
-            onPanUpdate: (d) => _handleDragUpdate3D(d, width, height, charSize),
-            onPanEnd: (d) => _handleDragEnd3D(d, width, height, charSize),
+            onTap: widget.visitorCharacterLevel == null ? _handleTap : null,
+            onPanStart: widget.visitorCharacterLevel == null
+                ? (d) => _handleDragStart3D(d, width, height, charSize)
+                : null,
+            onPanUpdate: widget.visitorCharacterLevel == null
+                ? (d) => _handleDragUpdate3D(d, width, height, charSize)
+                : null,
+            onPanEnd: widget.visitorCharacterLevel == null
+                ? (d) => _handleDragEnd3D(d, width, height, charSize)
+                : null,
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: _isTapped ? 1.0 : 0.0),
               duration: const Duration(milliseconds: 300),
@@ -592,6 +668,222 @@ class _EnhancedCharacterRoomWidgetState
         ),
       ],
     );
+  }
+
+  /// Visitor 캐릭터 컨테이너
+  Widget _buildVisitorCharacterContainer3D(
+      bool isAwake, AppColorScheme colorScheme, double width, double height) {
+    final charSize = (width + height) * 0.08;
+
+    double currentLeft;
+    double currentTop;
+
+    if (_isVisitorDragging && _visitorDragX != null && _visitorDragY != null) {
+      // 드래그 중: 화면 어디든 자유롭게 이동
+      currentLeft =
+          (_visitorDragX! * width - charSize / 2).clamp(0.0, width - charSize);
+      currentTop =
+          (_visitorDragY! * height - charSize).clamp(0.0, height - charSize);
+    } else {
+      // 일반 상태: 바닥 영역에 3D 매핑
+      final double py = _visitorVerticalPosition.clamp(0.5, 1.0);
+      final px = _visitorHorizontalPosition.clamp(0.05, 0.95);
+
+      currentLeft = (px * width - charSize / 2).clamp(0.0, width - charSize);
+      currentTop = (py * height - charSize + (isAwake ? 0 : charSize * 0.3))
+          .clamp(height * 0.42 - charSize * 0.5, height - charSize);
+    }
+
+    return Stack(
+      children: [
+        AnimatedPositioned(
+          duration: _isVisitorDragging
+              ? Duration.zero
+              : (_isVisitorFalling
+                  ? const Duration(milliseconds: 800)
+                  : const Duration(milliseconds: 3500)),
+          curve: _isVisitorFalling ? Curves.bounceOut : Curves.easeInOutQuart,
+          left: currentLeft,
+          top: currentTop,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque, // Ensure touches are captured
+            onTap: _handleVisitorTap,
+            onPanStart: (d) =>
+                _handleVisitorDragStart3D(d, width, height, charSize),
+            onPanUpdate: (d) =>
+                _handleVisitorDragUpdate3D(d, width, height, charSize),
+            onPanEnd: (d) =>
+                _handleVisitorDragEnd3D(d, width, height, charSize),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: _isVisitorTapped ? 1.0 : 0.0),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              builder: (context, tapValue, child) {
+                return TweenAnimationBuilder<double>(
+                  tween: Tween(
+                    begin: 0.15,
+                    end: (isAwake && (_visitorIsMoving || _isVisitorTapped))
+                        ? 1.0
+                        : 0.15,
+                  ),
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.easeInOut,
+                  builder: (context, intensity, child) {
+                    return AnimatedBuilder(
+                      animation: _bounceAnimation,
+                      builder: (context, child) {
+                        final jumpHeight =
+                            _bounceAnimation.value * 15 * intensity;
+                        final tapLift = tapValue * 4;
+                        final verticalOffset = -jumpHeight - tapLift;
+                        final maxSquash = 0.08 * intensity;
+                        final scaleX = (1.0 + maxSquash) -
+                            (_bounceAnimation.value * maxSquash * 2);
+                        final scaleY = (1.0 - maxSquash) +
+                            (_bounceAnimation.value * maxSquash * 2);
+
+                        return Transform(
+                          alignment: Alignment.bottomCenter,
+                          transform: Matrix4.identity()
+                            ..translate(0.0, verticalOffset)
+                            ..scale(scaleX, scaleY),
+                          child: CharacterDisplay(
+                            isAwake: isAwake,
+                            characterLevel: widget.visitorCharacterLevel ?? 1,
+                            size: charSize,
+                            isTapped: _isVisitorTapped,
+                            enableAnimation: true,
+                            equippedItems: widget.visitorEquippedItems,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleVisitorTap() {
+    if (_isVisitorTapped) return;
+    setState(() {
+      _isVisitorTapped = true;
+      _visitorIsMoving = true;
+    });
+    _visitorTapTimer?.cancel();
+    _visitorTapTimer = Timer(const Duration(milliseconds: 1000), () {
+      if (mounted) {
+        setState(() {
+          _isVisitorTapped = false;
+          _visitorIsMoving = false;
+        });
+      }
+    });
+  }
+
+  void _handleVisitorDragStart3D(
+      DragStartDetails d, double width, double height, double charSize) {
+    // if (!widget.isAwake) return; // Allow dragging even if room owner is sleeping
+    _visitorWanderTimer?.cancel();
+    _visitorMovementStopTimer?.cancel();
+
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final localPos = renderBox.globalToLocal(d.globalPosition);
+
+    final currentVisualLeft = localPos.dx - d.localPosition.dx;
+    final currentVisualTop = localPos.dy - d.localPosition.dy;
+
+    setState(() {
+      _isVisitorDragging = true;
+      _isVisitorFalling = false;
+      _visitorIsMoving = true;
+
+      _visitorDragX =
+          ((currentVisualLeft + charSize / 2) / width).clamp(0.0, 1.0);
+      _visitorDragY = ((currentVisualTop + charSize) / height).clamp(0.0, 1.0);
+    });
+  }
+
+  void _handleVisitorDragUpdate3D(
+      DragUpdateDetails d, double width, double height, double charSize) {
+    if (!_isVisitorDragging) return;
+    setState(() {
+      _visitorDragX =
+          ((_visitorDragX ?? 0.5) + d.delta.dx / width).clamp(0.0, 1.0);
+      _visitorDragY =
+          ((_visitorDragY ?? 0.5) + d.delta.dy / height).clamp(0.0, 1.0);
+    });
+  }
+
+  void _handleVisitorDragEnd3D(
+      DragEndDetails d, double width, double height, double charSize) {
+    if (!_isVisitorDragging) return;
+
+    final dropY = _visitorDragY ?? 0.5;
+    final dropX = _visitorDragX ?? 0.5;
+
+    final floorThreshold = 0.5;
+    final wasOnFloor = _visitorVerticalPosition >= floorThreshold;
+    final isDroppedOnFloor = dropY >= floorThreshold;
+
+    setState(() {
+      _isVisitorDragging = false;
+      _visitorDragX = null;
+      _visitorDragY = null;
+
+      if (wasOnFloor && isDroppedOnFloor) {
+        _isVisitorFalling = false;
+        _visitorVerticalPosition = dropY.clamp(floorThreshold, 1.0);
+        _visitorHorizontalPosition = dropX.clamp(0.05, 0.95);
+        _visitorIsMoving = false;
+
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted && !_isVisitorDragging) {
+            _startVisitorWandering();
+          }
+        });
+      } else if (dropY < floorThreshold) {
+        _isVisitorFalling = true;
+        _visitorVerticalPosition = floorThreshold;
+        _visitorHorizontalPosition = dropX.clamp(0.1, 0.9);
+
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) {
+            setState(() {
+              _isVisitorFalling = false;
+              _visitorIsMoving = false;
+            });
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              if (mounted && !_isVisitorDragging) {
+                _startVisitorWandering();
+              }
+            });
+          }
+        });
+      } else {
+        _isVisitorFalling = true;
+        _visitorVerticalPosition = dropY.clamp(floorThreshold, 1.0);
+        _visitorHorizontalPosition = dropX.clamp(0.05, 0.95);
+
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) {
+            setState(() {
+              _isVisitorFalling = false;
+              _visitorIsMoving = false;
+            });
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              if (mounted && !_isVisitorDragging) {
+                _startVisitorWandering();
+              }
+            });
+          }
+        });
+      }
+    });
   }
 
   void _handleDragStart3D(

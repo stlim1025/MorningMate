@@ -152,7 +152,6 @@ class _ShopScreenState extends State<ShopScreen> {
                 _buildSectionHeader('이모티콘'),
                 const SizedBox(height: 16),
                 _buildEmoticonGrid(user, characterController, colorScheme),
-                _buildEmoticonGrid(user, characterController, colorScheme),
                 const SizedBox(height: 32),
                 _buildSectionHeader('캐릭터'),
                 const SizedBox(height: 16),

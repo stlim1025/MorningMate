@@ -618,7 +618,11 @@ class _WritingScreenState extends State<WritingScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center, // Center align content
           children: [
-            _WakeUpAnimationWidget(characterLevel: level),
+            _WakeUpAnimationWidget(
+              characterLevel: level,
+              equippedItems:
+                  characterController.currentUser?.equippedCharacterItems ?? {},
+            ),
             const SizedBox(height: 4),
             Text(
               '캐릭터가 깨어났어요!',
@@ -771,7 +775,11 @@ class _BlurTextEditingController extends TextEditingController {
 
 class _WakeUpAnimationWidget extends StatefulWidget {
   final int characterLevel;
-  const _WakeUpAnimationWidget({required this.characterLevel});
+  final Map<String, dynamic> equippedItems;
+  const _WakeUpAnimationWidget({
+    required this.characterLevel,
+    required this.equippedItems,
+  });
 
   @override
   State<_WakeUpAnimationWidget> createState() => _WakeUpAnimationWidgetState();
@@ -809,6 +817,7 @@ class _WakeUpAnimationWidgetState extends State<_WakeUpAnimationWidget> {
                 characterLevel: widget.characterLevel,
                 size: 150,
                 enableAnimation: true,
+                equippedItems: widget.equippedItems,
               )
             : CharacterDisplay(
                 key: const ValueKey('asleep'),
@@ -816,6 +825,7 @@ class _WakeUpAnimationWidgetState extends State<_WakeUpAnimationWidget> {
                 characterLevel: widget.characterLevel,
                 size: 150,
                 enableAnimation: true,
+                equippedItems: widget.equippedItems,
               ),
       ),
     );

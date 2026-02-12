@@ -221,7 +221,7 @@ class RoomAssets {
       price: 200,
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/WoodDesk.png',
-      sizeMultiplier: 1.2,
+      sizeMultiplier: 0.9,
       aspectRatio: 1.8,
     ),
     RoomAsset(
@@ -230,7 +230,7 @@ class RoomAssets {
       price: 200,
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/Book_Desk.png',
-      sizeMultiplier: 1.2,
+      sizeMultiplier: 1.0,
       aspectRatio: 1.8,
     ),
     RoomAsset(
@@ -239,7 +239,7 @@ class RoomAssets {
       price: 200,
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/wooden_desk_sprite.png',
-      sizeMultiplier: 1.2,
+      sizeMultiplier: 1.0,
       aspectRatio: 1.8,
     ),
     RoomAsset(
@@ -257,8 +257,8 @@ class RoomAssets {
       price: 200,
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/Wood_Chair.png',
-      sizeMultiplier: 1.2,
-      aspectRatio: 1.8,
+      sizeMultiplier: 0.9,
+      aspectRatio: 1,
     ),
     RoomAsset(
       id: 'wood_bed',
@@ -440,6 +440,48 @@ class RoomAssets {
       icon: Icons.face,
       imagePath: 'assets/items/Charactor/Charactor_Heart_Glass.png',
       sizeMultiplier: 1.0,
+    ),
+    RoomAsset(
+      id: 'necktie',
+      name: '넥타이',
+      price: 150,
+      icon: Icons.accessibility_new_outlined,
+      imagePath: 'assets/items/Charactor/Charactor_Necktie.png',
+    ),
+    RoomAsset(
+      id: 'plogeyes',
+      name: '개구리 눈',
+      price: 150,
+      icon: Icons.visibility,
+      imagePath: 'assets/items/Charactor/Charactor_Plogeyes.png',
+    ),
+    RoomAsset(
+      id: 'sprout',
+      name: '새싹',
+      price: 150,
+      icon: Icons.eco,
+      imagePath: 'assets/items/Charactor/Charactor_Sprout.png',
+    ),
+    RoomAsset(
+      id: 'wood_glass',
+      name: '나무 안경',
+      price: 150,
+      icon: Icons.face,
+      imagePath: 'assets/items/Charactor/Charactor_WoodGlass.png',
+    ),
+    RoomAsset(
+      id: 'space_clothes',
+      name: '우주복',
+      price: 200,
+      icon: Icons.rocket_launch_outlined,
+      imagePath: 'assets/items/Charactor/Charactor_SpaceClothes.png',
+    ),
+    RoomAsset(
+      id: 'prog_clothes',
+      name: '개굴옷',
+      price: 200,
+      icon: Icons.face_retouching_natural,
+      imagePath: 'assets/items/Charactor/Charactor_Progclothes.png',
     ),
   ];
 }

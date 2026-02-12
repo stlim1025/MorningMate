@@ -100,11 +100,33 @@ class _CharacterDisplayState extends State<CharacterDisplay>
               cacheWidth: 500,
             ),
 
+            // 2.5 Clothes Slot (Space Clothes, Frog Clothes, etc.)
+            if (widget.equippedItems != null &&
+                widget.equippedItems!['clothes'] != null)
+              Builder(builder: (context) {
+                final clothesItem = widget.equippedItems!['clothes'];
+                String? assetPath;
+
+                if (clothesItem == 'space_clothes' ||
+                    clothesItem == 'prog_clothes') {
+                  assetPath = clothesItem == 'space_clothes'
+                      ? 'assets/items/Charactor/Charactor_SpaceClothes.png'
+                      : 'assets/items/Charactor/Charactor_Progclothes.png';
+                  return Image.asset(
+                    assetPath,
+                    width: charWidth * 1.05,
+                    height: charHeight * 1.05,
+                    fit: BoxFit.contain,
+                    cacheWidth: 500,
+                  );
+                }
+
+                return const SizedBox.shrink();
+              }),
+
             // 3. Expression Layer - Position face
             Positioned(
-              top: widget.isAwake
-                  ? charHeight * 0.18
-                  : charHeight * 0.13, // 자고 있을 때 위로
+              top: widget.isAwake ? charHeight * 0.18 : charHeight * 0.13,
               left: charWidth * 0.075,
               child: SizedBox(
                 width: charWidth * 0.85,
@@ -126,9 +148,7 @@ class _CharacterDisplayState extends State<CharacterDisplay>
                         ),
                         secondChild: Padding(
                           padding: EdgeInsets.only(
-                            top: widget.isAwake
-                                ? 10
-                                : 0, // 자고 있을 때 패딩 제거하여 위로 올림
+                            top: widget.isAwake ? 10 : 0,
                           ),
                           child: Image.asset(
                             widget.isAwake
@@ -150,19 +170,79 @@ class _CharacterDisplayState extends State<CharacterDisplay>
               ),
             ),
 
-            // 4. Accessories Layer (Glasses, etc.)
+            // 4. Accessories Layer (Necktie, Glasses, etc.)
+            // Body Slot (Necktie)
             if (widget.equippedItems != null &&
-                widget.equippedItems!['face'] == 'heart_glass')
+                widget.equippedItems!['body'] == 'necktie')
               Positioned(
-                top: widget.isAwake
-                    ? charHeight * 0.35 // 눈 위치 대략 조정
-                    : charHeight * 0.30,
+                bottom: charHeight * 0.08,
                 child: Image.asset(
-                  'assets/items/Charactor/Charactor_Heart_Glass.png',
-                  width: charWidth * 0.5,
+                  'assets/items/Charactor/Charactor_Necktie.png',
+                  width: charWidth * 0.15,
                   fit: BoxFit.contain,
                 ),
               ),
+
+            // Expression Layer is already at index 3 (lines 103-151)
+
+            // Face Slot (Glasses)
+            if (widget.equippedItems != null &&
+                widget.equippedItems!['face'] != null)
+              Builder(builder: (context) {
+                final faceItem = widget.equippedItems!['face'];
+                String? assetPath;
+                double itemWidth = charWidth * 0.7;
+
+                if (faceItem == 'heart_glass') {
+                  assetPath =
+                      'assets/items/Charactor/Charactor_Heart_Glass.png';
+                } else if (faceItem == 'wood_glass') {
+                  assetPath = 'assets/items/Charactor/Charactor_WoodGlass.png';
+                }
+
+                if (assetPath == null) return const SizedBox.shrink();
+
+                return Positioned(
+                  top: widget.isAwake ? charHeight * 0.35 : charHeight * 0.17,
+                  child: Image.asset(
+                    assetPath,
+                    width: itemWidth,
+                    fit: BoxFit.contain,
+                  ),
+                );
+              }),
+
+            // Head Slot (Sprout, Plogeyes)
+            if (widget.equippedItems != null &&
+                widget.equippedItems!['head'] != null)
+              Builder(builder: (context) {
+                final headItem = widget.equippedItems!['head'];
+                String? assetPath;
+                double itemWidth = charWidth * 0.3;
+                double topOffset =
+                    widget.isAwake ? -charHeight * 0.02 : -charHeight * 0.05;
+
+                if (headItem == 'sprout') {
+                  assetPath = 'assets/items/Charactor/Charactor_Sprout.png';
+                } else if (headItem == 'plogeyes') {
+                  assetPath = 'assets/items/Charactor/Charactor_Plogeyes.png';
+                  itemWidth = charWidth * 0.75;
+                  // Position it exactly on top of the head
+                  topOffset =
+                      widget.isAwake ? -charHeight * 0.12 : -charHeight * 0.15;
+                }
+
+                if (assetPath == null) return const SizedBox.shrink();
+
+                return Positioned(
+                  top: topOffset,
+                  child: Image.asset(
+                    assetPath,
+                    width: itemWidth,
+                    fit: BoxFit.contain,
+                  ),
+                );
+              }),
 
             // Zzz animation (if sleeping and animation enabled)
             if (!widget.isAwake && widget.enableAnimation)

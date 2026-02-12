@@ -257,7 +257,7 @@ class _SocialScreenState extends State<SocialScreen> {
                       ),
                       Positioned(
                         right: 16,
-                        bottom: 130, // Increased to avoid bottom nav bar
+                        bottom: 30, // Increased to avoid bottom nav bar
                         child: _AnimatedAddFriendButton(
                           onPressed: () =>
                               _showAddFriendDialog(context, colorScheme),

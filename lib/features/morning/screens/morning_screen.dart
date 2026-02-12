@@ -17,6 +17,7 @@ import '../widgets/store_button.dart';
 import '../widgets/diary_button.dart';
 import '../widgets/decoration_button.dart';
 import '../widgets/header_image_button.dart';
+import '../widgets/character_decoration_button.dart';
 
 class MorningScreen extends StatefulWidget {
   const MorningScreen({super.key});
@@ -258,6 +259,20 @@ class _MorningScreenState extends State<MorningScreen>
                       const StoreButton(),
                     ],
                   ),
+                ),
+              ),
+            ),
+
+            // 3.5 캐릭터 꾸미기 버튼 (오른쪽)
+            Positioned(
+              right: 20,
+              bottom: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: isAwake ? 20 : 95, // 잘 때 일기 작성 버튼 위로 올라가도록
+                  ),
+                  child: const CharacterDecorationButton(),
                 ),
               ),
             ),

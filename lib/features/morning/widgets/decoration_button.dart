@@ -9,7 +9,7 @@ class DecorationButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return RoomActionButton(
       iconPath: 'assets/icons/Ggumim_Icon.png',
-      label: '꾸미기',
+      label: '방 꾸미기',
       size: 53, // 원래 width가 53이었음
       onTap: () {
         context.push('/decoration');

@@ -71,10 +71,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     }
   }
 
-  bool _hasWrittenToday() {
-    return _getDiaryForDay(DateTime.now()) != null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
@@ -163,7 +159,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     return Consumer<AuthController>(
       builder: (context, authController, child) {
         final user = authController.userModel;
-        final hasWritten = _hasWrittenToday();
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -176,38 +171,47 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             ),
             // borderRadius, boxShadow 제거 (이미지 자체 형태 유지)
           ),
-          child: Column(
+          child: Stack(
             children: [
+              // Main Content (Character + Info)
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Character Display (Current Character)
+                  // Character Display
                   SizedBox(
                     width: 80,
                     height: 80,
                     child: CharacterDisplay(
-                      isAwake: true, // Always show awake/happy state in profile
+                      isAwake: true,
                       characterLevel: user?.characterLevel ?? 1,
                       size: 80,
                       enableAnimation: true,
+                      equippedItems: user?.equippedCharacterItems ?? {},
                     ),
                   ),
                   const SizedBox(width: 16),
 
-                  // User Info Text
+                  // User Info
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          user?.nickname ?? '사용자',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'BMJUA',
-                            color: Color(0xFF4E342E),
+                        // Nickname (avoid overlapping with point box)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 125),
+                          child: Text(
+                            user?.nickname ?? '사용자',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'BMJUA',
+                              color: Color(0xFF4E342E),
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(height: 2), // Reduced spacing
+                        const SizedBox(height: 2),
+                        // Level Tag
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
@@ -227,82 +231,111 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 4), // Reduced spacing
-                        // 작성 여부 배지 (Date_Icon.png 배경)
-                        Container(
-                          width: 75, // 크기 축소 (가로)
-                          height: 32, // 크기 축소 (세로)
-                          alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage('assets/images/Memo.png'),
-                              fit: BoxFit.fill,
-                              filterQuality: FilterQuality.none,
-                            ),
-                          ),
-                          child: Text(
-                            hasWritten
-                                ? '작성 완료 ✨'
-                                : '미작성 ✍️', // 텍스트 간소화 (공간 제약 고려)
-                            style: const TextStyle(
-                              color: Color(0xFF5D4037),
-                              fontFamily: 'BMJUA',
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                        const SizedBox(height: 8),
 
-                  // Point Info Box with TextBox_Background
-                  Container(
-                    width: 120, // 가로로 길게 설정
-                    height: 36, // 높이 축소 (48 -> 36)
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image:
-                            AssetImage('assets/images/TextBox_Background.png'),
-                        fit: BoxFit.fill,
-                        filterQuality: FilterQuality.none,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/images/branch.png',
-                          width: 18, // 22 -> 18 축소
-                          height: 18,
-                          cacheWidth: 72,
-                          filterQuality: FilterQuality.none,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${user?.points ?? 0}',
-                          style: const TextStyle(
-                            color: Color(0xFF5D4037),
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'BMJUA',
-                            fontSize: 14, // 16 -> 14 축소
+                        // Experience Bar (Full Width)
+                        if (user != null)
+                          Container(
+                            width: double.infinity,
+                            height: 24,
+                            child: Stack(
+                              alignment: Alignment.centerLeft,
+                              children: [
+                                // 배경 틀
+                                Image.asset(
+                                  'assets/images/Challenge_ProgressBar_Empty.png',
+                                  width: double.infinity,
+                                  height: 24,
+                                  fit: BoxFit.fill,
+                                ),
+                                // 경험치 게이지
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 5),
+                                  child: ClipRect(
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      widthFactor: user.expProgress * 0.94,
+                                      child: Image.asset(
+                                        'assets/images/Challenge_ProgressBar.png',
+                                        width: double.infinity,
+                                        height: 14,
+                                        fit: BoxFit.fill,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // 경험치 텍스트
+                                Center(
+                                  child: Text(
+                                    user.characterLevel >= 6
+                                        ? 'Max Level'
+                                        : '${user.experience} / ${user.requiredExpForNextLevel}',
+                                    style: const TextStyle(
+                                      fontFamily: 'BMJUA',
+                                      fontSize: 10,
+                                      color: Color(0xFF5D4037),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          '가지',
-                          style: TextStyle(
-                            color: Color(0xFF8D6E63),
-                            fontFamily: 'BMJUA',
-                            fontSize: 12, // 14 -> 12 축소
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                       ],
                     ),
                   ),
                 ],
+              ),
+
+              // Point Info Box (Positioned Top-Right)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  width: 120,
+                  height: 36,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/TextBox_Background.png'),
+                      fit: BoxFit.fill,
+                      filterQuality: FilterQuality.none,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/branch.png',
+                        width: 18,
+                        height: 18,
+                        cacheWidth: 72,
+                        filterQuality: FilterQuality.none,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${user?.points ?? 0}',
+                        style: const TextStyle(
+                          color: Color(0xFF5D4037),
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'BMJUA',
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        '가지',
+                        style: TextStyle(
+                          color: Color(0xFF8D6E63),
+                          fontFamily: 'BMJUA',
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

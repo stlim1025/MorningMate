@@ -200,6 +200,8 @@ class FriendCard extends StatelessWidget {
                                       characterLevel: friend.characterLevel,
                                       size: avatarRadius * 1.6,
                                       enableAnimation: false,
+                                      equippedItems:
+                                          friend.equippedCharacterItems,
                                     )
                                   : moodAsset != null
                                       ? Image.asset(

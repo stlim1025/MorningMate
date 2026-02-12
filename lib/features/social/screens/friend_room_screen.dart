@@ -114,6 +114,8 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
               ? socialController.getFriendMood(_friend!.uid)
               : null;
 
+          final currentUser = context.read<AuthController>().userModel;
+
           return Stack(
             children: [
               // 1. Full Screen Room Background
@@ -132,6 +134,8 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                     todaysMood: todaysMood,
                     bottomPadding: 45 + MediaQuery.of(context).padding.bottom,
                     equippedCharacterItems: _friend!.equippedCharacterItems,
+                    visitorCharacterLevel: currentUser?.characterLevel,
+                    visitorEquippedItems: currentUser?.equippedCharacterItems,
                   ),
                 ),
 

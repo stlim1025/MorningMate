@@ -528,12 +528,29 @@ class CharacterController extends ChangeNotifier {
     final currentEquipped =
         Map<String, dynamic>.from(_currentUser!.equippedCharacterItems);
 
-    // 단순화: 'face' 슬롯 고정 (안경)
-    // 이미 장착된 아이템이면 해제, 아니면 장착
-    const slot = 'face';
-    if (currentEquipped[slot] == itemId) {
-      currentEquipped.remove(slot);
+    // 아이템별 슬롯 지정
+    String slot = 'face';
+    if (itemId == 'necktie') {
+      slot = 'body';
+    } else if (itemId == 'space_clothes' || itemId == 'prog_clothes') {
+      slot = 'clothes';
+    } else if (itemId == 'sprout' || itemId == 'plogeyes') {
+      slot = 'head';
+    }
+
+    // 이미 어딘가에 장착되어 있는지 체크 (슬롯 변경 대응 및 중복 방지)
+    String? existingSlot;
+    currentEquipped.forEach((key, value) {
+      if (value == itemId) {
+        existingSlot = key;
+      }
+    });
+
+    if (existingSlot != null) {
+      // 이미 장착되어 있다면 해당 슬롯에서 제거 (해제)
+      currentEquipped.remove(existingSlot);
     } else {
+      // 장착되어 있지 않다면 지정된 슬롯에 장착
       currentEquipped[slot] = itemId;
     }
 
