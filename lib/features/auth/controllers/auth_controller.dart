@@ -176,9 +176,11 @@ class AuthController extends ChangeNotifier {
     });
   }
 
-  // 생체 인증으로 로그인
-  Future<bool> authenticateWithBiometric() async {
-    return await _authService.authenticateWithBiometric();
+  // 생체 인증으로 로그인/인증
+  Future<bool> authenticateWithBiometric({String? localizedReason}) async {
+    return await _authService.authenticateWithBiometric(
+      localizedReason: localizedReason ?? '일기를 보호하기 위해 인증이 필요합니다',
+    );
   }
 
   // 생체 인증 가능 여부 확인

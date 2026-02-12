@@ -705,7 +705,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
     final userModel = authController.userModel;
     if (userModel?.biometricEnabled == true) {
-      final authenticated = await authController.authenticateWithBiometric();
+      final authenticated = await authController.authenticateWithBiometric(
+        localizedReason: '과거 기록을 확인하기 위해 인증이 필요합니다',
+      );
       if (!authenticated) {
         if (mounted) {
           MemoNotification.show(context, '생체 인증에 실패했습니다. 🔒');

@@ -584,6 +584,20 @@ class _WritingScreenState extends State<WritingScreen> {
   Future<void> _completeDiary(BuildContext context,
       MorningController controller, AppColorScheme colorScheme) async {
     final authController = context.read<AuthController>();
+
+    // 생체 인증이 활성화되어 있다면 저장 전 인증 진행
+    if (authController.userModel?.biometricEnabled == true) {
+      final authenticated = await authController.authenticateWithBiometric(
+        localizedReason: '일기를 안전하게 저장하기 위해 인증이 필요합니다',
+      );
+      if (!authenticated) {
+        if (context.mounted) {
+          MemoNotification.show(context, '인증에 실패하여 일기를 저장할 수 없습니다. 🔒');
+        }
+        return;
+      }
+    }
+
     final characterController = context.read<CharacterController>();
     final userId = authController.currentUser?.uid;
 

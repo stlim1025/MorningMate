@@ -63,6 +63,19 @@ class AppRouter {
             return null;
           }
 
+          // 생체 인증이 필요한 경우 체크
+          final user = authController.userModel;
+          final needsBiometric = user?.biometricEnabled ?? false;
+          final isVerified = authController.isBiometricVerified;
+
+          if (needsBiometric && !isVerified) {
+            // 생체 인증이 필요한데 아직 안 된 경우에는 스플래시로 강제 이동하거나 유지
+            if (location != '/splash') {
+              return '/splash';
+            }
+            return null;
+          }
+
           if (location == '/splash' ||
               location == '/login' ||
               location == '/signup' ||
