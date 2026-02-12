@@ -177,164 +177,154 @@ class FriendCard extends StatelessWidget {
                   fit: BoxFit.fill,
                 ),
               ),
-              child: Stack(
-                children: [
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => context.push('/friend/${friend.uid}'),
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                            left: 4,
-                            right: 4,
-                            top: cardHeight * 0.12,
-                            bottom: 6),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => context.push('/friend/${friend.uid}'),
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        left: 4, right: 4, top: cardHeight * 0.12, bottom: 6),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
                           children: [
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // 기상/취침 상태에 따른 아바타 배경색 변화
-                                CircleAvatar(
-                                  radius: avatarRadius,
-                                  backgroundColor: Colors.transparent,
-                                  child: !isAwakeRequested
-                                      ? CharacterDisplay(
-                                          isAwake: false,
-                                          characterLevel: friend.characterLevel,
-                                          size: avatarRadius * 1.6,
-                                          enableAnimation: false,
+                            // 기상/취침 상태에 따른 아바타 배경색 변화
+                            CircleAvatar(
+                              radius: avatarRadius,
+                              backgroundColor: Colors.transparent,
+                              child: !isAwakeRequested
+                                  ? CharacterDisplay(
+                                      isAwake: false,
+                                      characterLevel: friend.characterLevel,
+                                      size: avatarRadius * 1.6,
+                                      enableAnimation: false,
+                                    )
+                                  : moodAsset != null
+                                      ? Image.asset(
+                                          moodAsset,
+                                          width: moodIconSize,
+                                          height: moodIconSize,
+                                          fit: BoxFit.contain,
                                         )
-                                      : moodAsset != null
-                                          ? Image.asset(
-                                              moodAsset,
-                                              width: moodIconSize,
-                                              height: moodIconSize,
-                                              fit: BoxFit.contain,
-                                            )
-                                          : Text(
-                                              friend.nickname[0],
-                                              style: TextStyle(
-                                                fontFamily: 'BMJUA',
-                                                color: Colors.brown,
-                                                fontSize: fontSizeLarge * 0.7,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
+                                      : Text(
+                                          friend.nickname[0],
+                                          style: TextStyle(
+                                            fontFamily: 'BMJUA',
+                                            color: Colors.brown,
+                                            fontSize: fontSizeLarge * 0.7,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isAwakeRequested
+                                        ? colorScheme.success.withOpacity(0.2)
+                                        : Colors.white,
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 2,
+                                    )
+                                  ],
                                 ),
-                                Positioned(
-                                  right: 0,
-                                  bottom: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: isAwakeRequested
-                                            ? colorScheme.success
-                                                .withOpacity(0.2)
-                                            : Colors.white,
-                                        width: 1.5,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 2,
-                                        )
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      isAwakeRequested
-                                          ? Icons.wb_sunny
-                                          : Icons.bedtime,
-                                      size: statusIconSize,
-                                      color: isAwakeRequested
-                                          ? colorScheme.pointStar
-                                          : colorScheme.textHint,
-                                    ),
+                                child: Icon(
+                                  isAwakeRequested
+                                      ? Icons.wb_sunny
+                                      : Icons.bedtime,
+                                  size: statusIconSize,
+                                  color: isAwakeRequested
+                                      ? colorScheme.pointStar
+                                      : colorScheme.textHint,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: cardHeight * 0.01),
+                        Text(
+                          friend.nickname,
+                          style: TextStyle(
+                            fontFamily: 'BMJUA',
+                            color: Colors.brown,
+                            fontSize: fontSizeMedium,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: cardHeight * 0.01),
+                        // 연속 일수 뱃지 스타일
+                        Container(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('🔥',
+                                  style: TextStyle(fontSize: fontSizeSmall)),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${friend.consecutiveDays}일',
+                                style: TextStyle(
+                                  fontFamily: 'BMJUA',
+                                  color: Colors.brown,
+                                  fontSize: fontSizeSmall,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        if (isAwakeRequested)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.only(top: 4, bottom: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle,
+                                    color: Colors.brown, size: iconSize),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '작성 완료',
+                                  style: TextStyle(
+                                    fontFamily: 'BMJUA',
+                                    color: Colors.brown,
+                                    fontSize: fontSizeTiny,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
                             ),
-                            SizedBox(height: cardHeight * 0.01),
-                            Text(
-                              friend.nickname,
-                              style: TextStyle(
-                                fontFamily: 'BMJUA',
-                                color: Colors.brown,
-                                fontSize: fontSizeMedium,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 5.0),
+                            child: Center(
+                              child: _buildWakeUpButton(
+                                  context,
+                                  friend,
+                                  controller,
+                                  wakeUpButtonWidth,
+                                  wakeUpButtonHeight,
+                                  fontSizeSmall),
                             ),
-                            SizedBox(height: cardHeight * 0.01),
-                            // 연속 일수 뱃지 스타일
-                            Container(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('🔥',
-                                      style:
-                                          TextStyle(fontSize: fontSizeSmall)),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '${friend.consecutiveDays}일',
-                                    style: TextStyle(
-                                      fontFamily: 'BMJUA',
-                                      color: Colors.brown,
-                                      fontSize: fontSizeSmall,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Spacer(),
-                            if (isAwakeRequested)
-                              Container(
-                                width: double.infinity,
-                                padding:
-                                    const EdgeInsets.only(top: 4, bottom: 8),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.check_circle,
-                                        color: Colors.brown, size: iconSize),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      '작성 완료',
-                                      style: TextStyle(
-                                        fontFamily: 'BMJUA',
-                                        color: Colors.brown,
-                                        fontSize: fontSizeTiny,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            else
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 5.0),
-                                child: Center(
-                                  child: _buildWakeUpButton(
-                                      context,
-                                      friend,
-                                      controller,
-                                      wakeUpButtonWidth,
-                                      wakeUpButtonHeight,
-                                      fontSizeSmall),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                          ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             );
           },

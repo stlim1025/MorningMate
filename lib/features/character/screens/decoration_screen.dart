@@ -28,6 +28,16 @@ class _DecorationScreenState extends State<DecorationScreen> {
   bool? _previewIsAwake;
   late List<String> _selectedEmoticonIds;
 
+  final List<String> _categories = [
+    'background',
+    'wallpaper',
+    'props',
+    'floor',
+    'emoticon'
+  ];
+  int _currentIndex = 0;
+  late PageController _pageController;
+
   Future<String?> _showStickyNoteInput(BuildContext context) async {
     final controller = TextEditingController();
 
@@ -79,10 +89,12 @@ class _DecorationScreenState extends State<DecorationScreen> {
     _selectedEmoticonIds =
         List<String>.from(controller.currentUser?.activeEmoticonIds ?? []);
     _decorationNotifier = ValueNotifier<RoomDecorationModel>(initialDecoration);
+    _pageController = PageController(initialPage: _currentIndex);
   }
 
   @override
   void dispose() {
+    _pageController.dispose();
     _decorationNotifier.dispose();
     super.dispose();
   }
@@ -338,9 +350,22 @@ class _DecorationScreenState extends State<DecorationScreen> {
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.only(
-                            bottom: 20.0 +
+                            bottom: 10.0 +
                                 paddingBottom), // Add padding for content
-                        child: _buildCategoryContent(user, colorScheme),
+                        child: PageView.builder(
+                          controller: _pageController,
+                          itemCount: _categories.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentIndex = index;
+                              _selectedCategory = _categories[index];
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return _buildCategoryContentByIndex(
+                                index, user, colorScheme);
+                          },
+                        ),
                       ),
                     ),
                   ],
@@ -406,10 +431,22 @@ class _DecorationScreenState extends State<DecorationScreen> {
       String id, String label, IconData icon, AppColorScheme colorScheme) {
     final isSelected = _selectedCategory == id;
     return GestureDetector(
-      onTap: () => setState(() {
-        _selectedCategory = id;
-        _isPanelExpanded = true; // Automatically expand when a tab is clicked
-      }),
+      onTap: () {
+        final newIndex = _categories.indexOf(id);
+        if (newIndex == _currentIndex) return;
+
+        setState(() {
+          _currentIndex = newIndex;
+          _selectedCategory = id;
+          _isPanelExpanded = true; // Automatically expand when a tab is clicked
+        });
+
+        _pageController.animateToPage(
+          newIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
@@ -446,8 +483,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
     );
   }
 
-  Widget _buildCategoryContent(user, AppColorScheme colorScheme) {
-    switch (_selectedCategory) {
+  Widget _buildCategoryContentByIndex(
+      int index, user, AppColorScheme colorScheme) {
+    switch (_categories[index]) {
       case 'background':
         return _buildBackgroundList(user, colorScheme);
       case 'wallpaper':
@@ -473,7 +511,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
         return GridView.builder(
-          padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 100),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
             crossAxisSpacing: 8,
@@ -513,7 +551,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
         return GridView.builder(
-          padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 100),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
             crossAxisSpacing: 8,
@@ -550,7 +588,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
         return GridView.builder(
-          padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 100),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 12,
@@ -603,7 +641,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
             user.lastStickyNoteDate!.day == now.day;
 
         return GridView.builder(
-          padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 100),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
             crossAxisSpacing: 8,
@@ -699,7 +737,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
         .toList();
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(24, 4, 24, 150),
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 100),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
         crossAxisSpacing: 8,

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_color_scheme.dart';
 import '../controllers/social_controller.dart';
@@ -10,7 +11,6 @@ import '../../../services/user_service.dart';
 import '../../../core/widgets/app_dialog.dart';
 
 import '../widgets/friend_card.dart';
-import '../../common/widgets/custom_bottom_navigation_bar.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -55,219 +55,222 @@ class _SocialScreenState extends State<SocialScreen> {
     final friendsStream =
         userId == null ? null : socialController.getFriendsStream(userId);
 
-    return Scaffold(
-      extendBody: true,
-      extendBodyBehindAppBar: true,
-      backgroundColor: const Color(0xFFFFF9F0), // Prevent black flash
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: StreamBuilder<List<UserModel>>(
-          stream: friendsStream,
-          initialData: socialController.friends,
-          builder: (context, snapshot) {
-            final count = snapshot.data?.length ?? 0;
-            return Container(
-              width: 150, // Adjust based on image aspect ratio
-              height: 40,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/icons/TopFriend_Label.png'),
-                  fit: BoxFit.fill,
-                ),
-              ),
-              alignment: Alignment.center,
-              padding: const EdgeInsets.only(top: 4), // Fine tune alignment
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: Text(
-                      '친구',
-                      style: TextStyle(
-                        color: colorScheme.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'BMJUA',
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$count명',
-                    style: TextStyle(
-                      color: colorScheme.textPrimary,
-                      fontWeight: FontWeight.normal,
-                      fontFamily: 'BMJUA',
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: ResizeImage(AssetImage('assets/images/Friend_Background.png'),
+              width: 1080),
+          fit: BoxFit.cover,
         ),
-        centerTitle: true,
-        actions: [],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: ResizeImage(
-                AssetImage('assets/images/Friend_Background.png'),
-                width: 1080),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SafeArea(
-          bottom: true, // Handle system bottom padding
-          child: StreamBuilder<List<UserModel>>(
-            stream: friendsStream,
-            initialData: socialController.friends,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting &&
-                  !snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              final friends = snapshot.data ?? [];
-              final hasFriends = friends.isNotEmpty;
-
-              return Stack(
-                children: [
-                  // Background Layer (Fixed Position)
-                  if (!hasFriends)
-                    Positioned.fill(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 300.0),
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/images/Nofriend_Charactor.png',
-                                    width: 250,
-                                  ),
-                                  Positioned(
-                                    top: 125,
-                                    child: const Text(
-                                      '친구를 추가해\n보세요',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: Colors.brown,
-                                        fontSize: 18,
-                                        fontFamily: 'BMJUA',
-                                        height: 1.2,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+      child: SafeArea(
+        bottom: true, // Handle system bottom padding
+        child: Column(
+          children: [
+            // Custom AppBar replacement
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: StreamBuilder<List<UserModel>>(
+                stream: friendsStream,
+                initialData: socialController.friends,
+                builder: (context, snapshot) {
+                  final count = snapshot.data?.length ?? 0;
+                  return Container(
+                    width: 150,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/icons/TopFriend_Label.png'),
+                        fit: BoxFit.fill,
                       ),
                     ),
-
-                  // Content Layer
-                  Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      // Friend Requests
-                      Consumer<SocialController>(
-                        builder: (context, controller, child) {
-                          if (controller.friendRequests.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
-                          return Container(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            padding: const EdgeInsets.all(20),
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(
-                                    'assets/images/FriendRequest_Background.png'),
-                                fit: BoxFit.fill,
-                              ),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Text(
+                            '친구',
+                            style: TextStyle(
+                              color: colorScheme.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'BMJUA',
+                              fontSize: 16,
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.person_add_rounded,
-                                        color: Colors.brown, size: 24),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      '새로운 친구 요청',
-                                      style: TextStyle(
-                                        color: colorScheme.textPrimary,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'BMJUA',
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      '${controller.friendRequests.length}',
-                                      style: const TextStyle(
-                                        color: Colors.brown,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                        fontFamily: 'BMJUA',
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                        width: 20), // Move more to the left
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                ...controller.friendRequests.map((req) =>
-                                    _buildRequestItem(req, colorScheme)),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-
-                      // Friend List (GridView)
-                      if (hasFriends)
-                        Expanded(
-                          child: GridView.builder(
-                            padding: const EdgeInsets.fromLTRB(
-                                16, 16, 16, 80), // Added bottom padding (80)
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              mainAxisSpacing: 10,
-                              crossAxisSpacing: 10,
-                              childAspectRatio: 0.82,
-                            ),
-                            itemCount: friends.length,
-                            itemBuilder: (context, index) {
-                              return FriendCard(
-                                  friend: friends[index],
-                                  colorScheme: colorScheme);
-                            },
                           ),
                         ),
-                      if (!hasFriends) const SizedBox(height: 80),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$count명',
+                          style: TextStyle(
+                            color: colorScheme.textPrimary,
+                            fontWeight: FontWeight.normal,
+                            fontFamily: 'BMJUA',
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            Expanded(
+              child: StreamBuilder<List<UserModel>>(
+                stream: friendsStream,
+                initialData: socialController.friends,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final friends = snapshot.data ?? [];
+                  final hasFriends = friends.isNotEmpty;
+
+                  return Stack(
+                    children: [
+                      // Background Layer (Fixed Position)
+                      if (!hasFriends)
+                        Positioned.fill(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      top:
+                                          100.0), // Adjusted for removal of AppBar
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/Nofriend_Charactor.png',
+                                        width: 250,
+                                      ),
+                                      Positioned(
+                                        top: 125,
+                                        child: const Text(
+                                          '친구를 추가해\n보세요',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.brown,
+                                            fontSize: 18,
+                                            fontFamily: 'BMJUA',
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                      // Content Layer
+                      Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          // Friend Requests
+                          Consumer<SocialController>(
+                            builder: (context, controller, child) {
+                              if (controller.friendRequests.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
+                              return Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                padding: const EdgeInsets.all(20),
+                                decoration: const BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                        'assets/images/FriendRequest_Background.png'),
+                                    fit: BoxFit.fill,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.person_add_rounded,
+                                            color: Colors.brown, size: 24),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          '새로운 친구 요청',
+                                          style: TextStyle(
+                                            color: colorScheme.textPrimary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'BMJUA',
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Text(
+                                          '${controller.friendRequests.length}',
+                                          style: const TextStyle(
+                                            color: Colors.brown,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                            fontFamily: 'BMJUA',
+                                          ),
+                                        ),
+                                        const SizedBox(width: 20),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ...controller.friendRequests.map((req) =>
+                                        _buildRequestItem(req, colorScheme)),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+
+                          // Friend List (GridView)
+                          if (hasFriends)
+                            Expanded(
+                              child: GridView.builder(
+                                padding: const EdgeInsets.fromLTRB(16, 16, 16,
+                                    100), // Increased bottom padding
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisSpacing: 10,
+                                  crossAxisSpacing: 10,
+                                  childAspectRatio: 0.82,
+                                ),
+                                itemCount: friends.length,
+                                itemBuilder: (context, index) {
+                                  return FriendCard(
+                                      friend: friends[index],
+                                      colorScheme: colorScheme);
+                                },
+                              ),
+                            ),
+                          if (!hasFriends) const SizedBox(height: 80),
+                        ],
+                      ),
+                      Positioned(
+                        right: 16,
+                        bottom: 130, // Increased to avoid bottom nav bar
+                        child: _AnimatedAddFriendButton(
+                          onPressed: () =>
+                              _showAddFriendDialog(context, colorScheme),
+                        ),
+                      ),
                     ],
-                  ),
-                ],
-              );
-            },
-          ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
-      floatingActionButton: _AnimatedAddFriendButton(
-        onPressed: () => _showAddFriendDialog(context, colorScheme),
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(context),
     );
   }
 
@@ -422,13 +425,6 @@ class _SocialScreenState extends State<SocialScreen> {
     }
   }
 
-  Widget _buildBottomNavigationBar(BuildContext context) {
-    return CustomBottomNavigationBar(
-      currentIndex: 2,
-      onTap: (index) {},
-    );
-  }
-
   Future<void> _showAddFriendDialog(
       BuildContext context, AppColorScheme colorScheme) async {
     final controller = TextEditingController();
@@ -448,7 +444,7 @@ class _SocialScreenState extends State<SocialScreen> {
       actions: [
         AppDialogAction(
           label: '취소',
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         AppDialogAction(
           label: '요청',

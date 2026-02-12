@@ -5,98 +5,112 @@ import 'package:go_router/go_router.dart';
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
+  final StatefulNavigationShell? navigationShell;
 
   const CustomBottomNavigationBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    this.navigationShell,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.bottomCenter,
-      clipBehavior: Clip.none,
-      children: [
-        // 1. Background Image (Down_Tab.png)
-        Container(
-          width: double.infinity,
-          height: (Platform.isIOS ? 50 : 60) +
-              MediaQuery.of(context).padding.bottom,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/Down_Tab.png'),
-              fit: BoxFit.fill,
+    final double navBarHeight = Platform.isIOS ? 75 : 90;
+
+    return SizedBox(
+      height: navBarHeight + MediaQuery.of(context).padding.bottom,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        clipBehavior: Clip.none,
+        children: [
+          // 1. Background Image (Down_Tab.png)
+          Container(
+            width: double.infinity,
+            height: (Platform.isIOS ? 50 : 60) +
+                MediaQuery.of(context).padding.bottom,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Down_Tab.png'),
+                fit: BoxFit.fill,
+              ),
             ),
           ),
-        ),
-        // 2. Tab Items (Protruding icons)
-        SafeArea(
-          top: false,
-          child: SizedBox(
-            height: Platform.isIOS
-                ? 70
-                : 90, // Increased slightly for iOS to prevent overflow
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _TabItem(
-                  iconPath: 'assets/icons/Home_Icon.png',
-                  label: '홈',
-                  width: 38,
-                  height: 38,
-                  isSelected: currentIndex == 0,
-                  onTap: () => _handleNavigation(context, 0),
-                ),
-                _TabItem(
-                  iconPath: 'assets/icons/Challenge_Icon.png',
-                  label: '도전과제',
-                  width: 54,
-                  height: 38,
-                  isSelected: currentIndex == 1,
-                  onTap: () => _handleNavigation(context, 1),
-                ),
-                _TabItem(
-                  iconPath: 'assets/icons/Friend_Icon.png',
-                  label: '친구',
-                  width: 64,
-                  height: 45, // Restored height
-                  isSelected: currentIndex == 2,
-                  labelOffset: -7,
-                  onTap: () => _handleNavigation(context, 2),
-                ),
-                _TabItem(
-                  iconPath: 'assets/icons/Calander_Icon.png',
-                  label: '마이페이지',
-                  width: 48,
-                  height: 38,
-                  isSelected: currentIndex == 3,
-                  onTap: () => _handleNavigation(context, 3),
-                ),
-              ],
+          // 2. Tab Items (Protruding icons)
+          SafeArea(
+            top: false,
+            child: SizedBox(
+              height: navBarHeight,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _TabItem(
+                    iconPath: 'assets/icons/Home_Icon.png',
+                    label: '홈',
+                    width: 38,
+                    height: 38,
+                    isSelected: currentIndex == 0,
+                    onTap: () => _handleNavigation(context, 0),
+                  ),
+                  _TabItem(
+                    iconPath: 'assets/icons/Challenge_Icon.png',
+                    label: '도전과제',
+                    width: 54,
+                    height: 38,
+                    isSelected: currentIndex == 1,
+                    onTap: () => _handleNavigation(context, 1),
+                  ),
+                  _TabItem(
+                    iconPath: 'assets/icons/Friend_Icon.png',
+                    label: '친구',
+                    width: 64,
+                    height: 45,
+                    isSelected: currentIndex == 2,
+                    labelOffset: -7,
+                    onTap: () => _handleNavigation(context, 2),
+                  ),
+                  _TabItem(
+                    iconPath: 'assets/icons/Calander_Icon.png',
+                    label: '마이페이지',
+                    width: 48,
+                    height: 38,
+                    isSelected: currentIndex == 3,
+                    onTap: () => _handleNavigation(context, 3),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   void _handleNavigation(BuildContext context, int index) {
+    onTap(index);
     if (currentIndex == index) return;
-    switch (index) {
-      case 0:
-        context.go('/morning');
-        break;
-      case 1:
-        context.go('/challenge');
-        break;
-      case 2:
-        context.go('/social');
-        break;
-      case 3:
-        context.go('/archive');
-        break;
+
+    if (navigationShell != null) {
+      navigationShell!.goBranch(
+        index,
+        initialLocation: index == navigationShell!.currentIndex,
+      );
+    } else {
+      switch (index) {
+        case 0:
+          context.go('/morning');
+          break;
+        case 1:
+          context.go('/challenge');
+          break;
+        case 2:
+          context.go('/social');
+          break;
+        case 3:
+          context.go('/archive');
+          break;
+      }
     }
   }
 }

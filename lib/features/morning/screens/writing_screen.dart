@@ -688,12 +688,12 @@ class _WritingScreenState extends State<WritingScreen> {
       actions: [
         AppDialogAction(
           label: '계속 작성',
-          onPressed: () => Navigator.of(context).pop(false),
+          onPressed: (context) => Navigator.of(context).pop(false),
         ),
         AppDialogAction(
           label: '중단',
           isPrimary: true,
-          onPressed: () => Navigator.of(context).pop(true),
+          onPressed: (context) => Navigator.of(context).pop(true),
         ),
       ],
     );

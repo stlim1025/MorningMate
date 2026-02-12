@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_color_scheme.dart';
-import '../../common/widgets/custom_bottom_navigation_bar.dart';
 import '../../character/controllers/character_controller.dart';
 
 class ChallengeScreen extends StatelessWidget {
@@ -54,74 +53,67 @@ class ChallengeScreen extends StatelessWidget {
 
     final completedCount = challenges.where((c) => c['isCompleted']).length;
 
-    return Scaffold(
-      extendBody: true,
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/Challenge_Background.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/Challenge_Note.png'),
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 15),
-                      // Title
-                      const Text(
-                        '도전과제',
-                        style: TextStyle(
-                          fontFamily: 'BMJUA',
-                          fontSize: 18,
-                          color: Color(0xFF4E342E),
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                      // Progress Section
-                      _buildHeaderProgress(completedCount, challenges.length),
-                      const SizedBox(height: 10),
-                      // Dotted Separator
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 30),
-                        child: _DottedDivider(
-                            color: Colors.brown.withOpacity(0.3)),
-                      ),
-                      // List Section
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(35, 10, 35, 60),
-                          itemCount: challenges.length,
-                          itemBuilder: (context, index) {
-                            return _buildChallengeListItem(
-                                context, challenges[index], colorScheme);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 90),
-            ],
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/Challenge_Background.png'),
+          fit: BoxFit.cover,
         ),
       ),
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: 1,
-        onTap: (index) {},
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/Challenge_Note.png'),
+                    fit: BoxFit.fill,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 15),
+                    // Title
+                    const Text(
+                      '도전과제',
+                      style: TextStyle(
+                        fontFamily: 'BMJUA',
+                        fontSize: 18,
+                        color: Color(0xFF4E342E),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    // Progress Section
+                    _buildHeaderProgress(completedCount, challenges.length),
+                    const SizedBox(height: 10),
+                    // Dotted Separator
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 30),
+                      child:
+                          _DottedDivider(color: Colors.brown.withOpacity(0.3)),
+                    ),
+                    // List Section
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(35, 10, 35, 60),
+                        itemCount: challenges.length,
+                        itemBuilder: (context, index) {
+                          return _buildChallengeListItem(
+                              context, challenges[index], colorScheme);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 90),
+          ],
+        ),
       ),
     );
   }

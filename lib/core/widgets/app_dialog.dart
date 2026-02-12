@@ -172,7 +172,6 @@ class AppDialog {
                 AppDialogAction(
                   label: '확인',
                   isPrimary: true,
-                  isFullWidth: true,
                   onPressed: (context) => Navigator.pop(context),
                 ),
               ],
@@ -314,7 +313,7 @@ class AppDialog {
 
     // 'Cancel' or 'Close' style buttons. Includes '계속 작성'
     final isCancelStyle =
-        ['취소', '닫기', '거절', '아니오', '계속 작성'].contains(action.label);
+        ['취소', '닫기', '거절', '아니오', '계속 작성', '꾸미기'].contains(action.label);
 
     if (isConfirmStyle || isCancelStyle) {
       final imagePath = isConfirmStyle

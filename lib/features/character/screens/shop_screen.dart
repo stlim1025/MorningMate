@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
@@ -563,7 +564,7 @@ class _ShopScreenState extends State<ShopScreen> {
                             try {
                               await onPurchase();
                               if (context.mounted) {
-                                await AppDialog.show(
+                                final result = await AppDialog.show<String>(
                                   context: context,
                                   key: AppDialogKey.purchaseComplete,
                                   content: Column(
@@ -605,7 +606,25 @@ class _ShopScreenState extends State<ShopScreen> {
                                       const SizedBox(height: 8),
                                     ],
                                   ),
+                                  actions: [
+                                    AppDialogAction(
+                                      label: '꾸미기',
+                                      onPressed: (context) {
+                                        Navigator.pop(context, 'decorate');
+                                      },
+                                    ),
+                                    AppDialogAction(
+                                      label: '확인',
+                                      isPrimary: true,
+                                      onPressed: (context) =>
+                                          Navigator.pop(context),
+                                    ),
+                                  ],
                                 );
+
+                                if (context.mounted && result == 'decorate') {
+                                  context.push('/decoration');
+                                }
                               }
                             } catch (e) {
                               if (context.mounted) {

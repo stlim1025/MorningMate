@@ -5,8 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../controllers/morning_controller.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../alarm/screens/alarm_screen.dart';
-import '../../settings/screens/settings_screen.dart';
 import '../../notification/controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
 import '../widgets/enhanced_character_room_widget.dart';
@@ -18,7 +16,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/store_button.dart';
 import '../widgets/diary_button.dart';
 import '../widgets/decoration_button.dart';
-import '../../common/widgets/custom_bottom_navigation_bar.dart';
 import '../widgets/header_image_button.dart';
 
 class MorningScreen extends StatefulWidget {
@@ -134,7 +131,7 @@ class _MorningScreenState extends State<MorningScreen>
                   top: 35,
                   right: 15,
                   child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () => context.pop(),
                     child: const Icon(Icons.close,
                         color: Colors.black54, size: 24),
                   ),
@@ -180,145 +177,150 @@ class _MorningScreenState extends State<MorningScreen>
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
 
-    return Scaffold(
-      extendBody: true,
-      body: Consumer<MorningController>(
-        builder: (context, morningController, child) {
-          final isAwake = morningController.hasDiaryToday;
-          final characterController = context.watch<CharacterController>();
+    return Consumer<MorningController>(
+      builder: (context, morningController, child) {
+        final isAwake = morningController.hasDiaryToday;
+        final characterController = context.watch<CharacterController>();
 
-          if (characterController.showLevelUpDialog && mounted) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                AppDialog.show(
-                  context: context,
-                  key: AppDialogKey.levelUp,
-                );
-                characterController.consumeLevelUpDialog();
-              }
-            });
-          }
+        if (characterController.showLevelUpDialog && mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              AppDialog.show(
+                context: context,
+                key: AppDialogKey.levelUp,
+              );
+              characterController.consumeLevelUpDialog();
+            }
+          });
+        }
 
-          return Stack(
-            children: [
-              // 1. 3D 방이 전체 영역을 채움 (배경은 창문을 통해서만 표시)
-              Positioned.fill(
-                child: _buildEnhancedCharacterRoom(
-                  context,
-                  isAwake,
-                  characterController,
-                  morningController,
-                ),
+        return Stack(
+          children: [
+            // 1. 3D 방이 전체 영역을 채움 (배경은 창문을 통해서만 표시)
+            Positioned.fill(
+              child: _buildEnhancedCharacterRoom(
+                context,
+                isAwake,
+                characterController,
+                morningController,
               ),
+            ),
 
-              // 1.5. 밤 모드 전체 오버레이 (잠들어있을 때 방 전체를 어둡게)
-              if (!isAwake)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: Container(
-                      color: Colors.black.withOpacity(0.30),
-                    ),
-                  ),
-                ),
-
-              // 2. Subtle Top Overlay for UI readability
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 180,
+            // 1.5. 밤 모드 전체 오버레이 (잠들어있을 때 방 전체를 어둡게)
+            if (!isAwake)
+              Positioned.fill(
                 child: IgnorePointer(
                   child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          (isAwake && !isDarkMode)
-                              ? Colors.white.withOpacity(0.2)
-                              : Colors.black.withOpacity(0.4),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
+                    color: Colors.black.withOpacity(0.30),
                   ),
                 ),
               ),
 
-              // 3. 상점/꾸미기 버튼 (왼쪽)
-              Positioned(
-                left: 20,
-                bottom: 0,
-                child: SafeArea(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                        bottom: isAwake
-                            ? 30
-                            : 105), // Adjusted bottom from 125 to 75
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const DecorationButton(),
-                        const SizedBox(height: 8),
-                        const StoreButton(),
+            // 2. Subtle Top Overlay for UI readability
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 180,
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        (isAwake && !isDarkMode)
+                            ? Colors.white.withOpacity(0.2)
+                            : Colors.black.withOpacity(0.4),
+                        Colors.transparent,
                       ],
                     ),
                   ),
                 ),
               ),
+            ),
 
-              // 4. 일기작성하기 버튼 (중앙 하단)
-              if (!isAwake)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          bottom: 10,
-                          left: 20,
-                          right: 20), // Tab(60) + tighter margin
-                      child: Center(
-                        child: DiaryButton(
-                          onTap: () async {
-                            if (morningController.currentQuestion == null) {
-                              await morningController.fetchRandomQuestion();
-                            }
-                            if (context.mounted) {
-                              context.push('/writing',
-                                  extra: morningController.currentQuestion);
-                            }
-                          },
-                        ),
+            // 3. 상점/꾸미기 버튼 (왼쪽)
+            Positioned(
+              left: 20,
+              bottom: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                      bottom: isAwake
+                          ? 30
+                          : 105), // Increased significantly to avoid overlap
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const DecorationButton(),
+                      const SizedBox(height: 8),
+                      const StoreButton(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // 4. 일기작성하기 버튼 (중앙 하단)
+            if (!isAwake)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        bottom: 10, // Match side button height
+                        left: 20,
+                        right: 20),
+                    child: Center(
+                      child: DiaryButton(
+                        onTap: () async {
+                          if (morningController.currentQuestion == null) {
+                            await morningController.fetchRandomQuestion();
+                          }
+                          if (context.mounted) {
+                            context.push('/writing',
+                                extra: morningController.currentQuestion);
+                          }
+                        },
                       ),
                     ),
                   ),
                 ),
+              ),
 
-              // 4. Main Content (헤더, 하단 섹션 오버레이)
-              SafeArea(
-                bottom: true,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildHeader(context, isAwake, colorScheme, isDarkMode),
-                    const Spacer(),
-                    _buildBottomSection(
-                      context,
-                      morningController,
-                      isAwake,
-                      colorScheme,
-                      isDarkMode,
-                    ),
-                  ],
+            // 5. Header (Top)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: _buildHeader(context, isAwake, colorScheme, isDarkMode),
+              ),
+            ),
+
+            // 6. Optional Bottom Section Overlay (if needed for other UI)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                top: false,
+                child: _buildBottomSection(
+                  context,
+                  morningController,
+                  isAwake,
+                  colorScheme,
+                  isDarkMode,
                 ),
               ),
-            ],
-          );
-        },
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(context),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -445,12 +447,7 @@ class _MorningScreenState extends State<MorningScreen>
               HeaderImageButton(
                 imagePath: 'assets/icons/Alarm_Button_Icon.png',
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AlarmScreen(),
-                    ),
-                  );
+                  context.push('/alarm');
                 },
               ),
               const SizedBox(width: 8), // 아이콘 사이 간격
@@ -480,12 +477,7 @@ class _MorningScreenState extends State<MorningScreen>
               HeaderImageButton(
                 imagePath: 'assets/icons/Setting_button.png',
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
-                    ),
-                  );
+                  context.push('/settings');
                 },
               ),
             ],
@@ -532,13 +524,6 @@ class _MorningScreenState extends State<MorningScreen>
     bool isDarkMode,
   ) {
     return const SizedBox.shrink();
-  }
-
-  Widget _buildBottomNavigationBar(BuildContext context) {
-    return CustomBottomNavigationBar(
-      currentIndex: 0,
-      onTap: (index) {}, // Navigation handled inside the widget
-    );
   }
 
   String _getGreeting() {

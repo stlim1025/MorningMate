@@ -8,6 +8,7 @@ import 'dart:async';
 import '../features/auth/screens/auth_wrapper.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
+import '../features/auth/screens/splash_screen.dart';
 import '../features/morning/screens/morning_screen.dart';
 import '../features/morning/screens/writing_screen.dart';
 import '../features/challenge/screens/challenge_screen.dart';
@@ -28,7 +29,7 @@ import '../features/alarm/screens/alarm_ring_screen.dart';
 import '../features/auth/controllers/auth_controller.dart';
 import '../data/models/diary_model.dart';
 
-import '../features/auth/screens/splash_screen.dart';
+import '../features/common/screens/main_shell.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -56,9 +57,7 @@ class AppRouter {
 
         final isLoggedIn = authController.userModel != null;
 
-        // 2. 로그인 성공 시 메인으로 보내는 로직 수정
         if (isLoggedIn) {
-          // 💡 이미 알람 화면에 있다면 절대로 /morning으로 보내면 안 됨!
           if (location.contains('alarm-ring') || location.contains('writing')) {
             return null;
           }
@@ -69,16 +68,8 @@ class AppRouter {
               location == '/') {
             return '/morning';
           }
-        }
-        // 4. 로딩 끝남 & 로그인 안 되어 있음
-        else {
-          // 로그인하러 가는 게 아니라면 -> 로그인 화면으로
+        } else {
           if (location != '/login' && location != '/splash') {
-            // !isGoingToSplash 추가: 로딩 끝난 직후 /splash에 있으면 /login으로 보내야 함.
-            // 위 로직에서 isLoggedI
-            // n이 false면 여기로 옴.
-            // 만약 현재 /splash라면 /login으로 가야함.
-            // 만약 isGoingToLogin이면 null 반환(통과).
             return '/login';
           }
           if (location == '/splash') {
@@ -89,21 +80,18 @@ class AppRouter {
         return null;
       },
       routes: [
-        // 🚨 3. 스플래시 라우트 추가
         GoRoute(
           path: '/splash',
           name: 'splash',
           builder: (context, state) => const SplashScreen(),
         ),
 
-        // Auth Wrapper (Root) - 사용하지 않게 됨 (혹은 유지)
         GoRoute(
           path: '/',
           name: 'authWrapper',
           builder: (context, state) => const AuthWrapper(),
         ),
 
-        // Auth Routes
         GoRoute(
           path: '/login',
           name: 'login',
@@ -115,13 +103,53 @@ class AppRouter {
           builder: (context, state) => const SignupScreen(),
         ),
 
-        // Main Routes
-        GoRoute(
-          path: '/morning',
-          name: 'morning',
-          builder: (context, state) => const MorningScreen(),
+        // Main Tab Shell
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return MainShell(navigationShell: navigationShell);
+          },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/morning',
+                  name: 'morning',
+                  builder: (context, state) => const MorningScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/challenge',
+                  name: 'challenge',
+                  builder: (context, state) => const ChallengeScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/social',
+                  name: 'social',
+                  builder: (context, state) => const SocialScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/archive',
+                  name: 'archive',
+                  builder: (context, state) => const ArchiveScreen(),
+                ),
+              ],
+            ),
+          ],
         ),
+
         GoRoute(
+          parentNavigatorKey: navigatorKey,
           path: '/writing',
           name: 'writing',
           builder: (context, state) {
@@ -129,52 +157,8 @@ class AppRouter {
             return WritingScreen(initialQuestion: question);
           },
         ),
-
         GoRoute(
-          path: '/decoration',
-          name: 'decoration',
-          builder: (context, state) => const DecorationScreen(),
-        ),
-        GoRoute(
-          path: '/shop',
-          name: 'shop',
-          builder: (context, state) => const ShopScreen(),
-        ),
-
-        // Challenge Routes
-        GoRoute(
-          path: '/challenge',
-          name: 'challenge',
-          builder: (context, state) => const ChallengeScreen(),
-        ),
-
-        // Social Routes
-        GoRoute(
-          path: '/social',
-          name: 'social',
-          builder: (context, state) => const SocialScreen(),
-        ),
-        GoRoute(
-          path: '/notification',
-          name: 'notification',
-          builder: (context, state) => const NotificationScreen(),
-        ),
-        GoRoute(
-          path: '/friend/:friendId',
-          name: 'friendRoom',
-          builder: (context, state) {
-            final friendId = state.pathParameters['friendId']!;
-            return FriendRoomScreen(friendId: friendId);
-          },
-        ),
-
-        // Archive Routes
-        GoRoute(
-          path: '/archive',
-          name: 'archive',
-          builder: (context, state) => const ArchiveScreen(),
-        ),
-        GoRoute(
+          parentNavigatorKey: navigatorKey,
           path: '/diary-detail',
           name: 'diaryDetail',
           builder: (context, state) {
@@ -186,8 +170,37 @@ class AppRouter {
           },
         ),
 
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/decoration',
+          name: 'decoration',
+          builder: (context, state) => const DecorationScreen(),
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/shop',
+          name: 'shop',
+          builder: (context, state) => const ShopScreen(),
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/notification',
+          name: 'notification',
+          builder: (context, state) => const NotificationScreen(),
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/friend/:friendId',
+          name: 'friendRoom',
+          builder: (context, state) {
+            final friendId = state.pathParameters['friendId']!;
+            return FriendRoomScreen(friendId: friendId);
+          },
+        ),
+
         // Settings Routes
         GoRoute(
+          parentNavigatorKey: navigatorKey,
           path: '/settings',
           name: 'settings',
           builder: (context, state) => const SettingsScreen(),
@@ -212,6 +225,7 @@ class AppRouter {
 
         // Alarm Routes
         GoRoute(
+          parentNavigatorKey: navigatorKey,
           path: '/alarm',
           name: 'alarm',
           builder: (context, state) => const AlarmScreen(),
@@ -224,16 +238,12 @@ class AppRouter {
             if (state.extra is AlarmSettings) {
               alarmSettings = state.extra as AlarmSettings;
             } else if (state.extra is Map<String, dynamic>) {
-              // 💡 종료 상태에서 진입 시 Map으로 들어오므로 수동 변환
               alarmSettings =
                   AlarmSettings.fromJson(state.extra as Map<String, dynamic>);
             } else {
-              // 데이터가 없으면 서비스에서 현재 울리는 알람 참조
               alarmSettings = AlarmService.ringingAlarm;
             }
 
-            // 🚨 여전히 null이면 MorningScreen으로 보내지 말고 '로딩/빈화면'을 띄우세요.
-            // 여기서 MorningScreen()을 호출하면 의존성 때문에 또 터질 수 있습니다.
             if (alarmSettings == null) {
               return const Scaffold(
                 body: Center(child: CircularProgressIndicator()),

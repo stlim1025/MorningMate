@@ -50,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 40,
             height: 40,
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           '설정',
@@ -657,7 +657,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       actions: [
         AppDialogAction(
           label: '취소',
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         AppDialogAction(
           label: '변경',
