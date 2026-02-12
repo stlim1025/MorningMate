@@ -28,8 +28,6 @@ class MorningScreen extends StatefulWidget {
 
 class _MorningScreenState extends State<MorningScreen>
     with SingleTickerProviderStateMixin {
-  bool _hasCheckedBiometric = false;
-
   @override
   void initState() {
     super.initState();
@@ -165,7 +163,7 @@ class _MorningScreenState extends State<MorningScreen>
         ]);
 
         if (mounted) {
-          _maybeAuthenticateOnLaunch(context);
+          // 초기화 완료 시 로직 (생체 인증은 Splash에서 완료됨)
         }
       }
     } catch (e) {
@@ -180,7 +178,9 @@ class _MorningScreenState extends State<MorningScreen>
 
     return Consumer<MorningController>(
       builder: (context, morningController, child) {
-        final isAwake = morningController.hasDiaryToday;
+        // 데이터가 로드되지 않았을 때는(초기 상태) 깨어있는 것으로 간주하여 "뿌연" 오버레이 방지
+        final isAwake = !morningController.hasInitialized ||
+            morningController.hasDiaryToday;
         final characterController = context.watch<CharacterController>();
 
         if (characterController.showLevelUpDialog && mounted) {
@@ -339,51 +339,7 @@ class _MorningScreenState extends State<MorningScreen>
     );
   }
 
-  void _maybeAuthenticateOnLaunch(BuildContext context) {
-    if (_hasCheckedBiometric) return;
-    final authController = context.read<AuthController>();
-    final userModel = authController.userModel;
-    if (userModel == null) return;
-    _hasCheckedBiometric = true;
-    if (!userModel.biometricEnabled) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      final authenticated = await authController.authenticateWithBiometric();
-      if (!authenticated && mounted) {
-        final retry = await _showBiometricRetryDialog(context);
-        if (retry && mounted) {
-          _hasCheckedBiometric = false;
-          _maybeAuthenticateOnLaunch(context);
-        } else if (mounted) {
-          await authController.signOut();
-          if (mounted) {
-            context.go('/login');
-          }
-        }
-      }
-    });
-  }
-
-  Future<bool> _showBiometricRetryDialog(BuildContext context) async {
-    final result = await AppDialog.show<bool>(
-      context: context,
-      key: AppDialogKey.biometricRetry,
-      barrierDismissible: false,
-      actions: [
-        AppDialogAction(
-          label: '로그아웃',
-          onPressed: () => Navigator.pop(context, false),
-        ),
-        AppDialogAction(
-          label: '다시 시도',
-          onPressed: () => Navigator.pop(context, true),
-          useHighlight: true,
-        ),
-      ],
-    );
-    return result ?? false;
-  }
+  // 생체 인증 로직은 SplashScreen으로 이동됨
 
   Widget _buildHeader(BuildContext context, bool isAwake,
       AppColorScheme colorScheme, bool isDarkMode) {

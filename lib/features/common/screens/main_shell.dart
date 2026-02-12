@@ -25,6 +25,7 @@ class _MainShellState extends State<MainShell>
     _controller = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
+      value: 1.0,
     );
     _offsetAnimation = const AlwaysStoppedAnimation(Offset.zero);
   }

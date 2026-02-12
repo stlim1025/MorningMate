@@ -34,6 +34,15 @@ class AuthController extends ChangeNotifier {
   bool _isAuthCheckDone = false;
   bool get isAuthCheckDone => _isAuthCheckDone;
 
+  // ✨ [추가] 생체 인증이 이미 완료되었는지 확인하는 플래그 (중복 요청 방지)
+  bool _isBiometricVerified = false;
+  bool get isBiometricVerified => _isBiometricVerified;
+
+  void setBiometricVerified(bool verified) {
+    _isBiometricVerified = verified;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _authSubscription?.cancel();
