@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../controllers/character_controller.dart';
@@ -214,6 +215,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
                   hideProps: false,
                   showBorder: false,
                   bottomPadding: roomBottomPadding,
+                  equippedCharacterItems:
+                      characterController.currentUser?.equippedCharacterItems,
                   currentAnimation: characterController.currentAnimation,
                   isPropEditable: true,
                   selectedPropIndex: _selectedPropIndex,
@@ -409,6 +412,50 @@ class _DecorationScreenState extends State<DecorationScreen> {
         clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
+            // Character Decoration Button
+            GestureDetector(
+              onTap: () {
+                context.push('/character-decoration');
+              },
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                decoration: BoxDecoration(
+                  image: const DecorationImage(
+                    image: AssetImage('assets/images/Nofriend_Charactor.png'),
+                    fit: BoxFit.cover,
+                    // Note: User asked for 'Nofriend_Charactor.png' as background.
+                    // It might be a character image, so cover/contain depends on the asset.
+                    // Assuming it's a button background texture or needs to be clipped.
+                    opacity: 0.8,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(
+                      Icons
+                          .accessibility_new_rounded, // Use a relevant icon for character decoration
+                      size: 14,
+                      color: Color(0xFF5D4E37),
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      '꾸미기',
+                      style: TextStyle(
+                        fontFamily: 'BMJUA',
+                        fontSize: 12,
+                        color: Color(0xFF5D4E37),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             _buildTabItem(
                 'background', '배경', Icons.landscape_outlined, colorScheme),
             const SizedBox(width: 8),

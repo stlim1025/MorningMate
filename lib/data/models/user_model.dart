@@ -33,6 +33,9 @@ class UserModel {
   final List<String> purchasedFloorIds; // 구매한 바닥 ID 목록
   final List<String> purchasedEmoticonIds; // 구매한 이모티콘 ID 목록
   final List<String> activeEmoticonIds; // 활성화된 이모티콘 ID 목록
+  final List<String> purchasedCharacterItemIds; // 구매한 캐릭터 아이템 ID 목록
+  final Map<String, dynamic>
+      equippedCharacterItems; // 장착된 캐릭터 아이템 (slot: itemId)
   final String currentThemeId; // 현재 선택된 테마 ID
   final RoomDecorationModel roomDecoration;
 
@@ -78,6 +81,8 @@ class UserModel {
       'sad',
       'love'
     ], // 기본 활성화 이모티콘
+    this.purchasedCharacterItemIds = const [],
+    this.equippedCharacterItems = const {},
     this.currentThemeId = 'light',
     RoomDecorationModel? roomDecoration,
   }) : roomDecoration = roomDecoration ?? RoomDecorationModel();
@@ -130,6 +135,10 @@ class UserModel {
           data['purchasedEmoticonIds'] ?? ['happy', 'normal', 'sad', 'love']),
       activeEmoticonIds: List<String>.from(
           data['activeEmoticonIds'] ?? ['happy', 'normal', 'sad', 'love']),
+      purchasedCharacterItemIds:
+          List<String>.from(data['purchasedCharacterItemIds'] ?? []),
+      equippedCharacterItems:
+          data['equippedCharacterItems'] as Map<String, dynamic>? ?? {},
       currentThemeId: data['currentThemeId'] ?? 'light',
       roomDecoration: data['roomDecoration'] != null
           ? RoomDecorationModel.fromMap(
@@ -177,6 +186,8 @@ class UserModel {
       'purchasedFloorIds': purchasedFloorIds,
       'purchasedEmoticonIds': purchasedEmoticonIds,
       'activeEmoticonIds': activeEmoticonIds,
+      'purchasedCharacterItemIds': purchasedCharacterItemIds,
+      'equippedCharacterItems': equippedCharacterItems,
       'currentThemeId': currentThemeId,
       'roomDecoration': roomDecoration.toMap(),
     };
@@ -215,6 +226,8 @@ class UserModel {
     List<String>? purchasedFloorIds,
     List<String>? purchasedEmoticonIds,
     List<String>? activeEmoticonIds,
+    List<String>? purchasedCharacterItemIds,
+    Map<String, dynamic>? equippedCharacterItems,
     String? currentThemeId,
     RoomDecorationModel? roomDecoration,
   }) {
@@ -252,6 +265,10 @@ class UserModel {
       purchasedFloorIds: purchasedFloorIds ?? this.purchasedFloorIds,
       purchasedEmoticonIds: purchasedEmoticonIds ?? this.purchasedEmoticonIds,
       activeEmoticonIds: activeEmoticonIds ?? this.activeEmoticonIds,
+      purchasedCharacterItemIds:
+          purchasedCharacterItemIds ?? this.purchasedCharacterItemIds,
+      equippedCharacterItems:
+          equippedCharacterItems ?? this.equippedCharacterItems,
       currentThemeId: currentThemeId ?? this.currentThemeId,
       roomDecoration: roomDecoration ?? this.roomDecoration,
     );

@@ -431,4 +431,15 @@ class RoomAssets {
         icon: Icons.star,
         imagePath: 'assets/images/floors/Castle_Stone_Floor.png'),
   ];
+
+  static const List<RoomAsset> characterItems = [
+    RoomAsset(
+      id: 'heart_glass',
+      name: '하트 안경',
+      price: 150,
+      icon: Icons.face,
+      imagePath: 'assets/items/Charactor/Charactor_Heart_Glass.png',
+      sizeMultiplier: 1.0,
+    ),
+  ];
 }

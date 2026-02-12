@@ -6,6 +6,7 @@ class CharacterDisplay extends StatefulWidget {
   final double size;
   final bool isTapped;
   final bool enableAnimation;
+  final Map<String, dynamic>? equippedItems;
 
   const CharacterDisplay({
     super.key,
@@ -14,6 +15,7 @@ class CharacterDisplay extends StatefulWidget {
     required this.size,
     this.isTapped = false,
     this.enableAnimation = true,
+    this.equippedItems,
   });
 
   @override
@@ -147,6 +149,20 @@ class _CharacterDisplayState extends State<CharacterDisplay>
                       ),
               ),
             ),
+
+            // 4. Accessories Layer (Glasses, etc.)
+            if (widget.equippedItems != null &&
+                widget.equippedItems!['face'] == 'heart_glass')
+              Positioned(
+                top: widget.isAwake
+                    ? charHeight * 0.35 // 눈 위치 대략 조정
+                    : charHeight * 0.30,
+                child: Image.asset(
+                  'assets/items/Charactor/Charactor_Heart_Glass.png',
+                  width: charWidth * 0.5,
+                  fit: BoxFit.contain,
+                ),
+              ),
 
             // Zzz animation (if sleeping and animation enabled)
             if (!widget.isAwake && widget.enableAnimation)

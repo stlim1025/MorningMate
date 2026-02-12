@@ -79,7 +79,8 @@ class CharacterController extends ChangeNotifier {
             user.roomDecoration.backgroundId ||
         _currentUser?.roomDecoration.floorId != user.roomDecoration.floorId ||
         _currentUser?.roomDecoration.props.length !=
-            user.roomDecoration.props.length) {
+            user.roomDecoration.props.length ||
+        _currentUser?.equippedCharacterItems != user.equippedCharacterItems) {
       _currentUser = user;
       notifyListeners();
     }
@@ -486,6 +487,62 @@ class CharacterController extends ChangeNotifier {
       points: newPoints,
       purchasedFloorIds: newPurchasedFloors,
     );
+    notifyListeners();
+  }
+
+  // 캐릭터 아이템 구매
+  Future<void> purchaseCharacterItem(
+      String userId, String itemId, int price) async {
+    if (_currentUser == null) return;
+    if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
+    if (_currentUser!.purchasedCharacterItemIds.contains(itemId)) {
+      throw Exception('이미 구매한 아이템입니다');
+    }
+
+    final newPurchasedItems =
+        List<String>.from(_currentUser!.purchasedCharacterItemIds)..add(itemId);
+    final newPoints = _currentUser!.points - price;
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+      'purchasedCharacterItemIds': newPurchasedItems,
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      purchasedCharacterItemIds: newPurchasedItems,
+    );
+    notifyListeners();
+  }
+
+  // 캐릭터 아이템 장착/해제
+  Future<void> equipCharacterItem(String userId, String itemId) async {
+    if (_currentUser == null) return;
+
+    // 만약 구매한 아이템이 아니면 에러 (해제의 경우 구매여부 상관없을 수도 있지만 일단 체크)
+    if (itemId.isNotEmpty &&
+        !_currentUser!.purchasedCharacterItemIds.contains(itemId)) {
+      throw Exception('구매하지 않은 아이템입니다');
+    }
+
+    final currentEquipped =
+        Map<String, dynamic>.from(_currentUser!.equippedCharacterItems);
+
+    // 단순화: 'face' 슬롯 고정 (안경)
+    // 이미 장착된 아이템이면 해제, 아니면 장착
+    const slot = 'face';
+    if (currentEquipped[slot] == itemId) {
+      currentEquipped.remove(slot);
+    } else {
+      currentEquipped[slot] = itemId;
+    }
+
+    await _userService.updateUser(userId, {
+      'equippedCharacterItems': currentEquipped,
+    });
+
+    _currentUser =
+        _currentUser!.copyWith(equippedCharacterItems: currentEquipped);
     notifyListeners();
   }
 

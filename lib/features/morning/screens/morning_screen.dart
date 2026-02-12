@@ -513,6 +513,8 @@ class _MorningScreenState extends State<MorningScreen>
           ? morningController.todayDiary?.moods.first
           : null,
       bottomPadding: bottomPadding,
+      equippedCharacterItems:
+          characterController.currentUser?.equippedCharacterItems,
     );
   }
 

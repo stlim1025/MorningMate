@@ -131,6 +131,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                     isDarkMode: isDarkMode,
                     todaysMood: todaysMood,
                     bottomPadding: 45 + MediaQuery.of(context).padding.bottom,
+                    equippedCharacterItems: _friend!.equippedCharacterItems,
                   ),
                 ),
 

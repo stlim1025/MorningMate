@@ -14,6 +14,7 @@ import '../features/morning/screens/writing_screen.dart';
 import '../features/challenge/screens/challenge_screen.dart';
 import '../features/character/screens/decoration_screen.dart';
 import '../features/character/screens/shop_screen.dart';
+import '../features/character/screens/character_decoration_screen.dart';
 import '../features/social/screens/social_screen.dart';
 import '../features/social/screens/friend_room_screen.dart';
 import '../features/notification/screens/notification_screen.dart';
@@ -175,6 +176,12 @@ class AppRouter {
           path: '/decoration',
           name: 'decoration',
           builder: (context, state) => const DecorationScreen(),
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/character-decoration',
+          name: 'characterDecoration',
+          builder: (context, state) => const CharacterDecorationScreen(),
         ),
         GoRoute(
           parentNavigatorKey: navigatorKey,

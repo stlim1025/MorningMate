@@ -152,6 +152,11 @@ class _ShopScreenState extends State<ShopScreen> {
                 _buildSectionHeader('이모티콘'),
                 const SizedBox(height: 16),
                 _buildEmoticonGrid(user, characterController, colorScheme),
+                _buildEmoticonGrid(user, characterController, colorScheme),
+                const SizedBox(height: 32),
+                _buildSectionHeader('캐릭터'),
+                const SizedBox(height: 16),
+                _buildCharacterItemGrid(user, characterController, colorScheme),
                 const SizedBox(height: 32),
                 _buildSectionHeader('벽지'),
                 const SizedBox(height: 16),
@@ -323,6 +328,20 @@ class _ShopScreenState extends State<ShopScreen> {
         isPurchased: isPurchased,
         onPurchase: () =>
             characterController.purchaseEmoticon(user.uid, item.id, item.price),
+        colorScheme: colorScheme,
+      );
+    });
+  }
+
+  Widget _buildCharacterItemGrid(user, characterController, colorScheme) {
+    final purchasableItems = RoomAssets.characterItems;
+    return _buildGrid(purchasableItems, (item) {
+      final isPurchased = user.purchasedCharacterItemIds.contains(item.id);
+      return _buildShopItem(
+        item: item,
+        isPurchased: isPurchased,
+        onPurchase: () => characterController.purchaseCharacterItem(
+            user.uid, item.id, item.price),
         colorScheme: colorScheme,
       );
     });
@@ -623,7 +642,15 @@ class _ShopScreenState extends State<ShopScreen> {
                                 );
 
                                 if (context.mounted && result == 'decorate') {
-                                  context.push('/decoration');
+                                  // 캐릭터 아이템이면 캐릭터 꾸미기 화면으로, 아니면 방 꾸미기 화면으로
+                                  final isCharacterItem = RoomAssets
+                                      .characterItems
+                                      .any((i) => i.id == item.id);
+                                  if (isCharacterItem) {
+                                    context.push('/character-decoration');
+                                  } else {
+                                    context.push('/decoration');
+                                  }
                                 }
                               }
                             } catch (e) {

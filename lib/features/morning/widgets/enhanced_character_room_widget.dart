@@ -38,6 +38,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
     this.onPropDelete,
     this.todaysMood,
     this.bottomPadding = 0,
+    this.equippedCharacterItems,
   });
 
   final bool isPropEditable;
@@ -46,6 +47,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
   final int? selectedPropIndex;
   final Function(int index)? onPropDelete;
   final String? todaysMood;
+  final Map<String, dynamic>? equippedCharacterItems;
 
   @override
   State<EnhancedCharacterRoomWidget> createState() =>
@@ -565,6 +567,7 @@ class _EnhancedCharacterRoomWidgetState
                                 size: charSize,
                                 isTapped: _isTapped,
                                 enableAnimation: true,
+                                equippedItems: widget.equippedCharacterItems,
                               ),
                             ),
                             // Mood Bubble
