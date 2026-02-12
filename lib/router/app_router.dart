@@ -218,29 +218,29 @@ class AppRouter {
           },
         ),
 
-        // Settings Routes
         GoRoute(
           parentNavigatorKey: navigatorKey,
           path: '/settings',
           name: 'settings',
           builder: (context, state) => const SettingsScreen(),
-          routes: [
-            GoRoute(
-              path: 'notifications',
-              name: 'notificationSettings',
-              builder: (context, state) => const NotificationSettingsScreen(),
-            ),
-            GoRoute(
-              path: 'terms',
-              name: 'termsOfService',
-              builder: (context, state) => const TermsOfServiceScreen(),
-            ),
-            GoRoute(
-              path: 'privacy',
-              name: 'privacyPolicy',
-              builder: (context, state) => const PrivacyPolicyScreen(),
-            ),
-          ],
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/settings/notifications',
+          name: 'notificationSettings',
+          builder: (context, state) => const NotificationSettingsScreen(),
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/settings/terms',
+          name: 'termsOfService',
+          builder: (context, state) => const TermsOfServiceScreen(),
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/settings/privacy',
+          name: 'privacyPolicy',
+          builder: (context, state) => const PrivacyPolicyScreen(),
         ),
 
         // Alarm Routes

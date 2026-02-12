@@ -144,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           icon: Icons.notifications,
                           title: '알림 설정',
                           onTap: () {
-                            context.push('/settings/notifications');
+                            context.pushNamed('notificationSettings');
                           },
                         ),
                       ],
@@ -173,7 +173,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           icon: Icons.description,
                           title: '이용약관',
                           onTap: () {
-                            context.push('/settings/terms');
+                            context.pushNamed('termsOfService');
                           },
                         ),
                         _buildDivider(colorScheme),
@@ -183,7 +183,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           icon: Icons.privacy_tip,
                           title: '개인정보 처리방침',
                           onTap: () {
-                            context.push('/settings/privacy');
+                            context.pushNamed('privacyPolicy');
                           },
                         ),
                       ],
