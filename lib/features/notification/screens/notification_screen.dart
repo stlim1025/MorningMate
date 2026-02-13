@@ -143,7 +143,7 @@ class NotificationScreen extends StatelessWidget {
                   return ListView.separated(
                     padding: EdgeInsets.fromLTRB(
                       16,
-                      MediaQuery.of(context).padding.top + kToolbarHeight + 16,
+                      MediaQuery.of(context).padding.top,
                       16,
                       16,
                     ),

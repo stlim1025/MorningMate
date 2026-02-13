@@ -153,10 +153,6 @@ class _ShopScreenState extends State<ShopScreen> {
                 const SizedBox(height: 16),
                 _buildEmoticonGrid(user, characterController, colorScheme),
                 const SizedBox(height: 32),
-                _buildSectionHeader('캐릭터'),
-                const SizedBox(height: 16),
-                _buildCharacterItemGrid(user, characterController, colorScheme),
-                const SizedBox(height: 32),
                 _buildSectionHeader('벽지'),
                 const SizedBox(height: 16),
                 _buildWallpaperGrid(user, characterController, colorScheme),
@@ -327,20 +323,6 @@ class _ShopScreenState extends State<ShopScreen> {
         isPurchased: isPurchased,
         onPurchase: () =>
             characterController.purchaseEmoticon(user.uid, item.id, item.price),
-        colorScheme: colorScheme,
-      );
-    });
-  }
-
-  Widget _buildCharacterItemGrid(user, characterController, colorScheme) {
-    final purchasableItems = RoomAssets.characterItems;
-    return _buildGrid(purchasableItems, (item) {
-      final isPurchased = user.purchasedCharacterItemIds.contains(item.id);
-      return _buildShopItem(
-        item: item,
-        isPurchased: isPurchased,
-        onPurchase: () => characterController.purchaseCharacterItem(
-            user.uid, item.id, item.price),
         colorScheme: colorScheme,
       );
     });

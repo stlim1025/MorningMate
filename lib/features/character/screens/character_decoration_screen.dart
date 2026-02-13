@@ -5,6 +5,8 @@ import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../controllers/character_controller.dart';
 import '../widgets/character_display.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
 
 class CharacterDecorationScreen extends StatefulWidget {
@@ -19,6 +21,8 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
   String _selectedCategory = 'all';
   late PageController _pageController;
   int _currentIndex = 0;
+  bool _isOwnedOnly = false;
+  Map<String, String> _previewEquippedItems = {};
 
   final Map<String, String> _categoryNames = {
     'all': '전체',
@@ -34,6 +38,14 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = context.read<CharacterController>().currentUser;
+      if (user != null) {
+        setState(() {
+          _previewEquippedItems = Map.from(user.equippedCharacterItems);
+        });
+      }
+    });
   }
 
   @override
@@ -91,10 +103,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
             child: GestureDetector(
-              onTap: () {
-                MemoNotification.show(context, '설정이 저장되었습니다! ✨');
-                context.pop();
-              },
+              onTap: _handleSave,
               child: Container(
                 width: 70,
                 height: 35,
@@ -134,14 +143,68 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
                   opacity: 0.5,
                 ),
               ),
-              child: Center(
-                child: CharacterDisplay(
-                  isAwake: true,
-                  characterLevel: user.characterLevel,
-                  size: 250,
-                  enableAnimation: true,
-                  equippedItems: user.equippedCharacterItems,
-                ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: CharacterDisplay(
+                      isAwake: true,
+                      characterLevel: user.characterLevel,
+                      size: 250,
+                      enableAnimation: true,
+                      equippedItems: _previewEquippedItems, // Use preview items
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 10,
+                    right: 20,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _isOwnedOnly = !_isOwnedOnly;
+                        });
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: Checkbox(
+                              value: _isOwnedOnly,
+                              onChanged: (value) {
+                                setState(() {
+                                  _isOwnedOnly = value ?? false;
+                                });
+                              },
+                              activeColor: const Color(0xFF5D4037),
+                              checkColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            '보유중인 상품만 보기',
+                            style: TextStyle(
+                              fontFamily: 'BMJUA',
+                              fontSize: 14,
+                              color: Color(0xFF5D4037),
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -190,6 +253,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
                       ),
                     ),
                   ),
+
                   // Items PageView
                   Expanded(
                     child: Padding(
@@ -207,8 +271,17 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
                           final category = _categories[pageIndex];
                           final filteredItems =
                               RoomAssets.characterItems.where((item) {
-                            if (category == 'all') return true;
-                            return _getCategory(item.id) == category;
+                            // Category Filter
+                            if (category != 'all' &&
+                                _getCategory(item.id) != category) {
+                              return false;
+                            }
+                            // Owned Filter
+                            if (_isOwnedOnly) {
+                              return user.purchasedCharacterItemIds
+                                  .contains(item.id);
+                            }
+                            return true;
                           }).toList();
 
                           return GridView.builder(
@@ -218,40 +291,28 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
                               crossAxisCount: 3,
                               crossAxisSpacing: 12,
                               mainAxisSpacing: 16,
-                              childAspectRatio: 0.75,
+                              childAspectRatio:
+                                  0.75, // Adjusted for taller card
                             ),
                             itemCount: filteredItems.length,
                             itemBuilder: (context, index) {
                               final item = filteredItems[index];
                               final isOwned = user.purchasedCharacterItemIds
                                   .contains(item.id);
-                              final isEquipped = user.equippedCharacterItems
-                                  .containsValue(item.id);
+                              final isEquipped =
+                                  _previewEquippedItems.containsValue(item.id);
 
                               return _buildSelectionCard(
-                                label: item.name,
-                                imagePath: item.imagePath,
+                                item: item,
+                                isOwned: isOwned,
                                 isSelected: isEquipped,
-                                isLocked: !isOwned,
-                                onTap: () async {
-                                  if (!isOwned) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text('상점에서 먼저 구매해주세요!')),
-                                    );
-                                    return;
-                                  }
-                                  try {
-                                    await characterController
-                                        .equipCharacterItem(user.uid, item.id);
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(content: Text(e.toString())),
-                                      );
-                                    }
-                                  }
+                                onTap: () {
+                                  // Determine slot
+                                  String slot = _getCategory(item.id);
+                                  _toggleItem(item.id, slot);
+                                },
+                                onPriceClick: () {
+                                  _showSinglePurchaseDialog(item, user);
                                 },
                                 colorScheme: colorScheme,
                               );
@@ -268,6 +329,128 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
         ],
       ),
     );
+  }
+
+  void _toggleItem(String itemId, String slot) {
+    setState(() {
+      if (_previewEquippedItems[slot] == itemId) {
+        // Un-equip if already equipped
+        _previewEquippedItems.remove(slot);
+      } else {
+        // Equip new item
+        _previewEquippedItems[slot] = itemId;
+      }
+    });
+  }
+
+  Future<void> _handleSave() async {
+    final characterController = context.read<CharacterController>();
+    final user = characterController.currentUser;
+    if (user == null) return;
+
+    // 1. Identify unowned items in current preview
+    final unownedItemIds = _previewEquippedItems.values
+        .where((id) => !user.purchasedCharacterItemIds.contains(id))
+        .toSet();
+
+    if (unownedItemIds.isEmpty) {
+      // All owned -> Just save
+      await characterController.updateEquippedCharacterItems(
+          user.uid, _previewEquippedItems);
+      if (mounted) {
+        MemoNotification.show(context, '설정이 저장되었습니다! ✨');
+        context.pop();
+      }
+      return;
+    }
+
+    // 2. Prepare items for bulk purchase
+    final unownedItems = RoomAssets.characterItems
+        .where((item) => unownedItemIds.contains(item.id))
+        .toList();
+
+    final selectedIds = unownedItems.map((e) => e.id).toSet();
+    final isEnabledNotifier = ValueNotifier<bool>(true);
+
+    // 3. Show Bulk Purchase Dialog
+    if (!mounted) return;
+
+    final shouldPurchase = await AppDialog.show<bool>(
+      context: context,
+      key: AppDialogKey.purchase,
+      content: _BulkPurchaseContent(
+        items: unownedItems,
+        onSelectionChanged: (ids) {
+          selectedIds.clear();
+          selectedIds.addAll(ids);
+          isEnabledNotifier.value = ids.isNotEmpty;
+        },
+      ),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: (context) => Navigator.pop(context, false),
+        ),
+        AppDialogAction(
+          label: '일괄구매',
+          isPrimary: true,
+          isEnabled: isEnabledNotifier,
+          onPressed: (context) => Navigator.pop(context, true),
+        ),
+      ],
+    );
+
+    if (shouldPurchase == true) {
+      final itemsToBuy =
+          unownedItems.where((i) => selectedIds.contains(i.id)).toList();
+      int finalPrice = itemsToBuy.fold(0, (sum, i) => sum + i.price);
+
+      if (user.points < finalPrice) {
+        if (mounted) {
+          MemoNotification.show(context, '가지가 부족합니다!');
+        }
+        return;
+      }
+
+      try {
+        // Bulk purchase
+        for (var item in itemsToBuy) {
+          await characterController.purchaseCharacterItem(
+              user.uid, item.id, item.price);
+        }
+
+        // Save (Only if all unowned items in preview were purchased, or we just save what we have)
+        // If the user deselected something, they won't own it, so it shouldn't be equipped?
+        // Actually, if they deselect it, they don't buy it, so they don't own it.
+        // We should probably only save the items they own (including the newly purchased ones).
+
+        // Remove unpurchased items from preview before saving
+        final newPreviewEquipped =
+            Map<String, String>.from(_previewEquippedItems);
+        final unpurchasedIds =
+            unownedItemIds.where((id) => !selectedIds.contains(id));
+
+        newPreviewEquipped
+            .removeWhere((key, value) => unpurchasedIds.contains(value));
+
+        // Also update local state to reflect removal
+        setState(() {
+          _previewEquippedItems = newPreviewEquipped;
+        });
+
+        await characterController.updateEquippedCharacterItems(
+            user.uid, newPreviewEquipped);
+
+        if (mounted) {
+          MemoNotification.show(context, '구매 및 저장이 완료되었습니다! ✨');
+          context.pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          MemoNotification.show(context, '오류가 발생했습니다: $e');
+        }
+      }
+    }
   }
 
   Widget _buildTabItem(String label, bool isSelected, VoidCallback onTap) {
@@ -298,56 +481,122 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
   }
 
   Widget _buildSelectionCard({
-    required String label,
-    required String? imagePath,
+    required RoomAsset item,
     required bool isSelected,
-    required bool isLocked,
+    required bool isOwned,
     required VoidCallback onTap,
+    VoidCallback? onPriceClick,
     required AppColorScheme colorScheme,
   }) {
+    final cardIndex = (item.name.hashCode.abs() % 6) + 1;
+    final cardBgImage = 'assets/icons/Friend_Card$cardIndex.png';
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage(
-              'assets/icons/Friend_Card${(label.hashCode.abs() % 6) + 1}.png',
-            ),
+            image: AssetImage(cardBgImage),
             fit: BoxFit.fill,
           ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Stack(
           alignment: Alignment.center,
           children: [
-            if (imagePath != null)
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Image.asset(
-                    imagePath,
-                    fit: BoxFit.contain,
-                    opacity: isLocked
-                        ? const AlwaysStoppedAnimation(0.5)
-                        : const AlwaysStoppedAnimation(1.0),
-                  ),
-                ),
-              ),
+            // Item Image
             Positioned(
-              bottom: 12,
+              top: 0,
+              bottom: isOwned ? 20 : 36, // Adjust space based on text position
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: item.imagePath != null
+                    ? (item.imagePath!.endsWith('.svg')
+                        ? SvgPicture.asset(item.imagePath!, fit: BoxFit.contain)
+                        : Image.asset(item.imagePath!,
+                            cacheWidth: 150, fit: BoxFit.contain))
+                    : Icon(item.icon,
+                        color: item.color ?? colorScheme.primaryButton,
+                        size: 24),
+              ),
+            ),
+
+            // Item Name
+            Positioned(
+              bottom: isOwned ? 12 : 32, // Lower if owned, above button if not
               left: 4,
               right: 4,
               child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'BMJUA',
+                item.name,
+                style: const TextStyle(
                   fontSize: 12,
-                  color: isLocked ? Colors.grey : const Color(0xFF4E342E),
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'BMJUA',
+                  color: Color(0xFF5D4037),
+                  overflow: TextOverflow.ellipsis,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
               ),
             ),
-            if (isLocked)
-              const Icon(Icons.lock, size: 24, color: Colors.black26),
+
+            // Price Button (Only if not owned)
+            if (!isOwned)
+              Positioned(
+                bottom: 4,
+                left: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: onPriceClick, // Trigger purchase dialog
+                  child: SizedBox(
+                    height: 24,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/icons/WakeUp_Button.png',
+                          width: double.infinity,
+                          height: 24,
+                          fit: BoxFit.fill,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/branch.png',
+                              width: 12,
+                              height: 12,
+                              cacheWidth: 48,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${item.price}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF5D4037),
+                                fontFamily: 'BMJUA',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+            // Selected Stamp
             if (isSelected)
               Stack(
                 alignment: Alignment.center,
@@ -375,6 +624,298 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _showSinglePurchaseDialog(RoomAsset item, dynamic user) async {
+    final characterController = context.read<CharacterController>();
+    final canAfford = user.points >= item.price;
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+
+    final shouldPurchase = await AppDialog.show<bool>(
+      context: context,
+      key: AppDialogKey.purchase,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Center(
+            child: item.imagePath != null
+                ? SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: item.imagePath!.endsWith('.svg')
+                        ? SvgPicture.asset(
+                            item.imagePath!,
+                            fit: BoxFit.contain,
+                          )
+                        : Image.asset(
+                            item.imagePath!,
+                            fit: BoxFit.contain,
+                          ),
+                  )
+                : Icon(
+                    item.icon,
+                    size: 60,
+                    color: item.color ?? colorScheme.primaryButton,
+                  ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '${item.name}을(를) 구매하시겠습니까?',
+            style: const TextStyle(fontFamily: 'BMJUA'),
+          ),
+          const SizedBox(height: 12),
+          if (!canAfford) ...[
+            const SizedBox(height: 12),
+            Text(
+              '가지가 부족합니다.',
+              style: TextStyle(
+                color: colorScheme.error,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'BMJUA',
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        AppDialogAction(
+          label: '${item.price}',
+          labelWidget: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/branch.png',
+                width: 18,
+                height: 18,
+                cacheWidth: 72,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${item.price}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  height: 1.1,
+                  fontFamily: 'BMJUA',
+                ),
+              ),
+            ],
+          ),
+          isPrimary: true,
+          isFullWidth: true,
+          isEnabled: AlwaysStoppedAnimation<bool>(canAfford),
+          onPressed: (context) => Navigator.pop(context, true),
+        ),
+      ],
+    );
+
+    if (shouldPurchase == true) {
+      try {
+        await characterController.purchaseCharacterItem(
+            user.uid, item.id, item.price);
+
+        if (!mounted) return;
+
+        // Show success
+        await AppDialog.show<String>(
+          context: context,
+          key: AppDialogKey.purchaseComplete,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 16),
+              Center(
+                child: item.imagePath != null
+                    ? SizedBox(
+                        width: 120,
+                        height: 120,
+                        child: item.imagePath!.endsWith('.svg')
+                            ? SvgPicture.asset(
+                                item.imagePath!,
+                                fit: BoxFit.contain,
+                              )
+                            : Image.asset(
+                                item.imagePath!,
+                                fit: BoxFit.contain,
+                              ),
+                      )
+                    : Icon(
+                        item.icon,
+                        size: 100,
+                        color: item.color ?? colorScheme.primaryButton,
+                      ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                '${item.name}을(를) 구매했습니다.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16, fontFamily: 'BMJUA'),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+          actions: [
+            AppDialogAction(
+              label: '확인',
+              isPrimary: true,
+              onPressed: (context) => Navigator.pop(context),
+            ),
+          ],
+        );
+      } catch (e) {
+        if (!mounted) return;
+        MemoNotification.show(
+            context, e.toString().replaceFirst('Exception: ', ''));
+      }
+    }
+  }
+}
+
+class _BulkPurchaseContent extends StatefulWidget {
+  final List<RoomAsset> items;
+  final ValueChanged<Set<String>> onSelectionChanged;
+
+  const _BulkPurchaseContent({
+    required this.items,
+    required this.onSelectionChanged,
+  });
+
+  @override
+  State<_BulkPurchaseContent> createState() => _BulkPurchaseContentState();
+}
+
+class _BulkPurchaseContentState extends State<_BulkPurchaseContent> {
+  late final Set<String> _selectedIds;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIds = widget.items.map((e) => e.id).toSet();
+  }
+
+  int get _totalPrice => widget.items
+      .where((item) => _selectedIds.contains(item.id))
+      .fold(0, (sum, item) => sum + item.price);
+
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+      widget.onSelectionChanged(_selectedIds);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          '구매하지 않은 상품이 있습니다.\n일괄 구매하시겠습니까?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 120,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: widget.items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final item = widget.items[index];
+              final isSelected = _selectedIds.contains(item.id);
+
+              return GestureDetector(
+                onTap: () => _toggleSelection(item.id),
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: isSelected
+                          ? Image.asset('assets/images/Check_Icon.png')
+                          : Center(
+                              child: Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: const Color(0xFFD7CCC8), width: 2),
+                                ),
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      child: item.imagePath != null
+                          ? (item.imagePath!.endsWith('.svg')
+                              ? SvgPicture.asset(item.imagePath!)
+                              : Image.asset(item.imagePath!))
+                          : Icon(item.icon),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        item.name,
+                        style: const TextStyle(
+                          fontFamily: 'BMJUA',
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Image.asset('assets/images/branch.png',
+                            width: 14, height: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${item.price}',
+                          style: const TextStyle(
+                            fontFamily: 'BMJUA',
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              '총 합계: ',
+              style: TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+            ),
+            Image.asset('assets/images/branch.png', width: 20, height: 20),
+            const SizedBox(width: 4),
+            Text(
+              '$_totalPrice',
+              style: const TextStyle(
+                fontFamily: 'BMJUA',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5D4037),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

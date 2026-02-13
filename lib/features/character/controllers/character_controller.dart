@@ -563,6 +563,20 @@ class CharacterController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 캐릭터 아이템 일괄 장착 (저장하기용)
+  Future<void> updateEquippedCharacterItems(
+      String userId, Map<String, String> newEquippedItems) async {
+    if (_currentUser == null) return;
+
+    await _userService.updateUser(userId, {
+      'equippedCharacterItems': newEquippedItems,
+    });
+
+    _currentUser =
+        _currentUser!.copyWith(equippedCharacterItems: newEquippedItems);
+    notifyListeners();
+  }
+
   // 테마 설정
   Future<void> setTheme(String userId, String themeId) async {
     if (_currentUser == null) return;

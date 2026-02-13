@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:237548170950:android:30f5e25176a3ca41dd31c7",
         "android_client_info": {
-          "package_name": "com.example.morningmate"
+          "package_name": "com.stlim1025.morningmate"
         }
       },
       "oauth_client": [
@@ -31,10 +31,46 @@
               "client_type": 3
             },
             {
-              "client_id": "237548170950-gffc6p91frabvtkj5dr4lvicoe3s7s23.apps.googleusercontent.com",
+              "client_id": "237548170950-6cjd0dq10bfkc7285kg3rv2ts7t0dt8q.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.morningmate"
+                "bundle_id": "com.stlim1025.morningmate"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237548170950:android:89f17d0cc9dff63edd31c7",
+        "android_client_info": {
+          "package_name": "com.stlim1025.morningmate"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "237548170950-749lq9bubbcskqrs1i3nbmajqiqn783t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIl1ObbqcPM56aGWCx8E9J_9EySE1Bm0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "237548170950-749lq9bubbcskqrs1i3nbmajqiqn783t.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "237548170950-6cjd0dq10bfkc7285kg3rv2ts7t0dt8q.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.stlim1025.morningmate"
               }
             }
           ]
