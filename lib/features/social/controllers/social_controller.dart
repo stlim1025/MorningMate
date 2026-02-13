@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import '../../../services/diary_service.dart';
+
 import '../../../services/friend_service.dart';
 import '../../../data/models/user_model.dart';
 
 class SocialController extends ChangeNotifier {
   final FriendService _friendService;
-  final DiaryService _diaryService;
 
   static const Duration _wakeUpCooldown = Duration(seconds: 10);
   static const Duration _cheerCooldown = Duration(seconds: 30);
@@ -21,7 +20,6 @@ class SocialController extends ChangeNotifier {
 
   SocialController(
     this._friendService,
-    this._diaryService,
   );
 
   @override
@@ -56,45 +54,31 @@ class SocialController extends ChangeNotifier {
 
   List<UserModel> _friends = [];
   List<Map<String, dynamic>> _friendRequests = []; // 친구 요청 목록
-  // 친구 기상 상태 캐싱 (friendId -> isAwake)
-  final Map<String, bool> _friendsAwakeStatus = {};
-  // 친구 오늘의 기분 캐싱 (friendId -> mood)
-  final Map<String, String?> _friendsMood = {};
 
   List<UserModel> get friends => _friends;
   List<Map<String, dynamic>> get friendRequests => _friendRequests;
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // 친구의 기상 상태를 가져오는 메서드 (캐시 사용)
-  bool isFriendAwake(String friendId, [DateTime? lastDiaryDate]) {
-    // 1. 확인된 상태가 있으면 우선 사용
-    if (_friendsAwakeStatus.containsKey(friendId)) {
-      return _friendsAwakeStatus[friendId]!;
-    }
+  // 친구의 기상 상태를 가져오는 메서드 (UserModel 정보 활용)
+  bool isFriendAwake(UserModel friend) {
+    if (friend.lastDiaryDate == null) return false;
 
-    // 2. 확인 중일 때의 임시 상태 (UserModel 정보 활용)
-    if (lastDiaryDate != null) {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final diaryDate =
-          DateTime(lastDiaryDate.year, lastDiaryDate.month, lastDiaryDate.day);
-      return diaryDate.isAtSameMomentAs(today);
-    }
-
-    return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final diaryDate = DateTime(friend.lastDiaryDate!.year,
+        friend.lastDiaryDate!.month, friend.lastDiaryDate!.day);
+    return diaryDate.isAtSameMomentAs(today);
   }
 
   // 친구의 오늘의 기분을 가져오는 메서드
-  String? getFriendMood(String friendId) {
-    return _friendsMood[friendId];
+  String? getFriendMood(UserModel friend) {
+    return friend.lastDiaryMood;
   }
 
-  Future<bool> refreshFriendAwakeStatus(String friendId) async {
-    final isAwake = await hasFriendWrittenToday(friendId);
-    _friendsAwakeStatus[friendId] = isAwake;
+  Future<void> refreshFriendAwakeStatus(String friendId) async {
+    // Stream updates handle this now
     notifyListeners();
-    return isAwake;
   }
 
   bool canSendWakeUp(String friendId) {
@@ -167,11 +151,7 @@ class SocialController extends ChangeNotifier {
         notifyListeners();
       });
 
-      // 3. 각 친구의 기상 상태(일기 작성 여부) 확인 및 캐싱 (병렬 처리)
-      await Future.wait(_friends.map((friend) async {
-        final isAwake = await hasFriendWrittenToday(friend.uid);
-        _friendsAwakeStatus[friend.uid] = isAwake;
-      }));
+      // 3. 일기 작성 여부는 UserModel에 포함되어 있으므로 별도 확인 불필요
     } catch (e) {
       print('친구 목록 로드 오류: $e');
     }
@@ -391,28 +371,7 @@ class SocialController extends ChangeNotifier {
     }
   }
 
-  // 친구가 오늘 일기를 작성했는지 확인
-  Future<bool> hasFriendWrittenToday(String friendId) async {
-    try {
-      final diary = await _diaryService.getDiaryByDate(
-        friendId,
-        DateTime.now(), // 로컬 시간 기준
-      );
-      final isCompleted = diary?.isCompleted ?? false;
-
-      if (isCompleted && diary != null) {
-        _friendsMood[friendId] =
-            diary.moods.isNotEmpty ? diary.moods.first : null;
-      } else {
-        _friendsMood[friendId] = null;
-      }
-
-      return isCompleted;
-    } catch (e) {
-      print('친구 일기 확인 오류: $e');
-      return false;
-    }
-  }
+  // Future<bool> hasFriendWrittenToday(String friendId) removed as it is no longer needed
 
   // 모든 상태 초기화 (로그아웃용)
   void clear() {
@@ -422,8 +381,6 @@ class SocialController extends ChangeNotifier {
     _friendRequestSubscription = null;
     _friends = [];
     _friendRequests = [];
-    _friendsAwakeStatus.clear();
-    _friendsMood.clear();
     _wakeUpCooldowns.clear();
     _cheerCooldowns.clear();
     _isLoading = false;

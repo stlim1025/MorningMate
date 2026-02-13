@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
@@ -103,7 +104,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    final characterController = context.watch<CharacterController>();
+    // 저장 시 리빌드로 인한 pop 오류 방지를 위해 watch -> read로 변경
+    // 이 화면에서는 실시간 유저 정보 변경 반영보다 안정적인 저장이 더 중요함
+    final characterController = context.read<CharacterController>();
     final morningController = context.watch<MorningController>();
     final user = characterController.currentUser;
 
@@ -129,7 +132,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
           icon: Image.asset(
             'assets/icons/X_Button.png',
             width: 40,
@@ -160,7 +163,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
                       user.uid, _decorationNotifier.value);
                   if (context.mounted) {
                     MemoNotification.show(context, '설정이 저장되었습니다! ✨');
-                    Navigator.pop(context);
+                    Navigator.of(context).pop();
                   }
                 } catch (e) {
                   if (context.mounted) {
@@ -690,7 +693,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     type: p.id,
                     x: 0.5,
-                    y: 0.5,
+                    y: 0.6, // Place lower to avoid overlapping with character
                     metadata: {
                       'content': text,
                       'heartCount': 0,
@@ -706,11 +709,18 @@ class _DecorationScreenState extends State<DecorationScreen> {
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     type: p.id,
                     x: 0.5,
-                    y: 0.5,
+                    y: 0.6, // Place lower to avoid overlapping with character
                   );
-                  _decorationNotifier.value = decoration.copyWith(
-                    props: [...decoration.props, newProp],
-                  );
+
+                  // 상태 업데이트를 다음 마이크로태스크로 지연하여
+                  // 빌드/네비게이션 충돌(!_debugLocked) 방지
+                  Future.microtask(() {
+                    if (context.mounted) {
+                      _decorationNotifier.value = decoration.copyWith(
+                        props: [...decoration.props, newProp],
+                      );
+                    }
+                  });
                 }
               },
               colorScheme: colorScheme,

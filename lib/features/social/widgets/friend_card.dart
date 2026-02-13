@@ -124,9 +124,8 @@ class FriendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SocialController>(
       builder: (context, controller, child) {
-        final isAwakeRequested =
-            controller.isFriendAwake(friend.uid, friend.lastDiaryDate);
-        final friendMood = controller.getFriendMood(friend.uid);
+        final isAwakeRequested = controller.isFriendAwake(friend);
+        final friendMood = controller.getFriendMood(friend);
         String? moodAsset;
         if (isAwakeRequested && friendMood != null) {
           switch (friendMood) {

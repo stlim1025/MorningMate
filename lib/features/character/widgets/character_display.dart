@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/character_assets.dart';
+
 class CharacterDisplay extends StatefulWidget {
   final bool isAwake;
   final int characterLevel;
@@ -75,19 +77,24 @@ class _CharacterDisplayState extends State<CharacterDisplay>
           children: [
             // 1. Wings (Level 2+) - Static layer
             if (widget.characterLevel >= 2)
-              Image.asset(
-                widget.characterLevel >= 3
-                    ? 'assets/images/Egg_Wing2.png'
-                    : 'assets/images/Egg_Wing.png',
-                width: widget.characterLevel >= 3
-                    ? (widget.isAwake ? charWidth * 2 : charWidth * 2.4)
-                    : (widget.isAwake ? charWidth * 1.2 : charWidth * 1.44),
-                height: widget.characterLevel >= 3
-                    ? (widget.isAwake ? charHeight * 2 : charHeight * 2.4)
-                    : (widget.isAwake ? charHeight : charHeight * 1.2),
-                fit: BoxFit.contain,
-                cacheWidth: 400,
-              ),
+              Builder(builder: (context) {
+                // 시각적으로만 크게 보이도록 Transform.scale 사용 (레이아웃 에러 방지)
+                final double wingScale = 1.1;
+
+                return Transform.scale(
+                  scale: wingScale,
+                  child: Image.asset(
+                    widget.characterLevel >= 3
+                        ? 'assets/images/Egg_Wing2.png'
+                        : 'assets/images/Egg_Wing.png',
+                    width: charWidth,
+                    height: charHeight,
+                    fit: BoxFit.contain,
+                    cacheWidth: 400,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                );
+              }),
 
             // 2. Base Body - Static layer
             Image.asset(
@@ -98,31 +105,8 @@ class _CharacterDisplayState extends State<CharacterDisplay>
               height: charHeight,
               fit: BoxFit.contain,
               cacheWidth: 500,
+              filterQuality: FilterQuality.medium,
             ),
-
-            // 2.5 Clothes Slot (Space Clothes, Frog Clothes, etc.)
-            if (widget.equippedItems != null &&
-                widget.equippedItems!['clothes'] != null)
-              Builder(builder: (context) {
-                final clothesItem = widget.equippedItems!['clothes'];
-                String? assetPath;
-
-                if (clothesItem == 'space_clothes' ||
-                    clothesItem == 'prog_clothes') {
-                  assetPath = clothesItem == 'space_clothes'
-                      ? 'assets/items/Charactor/Charactor_SpaceClothes.png'
-                      : 'assets/items/Charactor/Charactor_Progclothes.png';
-                  return Image.asset(
-                    assetPath,
-                    width: charWidth * 1.05,
-                    height: charHeight * 1.05,
-                    fit: BoxFit.contain,
-                    cacheWidth: 500,
-                  );
-                }
-
-                return const SizedBox.shrink();
-              }),
 
             // 3. Expression Layer - Position face
             Positioned(
@@ -170,18 +154,66 @@ class _CharacterDisplayState extends State<CharacterDisplay>
               ),
             ),
 
+            // 4. Clothes Slot
+            if (widget.equippedItems != null &&
+                widget.equippedItems!['clothes'] != null)
+              Builder(builder: (context) {
+                final clothesId = widget.equippedItems!['clothes'];
+                try {
+                  final asset = CharacterAssets.items
+                      .firstWhere((e) => e.id == clothesId);
+
+                  if (asset.imagePath == null) return const SizedBox.shrink();
+
+                  // Apply scale based on awake status
+                  final double clothesScale = widget.isAwake
+                      ? (asset.charScaleAwake ?? 1.0)
+                      : (asset.charScaleSleep ?? 1.0);
+
+                  return Transform.scale(
+                    scale: clothesScale,
+                    child: Image.asset(
+                      asset.imagePath!,
+                      width: charWidth,
+                      height: charHeight,
+                      fit: BoxFit.contain,
+                      cacheWidth: 500,
+                      filterQuality: FilterQuality.medium,
+                    ),
+                  );
+                } catch (e) {
+                  return const SizedBox.shrink();
+                }
+              }),
+
             // 4. Accessories Layer (Necktie, Glasses, etc.)
             // Body Slot (Necktie)
             if (widget.equippedItems != null &&
-                widget.equippedItems!['body'] == 'necktie')
-              Positioned(
-                bottom: charHeight * 0.08,
-                child: Image.asset(
-                  'assets/items/Charactor/Charactor_Necktie.png',
-                  width: charWidth * 0.15,
-                  fit: BoxFit.contain,
-                ),
-              ),
+                widget.equippedItems!['body'] != null)
+              Builder(builder: (context) {
+                final bodyId = widget.equippedItems!['body'];
+                try {
+                  final asset =
+                      CharacterAssets.items.firstWhere((e) => e.id == bodyId);
+
+                  if (asset.imagePath == null) return const SizedBox.shrink();
+
+                  // Remove hardcoding: Use asset properties
+                  final double bottomPct = asset.charBottomPct ?? 0.08;
+                  final double widthPct = asset.charWidthPct ?? 0.15;
+
+                  return Positioned(
+                    bottom: charHeight * bottomPct,
+                    child: Image.asset(
+                      asset.imagePath!,
+                      width: charWidth * widthPct,
+                      fit: BoxFit.contain,
+                    ),
+                  );
+                } catch (e) {
+                  return const SizedBox.shrink();
+                }
+              }),
 
             // Expression Layer is already at index 3 (lines 103-151)
 
@@ -189,59 +221,60 @@ class _CharacterDisplayState extends State<CharacterDisplay>
             if (widget.equippedItems != null &&
                 widget.equippedItems!['face'] != null)
               Builder(builder: (context) {
-                final faceItem = widget.equippedItems!['face'];
-                String? assetPath;
-                double itemWidth = charWidth * 0.7;
+                final faceId = widget.equippedItems!['face'];
+                try {
+                  final asset =
+                      CharacterAssets.items.firstWhere((e) => e.id == faceId);
 
-                if (faceItem == 'heart_glass') {
-                  assetPath =
-                      'assets/items/Charactor/Charactor_Heart_Glass.png';
-                } else if (faceItem == 'wood_glass') {
-                  assetPath = 'assets/items/Charactor/Charactor_WoodGlass.png';
+                  if (asset.imagePath == null) return const SizedBox.shrink();
+
+                  final double itemWidth =
+                      charWidth * (asset.charWidthPct ?? 0.7);
+                  final double topPct = widget.isAwake
+                      ? (asset.charTopPctAwake ?? 0.35)
+                      : (asset.charTopPctSleep ?? 0.17);
+
+                  return Positioned(
+                    top: charHeight * topPct,
+                    child: Image.asset(
+                      asset.imagePath!,
+                      width: itemWidth,
+                      fit: BoxFit.contain,
+                    ),
+                  );
+                } catch (e) {
+                  return const SizedBox.shrink();
                 }
-
-                if (assetPath == null) return const SizedBox.shrink();
-
-                return Positioned(
-                  top: widget.isAwake ? charHeight * 0.35 : charHeight * 0.17,
-                  child: Image.asset(
-                    assetPath,
-                    width: itemWidth,
-                    fit: BoxFit.contain,
-                  ),
-                );
               }),
 
             // Head Slot (Sprout, Plogeyes)
             if (widget.equippedItems != null &&
                 widget.equippedItems!['head'] != null)
               Builder(builder: (context) {
-                final headItem = widget.equippedItems!['head'];
-                String? assetPath;
-                double itemWidth = charWidth * 0.3;
-                double topOffset =
-                    widget.isAwake ? -charHeight * 0.02 : -charHeight * 0.05;
+                final headId = widget.equippedItems!['head'];
+                try {
+                  final asset =
+                      CharacterAssets.items.firstWhere((e) => e.id == headId);
 
-                if (headItem == 'sprout') {
-                  assetPath = 'assets/items/Charactor/Charactor_Sprout.png';
-                } else if (headItem == 'plogeyes') {
-                  assetPath = 'assets/items/Charactor/Charactor_Plogeyes.png';
-                  itemWidth = charWidth * 0.75;
-                  // Position it exactly on top of the head
-                  topOffset =
-                      widget.isAwake ? -charHeight * 0.12 : -charHeight * 0.15;
+                  if (asset.imagePath == null) return const SizedBox.shrink();
+
+                  final double itemWidth =
+                      charWidth * (asset.charWidthPct ?? 0.3);
+                  final double topPct = widget.isAwake
+                      ? (asset.charTopPctAwake ?? -0.02)
+                      : (asset.charTopPctSleep ?? -0.05);
+
+                  return Positioned(
+                    top: charHeight * topPct,
+                    child: Image.asset(
+                      asset.imagePath!,
+                      width: itemWidth,
+                      fit: BoxFit.contain,
+                    ),
+                  );
+                } catch (e) {
+                  return const SizedBox.shrink();
                 }
-
-                if (assetPath == null) return const SizedBox.shrink();
-
-                return Positioned(
-                  top: topOffset,
-                  child: Image.asset(
-                    assetPath,
-                    width: itemWidth,
-                    fit: BoxFit.contain,
-                  ),
-                );
               }),
 
             // Zzz animation (if sleeping and animation enabled)

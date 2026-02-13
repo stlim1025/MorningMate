@@ -11,6 +11,9 @@ class RoomAsset {
   final String? imagePath;
   final double sizeMultiplier;
   final double aspectRatio;
+  final bool isWallMounted;
+  final bool noShadow;
+  final double shadowDyCorrection;
 
   const RoomAsset({
     required this.id,
@@ -22,7 +25,25 @@ class RoomAsset {
     this.imagePath,
     this.sizeMultiplier = 1.0,
     this.aspectRatio = 1.0,
+    this.isWallMounted = false,
+    this.noShadow = false,
+    this.shadowDyCorrection = 0.0,
+    this.category,
+    this.charWidthPct,
+    this.charTopPctAwake,
+    this.charTopPctSleep,
+    this.charBottomPct,
+    this.charScaleAwake,
+    this.charScaleSleep,
   });
+
+  final String? category;
+  final double? charWidthPct;
+  final double? charTopPctAwake;
+  final double? charTopPctSleep;
+  final double? charBottomPct;
+  final double? charScaleAwake;
+  final double? charScaleSleep;
 }
 
 class RoomAssets {
@@ -106,12 +127,6 @@ class RoomAssets {
         icon: Icons.check_box_outline_blank, // Plain
         imagePath: 'assets/images/wallpapers/Default_wall.png'),
     RoomAsset(
-        id: 'classic',
-        name: '클래식',
-        price: 100,
-        icon: Icons.window, // Grid-like
-        color: Color(0xFFD7CCC8)),
-    RoomAsset(
         id: 'stripe',
         name: '스트라이프',
         price: 100,
@@ -132,12 +147,6 @@ class RoomAssets {
         icon: Icons.scatter_plot, // Dots
         color: Color(0xFFFFF9C4),
         imagePath: 'assets/images/wallpapers/DotPink.png'),
-    RoomAsset(
-        id: 'dark_wall',
-        name: '다크벽지',
-        price: 100,
-        icon: Icons.brightness_3,
-        color: Color(0xFF424242)),
     RoomAsset(
         id: 'flower_sky',
         name: '꽃하늘',
@@ -190,6 +199,13 @@ class RoomAssets {
         icon: Icons.circle,
         color: Colors.blueAccent,
         imagePath: 'assets/images/backgrounds/BlueMoon.png'),
+    RoomAsset(
+        id: 'blue_moon2',
+        name: '푸른 달2',
+        price: 300,
+        icon: Icons.circle,
+        color: Colors.blueAccent,
+        imagePath: 'assets/images/backgrounds/BlueMoon2.png'),
     RoomAsset(
         id: 'golden_sun',
         name: '황금 태양',
@@ -249,7 +265,7 @@ class RoomAssets {
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/Space_Desk.png',
       sizeMultiplier: 1.2,
-      aspectRatio: 1.8,
+      aspectRatio: 1.2,
     ),
     RoomAsset(
       id: 'wood_chair',
@@ -266,8 +282,8 @@ class RoomAssets {
       price: 100,
       icon: Icons.note_alt_outlined,
       imagePath: 'assets/items/Wood_Bed.png',
-      sizeMultiplier: 2.5,
-      aspectRatio: 1.0,
+      sizeMultiplier: 1.5,
+      aspectRatio: 1.6,
     ),
     RoomAsset(
       id: 'space_chair',
@@ -276,7 +292,7 @@ class RoomAssets {
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/Space_Chair.png',
       sizeMultiplier: 1.2,
-      aspectRatio: 1.8,
+      aspectRatio: 1,
     ),
     RoomAsset(
       id: 'space_bed',
@@ -314,6 +330,14 @@ class RoomAssets {
       sizeMultiplier: 0.6,
     ),
     RoomAsset(
+      id: 'analog_clock',
+      name: '아날로그 시계',
+      price: 120,
+      icon: Icons.access_time,
+      imagePath: 'assets/items/Analog_Clock.png',
+      sizeMultiplier: 0.6,
+    ),
+    RoomAsset(
       id: 'white_bear',
       name: '흰 곰 인형',
       price: 180,
@@ -343,7 +367,7 @@ class RoomAssets {
       price: 100,
       icon: Icons.local_cafe,
       imagePath: 'assets/items/MugCup.png',
-      sizeMultiplier: 0.6,
+      sizeMultiplier: 0.4,
     ),
     RoomAsset(
       id: 'wood_cup',
@@ -351,7 +375,7 @@ class RoomAssets {
       price: 100,
       icon: Icons.local_cafe,
       imagePath: 'assets/items/WoodCup.png',
-      sizeMultiplier: 0.6,
+      sizeMultiplier: 0.4,
     ),
     RoomAsset(
       id: 'cloud_watch',
@@ -360,6 +384,7 @@ class RoomAssets {
       icon: Icons.access_time,
       imagePath: 'assets/items/CloudDigital.png',
       sizeMultiplier: 1.0,
+      isWallMounted: true,
     ),
     RoomAsset(
       id: 'red_carpet',
@@ -367,8 +392,9 @@ class RoomAssets {
       price: 100,
       icon: Icons.access_time,
       imagePath: 'assets/items/RedCarpet.png',
-      sizeMultiplier: 1.0,
+      sizeMultiplier: 1.6,
       aspectRatio: 1.8,
+      noShadow: true,
     ),
     RoomAsset(
       id: 'sticky_note',
@@ -378,6 +404,7 @@ class RoomAssets {
       imagePath: 'assets/items/StickyNote.png',
       sizeMultiplier: 0.6,
       aspectRatio: 1.0,
+      isWallMounted: true,
     ),
   ];
 
@@ -430,58 +457,5 @@ class RoomAssets {
         price: 300,
         icon: Icons.star,
         imagePath: 'assets/images/floors/Castle_Stone_Floor.png'),
-  ];
-
-  static const List<RoomAsset> characterItems = [
-    RoomAsset(
-      id: 'heart_glass',
-      name: '하트 안경',
-      price: 150,
-      icon: Icons.face,
-      imagePath: 'assets/items/Charactor/Charactor_Heart_Glass.png',
-      sizeMultiplier: 1.0,
-    ),
-    RoomAsset(
-      id: 'necktie',
-      name: '넥타이',
-      price: 150,
-      icon: Icons.accessibility_new_outlined,
-      imagePath: 'assets/items/Charactor/Charactor_Necktie.png',
-    ),
-    RoomAsset(
-      id: 'plogeyes',
-      name: '개구리 눈',
-      price: 150,
-      icon: Icons.visibility,
-      imagePath: 'assets/items/Charactor/Charactor_Plogeyes.png',
-    ),
-    RoomAsset(
-      id: 'sprout',
-      name: '새싹',
-      price: 150,
-      icon: Icons.eco,
-      imagePath: 'assets/items/Charactor/Charactor_Sprout.png',
-    ),
-    RoomAsset(
-      id: 'wood_glass',
-      name: '나무 안경',
-      price: 150,
-      icon: Icons.face,
-      imagePath: 'assets/items/Charactor/Charactor_WoodGlass.png',
-    ),
-    RoomAsset(
-      id: 'space_clothes',
-      name: '우주복',
-      price: 200,
-      icon: Icons.rocket_launch_outlined,
-      imagePath: 'assets/items/Charactor/Charactor_SpaceClothes.png',
-    ),
-    RoomAsset(
-      id: 'prog_clothes',
-      name: '개굴옷',
-      price: 200,
-      icon: Icons.face_retouching_natural,
-      imagePath: 'assets/items/Charactor/Charactor_Progclothes.png',
-    ),
   ];
 }

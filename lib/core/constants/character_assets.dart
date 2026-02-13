@@ -1,0 +1,144 @@
+import 'package:flutter/material.dart';
+import '../../core/constants/room_assets.dart'; // To reuse RoomAsset if desired, or define CharacterAsset
+
+// Since RoomAsset is already well structured and used, we can alias it or just use it.
+// However, the user asked to separate the source.
+// Let's create a CharacterAsset class similar to RoomAsset but tailored for character items.
+// Or we can just keep using RoomAsset but move the list to this file.
+// The user request "character assets source separation" implies moving the data.
+
+// Let's define the character items list here.
+// We will still use RoomAsset class for compatibility if possible, or create a new one.
+// Given the previous refactoring added character specific fields to RoomAsset,
+// it might be better to keep using RoomAsset class but move the static list `characterItems` to this new file.
+
+class CharacterAssets {
+  static const List<RoomAsset> items = [
+    RoomAsset(
+      id: 'heart_glass',
+      name: '하트 안경',
+      price: 150,
+      icon: Icons.face,
+      imagePath: 'assets/items/Charactor/Charactor_Heart_Glass.png',
+      sizeMultiplier: 1.0,
+      category: 'face',
+      charWidthPct: 0.7,
+      charTopPctAwake: 0.35,
+      charTopPctSleep: 0.17,
+    ),
+    RoomAsset(
+      id: 'blue_ribbon',
+      name: '파란 리본',
+      price: 150,
+      icon: Icons.accessibility_new_outlined,
+      imagePath: 'assets/items/Charactor/Charactor_BlueRibbon.png',
+      category: 'body',
+      charWidthPct: 0.3,
+      charBottomPct: 0.25,
+    ),
+    RoomAsset(
+      id: 'pink_mupler',
+      name: '분홍 목도리',
+      price: 150,
+      icon: Icons.accessibility_new_outlined,
+      imagePath: 'assets/items/Charactor/Charactor_Mupler.png',
+      category: 'body',
+      charWidthPct: 0.7,
+      charBottomPct: -0.15,
+    ),
+    RoomAsset(
+      id: 'necktie',
+      name: '넥타이',
+      price: 150,
+      icon: Icons.accessibility_new_outlined,
+      imagePath: 'assets/items/Charactor/Charactor_Necktie.png',
+      category: 'body',
+      charWidthPct: 0.15,
+      charBottomPct: 0.08,
+    ),
+    RoomAsset(
+      id: 'plogeyes',
+      name: '개구리 눈',
+      price: 150,
+      icon: Icons.visibility,
+      imagePath: 'assets/items/Charactor/Charactor_Plogeyes.png',
+      category: 'head',
+      charWidthPct: 0.75,
+      charTopPctAwake: -0.12,
+      charTopPctSleep: -0.15,
+    ),
+    RoomAsset(
+      id: 'sprout',
+      name: '새싹',
+      price: 150,
+      icon: Icons.eco,
+      imagePath: 'assets/items/Charactor/Charactor_Sprout.png',
+      category: 'head',
+      charWidthPct: 0.3,
+      charTopPctAwake: -0.02,
+      charTopPctSleep: -0.05,
+    ),
+    RoomAsset(
+      id: 'crown',
+      name: '왕관',
+      price: 150,
+      icon: Icons.eco,
+      imagePath: 'assets/items/Charactor/Charactor_Crown.png',
+      category: 'head',
+      charWidthPct: 0.3,
+      charTopPctAwake: -0.02,
+      charTopPctSleep: -0.05,
+    ),
+    RoomAsset(
+      id: 'wood_glass',
+      name: '나무 안경',
+      price: 150,
+      icon: Icons.face,
+      imagePath: 'assets/items/Charactor/Charactor_WoodGlass.png',
+      category: 'face',
+      charWidthPct: 0.7,
+      charTopPctAwake: 0.35,
+      charTopPctSleep: 0.17,
+    ),
+    RoomAsset(
+      id: 'space_clothes',
+      name: '우주복',
+      price: 200,
+      icon: Icons.rocket_launch_outlined,
+      imagePath: 'assets/items/Charactor/Charactor_SpaceClothes.png',
+      category: 'clothes',
+      charScaleAwake: 1.05,
+      charScaleSleep: 1.15,
+    ),
+    RoomAsset(
+      id: 'prog_clothes',
+      name: '개굴옷',
+      price: 200,
+      icon: Icons.face_retouching_natural,
+      imagePath: 'assets/items/Charactor/Charactor_Progclothes.png',
+      category: 'clothes',
+      charScaleAwake: 1.05,
+      charScaleSleep: 1.15,
+    ),
+    RoomAsset(
+      id: 'superb_bird_clothes',
+      name: '극락조 새옷',
+      price: 200,
+      icon: Icons.face_retouching_natural,
+      imagePath: 'assets/items/Charactor/Charactor_SuperbBirdClothes.png',
+      category: 'clothes',
+      charScaleAwake: 1.05,
+      charScaleSleep: 1.15,
+    ),
+    RoomAsset(
+      id: 'humming_bird_clothes',
+      name: '벌새옷',
+      price: 200,
+      icon: Icons.face_retouching_natural,
+      imagePath: 'assets/items/Charactor/Charactor_HummingBirdClothes.png',
+      category: 'clothes',
+      charScaleAwake: 1.05,
+      charScaleSleep: 1.15,
+    ),
+  ];
+}

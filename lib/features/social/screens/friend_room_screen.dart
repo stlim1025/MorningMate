@@ -69,8 +69,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
         return;
       }
 
-      final isAwake =
-          await socialController.refreshFriendAwakeStatus(friend.uid);
+      final isAwake = socialController.isFriendAwake(friend);
       if (!mounted) return;
 
       setState(() {
@@ -104,15 +103,14 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
         builder: (context, socialController, child) {
           final isAwake = _friendAwakeStatus ??
               (_friend != null
-                  ? socialController.isFriendAwake(_friend!.uid)
+                  ? socialController.isFriendAwake(_friend!)
                   : false);
 
           final textColor =
               (isAwake && !isDarkMode) ? const Color(0xFF2C3E50) : Colors.white;
 
-          final todaysMood = _friend != null
-              ? socialController.getFriendMood(_friend!.uid)
-              : null;
+          final todaysMood =
+              _friend != null ? socialController.getFriendMood(_friend!) : null;
 
           final currentUser = context.read<AuthController>().userModel;
 

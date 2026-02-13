@@ -344,6 +344,7 @@ class _EnhancedCharacterRoomWidgetState
             : null,
         clipBehavior: widget.showBorder ? Clip.antiAlias : Clip.none,
         child: Stack(
+          clipBehavior: Clip.none,
           children: [
             // 3D 룸 내부 (바닥, 벽, 천장 등)
             RepaintBoundary(
@@ -453,7 +454,39 @@ class _EnhancedCharacterRoomWidgetState
     final yPos = prop.y * height;
 
     // Visual Widget
-    Widget visualChild = _getPropVisual(prop.type, propWidth, propHeight);
+    Widget propImage = _getPropVisual(prop.type, propWidth, propHeight);
+
+    // Determine if shadow should be shown
+    bool showShadow = !asset.isWallMounted &&
+        prop.z != 1 &&
+        !asset.noShadow; // z=1 implies 'above' or stacked
+
+    Widget shadowLayer = showShadow
+        ? Positioned(
+            bottom: -propHeight * 0.05, // Closer to the prop
+            child: Transform(
+              transform: Matrix4.identity()
+                ..scale(1.0, 0.3)
+                ..setEntry(0, 1, -0.3)
+                ..translate(-propWidth * 0.02, -propHeight * 0.15),
+              alignment: Alignment.bottomCenter,
+              child: Opacity(
+                opacity: 0.2, // 그림자 농도 유지
+                child: _getPropVisual(prop.type, propWidth, propHeight,
+                    isShadow: true),
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
+
+    Widget visualChild = Stack(
+      alignment: Alignment.bottomCenter,
+      clipBehavior: Clip.none,
+      children: [
+        shadowLayer,
+        propImage,
+      ],
+    );
 
     // 1. Selection Visuals (Border + Delete Button)
     final isSelected =
@@ -479,16 +512,23 @@ class _EnhancedCharacterRoomWidgetState
           ),
           // X Button (Right Top)
           Positioned(
-            top: -18,
-            right: -18,
+            top: -25, // Make it stick out more
+            right: -25,
             child: GestureDetector(
-              onTap: () => widget.onPropDelete?.call(index),
-              behavior: HitTestBehavior.opaque,
-              child: Image.asset(
-                'assets/icons/X_Button.png',
-                width: 40,
-                height: 40,
-                fit: BoxFit.contain,
+              onTap: () {
+                widget.onPropDelete?.call(index);
+              },
+              behavior:
+                  HitTestBehavior.translucent, // Ensure touches are captured
+              child: Container(
+                padding: const EdgeInsets.all(12), // Increase touch area
+                color: Colors.transparent,
+                child: Image.asset(
+                  'assets/icons/X_Button.png',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
@@ -580,6 +620,7 @@ class _EnhancedCharacterRoomWidgetState
     }
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         AnimatedPositioned(
           duration: _isDragging
@@ -695,6 +736,7 @@ class _EnhancedCharacterRoomWidgetState
     }
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         AnimatedPositioned(
           duration: _isVisitorDragging
@@ -1004,7 +1046,8 @@ class _EnhancedCharacterRoomWidgetState
     });
   }
 
-  Widget _getPropVisual(String type, double width, double height) {
+  Widget _getPropVisual(String type, double width, double height,
+      {bool isShadow = false}) {
     if (type.isEmpty) return SizedBox(width: width, height: height);
     final asset = RoomAssets.props.firstWhere((p) => p.id == type,
         orElse: () =>
@@ -1018,6 +1061,9 @@ class _EnhancedCharacterRoomWidgetState
               width: width * 0.9,
               height: height * 0.9,
               fit: BoxFit.contain,
+              colorFilter: isShadow
+                  ? const ColorFilter.mode(Colors.black, BlendMode.srcIn)
+                  : null,
             )
           : Image.asset(
               asset.imagePath!,
@@ -1025,6 +1071,8 @@ class _EnhancedCharacterRoomWidgetState
               height: height * 0.9,
               fit: BoxFit.contain,
               cacheWidth: 300,
+              color: isShadow ? Colors.black : null,
+              colorBlendMode: isShadow ? BlendMode.srcIn : null,
               errorBuilder: (context, error, stackTrace) {
                 // Fallback to icon if image fails to load
                 return Icon(asset.icon,
@@ -1034,12 +1082,17 @@ class _EnhancedCharacterRoomWidgetState
             );
 
       // 밤 모드 어두운 효과는 morning_screen.dart에서 전체 오버레이로 처리됨
+      if (isShadow) {
+        // 이미 Image.asset에서 colorBlendMode로 처리됨. 추가 처리 불필요하거나 여기서 Opacity 처리 가능.
+        // 호출부에서 Opacity 처리하므로 여기서는 색상만 변경.
+      }
 
       return imageWidget;
     }
 
     return Icon(asset.icon,
-        color: Colors.blueGrey, size: (width < height ? width : height) * 0.7);
+        color: isShadow ? Colors.black : Colors.blueGrey,
+        size: (width < height ? width : height) * 0.7);
   }
 
   bool _isPropValid(RoomPropModel prop) {
@@ -1274,13 +1327,6 @@ class Room3DBackground extends StatelessWidget {
 
     // 3. 공용 벽지 레이어 생성 (정면 + 왼쪽 "잇닿" 배치)
     final totalW = leftW + frontW;
-    final sharedWallpaper = _buildSharedWallpaperLayer(
-      wallpaperAsset: wallpaperAsset,
-      wallpaperColor: wallpaperColor,
-      isAwake: isAwake,
-      totalWidth: totalW,
-      totalHeight: wallH,
-    );
 
     return Stack(
       children: [
@@ -1325,7 +1371,13 @@ class Room3DBackground extends StatelessWidget {
           child: Stack(
             children: [
               _buildWallSlice(
-                sharedWallpaper: sharedWallpaper,
+                sharedWallpaper: _buildSharedWallpaperLayer(
+                  wallpaperAsset: wallpaperAsset,
+                  wallpaperColor: wallpaperColor,
+                  isAwake: isAwake,
+                  totalWidth: totalW,
+                  totalHeight: wallH,
+                ),
                 sliceX: leftW,
                 sliceW: frontW,
                 sliceH: wallH,
@@ -1375,7 +1427,13 @@ class Room3DBackground extends StatelessWidget {
               children: [
                 // 벽지 슬라이스
                 _buildWallSlice(
-                  sharedWallpaper: sharedWallpaper,
+                  sharedWallpaper: _buildSharedWallpaperLayer(
+                    wallpaperAsset: wallpaperAsset,
+                    wallpaperColor: wallpaperColor,
+                    isAwake: isAwake,
+                    totalWidth: totalW,
+                    totalHeight: wallH,
+                  ),
                   sliceX: 0,
                   sliceW: leftW,
                   sliceH: wallH,
@@ -1397,13 +1455,18 @@ class Room3DBackground extends StatelessWidget {
                   height: 2,
                   child: Container(color: Colors.black.withOpacity(0.5)),
                 ),
-                // Right Boundary (Corner)
+                // 창문 그림자
                 Positioned(
-                  top: 0,
-                  bottom: 0,
-                  right: 0,
-                  width: 2,
-                  child: Container(color: Colors.black.withOpacity(0.5)),
+                  left: leftW * 0.2 + 6,
+                  top: wallH * 0.15 + 6,
+                  width: leftW * 0.6,
+                  height: wallH * 0.63,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
                 ),
                 // 창문 (벽면 변환을 그대로 따름)
                 Positioned(
@@ -1411,30 +1474,32 @@ class Room3DBackground extends StatelessWidget {
                   top: wallH * 0.15, // 벽 높이의 15% 지점
                   width: leftW * 0.65,
                   height: wallH * 0.7,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: const Color(0xFF8B7355),
-                        width: 5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          spreadRadius: 2,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // 1. 창 밖 풍경 (Background)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            12, 12, 12, 20), // 하단 패딩을 더 주어 바닥 부분 축소
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: RoomBackgroundWidget(
+                            decoration: decoration,
+                            isAwake: isAwake,
+                            isDarkMode: isDarkMode,
+                            colorScheme: colorScheme,
+                          ),
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: RoomBackgroundWidget(
-                        decoration: decoration,
-                        isAwake: isAwake,
-                        isDarkMode: isDarkMode,
-                        colorScheme: colorScheme,
                       ),
-                    ),
+                      // 2. 창문 프레임 + 커튼 이미지 (Overlay)
+                      Image.asset(
+                        'assets/images/backgrounds/WIndow_Curton.png',
+                        fit: BoxFit.fill,
+                        cacheWidth: 300,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox(),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1546,7 +1611,6 @@ class Room3DBackground extends StatelessWidget {
     required double totalHeight,
   }) {
     final base = Container(
-      color: wallpaperColor,
       child: wallpaperAsset.imagePath != null
           ? Image.asset(
               wallpaperAsset.imagePath!,
@@ -1554,6 +1618,9 @@ class Room3DBackground extends StatelessWidget {
               height: totalHeight,
               fit: BoxFit.fill,
               cacheWidth: 540,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(color: wallpaperColor);
+              },
             )
           : (wallpaperAsset.id == 'black_stripe'
               ? Stack(

@@ -13,6 +13,7 @@ class UserModel {
   final int maxConsecutiveDays;
   final DateTime? lastLoginDate;
   final DateTime? lastDiaryDate;
+  final String? lastDiaryMood; // 마지막 일기 감정 (최적화용)
   final DateTime? lastStickyNoteDate; // 오늘 메모 작성 여부 체크용
   final DateTime? lastAdRewardDate; // 마지막 광고 보상 받은 시간
   final int adRewardCount; // 오늘 광고 보상 받은 횟수
@@ -51,6 +52,7 @@ class UserModel {
     this.maxConsecutiveDays = 0,
     this.lastLoginDate,
     this.lastDiaryDate,
+    this.lastDiaryMood,
     this.lastStickyNoteDate,
     this.lastAdRewardDate,
     this.adRewardCount = 0,
@@ -106,6 +108,7 @@ class UserModel {
       lastDiaryDate: data['lastDiaryDate'] != null
           ? (data['lastDiaryDate'] as Timestamp).toDate()
           : null,
+      lastDiaryMood: data['lastDiaryMood'],
       lastStickyNoteDate: data['lastStickyNoteDate'] != null
           ? (data['lastStickyNoteDate'] as Timestamp).toDate()
           : null,
@@ -162,6 +165,7 @@ class UserModel {
           lastLoginDate != null ? Timestamp.fromDate(lastLoginDate!) : null,
       'lastDiaryDate':
           lastDiaryDate != null ? Timestamp.fromDate(lastDiaryDate!) : null,
+      'lastDiaryMood': lastDiaryMood,
       'lastStickyNoteDate': lastStickyNoteDate != null
           ? Timestamp.fromDate(lastStickyNoteDate!)
           : null,
@@ -206,6 +210,7 @@ class UserModel {
     int? maxConsecutiveDays,
     DateTime? lastLoginDate,
     DateTime? lastDiaryDate,
+    String? lastDiaryMood,
     DateTime? lastStickyNoteDate,
     DateTime? lastAdRewardDate,
     int? adRewardCount,
@@ -243,6 +248,7 @@ class UserModel {
       maxConsecutiveDays: maxConsecutiveDays ?? this.maxConsecutiveDays,
       lastLoginDate: lastLoginDate ?? this.lastLoginDate,
       lastDiaryDate: lastDiaryDate ?? this.lastDiaryDate,
+      lastDiaryMood: lastDiaryMood ?? this.lastDiaryMood,
       lastStickyNoteDate: lastStickyNoteDate ?? this.lastStickyNoteDate,
       lastAdRewardDate: lastAdRewardDate ?? this.lastAdRewardDate,
       adRewardCount: adRewardCount ?? this.adRewardCount,

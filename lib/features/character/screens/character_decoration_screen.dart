@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
+import '../../../core/constants/character_assets.dart';
 import '../controllers/character_controller.dart';
 import '../widgets/character_display.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -55,10 +56,12 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
   }
 
   String _getCategory(String itemId) {
-    if (itemId == 'necktie') return 'body';
-    if (itemId == 'space_clothes' || itemId == 'prog_clothes') return 'clothes';
-    if (itemId == 'sprout' || itemId == 'plogeyes') return 'head';
-    return 'face';
+    try {
+      final item = CharacterAssets.items.firstWhere((e) => e.id == itemId);
+      return item.category ?? 'face';
+    } catch (e) {
+      return 'face';
+    }
   }
 
   @override
@@ -167,22 +170,27 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // 커스텀 체크박스 (이미지만 표시)
                           SizedBox(
-                            height: 24,
                             width: 24,
-                            child: Checkbox(
-                              value: _isOwnedOnly,
-                              onChanged: (value) {
-                                setState(() {
-                                  _isOwnedOnly = value ?? false;
-                                });
-                              },
-                              activeColor: const Color(0xFF5D4037),
-                              checkColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
+                            height: 24,
+                            child: _isOwnedOnly
+                                ? Image.asset(
+                                    'assets/images/Check_Icon.png',
+                                    width: 24,
+                                    height: 24,
+                                    fit: BoxFit.contain,
+                                  )
+                                : Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.transparent,
+                                      border: Border.all(
+                                        color: const Color(0xFF5D4037),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
                           ),
                           const SizedBox(width: 8),
                           const Text(
@@ -270,7 +278,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
                         itemBuilder: (context, pageIndex) {
                           final category = _categories[pageIndex];
                           final filteredItems =
-                              RoomAssets.characterItems.where((item) {
+                              CharacterAssets.items.where((item) {
                             // Category Filter
                             if (category != 'all' &&
                                 _getCategory(item.id) != category) {
@@ -365,7 +373,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
     }
 
     // 2. Prepare items for bulk purchase
-    final unownedItems = RoomAssets.characterItems
+    final unownedItems = CharacterAssets.items
         .where((item) => unownedItemIds.contains(item.id))
         .toList();
 
@@ -519,7 +527,8 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
               left: 0,
               right: 0,
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0, vertical: 16.0),
                 child: item.imagePath != null
                     ? (item.imagePath!.endsWith('.svg')
                         ? SvgPicture.asset(item.imagePath!, fit: BoxFit.contain)

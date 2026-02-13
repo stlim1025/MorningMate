@@ -205,10 +205,9 @@ class _MorningMateAppState extends State<MorningMateApp> {
           },
         ),
         ChangeNotifierProxyProvider<AuthController, SocialController>(
-          create: (context) => SocialController(_friendService, _diaryService),
+          create: (context) => SocialController(_friendService),
           update: (context, auth, previous) {
-            final controller =
-                previous ?? SocialController(_friendService, _diaryService);
+            final controller = previous ?? SocialController(_friendService);
             if (auth.userModel == null) {
               controller.clear();
             }

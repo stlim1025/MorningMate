@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
+import '../../../core/constants/character_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../controllers/character_controller.dart';
@@ -16,12 +17,35 @@ class ShopScreen extends StatefulWidget {
 }
 
 class _ShopScreenState extends State<ShopScreen> {
+  String _selectedCategory = 'wallpaper';
+  late PageController _pageController;
+  int _currentIndex = 0;
+  bool _isUnownedOnly = false;
+
+  final Map<String, String> _categoryNames = {
+    'wallpaper': '벽지',
+    'background': '배경',
+    'prop': '소품',
+    'floor': '바닥',
+    'character': '캐릭터',
+    'emoticon': '이모티콘',
+  };
+
+  late final List<String> _categories = _categoryNames.keys.toList();
+
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _currentIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CharacterController>().loadRewardedAd();
     });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -33,7 +57,7 @@ class _ShopScreenState extends State<ShopScreen> {
     if (user == null) {
       return Container(
         decoration: const BoxDecoration(
-          color: Color(0xFFFDF7E2), // 로딩 중 배경색 (깜빡임 방지)
+          color: Color(0xFFFDF7E2),
           image: DecorationImage(
             image: ResizeImage(AssetImage('assets/images/Store_Background.png'),
                 width: 1080),
@@ -48,7 +72,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFFFDF7E2), // 이미지 로딩 전 배경색 (깜빡임 방지)
+        color: Color(0xFFFDF7E2),
         image: DecorationImage(
           image: ResizeImage(AssetImage('assets/images/Store_Background.png'),
               width: 1080),
@@ -78,29 +102,22 @@ class _ShopScreenState extends State<ShopScreen> {
               onTap: () => Navigator.of(context).pop(),
               child: Container(
                 alignment: Alignment.center,
-                padding: const EdgeInsets.only(left: 16), // 오른쪽으로 살짝 이동
+                padding: const EdgeInsets.only(left: 16),
                 color: Colors.transparent,
-                child: Stack(
-                  alignment: Alignment.center,
-                  clipBehavior: Clip.none,
-                  children: [
-                    Image.asset(
-                      'assets/icons/X_Button.png',
-                      width: 55,
-                      height: 55,
-                      fit: BoxFit.contain,
-                    ),
-                  ],
+                child: Image.asset(
+                  'assets/icons/X_Button.png',
+                  width: 55,
+                  height: 55,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
-            leadingWidth: 72, // 터치 영역 및 이동 공간 확보
+            leadingWidth: 72,
             actions: [
               Container(
-                margin: const EdgeInsets.only(
-                    right: 16, top: 6, bottom: 6), // 마진을 줄여 높이 확보
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 8), // 패딩을 늘려 배경 크기 확대
+                margin: const EdgeInsets.only(right: 16, top: 6, bottom: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 decoration: const BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage('assets/images/Item_Background.png'),
@@ -139,37 +156,187 @@ class _ShopScreenState extends State<ShopScreen> {
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 광고 보기 버튼
-                _buildAdButton(
+          body: Column(
+            children: [
+              // 광고 보기 버튼
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                child: _buildAdButton(
                     user, colorScheme, context.read<CharacterController>()),
-                const SizedBox(height: 24),
+              ),
 
-                _buildSectionHeader('이모티콘'),
-                const SizedBox(height: 16),
-                _buildEmoticonGrid(user, characterController, colorScheme),
-                const SizedBox(height: 32),
-                _buildSectionHeader('벽지'),
-                const SizedBox(height: 16),
-                _buildWallpaperGrid(user, characterController, colorScheme),
-                const SizedBox(height: 32),
-                _buildSectionHeader('배경'),
-                const SizedBox(height: 16),
-                _buildBackgroundGrid(user, characterController, colorScheme),
-                const SizedBox(height: 32),
-                _buildSectionHeader('소품'),
-                const SizedBox(height: 16),
-                _buildPropGrid(user, characterController, colorScheme),
-                const SizedBox(height: 32),
-                _buildSectionHeader('바닥'),
-                const SizedBox(height: 16),
-                _buildFloorGrid(user, characterController, colorScheme),
-              ],
-            ),
+              // 카테고리 탭
+              Container(
+                width: double.infinity,
+                height: 50,
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/Tab_Background.png'),
+                    fit: BoxFit.fill,
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: _categoryNames.entries.map((entry) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: _buildTabItem(
+                          entry.value,
+                          _selectedCategory == entry.key,
+                          () {
+                            final index = _categories.indexOf(entry.key);
+                            setState(() {
+                              _currentIndex = index;
+                              _selectedCategory = entry.key;
+                            });
+                            _pageController.animateToPage(
+                              index,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+
+              // 아이템 리스트 (Stack으로 필터 버튼 오버레이)
+              Expanded(
+                child: Stack(
+                  alignment: Alignment.topCenter,
+                  children: [
+                    PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentIndex = index;
+                          _selectedCategory = _categories[index];
+                        });
+                      },
+                      itemCount: _categories.length,
+                      itemBuilder: (context, index) {
+                        final category = _categories[index];
+                        switch (category) {
+                          case 'emoticon':
+                            return _buildEmoticonGrid(
+                                user, characterController, colorScheme);
+                          case 'wallpaper':
+                            return _buildWallpaperGrid(
+                                user, characterController, colorScheme);
+                          case 'background':
+                            return _buildBackgroundGrid(
+                                user, characterController, colorScheme);
+                          case 'prop':
+                            return _buildPropGrid(
+                                user, characterController, colorScheme);
+                          case 'floor':
+                            return _buildFloorGrid(
+                                user, characterController, colorScheme);
+                          case 'character':
+                            return _buildCharacterGrid(
+                                user, characterController, colorScheme);
+                          default:
+                            return const SizedBox.shrink();
+                        }
+                      },
+                    ),
+
+                    // 미보유 필터 버튼 (Floating)
+                    Positioned(
+                      top: 0,
+                      left: 20,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isUnownedOnly = !_isUnownedOnly;
+                          });
+                        },
+                        child: Container(
+                          width: 120, // 텍스트 포함 적절한 너비
+                          height: 40,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage(
+                                  'assets/images/Message_Button.png'),
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // 커스텀 체크박스
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: _isUnownedOnly
+                                    ? null
+                                    : BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.transparent,
+                                        border: Border.all(
+                                          color: const Color(0xFF5D4037),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                child: _isUnownedOnly
+                                    ? Image.asset(
+                                        'assets/images/Check_Icon.png',
+                                        fit: BoxFit.contain,
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                '미보유',
+                                style: TextStyle(
+                                  fontFamily: 'BMJUA',
+                                  fontSize: 14,
+                                  color: Color(0xFF5D4037),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabItem(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(isSelected
+                ? 'assets/images/ShopTab_ButtonClick.png'
+                : 'assets/images/ShopTab_Button.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'BMJUA',
+            fontSize: 14,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: const Color(0xFF5D4E37),
           ),
         ),
       ),
@@ -289,33 +456,38 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Container(
-      width: 100,
-      height: 40,
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/icons/Store_Tab.png'),
-          fit: BoxFit.fill,
-        ),
-      ),
-      alignment: Alignment.center,
-      padding: const EdgeInsets.only(bottom: 5, left: 24), // 왼쪽 여백 12 -> 24로 증가
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          fontFamily: 'KyoboHandwriting2024psw', // 폰트 변경
-          color: Color(0xFF5D4037),
-        ),
-      ),
-    );
+  Widget _buildCharacterGrid(user, characterController, colorScheme) {
+    var purchasableItems =
+        CharacterAssets.items.where((i) => i.price > 0).toList();
+
+    if (_isUnownedOnly) {
+      purchasableItems = purchasableItems
+          .where((i) => !user.purchasedCharacterItemIds.contains(i.id))
+          .toList();
+    }
+
+    return _buildGrid(purchasableItems, (item) {
+      final isPurchased = user.purchasedCharacterItemIds.contains(item.id);
+      return _buildShopItem(
+        item: item,
+        isPurchased: isPurchased,
+        onPurchase: () => characterController.purchaseCharacterItem(
+            user.uid, item.id, item.price),
+        colorScheme: colorScheme,
+      );
+    });
   }
 
   Widget _buildEmoticonGrid(user, characterController, colorScheme) {
-    final purchasableEmoticons =
+    var purchasableEmoticons =
         RoomAssets.emoticons.where((e) => e.price > 0).toList();
+
+    if (_isUnownedOnly) {
+      purchasableEmoticons = purchasableEmoticons
+          .where((e) => !user.purchasedEmoticonIds.contains(e.id))
+          .toList();
+    }
+
     return _buildGrid(purchasableEmoticons, (item) {
       final isPurchased = user.purchasedEmoticonIds.contains(item.id);
       return _buildShopItem(
@@ -329,8 +501,15 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildWallpaperGrid(user, characterController, colorScheme) {
-    final purchasableWallpapers =
+    var purchasableWallpapers =
         RoomAssets.wallpapers.where((w) => w.price > 0).toList();
+
+    if (_isUnownedOnly) {
+      purchasableWallpapers = purchasableWallpapers
+          .where((w) => !user.purchasedThemeIds.contains(w.id))
+          .toList();
+    }
+
     return _buildGrid(purchasableWallpapers, (item) {
       final isPurchased = user.purchasedThemeIds.contains(item.id);
       return _buildShopItem(
@@ -344,8 +523,15 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildBackgroundGrid(user, characterController, colorScheme) {
-    final purchasableBackgrounds =
+    var purchasableBackgrounds =
         RoomAssets.backgrounds.where((b) => b.price > 0).toList();
+
+    if (_isUnownedOnly) {
+      purchasableBackgrounds = purchasableBackgrounds
+          .where((b) => !user.purchasedBackgroundIds.contains(b.id))
+          .toList();
+    }
+
     return _buildGrid(purchasableBackgrounds, (item) {
       final isPurchased = user.purchasedBackgroundIds.contains(item.id);
       return _buildShopItem(
@@ -359,8 +545,14 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildPropGrid(user, characterController, colorScheme) {
-    final purchasableProps =
-        RoomAssets.props.where((p) => p.price > 0).toList();
+    var purchasableProps = RoomAssets.props.where((p) => p.price > 0).toList();
+
+    if (_isUnownedOnly) {
+      purchasableProps = purchasableProps
+          .where((p) => !user.purchasedPropIds.contains(p.id))
+          .toList();
+    }
+
     return _buildGrid(purchasableProps, (item) {
       final isPurchased = user.purchasedPropIds.contains(item.id);
       return _buildShopItem(
@@ -374,8 +566,15 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildFloorGrid(user, characterController, colorScheme) {
-    final purchasableFloors =
+    var purchasableFloors =
         RoomAssets.floors.where((f) => f.price > 0).toList();
+
+    if (_isUnownedOnly) {
+      purchasableFloors = purchasableFloors
+          .where((f) => !user.purchasedFloorIds.contains(f.id))
+          .toList();
+    }
+
     return _buildGrid(purchasableFloors, (item) {
       final isPurchased = user.purchasedFloorIds.contains(item.id);
       return _buildShopItem(
@@ -391,13 +590,12 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget _buildGrid(
       List<RoomAsset> items, Widget Function(RoomAsset) itemBuilder) {
     return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.82,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.8,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) => itemBuilder(items[index]),
@@ -624,8 +822,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
                                 if (context.mounted && result == 'decorate') {
                                   // 캐릭터 아이템이면 캐릭터 꾸미기 화면으로, 아니면 방 꾸미기 화면으로
-                                  final isCharacterItem = RoomAssets
-                                      .characterItems
+                                  final isCharacterItem = CharacterAssets.items
                                       .any((i) => i.id == item.id);
                                   if (isCharacterItem) {
                                     context.push('/character-decoration');
@@ -704,15 +901,15 @@ class _ShopScreenState extends State<ShopScreen> {
             ),
           ),
           if (isPurchased)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Image.asset(
-                'assets/icons/purchase_Icon.png',
-                width:
-                    36, // 28 -> 40 (slightly smaller than full card but bigger) - Let's use 36 or 40. User said "bigger".
-                height: 36,
-                fit: BoxFit.contain,
+            Center(
+              child: Opacity(
+                opacity: 0.9,
+                child: Image.asset(
+                  'assets/icons/purchase_Icon.png',
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
         ],
