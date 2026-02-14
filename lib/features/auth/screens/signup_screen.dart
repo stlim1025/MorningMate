@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
+import '../../../core/widgets/memo_notification.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -358,13 +359,8 @@ class _SignupScreenState extends State<SignupScreen> {
       if (mounted) {
         context.go('/morning');
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_nicknameController.text}님, 환영합니다! 🎉'),
-            backgroundColor: colorScheme.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        MemoNotification.show(
+            context, '${_nicknameController.text}님, 환영합니다! 🎉');
       }
     } catch (e) {
       if (mounted) {

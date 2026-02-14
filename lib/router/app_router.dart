@@ -83,7 +83,9 @@ class AppRouter {
             return '/morning';
           }
         } else {
-          if (location != '/login' && location != '/splash') {
+          if (location != '/login' &&
+              location != '/splash' &&
+              location != '/signup') {
             return '/login';
           }
           if (location == '/splash') {

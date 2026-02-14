@@ -52,7 +52,7 @@ echo ==========================================
 echo [4/5] Uploading to Firebase...
 echo ==========================================
 
-call firebase appdistribution:distribute build\app\outputs\flutter-apk\app-release.apk --app "1:237548170950:android:30f5e25176a3ca41dd31c7" --groups "morningmate" --release-notes-file release_notes.txt
+call firebase appdistribution:distribute build\app\outputs\flutter-apk\app-release.apk --app "1:237548170950:android:89f17d0cc9dff63edd31c7" --groups "morningmate" --release-notes-file release_notes.txt
 
 if %errorlevel% neq 0 (
     echo.
