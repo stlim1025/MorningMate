@@ -231,15 +231,47 @@ class MorningController extends ChangeNotifier {
     });
   }
 
-  // 일기 저장
+  // 일기 저장 (완료)
   Future<bool> saveDiary({
     required String userId,
     required String content,
     List<String>? moods,
   }) async {
+    return _saveDiaryInternal(
+      userId: userId,
+      content: content,
+      moods: moods,
+      isDraft: false,
+    );
+  }
+
+  // 임시 저장
+  Future<bool> saveDraft({
+    required String userId,
+    required String content,
+    List<String>? moods,
+  }) async {
+    return _saveDiaryInternal(
+      userId: userId,
+      content: content,
+      moods: moods,
+      isDraft: true,
+    );
+  }
+
+  // 내부 저장 로직 (통합)
+  Future<bool> _saveDiaryInternal({
+    required String userId,
+    required String content,
+    List<String>? moods,
+    required bool isDraft,
+  }) async {
     if (_writingTimer != null) {
-      _writingTimer!.cancel();
-      _writingTimer = null;
+      if (!isDraft) {
+        _writingTimer!.cancel();
+        _writingTimer = null;
+      }
+      // 임시 저장은 타이머 계속 유지
     }
 
     _isLoading = true;
@@ -255,36 +287,51 @@ class MorningController extends ChangeNotifier {
       // 2. 로컬에 암호화된 일기 저장
       await _saveEncryptedDiaryLocally(userId, encryptedContent);
 
-      // 3. Firestore에 메타데이터만 저장
+      // 3. Firestore 저장 (생성 또는 업데이트)
       final now = DateTime.now();
       final diaryDate = DateTime(now.year, now.month, now.day);
+
+      // 기존 일기(임시저장 포함)가 있는지 확인
+      String? existingId = _todayDiary?.id;
+      if (existingId == 'local_temp') existingId = null; // 로컬만 있는 경우 ID 없음
+
       final diary = DiaryModel(
-        id: '',
+        id: existingId ?? '',
         userId: userId,
         date: diaryDate,
         dateKey: _dateKey(now),
-        encryptedContent: encryptedContent, // 암호화된 내용 포함
-        wordCount: _charCount, // 글자 수 저장
+        encryptedContent: encryptedContent,
+        wordCount: _charCount,
         writingDuration: _writingDuration,
         moods: moods ?? [],
-        isCompleted: true,
-        createdAt: now,
+        isCompleted: !isDraft, // 완료 여부 설정
+        createdAt: _todayDiary?.createdAt ?? now,
         promptQuestion: _currentQuestion,
       );
 
-      final diaryId = await _diaryService.createDiary(diary);
-      _todayDiary = diary.copyWith(id: diaryId);
+      if (existingId != null && existingId.isNotEmpty) {
+        // 업데이트
+        await _diaryService.updateDiary(existingId, diary.toFirestore());
+        _todayDiary = diary;
+      } else {
+        // 생성
+        final newId = await _diaryService.createDiary(diary);
+        _todayDiary = diary.copyWith(id: newId);
+      }
 
-      // 4. 연속 기록 및 점수 업데이트
-      await _userService.updateConsecutiveDays(userId);
-      await _userService.updateUser(userId, {
-        'points': FieldValue.increment(10), // 일기 작성 시 포인트 지급 예시
-        'lastDiaryDate': Timestamp.fromDate(now),
-        'lastDiaryMood': moods?.isNotEmpty == true ? moods!.first : null,
-      });
+      // 4. 완료 시에만 연속 기록 및 점수 업데이트
+      if (!isDraft) {
+        await _userService.updateConsecutiveDays(userId);
+        await _userService.updateUser(userId, {
+          'points': FieldValue.increment(10),
+          'lastDiaryDate': Timestamp.fromDate(now),
+          'lastDiaryMood': moods?.isNotEmpty == true ? moods!.first : null,
+        });
+
+        _isWriting = false;
+      }
 
       _isLoading = false;
-      _isWriting = false;
       Future.microtask(() {
         notifyListeners();
       });

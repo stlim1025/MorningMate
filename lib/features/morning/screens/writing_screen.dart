@@ -55,6 +55,43 @@ class _WritingScreenState extends State<WritingScreen> {
     } else {
       _selectedMoods.add('normal');
     }
+
+    // 드래프트 로드
+    _loadDraft();
+  }
+
+  Future<void> _loadDraft() async {
+    final morningController = context.read<MorningController>();
+    final authController = context.read<AuthController>();
+    final userId = authController.currentUser?.uid;
+
+    if (userId == null) return;
+
+    // 이미 로드된 오늘의 일기가 있고, 완료되지 않은 상태라면(임시저장)
+    if (morningController.todayDiary != null &&
+        !morningController.todayDiary!.isCompleted) {
+      try {
+        final content = await morningController.loadDiaryContent(
+          userId: userId,
+          date: morningController.todayDiary!.date,
+          encryptedContent: morningController.todayDiary!.encryptedContent,
+        );
+
+        if (mounted) {
+          setState(() {
+            _textController.text = content;
+            if (morningController.todayDiary!.moods.isNotEmpty) {
+              _selectedMoods.clear();
+              _selectedMoods.addAll(morningController.todayDiary!.moods);
+            }
+          });
+          // 글자수 업데이트 Trigger
+          morningController.updateCharCount(content);
+        }
+      } catch (e) {
+        debugPrint('드래프트 로드 실패: $e');
+      }
+    }
   }
 
   @override
@@ -259,6 +296,36 @@ class _WritingScreenState extends State<WritingScreen> {
                         width: 80,
                         height: 38,
                         fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // 임시 저장 버튼
+                  Padding(
+                    padding: const EdgeInsets.only(top: 0),
+                    child: GestureDetector(
+                      onTap: () => _saveDraft(context, controller),
+                      child: Container(
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          image: const DecorationImage(
+                            image:
+                                AssetImage('assets/images/Cancel_Button.png'),
+                            fit: BoxFit.fill,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          '임시저장',
+                          style: TextStyle(
+                            fontFamily: 'BMJUA',
+                            color: Color(0xFF5D4037),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -615,6 +682,29 @@ class _WritingScreenState extends State<WritingScreen> {
       if (context.mounted) {
         context.go('/morning');
       }
+    }
+  }
+
+  Future<void> _saveDraft(
+      BuildContext context, MorningController controller) async {
+    final authController = context.read<AuthController>();
+    final userId = authController.currentUser?.uid;
+
+    if (userId == null) return;
+
+    if (_textController.text.trim().isEmpty) {
+      MemoNotification.show(context, '내용을 입력해주세요! ✍️');
+      return;
+    }
+
+    final success = await controller.saveDraft(
+      userId: userId,
+      content: _textController.text,
+      moods: _selectedMoods,
+    );
+
+    if (success && context.mounted) {
+      MemoNotification.show(context, '임시 저장되었습니다. 📝');
     }
   }
 
