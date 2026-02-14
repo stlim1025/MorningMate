@@ -213,7 +213,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
                   characterLevel:
                       characterController.currentUser?.characterLevel ?? 1,
                   consecutiveDays:
-                      characterController.currentUser?.consecutiveDays ?? 0,
+                      characterController.currentUser?.displayConsecutiveDays ??
+                          0,
                   roomDecoration: decoration,
                   hideProps: false,
                   showBorder: false,

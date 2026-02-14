@@ -275,7 +275,7 @@ class FriendCard extends StatelessWidget {
                                   style: TextStyle(fontSize: fontSizeSmall)),
                               const SizedBox(width: 2),
                               Text(
-                                '${friend.consecutiveDays}일',
+                                '${friend.displayConsecutiveDays}일',
                                 style: TextStyle(
                                   fontFamily: 'BMJUA',
                                   color: Colors.brown,

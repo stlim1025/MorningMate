@@ -299,4 +299,25 @@ class UserModel {
     if (required == 0) return 1.0;
     return (experience / required).clamp(0.0, 1.0);
   }
+
+  // 화면 표시용 연속 기록 (날짜가 지났으면 0으로 표시)
+  int get displayConsecutiveDays {
+    if (lastDiaryDate == null) return 0;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final lastDate =
+        DateTime(lastDiaryDate!.year, lastDiaryDate!.month, lastDiaryDate!.day);
+
+    // 오늘 - 마지막작성일
+    final difference = today.difference(lastDate).inDays;
+
+    // 오늘(0) 이거나 어제(1) 작성했으면 유지
+    if (difference <= 1) {
+      return consecutiveDays;
+    }
+
+    // 그 외(2일 이상 지남)는 깨짐
+    return 0;
+  }
 }

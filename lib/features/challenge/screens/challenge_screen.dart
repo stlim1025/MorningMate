@@ -16,19 +16,19 @@ class ChallengeScreen extends StatelessWidget {
       {
         'title': '새벽의 시작',
         'description': '오전 6시 이전에 일기 1회 작성하기',
-        'isCompleted': (user?.consecutiveDays ?? 0) >= 1,
+        'isCompleted': (user?.displayConsecutiveDays ?? 0) >= 1,
         'reward': '50 가지',
       },
       {
         'title': '꾸준한 습관',
         'description': '3일 연속 일기 작성하기',
-        'isCompleted': (user?.consecutiveDays ?? 0) >= 3,
+        'isCompleted': (user?.displayConsecutiveDays ?? 0) >= 3,
         'reward': '100 가지',
       },
       {
         'title': '진정한 아침형 인간',
         'description': '7일 연속 일기 작성하기',
-        'isCompleted': (user?.consecutiveDays ?? 0) >= 7,
+        'isCompleted': (user?.displayConsecutiveDays ?? 0) >= 7,
         'reward': '300 가지',
       },
       {

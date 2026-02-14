@@ -391,7 +391,7 @@ class _MorningScreenState extends State<MorningScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${characterController.currentUser?.consecutiveDays ?? 0}일 연속 기록 중 🔥',
+                  '${characterController.currentUser?.displayConsecutiveDays ?? 0}일 연속 기록 중 🔥',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: textColor.withOpacity(0.9),
                     fontWeight: FontWeight.w600,
@@ -476,7 +476,8 @@ class _MorningScreenState extends State<MorningScreen>
       isDarkMode: isDarkMode,
       colorScheme: colorScheme,
       characterLevel: characterController.currentUser?.characterLevel ?? 1,
-      consecutiveDays: characterController.currentUser?.consecutiveDays ?? 0,
+      consecutiveDays:
+          characterController.currentUser?.displayConsecutiveDays ?? 0,
       roomDecoration: characterController.currentUser?.roomDecoration,
       currentAnimation: characterController.currentAnimation,
       onPropTap: (prop) => _showMemoDialog(prop),

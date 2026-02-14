@@ -122,7 +122,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                   child: EnhancedCharacterRoomWidget(
                     isAwake: isAwake,
                     characterLevel: _friend!.characterLevel,
-                    consecutiveDays: _friend!.consecutiveDays,
+                    consecutiveDays: _friend!.displayConsecutiveDays,
                     roomDecoration: _friend!.roomDecoration,
                     showBorder: false,
                     currentAnimation: 'idle',
@@ -198,7 +198,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                               if (!isSmallScreen) ...[
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  '${_friend!.consecutiveDays}일 연속 기록 중 🔥',
+                                                  '${_friend!.displayConsecutiveDays}일 연속 기록 중 🔥',
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .bodyMedium
