@@ -18,12 +18,16 @@ class CharacterDecorationScreen extends StatefulWidget {
       _CharacterDecorationScreenState();
 }
 
-class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
+class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
+    with SingleTickerProviderStateMixin {
   String _selectedCategory = 'all';
   late PageController _pageController;
   int _currentIndex = 0;
   bool _isOwnedOnly = false;
   Map<String, String> _previewEquippedItems = {};
+
+  late AnimationController _buttonController;
+  late Animation<double> _scaleAnimation;
 
   final Map<String, String> _categoryNames = {
     'all': '전체',
@@ -39,6 +43,15 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
+
+    _buttonController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _buttonController, curve: Curves.easeInOut),
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = context.read<CharacterController>().currentUser;
       if (user != null) {
@@ -51,6 +64,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
 
   @override
   void dispose() {
+    _buttonController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -155,6 +169,45 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen> {
                       size: 250,
                       enableAnimation: true,
                       equippedItems: _previewEquippedItems, // Use preview items
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 10,
+                    left: 20,
+                    child: GestureDetector(
+                      onTapDown: (_) => _buttonController.forward(),
+                      onTapUp: (_) {
+                        _buttonController.reverse();
+                        setState(() {
+                          _previewEquippedItems.clear();
+                        });
+                      },
+                      onTapCancel: () => _buttonController.reverse(),
+                      behavior: HitTestBehavior.opaque,
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Container(
+                          width: 80,
+                          height: 35,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage(
+                                  'assets/images/Message_Button.png'),
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          child: const Text(
+                            '모두 해제',
+                            style: TextStyle(
+                              fontFamily: 'BMJUA',
+                              fontSize: 14,
+                              color: Color(0xFF5D4037),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   Positioned(

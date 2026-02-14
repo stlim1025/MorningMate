@@ -612,9 +612,10 @@ class _ShopScreenState extends State<ShopScreen> {
     final cardIndex = (item.hashCode % 6) + 1;
     final cardBgImage = 'assets/icons/Friend_Card$cardIndex.png';
 
-    return Builder(builder: (context) {
+    return Builder(builder: (itemContext) {
       final canAfford =
-          context.read<CharacterController>().currentUser!.points >= item.price;
+          itemContext.read<CharacterController>().currentUser!.points >=
+              item.price;
 
       return Stack(
         children: [
@@ -676,7 +677,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       ? null
                       : () async {
                           final shouldPurchase = await AppDialog.show<bool>(
-                            context: context,
+                            context: itemContext,
                             key: AppDialogKey.purchase,
                             content: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -761,7 +762,7 @@ class _ShopScreenState extends State<ShopScreen> {
                           if (shouldPurchase == true) {
                             try {
                               await onPurchase();
-                              if (context.mounted) {
+                              if (mounted) {
                                 final result = await AppDialog.show<String>(
                                   context: context,
                                   key: AppDialogKey.purchaseComplete,
@@ -820,7 +821,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                   ],
                                 );
 
-                                if (context.mounted && result == 'decorate') {
+                                if (mounted && result == 'decorate') {
                                   // 캐릭터 아이템이면 캐릭터 꾸미기 화면으로, 아니면 방 꾸미기 화면으로
                                   final isCharacterItem = CharacterAssets.items
                                       .any((i) => i.id == item.id);
@@ -832,7 +833,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 }
                               }
                             } catch (e) {
-                              if (context.mounted) {
+                              if (mounted) {
                                 MemoNotification.show(
                                     context,
                                     e

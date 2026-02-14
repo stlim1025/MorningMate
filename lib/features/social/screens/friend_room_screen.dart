@@ -168,13 +168,14 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                         constraints.maxWidth < 350;
                                     return Row(
                                       children: [
-                                        IconButton(
-                                          icon: Icon(Icons.arrow_back,
-                                              color: textColor),
-                                          onPressed: () =>
-                                              Navigator.pop(context),
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(),
+                                        GestureDetector(
+                                          onTap: () => Navigator.pop(context),
+                                          child: Image.asset(
+                                            'assets/icons/X_Button.png',
+                                            width: 40,
+                                            height: 40,
+                                            fit: BoxFit.contain,
+                                          ),
                                         ),
                                         const SizedBox(width: 8),
                                         Expanded(

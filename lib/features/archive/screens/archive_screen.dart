@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../character/widgets/character_display.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/memo_notification.dart';
+import '../../morning/controllers/morning_controller.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -35,36 +36,51 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     _loadDiaries();
   }
 
-  Future<void> _loadDiaries() async {
+  Future<void> _loadDiaries({bool silent = false}) async {
     final authController = context.read<AuthController>();
     final diaryService = context.read<DiaryService>();
     final userId = authController.currentUser?.uid;
 
     if (userId == null) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final diaries = await diaryService.getUserDiaries(userId);
-      setState(() {
-        _diaries = diaries;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          // 완료된 일기만 표시 (임시저장 제외)
+          _diaries = diaries.where((d) => d.isCompleted).toList();
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print('일기 로드 오류: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  // 오늘 일기가 리스트에 있는지 확인
+  bool _hasTodayDiaryInList() {
+    return _diaries
+        .any((d) => d.dateKey == DiaryModel.buildDateKey(DateTime.now()));
   }
 
   // 특정 날짜에 일기가 있는지 확인
   DiaryModel? _getDiaryForDay(DateTime day) {
     try {
+      // 이미 리스트 자체가 완료된 일기만 담고 있지만, 이중 확인
       return _diaries.firstWhere(
-        (diary) => diary.dateKey == DiaryModel.buildDateKey(day),
+        (diary) =>
+            diary.dateKey == DiaryModel.buildDateKey(day) && diary.isCompleted,
       );
     } catch (_) {
       return null;
@@ -75,45 +91,58 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
-    return Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image:
-              ResizeImage(AssetImage('assets/images/Ceiling.png'), width: 1080),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: SafeArea(
-        bottom: false, // Allow background/content to extend lower
-        child: Column(
-          children: [
-            // 헤더 (마이페이지 + 설정 버튼)
-            _buildHeader(context, colorScheme),
+    return Consumer<MorningController>(
+      builder: (context, morningController, child) {
+        // 오늘 일기가 완료되었는데 리스트에 없다면 자동 새로고침 (작성 후 이동 시 대응)
+        if (morningController.hasDiaryToday &&
+            !_hasTodayDiaryInList() &&
+            !_isLoading) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _loadDiaries(silent: true);
+          });
+        }
 
-            // 메인 컨텐츠
-            if (_isLoading)
-              const Expanded(
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // 프로필 섹션 (유저 정보 + 포인트)
-                      _buildProfileSection(context, colorScheme),
-                      const SizedBox(height: 20),
+        return Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: ResizeImage(AssetImage('assets/images/Ceiling.png'),
+                  width: 1080),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: SafeArea(
+            bottom: false, // Allow background/content to extend lower
+            child: Column(
+              children: [
+                // 헤더 (마이페이지 + 설정 버튼)
+                _buildHeader(context, colorScheme),
 
-                      // 일기 작성 정보 (캘린더)
-                      _buildCalendarSection(context, colorScheme),
-                      const SizedBox(height: 100), // Adjusted for PageView
-                    ],
+                // 메인 컨텐츠
+                if (_isLoading)
+                  const Expanded(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // 프로필 섹션 (유저 정보 + 포인트)
+                          _buildProfileSection(context, colorScheme),
+                          const SizedBox(height: 20),
+
+                          // 일기 작성 정보 (캘린더)
+                          _buildCalendarSection(context, colorScheme),
+                          const SizedBox(height: 100), // Adjusted for PageView
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-          ],
-        ),
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

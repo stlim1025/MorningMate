@@ -101,7 +101,7 @@ class UserService {
     final today = DateTime(now.year, now.month, now.day);
 
     // 마지막 일기 작성 날짜 확인
-    DateTime? lastDate = user.lastDiaryDate;
+    DateTime? lastDate = user.lastDiaryDate?.toLocal();
     if (lastDate != null) {
       lastDate = DateTime(lastDate.year, lastDate.month, lastDate.day);
     }
@@ -109,6 +109,7 @@ class UserService {
     int newConsecutiveDays = user.consecutiveDays;
 
     // 오늘 이미 작성했는지 확인 (이미 작성했다면 업데이트 안 함)
+    // today는 이미 Local 기준 DateTime(y,m,d)
     if (lastDate != null && lastDate.isAtSameMomentAs(today)) {
       return;
     }
@@ -131,7 +132,8 @@ class UserService {
     await updateUser(uid, {
       'consecutiveDays': newConsecutiveDays,
       'maxConsecutiveDays': newMaxConsecutiveDays,
-      'lastDiaryDate': Timestamp.fromDate(now),
+      // lastDiaryDate는 MorningController에서 업데이트하므로 여기서는 제거하거나 유지해도 됨
+      // 중복 업데이트 방지를 위해 여기서는 연속일수만 업데이트
     });
   }
 

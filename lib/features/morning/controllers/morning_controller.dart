@@ -143,7 +143,7 @@ class MorningController extends ChangeNotifier {
           date: now,
           dateKey: _dateKey(now),
           encryptedContent: encryptedContent,
-          isCompleted: true,
+          isCompleted: false, // 임시저장 데이터이므로 false로 설정
           createdAt: now,
         );
         _isLoading = false;

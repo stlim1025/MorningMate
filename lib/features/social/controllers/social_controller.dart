@@ -65,10 +65,11 @@ class SocialController extends ChangeNotifier {
     if (friend.lastDiaryDate == null) return false;
 
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final diaryDate = DateTime(friend.lastDiaryDate!.year,
-        friend.lastDiaryDate!.month, friend.lastDiaryDate!.day);
-    return diaryDate.isAtSameMomentAs(today);
+    final localLastDiaryDate = friend.lastDiaryDate!.toLocal();
+
+    return localLastDiaryDate.year == now.year &&
+        localLastDiaryDate.month == now.month &&
+        localLastDiaryDate.day == now.day;
   }
 
   // 친구의 오늘의 기분을 가져오는 메서드
