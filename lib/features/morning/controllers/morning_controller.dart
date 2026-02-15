@@ -107,7 +107,7 @@ class MorningController extends ChangeNotifier {
         });
       }
     } catch (e) {
-      print('연속 기록 동기화 오류: $e');
+      debugPrint('연속 기록 동기화 오류: $e');
     }
   }
 
@@ -127,12 +127,9 @@ class MorningController extends ChangeNotifier {
 
     try {
       // 1. 먼저 로컬 파일 확인 (가장 빠름)
-      final directory = await getApplicationDocumentsDirectory();
       final now = DateTime.now();
-      final month = now.month.toString().padLeft(2, '0');
-      final day = now.day.toString().padLeft(2, '0');
-      final fileName = '${userId}_${now.year}$month$day.enc';
-      final file = File('${directory.path}/$fileName');
+      final filePath = await _getDiaryFilePath(userId, now);
+      final file = File(filePath);
 
       if (await file.exists()) {
         final encryptedContent = await file.readAsString();
@@ -167,7 +164,7 @@ class MorningController extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print('오늘의 일기 확인 오류: $e');
+      debugPrint('오늘의 일기 확인 오류: $e');
     } finally {
       _isLoading = false;
       _hasInitialized = true;
@@ -193,7 +190,7 @@ class MorningController extends ChangeNotifier {
         notifyListeners();
       });
     } catch (e) {
-      print('랜덤 질문 가져오기 오류: $e');
+      debugPrint('랜덤 질문 가져오기 오류: $e');
       _currentQuestion = _currentQuestion ?? '오늘 하루는 어땠나요?';
       Future.microtask(() {
         notifyListeners();
@@ -274,10 +271,9 @@ class MorningController extends ChangeNotifier {
       // 임시 저장은 타이머 계속 유지
     }
 
+    if (_isLoading) return false;
     _isLoading = true;
-    Future.microtask(() {
-      notifyListeners();
-    });
+    notifyListeners();
 
     try {
       // 1. 일기 내용 암호화
@@ -332,17 +328,13 @@ class MorningController extends ChangeNotifier {
       }
 
       _isLoading = false;
-      Future.microtask(() {
-        notifyListeners();
-      });
+      notifyListeners();
 
       return true;
     } catch (e) {
-      print('일기 저장 오류: $e');
+      debugPrint('일기 저장 오류: $e');
       _isLoading = false;
-      Future.microtask(() {
-        notifyListeners();
-      });
+      notifyListeners();
       return false;
     }
   }
@@ -351,17 +343,33 @@ class MorningController extends ChangeNotifier {
   Future<void> _saveEncryptedDiaryLocally(
       String userId, String encryptedContent) async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final date = DateTime.now();
-      // 날짜 패딩 추가 (월, 일 2자리 보장)
-      final month = date.month.toString().padLeft(2, '0');
-      final day = date.day.toString().padLeft(2, '0');
-      final fileName = '${userId}_${date.year}$month$day.enc';
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsString(encryptedContent);
+      final now = DateTime.now();
+      final filePath = await _getDiaryFilePath(userId, now, createDir: true);
+      final file = File(filePath);
+
+      await file.writeAsString(encryptedContent, flush: true);
+      debugPrint('로컬 저장 성공: $filePath');
     } catch (e) {
-      throw Exception('로컬 저장 실패: $e');
+      debugPrint('로컬 저장 상세 오류: $e');
+      throw Exception('로컬 저장 실패: ${e.toString()}');
     }
+  }
+
+  // 일기 파일 경로 가져오기 (공통 로직)
+  Future<String> _getDiaryFilePath(String userId, DateTime date,
+      {bool createDir = false}) async {
+    final directory = await getApplicationDocumentsDirectory();
+
+    if (createDir && !await directory.exists()) {
+      await directory.create(recursive: true);
+    }
+
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    final fileName = '${userId}_${date.year}$month$day.enc';
+
+    final pathSeparator = Platform.isWindows ? '\\' : '/';
+    return '${directory.path}$pathSeparator$fileName';
   }
 
   // 일기 내용 읽기 (전달된 데이터 우선 -> Firestore -> 로컬 파일 순)
@@ -383,12 +391,9 @@ class MorningController extends ChangeNotifier {
         return await EncryptionUtil.decryptText(contentToDecrypt, userId);
       }
 
-      // 2. Firestore에 없으면 로컬 파일에서 읽기 (하위 호환성)
-      final directory = await getApplicationDocumentsDirectory();
-      final month = date.month.toString().padLeft(2, '0');
-      final day = date.day.toString().padLeft(2, '0');
-      final fileName = '${userId}_${date.year}$month$day.enc';
-      final file = File('${directory.path}/$fileName');
+      // 2. Firestore에 없으면 로컬 파일에서 읽기
+      final filePath = await _getDiaryFilePath(userId, date);
+      final file = File(filePath);
 
       if (await file.exists()) {
         final encryptedFromFile = await file.readAsString();
@@ -396,8 +401,10 @@ class MorningController extends ChangeNotifier {
       }
 
       // 이전 버전 파일명 시도 (패딩 없음)
+      final directory = await getApplicationDocumentsDirectory();
       final oldFileName = '${userId}_${date.year}${date.month}${date.day}.enc';
-      final oldFile = File('${directory.path}/$oldFileName');
+      final pathSeparator = Platform.isWindows ? '\\' : '/';
+      final oldFile = File('${directory.path}$pathSeparator$oldFileName');
       if (await oldFile.exists()) {
         final encryptedFromFile = await oldFile.readAsString();
         return await EncryptionUtil.decryptText(encryptedFromFile, userId);
@@ -405,13 +412,12 @@ class MorningController extends ChangeNotifier {
 
       throw Exception('일기 내용을 찾을 수 없습니다.');
     } catch (e) {
-      print('일기 읽기 오류: $e');
+      debugPrint('일기 읽기 오류: $e');
       rethrow; // 에러를 그대로 전달
     }
   }
 
-  // 진행률 계산 (목표: 100자 또는 5분) - 테스트를 위해 100자로 낮춤, 실제로는 500자
-  // 사용자 요청에 따라 글자 수가 제대로 측정되게 수정했으므로 다시 500자로 설정하거나 유지
+  // 진행률 계산 (목표: 100자 또는 5분)
   double getProgress({int targetChars = 500, int targetMinutes = 5}) {
     final charProgress = _charCount / targetChars;
     final timeProgress = _writingDuration / (targetMinutes * 60);

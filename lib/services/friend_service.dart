@@ -160,4 +160,31 @@ class FriendService {
       return requests;
     });
   }
+
+  // 친구 삭제
+  Future<void> deleteFriend(String userId, String friendId) async {
+    final batch = _db.batch();
+
+    // 1. 내 친구 목록에서 삭제
+    final myQuery = await _friendsCollection
+        .where('userId', isEqualTo: userId)
+        .where('friendId', isEqualTo: friendId)
+        .get();
+
+    for (var doc in myQuery.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 2. 상대방 친구 목록에서 삭제
+    final friendQuery = await _friendsCollection
+        .where('userId', isEqualTo: friendId)
+        .where('friendId', isEqualTo: userId)
+        .get();
+
+    for (var doc in friendQuery.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
 }

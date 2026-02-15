@@ -56,6 +56,8 @@ const normalizeNotificationType = (type) => {
             return "friend_reject";
         case "cheerMessage":
             return "cheer_message";
+        case "reportResult":
+            return "report_result";
         case "morning_diary":
         case "morning_reminder":
             return "morning_diary";
@@ -96,12 +98,21 @@ const buildNotificationContent = (type, message, senderNickname, extraData) => {
                 title: "친구 요청 거절",
                 body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 거절했어요.`,
             };
+        case "report_result":
+            return {
+                title: "신고 처리 안내",
+                body: message ?? "신고 처리 결과가 도착했습니다.",
+            };
         case "morning_diary":
             return {
-                title: "아침 일성",
+                title: "아침 일기",
                 body: message ?? "일기를 작성할 시간입니다!",
             };
         case "system":
+            return {
+                title: "알림",
+                body: message ?? "새로운 알림이 도착했습니다.",
+            };
         default:
             return {
                 title: "알림",

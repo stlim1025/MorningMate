@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../../router/app_router.dart'; // navigatorKey 접근을 위해
@@ -22,7 +23,46 @@ enum CharacterState {
 class CharacterController extends ChangeNotifier {
   final UserService _userService;
 
-  CharacterController(this._userService);
+  CharacterController(this._userService) {
+    _startShopDiscountListener();
+  }
+
+  // 상점 할인 정보
+  Map<String, int> _shopDiscounts = {};
+  Map<String, int> get shopDiscounts => _shopDiscounts;
+  StreamSubscription? _shopDiscountSubscription;
+
+  void _startShopDiscountListener() {
+    _shopDiscountSubscription = FirebaseFirestore.instance
+        .collection('settings')
+        .doc('shop')
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists && snapshot.data() != null) {
+        final data = snapshot.data()!;
+        if (data['discounts'] != null) {
+          _shopDiscounts = Map<String, int>.from(data['discounts']);
+          notifyListeners();
+        }
+      } else {
+        _shopDiscounts = {};
+        notifyListeners();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _shopDiscountSubscription?.cancel();
+    super.dispose();
+  }
+
+  int getDiscountedPrice(String itemId, int originalPrice) {
+    if (_shopDiscounts.containsKey(itemId)) {
+      return _shopDiscounts[itemId]!;
+    }
+    return originalPrice;
+  }
 
   // 상태 변수
   UserModel? _currentUser;

@@ -137,6 +137,13 @@ class UserService {
     });
   }
 
+  // 마지막 로그인 시간 업데이트
+  Future<void> updateLastLogin(String uid) async {
+    await _usersCollection.doc(uid).update({
+      'lastLoginDate': FieldValue.serverTimestamp(),
+    });
+  }
+
   // 사용자 데이터 전체 삭제 (회원탈퇴)
   Future<void> deleteUserData(String uid) async {
     final batch = _db.batch();

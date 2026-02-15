@@ -19,6 +19,7 @@ import 'features/morning/controllers/morning_controller.dart';
 import 'features/character/controllers/character_controller.dart';
 import 'features/social/controllers/social_controller.dart';
 import 'features/notification/controllers/notification_controller.dart';
+import 'features/admin/controllers/admin_controller.dart';
 import 'core/theme/theme_controller.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -216,6 +217,19 @@ class _MorningMateAppState extends State<MorningMateApp> {
         ),
         ChangeNotifierProvider<NotificationController>(
           create: (_) => NotificationController(),
+        ),
+        ChangeNotifierProxyProvider<AuthController, AdminController>(
+          create: (_) => AdminController(null),
+          update: (_, auth, previous) {
+            final email = auth.userModel?.email ?? auth.currentUser?.email;
+            if (previous != null && previous.currentUserEmail == email) {
+              return previous;
+            }
+            // 이메일이 변경되었거나 처음 생성된 경우
+            // 새 컨트롤러를 생성하되, 데이터가 필요하다면 여기서 fetch할 수도 있음.
+            // 하지만 AdminScreen 진입 시 fetch하므로 괜찮음.
+            return AdminController(email);
+          },
         ),
         ChangeNotifierProxyProvider<AuthController, ThemeController>(
           create: (_) => ThemeController(),

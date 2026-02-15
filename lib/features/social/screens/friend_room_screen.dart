@@ -249,6 +249,31 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                               ),
 
                               const Spacer(),
+                              // 신고/삭제 메뉴 (친구 관리)
+                              PopupMenuButton<String>(
+                                icon: const Icon(Icons.more_vert,
+                                    color: Colors.white),
+                                onSelected: (value) {
+                                  if (value == 'delete') {
+                                    _showDeleteFriendDialog();
+                                  }
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.person_remove,
+                                            color: Colors.red),
+                                        SizedBox(width: 8),
+                                        Text('친구 삭제',
+                                            style:
+                                                TextStyle(color: Colors.red)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
               ),
@@ -747,6 +772,26 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                             color: Colors.black54, size: 24),
                       ),
                     ),
+                    // 5. 신고 버튼 (오른쪽 아래)
+                    Positioned(
+                      bottom: 30,
+                      right: 35,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context); // Close memo dialog first
+                          _showReportDialog(prop.id, content, 'sticky_note');
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                          child: const Icon(Icons.report_problem_outlined,
+                              color: Colors.redAccent, size: 20),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -755,5 +800,172 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
         );
       },
     );
+  }
+
+  void _showReportDialog(String targetId, String content, String type) {
+    String? selectedReason;
+    final reasons = [
+      '부적절한 내용',
+      '욕설/비하 발언',
+      '스팸/광고',
+      '기타',
+    ];
+
+    AppDialog.show(
+      context: context,
+      key: AppDialogKey.report,
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: reasons.map((reason) {
+              final isSelected = selectedReason == reason;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedReason = reason;
+                  });
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 4.0),
+                  child: Row(
+                    children: [
+                      // Custom Radio/Check UI
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: isSelected
+                            ? Image.asset('assets/images/Check_Icon.png',
+                                fit: BoxFit.contain)
+                            : Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(
+                                        0xFFD7CCC8), // Light brown border for unselected
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        reason,
+                        style: const TextStyle(
+                          fontFamily: 'BMJUA',
+                          fontSize: 16,
+                          color: Color(0xFF4E342E),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        },
+      ),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: '신고',
+          isPrimary: true,
+          onPressed: () async {
+            if (selectedReason == null) {
+              MemoNotification.show(context, '신고 사유를 선택해주세요.');
+              return;
+            }
+
+            final authController = context.read<AuthController>();
+            final socialController = context.read<SocialController>();
+            final user = authController.userModel!;
+
+            try {
+              // 다이얼로그 닫기
+              Navigator.pop(context);
+
+              await socialController.submitReport(
+                reporterId: user.uid,
+                reporterName: user.nickname,
+                targetUserId: _friend!.uid,
+                targetUserName: _friend!.nickname,
+                targetContent: content,
+                targetId: targetId,
+                reason: selectedReason!,
+              );
+
+              if (mounted) {
+                MemoNotification.show(context, '신고가 접수되었습니다.');
+              }
+            } catch (e) {
+              if (mounted) {
+                MemoNotification.show(context, '신고 접수 중 오류가 발생했습니다.');
+              }
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showDeleteFriendDialog() async {
+    final confirmed = await AppDialog.show<bool>(
+      context: context,
+      key: AppDialogKey.deleteFriend,
+      content: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 16,
+            fontFamily: 'BMJUA',
+          ),
+          children: [
+            TextSpan(
+              text: '${_friend?.nickname ?? '친구'}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const TextSpan(text: '님을 친구 목록에서\n삭제하시겠습니까?'),
+          ],
+        ),
+      ),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context, false),
+        ),
+        AppDialogAction(
+          label: '삭제',
+          isPrimary: true,
+          onPressed: () => Navigator.pop(context, true),
+        ),
+      ],
+    );
+
+    if (confirmed == true) {
+      if (!mounted) return;
+      final socialController = context.read<SocialController>();
+      final authController = context.read<AuthController>();
+      final myId = authController.currentUser?.uid;
+
+      if (myId != null && _friend != null) {
+        try {
+          await socialController.deleteFriend(myId, _friend!.uid);
+          if (mounted) {
+            MemoNotification.show(context, '친구가 삭제되었습니다.');
+            Navigator.pop(context); // Close screen
+          }
+        } catch (e) {
+          if (mounted) {
+            MemoNotification.show(context, '친구 삭제 중 오류가 발생했습니다.');
+          }
+        }
+      }
+    }
   }
 }

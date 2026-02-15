@@ -7,16 +7,16 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import {setGlobalOptions} from "firebase-functions/v2";
-import {onCall, HttpsError} from "firebase-functions/v2/https";
-import {onDocumentCreated} from "firebase-functions/v2/firestore";
+import { setGlobalOptions } from "firebase-functions/v2";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 
 admin.initializeApp();
 
 // Set global options
-setGlobalOptions({maxInstances: 10});
+setGlobalOptions({ maxInstances: 10 });
 
 const RATE_LIMIT_WINDOW_MS = 30 * 1000;
 
@@ -52,7 +52,7 @@ async function enforceRateLimit(
         type,
         lastSentAt: admin.firestore.Timestamp.fromMillis(now),
       },
-      {merge: true}
+      { merge: true }
     );
   });
 }
@@ -65,6 +65,8 @@ const normalizeNotificationType = (type?: string) => {
       return "friend_request";
     case "cheerMessage":
       return "cheer_message";
+    case "reportResult":
+      return "report_result";
     case "system":
       return "system";
     default:
@@ -92,6 +94,11 @@ const buildNotificationContent = (
       return {
         title: "친구가 응원 메시지를 보냈어요.",
         body: message ?? "응원 메시지가 도착했어요.",
+      };
+    case "report_result":
+      return {
+        title: "신고 처리 결과",
+        body: message ?? "신고하신 건에 대한 처리 결과가 도착했습니다.",
       };
     case "system":
     default:
@@ -133,7 +140,7 @@ export const sendNotificationOnCreate = onDocumentCreated(
     }
 
     const normalizedType = normalizeNotificationType(data.type);
-    const {title, body} = buildNotificationContent(
+    const { title, body } = buildNotificationContent(
       normalizedType,
       data.message,
       data.senderNickname
@@ -169,7 +176,7 @@ export const sendNotificationOnCreate = onDocumentCreated(
     };
 
     await admin.messaging().send(message);
-    await snapshot.ref.update({fcmSent: true});
+    await snapshot.ref.update({ fcmSent: true });
   }
 );
 
@@ -183,7 +190,7 @@ export const wakeUpFriend = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId, friendName} = request.data;
+  const { userId, friendId, friendName } = request.data;
 
   // 유효성 검사
   if (!userId || !friendId || !friendName) {
@@ -212,7 +219,7 @@ export const wakeUpFriend = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     // 알림 페이로드
@@ -248,7 +255,7 @@ export const wakeUpFriend = onCall(async (request) => {
     await admin.messaging().send(message);
     logger.info(`Wake up notification sent to ${friendId} from ${userId}`);
 
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending notification:", error);
     throw new HttpsError("internal", "Error sending notification.");
@@ -264,7 +271,7 @@ export const sendCheerMessage = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId, message, senderNickname} = request.data;
+  const { userId, friendId, message, senderNickname } = request.data;
 
   if (!userId || !friendId || !message) {
     throw new HttpsError(
@@ -291,7 +298,7 @@ export const sendCheerMessage = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     const notificationMessage = {
@@ -326,7 +333,7 @@ export const sendCheerMessage = onCall(async (request) => {
     await admin.messaging().send(notificationMessage);
     logger.info(`Cheer message sent to ${friendId} from ${userId}`);
 
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending cheer message:", error);
     throw new HttpsError("internal", "Error sending cheer message.");
@@ -342,7 +349,7 @@ export const sendFriendRequestNotification = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId, senderNickname} = request.data;
+  const { userId, friendId, senderNickname } = request.data;
 
   if (!userId || !friendId || !senderNickname) {
     throw new HttpsError(
@@ -367,7 +374,7 @@ export const sendFriendRequestNotification = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     const notificationMessage = {
@@ -401,7 +408,7 @@ export const sendFriendRequestNotification = onCall(async (request) => {
     await admin.messaging().send(notificationMessage);
     logger.info(`Friend request sent to ${friendId} from ${userId}`);
 
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending friend request:", error);
     throw new HttpsError("internal", "Error sending friend request.");
@@ -417,7 +424,7 @@ export const sendFriendAcceptNotification = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId, senderNickname} = request.data;
+  const { userId, friendId, senderNickname } = request.data;
 
   if (!userId || !friendId || !senderNickname) {
     throw new HttpsError(
@@ -442,7 +449,7 @@ export const sendFriendAcceptNotification = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     const notificationMessage = {
@@ -476,7 +483,7 @@ export const sendFriendAcceptNotification = onCall(async (request) => {
     await admin.messaging().send(notificationMessage);
     logger.info(`Friend accept sent to ${friendId} from ${userId}`);
 
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending friend accept:", error);
     throw new HttpsError("internal", "Error sending friend accept.");
@@ -492,7 +499,7 @@ export const sendFriendRejectNotification = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId, senderNickname} = request.data;
+  const { userId, friendId, senderNickname } = request.data;
 
   if (!userId || !friendId || !senderNickname) {
     throw new HttpsError(
@@ -517,7 +524,7 @@ export const sendFriendRejectNotification = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     const notificationMessage = {
@@ -551,7 +558,7 @@ export const sendFriendRejectNotification = onCall(async (request) => {
     await admin.messaging().send(notificationMessage);
     logger.info(`Friend reject sent to ${friendId} from ${userId}`);
 
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending friend reject:", error);
     throw new HttpsError("internal", "Error sending friend reject.");

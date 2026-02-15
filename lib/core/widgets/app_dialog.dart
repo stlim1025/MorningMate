@@ -22,6 +22,8 @@ enum AppDialogKey {
   writeMemo,
   diaryCompletion,
   adReward,
+  deleteFriend,
+  report,
 }
 
 class AppDialogAction {
@@ -268,6 +270,40 @@ class AppDialog {
                   isPrimary: true,
                   isFullWidth: true,
                   onPressed: (context) => Navigator.pop(context),
+                ),
+              ],
+        );
+      case AppDialogKey.deleteFriend:
+        return AppDialogConfig(
+          title: '친구 삭제',
+          content: content ?? const Text('친구를 삭제하시겠습니까?'),
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label: '취소',
+                  onPressed: (context) => Navigator.pop(context, false),
+                ),
+                AppDialogAction(
+                  label: '삭제',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context, true),
+                ),
+              ],
+        );
+      case AppDialogKey.report:
+        return AppDialogConfig(
+          title: '신고하기',
+          content: content,
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label: '취소',
+                  onPressed: (context) => Navigator.pop(context),
+                ),
+                AppDialogAction(
+                  label: '신고',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context, true),
                 ),
               ],
         );

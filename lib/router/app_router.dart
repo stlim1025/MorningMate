@@ -32,6 +32,8 @@ import '../data/models/diary_model.dart';
 
 import '../features/common/screens/main_shell.dart';
 
+import '../features/admin/screens/admin_screen.dart';
+
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
@@ -59,6 +61,18 @@ class AppRouter {
         final isLoggedIn = authController.userModel != null;
 
         if (isLoggedIn) {
+          // 관리자 리다이렉트 로직
+          final email = authController.userModel?.email;
+          const adminEmails = ['admin@morningmate.com', 'admin@test.com'];
+          if (adminEmails.contains(email)) {
+            // 이미 관리자 페이지에 있거나 관리자 페이지로 이동 중이면 리다이렉트 하지 않음
+            if (location.startsWith('/admin')) {
+              return null;
+            }
+            // 그 외의 경우 (로그인 직후, 스플래시 등) 관리자 페이지로 강제 이동
+            return '/admin';
+          }
+
           if (location.contains('alarm-ring') || location.contains('writing')) {
             return null;
           }
@@ -274,6 +288,12 @@ class AppRouter {
 
             return AlarmRingScreen(alarmSettings: alarmSettings);
           },
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/admin',
+          name: 'admin',
+          builder: (context, state) => const AdminScreen(),
         ),
       ],
       errorBuilder: (context, state) => Scaffold(

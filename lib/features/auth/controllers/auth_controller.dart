@@ -82,6 +82,11 @@ class AuthController extends ChangeNotifier {
       });
 
       await _updateFcmToken(user.uid);
+      try {
+        await _userService.updateLastLogin(user.uid);
+      } catch (e) {
+        debugPrint('로그인 시간 업데이트 실패: $e');
+      }
     } else {
       _notificationService.setOnTokenRefreshHandler(null);
       _userModel = null;

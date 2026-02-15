@@ -471,8 +471,8 @@ class _ShopScreenState extends State<ShopScreen> {
       return _buildShopItem(
         item: item,
         isPurchased: isPurchased,
-        onPurchase: () => characterController.purchaseCharacterItem(
-            user.uid, item.id, item.price),
+        onPurchase: (price) =>
+            characterController.purchaseCharacterItem(user.uid, item.id, price),
         colorScheme: colorScheme,
       );
     });
@@ -493,8 +493,8 @@ class _ShopScreenState extends State<ShopScreen> {
       return _buildShopItem(
         item: item,
         isPurchased: isPurchased,
-        onPurchase: () =>
-            characterController.purchaseEmoticon(user.uid, item.id, item.price),
+        onPurchase: (price) =>
+            characterController.purchaseEmoticon(user.uid, item.id, price),
         colorScheme: colorScheme,
       );
     });
@@ -515,8 +515,8 @@ class _ShopScreenState extends State<ShopScreen> {
       return _buildShopItem(
         item: item,
         isPurchased: isPurchased,
-        onPurchase: () => characterController.purchaseWallpaper(
-            user.uid, item.id, item.price),
+        onPurchase: (price) =>
+            characterController.purchaseWallpaper(user.uid, item.id, price),
         colorScheme: colorScheme,
       );
     });
@@ -537,8 +537,8 @@ class _ShopScreenState extends State<ShopScreen> {
       return _buildShopItem(
         item: item,
         isPurchased: isPurchased,
-        onPurchase: () => characterController.purchaseBackground(
-            user.uid, item.id, item.price),
+        onPurchase: (price) =>
+            characterController.purchaseBackground(user.uid, item.id, price),
         colorScheme: colorScheme,
       );
     });
@@ -558,8 +558,8 @@ class _ShopScreenState extends State<ShopScreen> {
       return _buildShopItem(
         item: item,
         isPurchased: isPurchased,
-        onPurchase: () =>
-            characterController.purchaseProp(user.uid, item.id, item.price),
+        onPurchase: (price) =>
+            characterController.purchaseProp(user.uid, item.id, price),
         colorScheme: colorScheme,
       );
     });
@@ -580,8 +580,8 @@ class _ShopScreenState extends State<ShopScreen> {
       return _buildShopItem(
         item: item,
         isPurchased: isPurchased,
-        onPurchase: () =>
-            characterController.purchaseFloor(user.uid, item.id, item.price),
+        onPurchase: (price) =>
+            characterController.purchaseFloor(user.uid, item.id, price),
         colorScheme: colorScheme,
       );
     });
@@ -605,7 +605,7 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget _buildShopItem({
     required RoomAsset item,
     required bool isPurchased,
-    required Future<void> Function() onPurchase,
+    required Future<void> Function(int price) onPurchase,
     required AppColorScheme colorScheme,
   }) {
     // 상품마다 고정된 랜덤 배경 이미지를 사용하기 위해 hashCode를 활용
@@ -613,11 +613,14 @@ class _ShopScreenState extends State<ShopScreen> {
     final cardBgImage = 'assets/icons/Friend_Card$cardIndex.png';
 
     return Builder(builder: (itemContext) {
-      final canAfford =
-          itemContext.read<CharacterController>().currentUser!.points >=
-              item.price;
+      final controller = itemContext.read<CharacterController>();
+      final discountedPrice =
+          controller.getDiscountedPrice(item.id, item.price);
+      final isDiscounted = discountedPrice < item.price;
+      final canAfford = controller.currentUser!.points >= discountedPrice;
 
       return Stack(
+        clipBehavior: Clip.none,
         children: [
           Container(
             // 배경 이미지 비율에 맞춰 내용을 배치
@@ -711,6 +714,15 @@ class _ShopScreenState extends State<ShopScreen> {
                                   style: const TextStyle(fontFamily: 'BMJUA'),
                                 ),
                                 const SizedBox(height: 12),
+                                if (isDiscounted)
+                                  Text(
+                                    'SALE! ${item.price} -> $discountedPrice 가지',
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'BMJUA',
+                                    ),
+                                  ),
                                 if (!canAfford) ...[
                                   const SizedBox(height: 12),
                                   Text(
@@ -727,7 +739,7 @@ class _ShopScreenState extends State<ShopScreen> {
                             ),
                             actions: [
                               AppDialogAction(
-                                label: '${item.price}',
+                                label: '$discountedPrice',
                                 labelWidget: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -739,12 +751,13 @@ class _ShopScreenState extends State<ShopScreen> {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      '${item.price}',
-                                      style: const TextStyle(
+                                      '$discountedPrice',
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         height: 1.1,
                                         fontFamily: 'BMJUA',
+                                        color: isDiscounted ? Colors.red : null,
                                       ),
                                     ),
                                   ],
@@ -761,7 +774,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
                           if (shouldPurchase == true) {
                             try {
-                              await onPurchase();
+                              await onPurchase(discountedPrice);
                               if (mounted) {
                                 final result = await AppDialog.show<String>(
                                   context: context,
@@ -882,11 +895,13 @@ class _ShopScreenState extends State<ShopScreen> {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        '${item.price}',
-                                        style: const TextStyle(
+                                        '$discountedPrice',
+                                        style: TextStyle(
                                           fontSize: 12, // 폰트 사이즈 살짝 축소
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF5D4037), // 갈색으로 변경
+                                          color: isDiscounted
+                                              ? Colors.red
+                                              : const Color(0xFF5D4037),
                                           fontFamily: 'BMJUA',
                                         ),
                                       ),
@@ -901,6 +916,27 @@ class _ShopScreenState extends State<ShopScreen> {
               ],
             ),
           ),
+          if (isDiscounted && !isPurchased)
+            Positioned(
+              top: -5,
+              right: -5,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: const Text(
+                  'SALE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ),
           if (isPurchased)
             Center(
               child: Opacity(

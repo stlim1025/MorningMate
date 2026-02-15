@@ -470,4 +470,44 @@ class SocialController extends ChangeNotifier {
       }
     });
   }
+
+  // 친구 삭제
+  Future<void> deleteFriend(String userId, String friendId) async {
+    try {
+      await _friendService.deleteFriend(userId, friendId);
+      // 친구 목록 새로고침
+      await loadFriends(userId);
+    } catch (e) {
+      print('친구 삭제 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 신고하기
+  Future<void> submitReport({
+    required String reporterId,
+    required String reporterName,
+    required String targetUserId,
+    required String targetUserName,
+    required String targetContent,
+    required String targetId,
+    required String reason,
+  }) async {
+    try {
+      await FirebaseFirestore.instance.collection('reports').add({
+        'reporterId': reporterId,
+        'reporterName': reporterName,
+        'targetUserId': targetUserId,
+        'targetUserName': targetUserName,
+        'targetContent': targetContent,
+        'targetId': targetId,
+        'reason': reason,
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('신고하기 오류: $e');
+      rethrow;
+    }
+  }
 }

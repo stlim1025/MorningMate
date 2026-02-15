@@ -156,76 +156,82 @@ class _WritingScreenState extends State<WritingScreen> {
                   ? minContentHeight
                   : screenHeight;
 
-              return SafeArea(
-                child: PopScope(
-                  canPop: false,
-                  onPopInvokedWithResult: (didPop, result) async {
-                    if (didPop) return;
-                    final confirmed = await _showExitConfirmation(context);
-                    if (confirmed == true && context.mounted) {
-                      context.go('/morning');
-                    }
-                  },
-                  child: Consumer<MorningController>(
-                    builder: (context, controller, child) {
-                      return Column(
-                        children: [
-                          // Fixed Header
-                          SizedBox(
-                            width: contentWidth,
-                            child:
-                                _buildHeader(context, colorScheme, controller),
-                          ),
-                          // Scrollable Content
-                          Expanded(
-                            child: SingleChildScrollView(
-                              child: Center(
-                                child: SizedBox(
-                                  width: contentWidth,
-                                  height:
-                                      scrollHeight - 140, // Header approx 140
-                                  child: Column(
-                                    children: [
-                                      // Reduced spacing
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 24),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              flex: 10,
-                                              child: _buildQuestionCard(
-                                                  colorScheme),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              flex: 9,
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top:
-                                                        12), // Slightly increased top padding
-                                                child: _buildMoodSelection(
+              return GestureDetector(
+                onTap: () {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
+                child: SafeArea(
+                  child: PopScope(
+                    canPop: false,
+                    onPopInvokedWithResult: (didPop, result) async {
+                      if (didPop) return;
+                      final confirmed = await _showExitConfirmation(context);
+                      if (confirmed == true && context.mounted) {
+                        context.go('/morning');
+                      }
+                    },
+                    child: Consumer<MorningController>(
+                      builder: (context, controller, child) {
+                        return Column(
+                          children: [
+                            // Fixed Header
+                            SizedBox(
+                              width: contentWidth,
+                              child: _buildHeader(
+                                  context, colorScheme, controller),
+                            ),
+                            // Scrollable Content
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: Center(
+                                  child: SizedBox(
+                                    width: contentWidth,
+                                    height:
+                                        scrollHeight - 140, // Header approx 140
+                                    child: Column(
+                                      children: [
+                                        // Reduced spacing
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 24),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                flex: 10,
+                                                child: _buildQuestionCard(
                                                     colorScheme),
                                               ),
-                                            ),
-                                          ],
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                flex: 9,
+                                                child: Padding(
+                                                  padding: const EdgeInsets
+                                                      .only(
+                                                      top:
+                                                          12), // Slightly increased top padding
+                                                  child: _buildMoodSelection(
+                                                      colorScheme),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      Expanded(
-                                        child: _buildWritingArea(
-                                            context, colorScheme),
-                                      ),
-                                    ],
+                                        Expanded(
+                                          child: _buildWritingArea(
+                                              context, colorScheme),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               );
@@ -682,6 +688,8 @@ class _WritingScreenState extends State<WritingScreen> {
       if (context.mounted) {
         context.go('/morning');
       }
+    } else if (context.mounted) {
+      MemoNotification.show(context, '저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. ⚠️');
     }
   }
 
@@ -705,6 +713,8 @@ class _WritingScreenState extends State<WritingScreen> {
 
     if (success && context.mounted) {
       MemoNotification.show(context, '임시 저장되었습니다. 📝');
+    } else if (context.mounted) {
+      MemoNotification.show(context, '임시 저장 중 오류가 발생했습니다. ⚠️');
     }
   }
 
