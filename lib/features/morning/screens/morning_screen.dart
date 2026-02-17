@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../controllers/morning_controller.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../services/user_service.dart';
 import '../../notification/controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
 import '../widgets/enhanced_character_room_widget.dart';
@@ -163,12 +164,130 @@ class _MorningScreenState extends State<MorningScreen>
         ]);
 
         if (mounted) {
-          // 초기화 완료 시 로직 (생체 인증은 Splash에서 완료됨)
+          // 닉네임 체크: 닉네임이 숫자로만 구성된 경우 (카카오 ID) 또는 '사용자'인 경우 변경 팝업 표시
+          final userModel = authController.userModel;
+          if (userModel != null) {
+            final nickname = userModel.nickname;
+            // 숫자로만 구성되어 있는지 확인 (카카오 ID) 또는 기본값 '사용자'인지 확인
+            final isNumeric = RegExp(r'^[0-9]+$').hasMatch(nickname);
+            final isDefault = nickname == '사용자';
+
+            if (isNumeric || isDefault) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _showNicknameChangeDialog(nickname);
+              });
+            }
+          }
         }
       }
     } catch (e) {
       debugPrint('Error initializing morning screen: $e');
     }
+  }
+
+  Future<void> _showNicknameChangeDialog(String currentNickname) async {
+    final controller = TextEditingController(text: ''); // 빈 칸으로 시작 유도
+    final isCheckingNotifier = ValueNotifier<bool>(false);
+
+    // 사용자가 닉네임을 입력하도록 유도하기 위해 빈 칸으로 시작하거나,
+    // 현재 닉네임(숫자)을 보여줄지 결정. 숫자는 보기 싫으니 빈 칸이 나을 수도 있음.
+    // 하지만 힌트를 주기 위해 placeholder에 "닉네임을 입력해주세요" 등을 넣음.
+
+    await AppDialog.show(
+      context: context,
+      barrierDismissible: false, // 필수 입력 유도
+      key: AppDialogKey.changeNickname,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '반가워요! 사용하실 닉네임을 입력해주세요.',
+            style: TextStyle(
+              fontFamily: 'BMJUA',
+              fontSize: 16,
+              color: Color(0xFF4E342E),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: PopupTextField(
+              controller: controller,
+              hintText: '닉네임 입력 (2~10자)',
+              maxLength: 10,
+            ),
+          ),
+          ValueListenableBuilder<bool>(
+            valueListenable: isCheckingNotifier,
+            builder: (context, isChecking, child) {
+              if (!isChecking) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      actions: [
+        // 취소 버튼 없음 (필수 설정 유도)
+        AppDialogAction(
+          label: '시작하기',
+          isPrimary: true,
+          onPressed: (BuildContext context) async {
+            final newNickname = controller.text.trim();
+            AppDialog.showError(context, null);
+
+            if (newNickname.isEmpty || newNickname.length < 2) {
+              AppDialog.showError(context, '닉네임은 2자 이상이어야 합니다');
+              return;
+            }
+
+            final authController = context.read<AuthController>();
+            final userService = context.read<UserService>();
+            final userId = authController.currentUser?.uid;
+
+            if (userId != null) {
+              try {
+                isCheckingNotifier.value = true;
+                final isAvailable =
+                    await userService.isNicknameAvailable(newNickname);
+                isCheckingNotifier.value = false;
+
+                if (!isAvailable) {
+                  AppDialog.showError(context, '이미 사용 중인 닉네임입니다');
+                  return;
+                }
+
+                await context
+                    .read<AuthController>()
+                    .updateNickname(newNickname);
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  // 환영 메시지 등 표시 가능
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  isCheckingNotifier.value = false;
+                  AppDialog.showError(context, '오류: $e');
+                }
+              }
+            }
+          },
+        ),
+      ],
+    );
   }
 
   @override

@@ -125,6 +125,22 @@ class AdminController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 모든 할인 제거
+  Future<void> removeAllShopDiscounts() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _shopDiscounts.clear();
+      await _firestore.collection('settings').doc('shop').set({
+        'discounts': {},
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('모든 할인 제거 오류: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
+
   // 신고 처리 (삭제) - 노트 삭제 및 신고 상태 변경 (resolved)
   Future<void> deleteNote(String reportId, String targetUserId, String noteId,
       String reporterId) async {

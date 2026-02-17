@@ -92,24 +92,38 @@ class AdminHomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AdminController>(
       builder: (context, controller, child) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildStatCard(
-                title: '오늘 접속자 수',
-                value: '${controller.dailyVisitorCount}명',
-                icon: Icons.person,
-                color: Colors.blue,
+        return RefreshIndicator(
+          onRefresh: () async {
+            await controller.fetchStats();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height -
+                  AppBar().preferredSize.height -
+                  kBottomNavigationBarHeight -
+                  MediaQuery.of(context).padding.top,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildStatCard(
+                      title: '오늘 접속자 수',
+                      value: '${controller.dailyVisitorCount}명',
+                      icon: Icons.person,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildStatCard(
+                      title: '총 가입자 수',
+                      value: '${controller.totalUserCount}명',
+                      icon: Icons.group,
+                      color: Colors.green,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-              _buildStatCard(
-                title: '총 가입자 수',
-                value: '${controller.totalUserCount}명',
-                icon: Icons.group,
-                color: Colors.green,
-              ),
-            ],
+            ),
           ),
         );
       },
@@ -176,17 +190,36 @@ class ReportListTab extends StatelessWidget {
 
         final reports = controller.reports;
         if (reports.isEmpty) {
-          return const Center(child: Text('신고 내역이 없습니다.'));
+          return RefreshIndicator(
+            onRefresh: () async {
+              await controller.fetchReports();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height -
+                    AppBar().preferredSize.height -
+                    kBottomNavigationBarHeight -
+                    MediaQuery.of(context).padding.top,
+                child: const Center(child: Text('신고 내역이 없습니다.')),
+              ),
+            ),
+          );
         }
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: reports.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 16),
-          itemBuilder: (context, index) {
-            final report = reports[index];
-            return _buildReportCard(context, controller, report);
+        return RefreshIndicator(
+          onRefresh: () async {
+            await controller.fetchReports();
           },
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: reports.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final report = reports[index];
+              return _buildReportCard(context, controller, report);
+            },
+          ),
         );
       },
     );

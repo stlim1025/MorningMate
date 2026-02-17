@@ -172,6 +172,135 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  // 구글 로그인
+  Future<void> signInWithGoogle() async {
+    _isLoading = true;
+    Future.microtask(() {
+      notifyListeners();
+    });
+
+    try {
+      final userCredential = await _authService.signInWithGoogle();
+      final user = userCredential.user;
+
+      if (user != null) {
+        // Firestore에서 사용자 데이터 확인
+        UserModel? existingUser = await _userService.getUser(user.uid);
+
+        if (existingUser == null) {
+          // 신규 사용자인 경우 데이터 생성
+          final userModel = UserModel(
+            uid: user.uid,
+            email: user.email ?? '',
+            nickname: user.displayName ?? '사용자',
+            createdAt: DateTime.now(),
+          );
+          await _userService.createUser(userModel);
+          _userModel = userModel;
+        } else {
+          _userModel = existingUser;
+        }
+
+        // FCM 토큰 업데이트
+        await _updateFcmToken(user.uid);
+      }
+    } finally {
+      // ...
+    }
+  }
+
+  // 카카오 로그인
+  Future<void> signInWithKakao() async {
+    _isLoading = true;
+    Future.microtask(() {
+      notifyListeners();
+    });
+
+    try {
+      final userCredential = await _authService.signInWithKakao();
+      final user = userCredential.user;
+
+      if (user != null) {
+        // Firestore에서 사용자 데이터 확인
+        UserModel? existingUser = await _userService.getUser(user.uid);
+
+        if (existingUser == null) {
+          // 신규 사용자인 경우 데이터 생성
+          // 닉네임이 없으면 '사용자' 대신 카카오 ID와 유사한 형태로 저장하여 닉네임 변경 팝업 유도
+          // (MorningScreen에서 숫자로만 구성된 닉네임은 변경 팝업을 띄움)
+          // user.displayName이 '사용자'일 수도 있으므로, 여기서 강제로 uid 등을 사용할 수도 있음
+          // 하지만 AuthService에서 displayName을 user.id로 설정했으므로 그 값이 올 것으로 기대함
+          // 만약 null이라면 uid 사용하여 숫자로 구성된 문자열 생성
+          String initialNickname = user.displayName ?? user.uid;
+
+          // 만약 "사용자"라면 강제로 uid 사용 (팝업 유도)
+          if (initialNickname == '사용자') {
+            // 카카오 ID만 추출하기 위해 uid에서 숫자만 남기거나 그냥 uid 사용
+            // 여기선 간단히 uid 사용 (숫자가 아닐 수도 있지만, 고유값 보장)
+            // AuthService에서 user.id (숫자)를 displayName으로 설정했으므로
+            // 정상적이라면 숫자가 들어옴.
+            // 만약 실패해서 '사용자'가 들어왔다면 여기서 처리.
+            initialNickname = user.uid.replaceAll(RegExp(r'[^0-9]'), '');
+            if (initialNickname.isEmpty) initialNickname = user.uid;
+          }
+
+          final userModel = UserModel(
+            uid: user.uid,
+            email: user.email ?? '',
+            nickname: initialNickname,
+            createdAt: DateTime.now(),
+          );
+          await _userService.createUser(userModel);
+          _userModel = userModel;
+        } else {
+          _userModel = existingUser;
+        }
+
+        // FCM 토큰 업데이트
+        await _updateFcmToken(user.uid);
+      }
+    } finally {
+      // ...
+    }
+  }
+
+  // 애플 로그인
+  Future<void> signInWithApple() async {
+    _isLoading = true;
+    Future.microtask(() {
+      notifyListeners();
+    });
+
+    try {
+      final userCredential = await _authService.signInWithApple();
+      final user = userCredential.user;
+
+      if (user != null) {
+        // Firestore에서 사용자 데이터 확인
+        UserModel? existingUser = await _userService.getUser(user.uid);
+
+        if (existingUser == null) {
+          // 신규 사용자인 경우 데이터 생성
+          final userModel = UserModel(
+            uid: user.uid,
+            email: user.email ?? '',
+            nickname: user.displayName ?? '사용자',
+            createdAt: DateTime.now(),
+          );
+          await _userService.createUser(userModel);
+          _userModel = userModel;
+        } else {
+          _userModel = existingUser;
+        }
+
+        // FCM 토큰 업데이트
+        await _updateFcmToken(user.uid);
+      }
+    } finally {
+      // ...
+    }
+  }
+
   // 로그아웃
   Future<void> signOut() async {
     await _authService.signOut();
@@ -235,6 +364,29 @@ class AuthController extends ChangeNotifier {
       } finally {
         _isDeletingAccount = false;
       }
+    }
+  }
+
+  // 닉네임 변경
+  Future<void> updateNickname(String newNickname) async {
+    final user = _currentUser;
+    if (user == null) return;
+
+    try {
+      // 1. Firebase Auth 프로필 업데이트
+      await user.updateDisplayName(newNickname);
+
+      // 2. Firestore 사용자 정보 업데이트
+      await _userService.updateNickname(user.uid, newNickname);
+
+      // 3. 로컬 상태 업데이트
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(nickname: newNickname);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('닉네임 업데이트 실패: $e');
+      rethrow;
     }
   }
 }

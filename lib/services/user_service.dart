@@ -144,6 +144,13 @@ class UserService {
     });
   }
 
+  // 닉네임 업데이트
+  Future<void> updateNickname(String uid, String nickname) async {
+    await _usersCollection.doc(uid).update({
+      'nickname': nickname,
+    });
+  }
+
   // 사용자 데이터 전체 삭제 (회원탈퇴)
   Future<void> deleteUserData(String uid) async {
     final batch = _db.batch();

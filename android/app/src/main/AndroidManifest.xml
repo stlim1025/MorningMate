@@ -54,6 +54,20 @@
         </receiver>
         <!-- 알람 동작 용 포그라운드 서비스 End -->
 
+        <!-- 카카오 로그인 -->
+        <activity
+            android:name="com.kakao.sdk.flutter.AuthCodeCustomTabsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="oauth"
+                    android:scheme="kakaob85bd2621b6bf24cf21211b92e352c50" />
+            </intent-filter>
+        </activity>
+
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- 알람 기능 권한 -->

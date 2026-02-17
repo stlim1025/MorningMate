@@ -99,7 +99,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           colorScheme,
                           icon: Icons.email,
                           title: '이메일',
-                          subtitle: user?.email ?? '',
+                          subtitle: (user?.email?.startsWith('kakao_') ?? false)
+                              ? '카카오 로그인'
+                              : (user?.email?.startsWith('apple_') ??
+                                      false) // 애플 로그인도 비슷하게 처리할 수 있다면 추가
+                                  ? 'Apple 로그인'
+                                  : user?.email ?? '',
                           onTap: null,
                         ),
                       ],

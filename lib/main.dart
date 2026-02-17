@@ -23,6 +23,8 @@ import 'features/admin/controllers/admin_controller.dart';
 import 'core/theme/theme_controller.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 // FCM 백그라운드 핸들러 (최상위 함수)
 @pragma('vm:entry-point')
@@ -48,6 +50,29 @@ void main() async {
     debugPrint('Firebase 초기화 성공');
   } catch (e) {
     debugPrint('Firebase 초기화 실패: $e');
+  }
+
+  // 카카오 SDK 초기화
+  // TODO: 카카오 개발자 콘솔에서 발급받은 네이티브 앱 키를 입력하세요
+  try {
+    KakaoSdk.init(
+      nativeAppKey:
+          'b85bd2621b6bf24cf21211b92e352c50', // 카카오 개발자 콘솔에서 발급받은 네이티브 앱 키
+    );
+    debugPrint('카카오 SDK 초기화 성공');
+  } catch (e) {
+    debugPrint('카카오 SDK 초기화 실패: $e');
+  }
+
+  // Firebase App Check 초기화 (개발 환경용 디버그 모드)
+  try {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.debug,
+      appleProvider: AppleProvider.debug,
+    );
+    debugPrint('Firebase App Check 초기화 성공 (디버그 모드)');
+  } catch (e) {
+    debugPrint('Firebase App Check 초기화 실패: $e');
   }
 
   // 알람 서비스 초기화 (리스너는 앱 상태 초기화 시 등록)

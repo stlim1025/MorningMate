@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -33,6 +36,148 @@ class AuthService {
       );
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    }
+  }
+
+  // 구글 로그인
+  Future<UserCredential> signInWithGoogle() async {
+    try {
+      // Google Sign In 시작
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        throw '구글 로그인이 취소되었습니다.';
+      }
+
+      // Google 인증 정보 가져오기
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // Firebase 인증 자격 증명 생성
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Firebase에 로그인
+      return await _auth.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw '구글 로그인 중 오류가 발생했습니다: $e';
+    }
+  }
+
+  // 카카오 로그인
+  Future<UserCredential> signInWithKakao() async {
+    try {
+      print('카카오 로그인 시작');
+
+      // 카카오톡 설치 여부 확인
+      bool isKakaoTalkInstalled = await kakao.isKakaoTalkInstalled();
+      print('카카오톡 설치 여부: $isKakaoTalkInstalled');
+
+      if (isKakaoTalkInstalled) {
+        // 카카오톡으로 로그인
+        print('카카오톡으로 로그인 시도');
+        await kakao.UserApi.instance.loginWithKakaoTalk();
+      } else {
+        // 카카오 계정으로 로그인
+        print('카카오 계정으로 로그인 시도');
+        await kakao.UserApi.instance.loginWithKakaoAccount();
+      }
+
+      print('카카오 로그인 성공, 사용자 정보 가져오는 중');
+
+      // 카카오 사용자 정보 가져오기
+      final kakao.User user = await kakao.UserApi.instance.me();
+      print('카카오 사용자 ID: ${user.id}');
+      print('카카오 사용자 닉네임: ${user.kakaoAccount?.profile?.nickname}');
+      print('카카오 사용자 이메일: ${user.kakaoAccount?.email}');
+
+      // 카카오 ID를 기반으로 고유한 이메일 생성
+      final String email =
+          user.kakaoAccount?.email ?? 'kakao_${user.id}@morningmate.app';
+      final String password =
+          'kakao_${user.id}_morningmate'; // 카카오 ID 기반 고유 비밀번호
+
+      // 요청사항: 닉네임을 카카오 ID로 설정 (사용자가 첫 로그인 시 변경하도록 함)
+      final String displayName = '${user.id}';
+
+      print('생성된 이메일: $email');
+      print('설정할 닉네임: $displayName');
+
+      UserCredential userCredential;
+
+      try {
+        // 먼저 로그인 시도
+        print('기존 계정으로 로그인 시도');
+        userCredential = await _auth.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        print('기존 계정 로그인 성공');
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+          // 계정이 없으면 새로 생성
+          print('계정이 없음, 새 계정 생성 시도');
+          userCredential = await _auth.createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+          print('새 계정 생성 성공');
+
+          // 사용자 정보 업데이트
+          await userCredential.user?.updateDisplayName(displayName);
+          print('사용자 닉네임 업데이트 완료: $displayName');
+        } else {
+          // 다른 오류는 그대로 throw
+          rethrow;
+        }
+      }
+
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      print('Firebase 인증 오류: ${e.code} - ${e.message}');
+      throw _handleAuthException(e);
+    } on kakao.KakaoException catch (e) {
+      print('카카오 로그인 오류: ${e.toString()}');
+      throw '카카오 로그인 중 오류가 발생했습니다: ${e.message}';
+    } catch (e) {
+      print('카카오 로그인 알 수 없는 오류: $e');
+      throw '카카오 로그인 중 오류가 발생했습니다: $e';
+    }
+  }
+
+  // 애플 로그인
+  Future<UserCredential> signInWithApple() async {
+    try {
+      // 애플 로그인 요청
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      // Firebase 인증 자격 증명 생성
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      // Firebase에 로그인
+      return await _auth.signInWithCredential(oauthCredential);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw '애플 로그인이 취소되었습니다.';
+      }
+      throw '애플 로그인 중 오류가 발생했습니다: ${e.message}';
+    } catch (e) {
+      throw '애플 로그인 중 오류가 발생했습니다: $e';
     }
   }
 
