@@ -131,11 +131,22 @@ class SocialController extends ChangeNotifier {
     return _cheerCooldown - elapsed;
   }
 
+  // 초기화 (앱 시작 시 또는 로그인 시 호출)
+  Future<void> initialize(String userId) async {
+    // 이미 데이터가 있으면 로딩 표시 없이 백그라운드에서 갱신
+    if (_friends.isNotEmpty) {
+      loadFriends(userId, background: true);
+    } else {
+      await loadFriends(userId);
+    }
+  }
+
   // 친구 목록 로드
-  Future<void> loadFriends(String userId) async {
-    _isLoading = true;
-    // Notify only if necessary to show loading spinner immediately6
-    notifyListeners();
+  Future<void> loadFriends(String userId, {bool background = false}) async {
+    if (!background) {
+      _isLoading = true;
+      notifyListeners();
+    }
 
     // 기존 스트림 구독 취소
     await _friendRequestSubscription?.cancel();
@@ -143,6 +154,8 @@ class SocialController extends ChangeNotifier {
     try {
       // 1. 친구 목록 가져오기
       _friends = await _friendService.getFriends(userId);
+      // 데이터가 로드되면 즉시 알림 (로딩 상태 해제 전이라도 화면 갱신 가능)
+      notifyListeners();
 
       // 2. 친구 요청 실시간 구독 시작
       _friendRequestSubscription = _friendService
@@ -157,8 +170,10 @@ class SocialController extends ChangeNotifier {
       print('친구 목록 로드 오류: $e');
     }
 
-    _isLoading = false;
-    Future.microtask(() => notifyListeners());
+    if (!background) {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   // 친구 요청 보내기

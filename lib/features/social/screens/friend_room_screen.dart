@@ -242,37 +242,124 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                             ),
                                           ],
                                         ),
+                                        // Menu Button
+                                        const SizedBox(width: 8),
+                                        PopupMenuButton<void>(
+                                          padding: EdgeInsets.zero,
+                                          elevation: 0,
+                                          color: Colors.transparent,
+                                          offset: const Offset(0, 40),
+                                          icon: Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 5),
+                                            child: Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                Image.asset(
+                                                  'assets/icons/AddFriend_Button.png',
+                                                  width: 50,
+                                                  height: 46,
+                                                  fit: BoxFit.fill,
+                                                ),
+                                                const Icon(Icons.more_horiz,
+                                                    color: Color(0xFF4E342E),
+                                                    size: 32),
+                                              ],
+                                            ),
+                                          ),
+                                          onSelected: (_) {},
+                                          itemBuilder: (context) => [
+                                            PopupMenuItem<void>(
+                                              enabled:
+                                                  false, // Disable outer touch to prevent double handling, opacity handled by providing non-null text style if needed, but 'enabled:false' fades content.
+                                              // Actually, enabled:false fades content. We need enabled:true but handle taps inside.
+                                              // Better approach: enabled: false, but wrap content in a widget that ignores the opacity or re-applies opacity?
+                                              // No, simple workaround: enabled: true, but consuming taps.
+                                              padding: EdgeInsets.zero,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 12,
+                                                        horizontal: 12),
+                                                decoration: const BoxDecoration(
+                                                  image: DecorationImage(
+                                                    image: AssetImage(
+                                                        'assets/images/Popup_Background.png'),
+                                                    fit: BoxFit.fill,
+                                                  ),
+                                                ),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    GestureDetector(
+                                                      behavior: HitTestBehavior
+                                                          .opaque,
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        _showReportDialog(
+                                                            _friend!.uid,
+                                                            '사용자 신고',
+                                                            'user');
+                                                      },
+                                                      child: Row(
+                                                        children: [
+                                                          Image.asset(
+                                                            'assets/icons/Warning_Icon.png',
+                                                            width: 24,
+                                                            height: 24,
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 8),
+                                                          const Text('신고하기',
+                                                              style: TextStyle(
+                                                                fontFamily:
+                                                                    'BMJUA',
+                                                                color: Colors
+                                                                    .redAccent,
+                                                              )),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                    GestureDetector(
+                                                      behavior: HitTestBehavior
+                                                          .opaque,
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        _showDeleteFriendDialog();
+                                                      },
+                                                      child: Row(
+                                                        children: [
+                                                          Image.asset(
+                                                            'assets/icons/FriendDelete_Icon.png',
+                                                            width: 24,
+                                                            height: 24,
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 8),
+                                                          const Text('친구 삭제',
+                                                              style: TextStyle(
+                                                                fontFamily:
+                                                                    'BMJUA',
+                                                                color:
+                                                                    Colors.red,
+                                                              )),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ],
                                     );
                                   },
                                 ),
-                              ),
-
-                              const Spacer(),
-                              // 신고/삭제 메뉴 (친구 관리)
-                              PopupMenuButton<String>(
-                                icon: const Icon(Icons.more_vert,
-                                    color: Colors.white),
-                                onSelected: (value) {
-                                  if (value == 'delete') {
-                                    _showDeleteFriendDialog();
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.person_remove,
-                                            color: Colors.red),
-                                        SizedBox(width: 8),
-                                        Text('친구 삭제',
-                                            style:
-                                                TextStyle(color: Colors.red)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
                               ),
                             ],
                           ),
@@ -917,21 +1004,24 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
     final confirmed = await AppDialog.show<bool>(
       context: context,
       key: AppDialogKey.deleteFriend,
-      content: RichText(
-        textAlign: TextAlign.center,
-        text: TextSpan(
-          style: const TextStyle(
-            color: Colors.black87,
-            fontSize: 16,
-            fontFamily: 'BMJUA',
-          ),
-          children: [
-            TextSpan(
-              text: '${_friend?.nickname ?? '친구'}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Text.rich(
+          TextSpan(
+            style: const TextStyle(
+              color: Colors.black87,
+              fontSize: 16,
+              fontFamily: 'BMJUA', // Ensure font family is applied
             ),
-            const TextSpan(text: '님을 친구 목록에서\n삭제하시겠습니까?'),
-          ],
+            children: [
+              TextSpan(
+                text: '${_friend?.nickname ?? '친구'}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(text: '님을 친구 목록에서\n삭제하시겠습니까?'),
+            ],
+          ),
+          textAlign: TextAlign.center,
         ),
       ),
       actions: [

@@ -236,6 +236,10 @@ class _MorningMateAppState extends State<MorningMateApp> {
             final controller = previous ?? SocialController(_friendService);
             if (auth.userModel == null) {
               controller.clear();
+            } else {
+              // 사용자 정보가 로드되면 친구 목록을 미리 로드
+              Future.microtask(
+                  () => controller.initialize(auth.currentUser!.uid));
             }
             return controller;
           },
