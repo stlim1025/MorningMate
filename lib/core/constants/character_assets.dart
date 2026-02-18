@@ -140,5 +140,16 @@ class CharacterAssets {
       charScaleAwake: 1.05,
       charScaleSleep: 1.15,
     ),
+    RoomAsset(
+      id: 'knight_helm',
+      name: '기사 투구',
+      price: 200,
+      icon: Icons.security,
+      imagePath: 'assets/items/Charactor/KnightHelm.png',
+      category: 'clothes',
+      charWidthPct: 0.5,
+      charTopPctAwake: 0.8,
+      charTopPctSleep: 0.8,
+    ),
   ];
 }
