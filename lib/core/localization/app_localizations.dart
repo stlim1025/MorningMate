@@ -316,6 +316,7 @@ class AppLocalizations {
       'item_name_lego_piano': 'Block Piano',
       'item_name_lego_sink': 'Block Sink',
       'item_name_lego_floor': 'Block Floor',
+      'item_name_lego_lug': 'Block Rug',
       // Login & Auth
       'login': 'Login',
       'signup': 'Sign Up',
@@ -357,6 +358,9 @@ class AppLocalizations {
       'friendAcceptNotiDesc': 'Get notified when your request is accepted',
       'friendRejectNoti': 'Friend Reject Alert',
       'friendRejectNotiDesc': 'Get notified when your request is rejected',
+      'notificationTime': 'Notification Time',
+      'timePickerHour': 'H',
+      'timePickerMinute': 'M',
       // Writing Screen
       'tempSave': 'Draft',
       'saveDraft': 'Save Draft',
@@ -413,6 +417,9 @@ class AppLocalizations {
       'unequipAll': 'Unequip All',
       'showOwnedOnly': 'Show Owned Only',
       'bulkPurchase': 'Bulk Purchase',
+      'bulkPurchaseConfirm':
+          'There are unowned items.\nDo you want to purchase them all?',
+      'totalPrice': 'Total: ',
       'purchaseAndSaveSuccess': 'Purchase & Save Complete! ✨',
       'all': 'All',
       'head': 'Head',
@@ -726,6 +733,7 @@ class AppLocalizations {
       'item_name_lego_piano': '블럭 피아노',
       'item_name_lego_sink': '블럭 세면대',
       'item_name_lego_floor': '블럭 바닥',
+      'item_name_lego_lug': '블럭 러그',
       // Login & Auth
       'login': '로그인',
       'signup': '회원가입',
@@ -767,6 +775,9 @@ class AppLocalizations {
       'friendAcceptNotiDesc': '상대방이 내 친구 요청을 수락하면 알려드려요',
       'friendRejectNoti': '친구 거절 알림',
       'friendRejectNotiDesc': '내 친구 요청이 거절되었을 때 알림을 받아요',
+      'notificationTime': '알림 시간 설정',
+      'timePickerHour': '시',
+      'timePickerMinute': '분',
       // Writing Screen
       'tempSave': '임시저장',
       'saveDraft': '임시저장',
@@ -823,6 +834,8 @@ class AppLocalizations {
       'unequipAll': '모두 해제',
       'showOwnedOnly': '보유중인 상품만 보기',
       'bulkPurchase': '일괄구매',
+      'bulkPurchaseConfirm': '구매하지 않은 상품이 있습니다.\n일괄 구매하시겠습니까?',
+      'totalPrice': '총 합계: ',
       'purchaseAndSaveSuccess': '구매 및 저장이 완료되었습니다! ✨',
       'all': '전체',
       'head': '머리',

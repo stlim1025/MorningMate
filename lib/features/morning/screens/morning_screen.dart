@@ -551,14 +551,6 @@ class _MorningScreenState extends State<MorningScreen>
           Row(
             children: [
               const SizedBox(width: 8),
-              // 알람 버튼
-              HeaderImageButton(
-                imagePath: 'assets/icons/Alarm_Button_Icon.png',
-                onTap: () {
-                  context.push('/alarm');
-                },
-              ),
-              const SizedBox(width: 8), // 아이콘 사이 간격
               // 알림 버튼
               StreamBuilder<List<NotificationModel>>(
                 stream: userId == null

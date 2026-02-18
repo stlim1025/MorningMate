@@ -23,6 +23,7 @@ class UserModel {
   final bool writingBlurEnabled;
   final bool biometricEnabled;
   final bool morningDiaryNoti;
+  final String morningDiaryNotiTime; // 아침 일기 알림 시간 (HH:mm)
   final bool wakeUpNoti;
   final bool cheerMessageNoti;
   final bool friendRequestNoti;
@@ -68,6 +69,7 @@ class UserModel {
     this.writingBlurEnabled = true,
     this.biometricEnabled = false,
     this.morningDiaryNoti = true,
+    this.morningDiaryNotiTime = '08:00',
     this.wakeUpNoti = true,
     this.cheerMessageNoti = true,
     this.friendRequestNoti = true,
@@ -134,6 +136,7 @@ class UserModel {
       writingBlurEnabled: data['writingBlurEnabled'] ?? true,
       biometricEnabled: data['biometricEnabled'] ?? false,
       morningDiaryNoti: data['morningDiaryNoti'] ?? true,
+      morningDiaryNotiTime: data['morningDiaryNotiTime'] ?? '08:00',
       wakeUpNoti: data['wakeUpNoti'] ?? true,
       cheerMessageNoti: data['cheerMessageNoti'] ?? true,
       friendRequestNoti: data['friendRequestNoti'] ?? true,
@@ -200,6 +203,7 @@ class UserModel {
       'writingBlurEnabled': writingBlurEnabled,
       'biometricEnabled': biometricEnabled,
       'morningDiaryNoti': morningDiaryNoti,
+      'morningDiaryNotiTime': morningDiaryNotiTime,
       'wakeUpNoti': wakeUpNoti,
       'cheerMessageNoti': cheerMessageNoti,
       'friendRequestNoti': friendRequestNoti,
@@ -248,6 +252,7 @@ class UserModel {
     bool? writingBlurEnabled,
     bool? biometricEnabled,
     bool? morningDiaryNoti,
+    String? morningDiaryNotiTime,
     bool? wakeUpNoti,
     bool? cheerMessageNoti,
     bool? friendRequestNoti,
@@ -293,6 +298,7 @@ class UserModel {
       writingBlurEnabled: writingBlurEnabled ?? this.writingBlurEnabled,
       biometricEnabled: biometricEnabled ?? this.biometricEnabled,
       morningDiaryNoti: morningDiaryNoti ?? this.morningDiaryNoti,
+      morningDiaryNotiTime: morningDiaryNotiTime ?? this.morningDiaryNotiTime,
       wakeUpNoti: wakeUpNoti ?? this.wakeUpNoti,
       cheerMessageNoti: cheerMessageNoti ?? this.cheerMessageNoti,
       friendRequestNoti: friendRequestNoti ?? this.friendRequestNoti,

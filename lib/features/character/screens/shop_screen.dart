@@ -690,6 +690,10 @@ class _ShopScreenState extends State<ShopScreen> {
                   onTap: isPurchased
                       ? null
                       : () async {
+                          final l10n = AppLocalizations.of(itemContext);
+                          final localizedName =
+                              l10n?.get('item_name_${item.id}') ?? item.name;
+
                           final shouldPurchase = await AppDialog.show<bool>(
                             context: itemContext,
                             key: AppDialogKey.purchase,
@@ -722,30 +726,19 @@ class _ShopScreenState extends State<ShopScreen> {
                                 const SizedBox(height: 16),
                                 const SizedBox(height: 16),
                                 Text(
-                                  AppLocalizations.of(itemContext)?.getFormat(
-                                        'purchaseConfirm',
-                                        {
-                                          'item': AppLocalizations.of(
-                                                      itemContext)
-                                                  ?.get(
-                                                      'item_name_${item.id}') ??
-                                              item.name
-                                        },
-                                      ) ??
-                                      'Do you want to purchase ${item.name}?',
+                                  l10n?.getFormat('purchaseConfirm',
+                                          {'item': localizedName}) ??
+                                      'Do you want to purchase $localizedName?',
                                   style: const TextStyle(fontFamily: 'BMJUA'),
                                 ),
                                 const SizedBox(height: 12),
                                 if (isDiscounted)
                                   Text(
-                                    AppLocalizations.of(itemContext)?.getFormat(
-                                          'salePrice',
-                                          {
-                                            'original': item.price.toString(),
-                                            'discounted':
-                                                discountedPrice.toString()
-                                          },
-                                        ) ??
+                                    l10n?.getFormat('salePrice', {
+                                          'original': item.price.toString(),
+                                          'discounted':
+                                              discountedPrice.toString()
+                                        }) ??
                                         'SALE! ${item.price} -> $discountedPrice 가지',
                                     style: const TextStyle(
                                       color: Colors.red,
@@ -756,8 +749,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 if (!canAfford) ...[
                                   const SizedBox(height: 12),
                                   Text(
-                                    AppLocalizations.of(itemContext)
-                                            ?.get('notEnoughBranch') ??
+                                    l10n?.get('notEnoughBranch') ??
                                         'Not enough branches.',
                                     style: TextStyle(
                                       color: colorScheme.error,
@@ -842,12 +834,9 @@ class _ShopScreenState extends State<ShopScreen> {
                                       ),
                                       const SizedBox(height: 24),
                                       Text(
-                                        AppLocalizations.of(itemContext)
-                                                ?.getFormat(
-                                              'purchaseSuccess',
-                                              {'item': item.name},
-                                            ) ??
-                                            '${item.name}을(를) 구매했습니다.',
+                                        l10n?.getFormat('purchaseSuccess',
+                                                {'item': localizedName}) ??
+                                            '$localizedName을(를) 구매했습니다.',
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
                                             fontSize: 16, fontFamily: 'BMJUA'),
@@ -857,17 +846,14 @@ class _ShopScreenState extends State<ShopScreen> {
                                   ),
                                   actions: [
                                     AppDialogAction(
-                                      label: AppLocalizations.of(itemContext)
-                                              ?.get('decorate') ??
-                                          'Decorate',
+                                      label:
+                                          l10n?.get('decorate') ?? 'Decorate',
                                       onPressed: (context) {
                                         Navigator.pop(context, 'decorate');
                                       },
                                     ),
                                     AppDialogAction(
-                                      label: AppLocalizations.of(itemContext)
-                                              ?.get('confirm') ??
-                                          'Confirm',
+                                      label: l10n?.get('confirm') ?? 'Confirm',
                                       isPrimary: true,
                                       onPressed: (context) =>
                                           Navigator.pop(context),

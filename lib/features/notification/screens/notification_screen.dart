@@ -94,7 +94,7 @@ class NotificationScreen extends StatelessWidget {
           // 배경 이미지
           Positioned.fill(
             child: Image.asset(
-              'assets/images/Noti_BackGround.png',
+              'assets/images/Diary_Background.png',
               fit: BoxFit.cover,
             ),
           ),

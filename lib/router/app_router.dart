@@ -1,8 +1,5 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
-
-import 'package:alarm/alarm.dart';
-import 'package:morning_mate/services/alarm_service.dart';
 import 'dart:async';
 
 import '../features/auth/screens/auth_wrapper.dart';
@@ -24,8 +21,6 @@ import '../features/settings/screens/settings_screen.dart';
 import '../features/settings/screens/notification_settings_screen.dart';
 import '../features/settings/screens/terms_of_service_screen.dart';
 import '../features/settings/screens/privacy_policy_screen.dart';
-import '../features/alarm/screens/alarm_screen.dart';
-import '../features/alarm/screens/alarm_ring_screen.dart';
 
 import '../features/auth/controllers/auth_controller.dart';
 import '../data/models/diary_model.dart';
@@ -48,13 +43,6 @@ class AppRouter {
       redirect: (context, state) {
         final String location = state.uri.toString();
 
-        if (AlarmService.ringingAlarm != null) {
-          if (!location.contains('alarm-ring')) {
-            return '/alarm-ring';
-          }
-          return null;
-        }
-
         if (!authController.isAuthCheckDone) {
           return '/splash';
         }
@@ -76,7 +64,7 @@ class AppRouter {
             return '/admin';
           }
 
-          if (location.contains('alarm-ring') || location.contains('writing')) {
+          if (location.contains('writing')) {
             return null;
           }
 
@@ -266,36 +254,6 @@ class AppRouter {
           builder: (context, state) => const PrivacyPolicyScreen(),
         ),
 
-        // Alarm Routes
-        GoRoute(
-          parentNavigatorKey: navigatorKey,
-          path: '/alarm',
-          name: 'alarm',
-          builder: (context, state) => const AlarmScreen(),
-        ),
-        GoRoute(
-          path: '/alarm-ring',
-          builder: (context, state) {
-            AlarmSettings? alarmSettings;
-
-            if (state.extra is AlarmSettings) {
-              alarmSettings = state.extra as AlarmSettings;
-            } else if (state.extra is Map<String, dynamic>) {
-              alarmSettings =
-                  AlarmSettings.fromJson(state.extra as Map<String, dynamic>);
-            } else {
-              alarmSettings = AlarmService.ringingAlarm;
-            }
-
-            if (alarmSettings == null) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            return AlarmRingScreen(alarmSettings: alarmSettings);
-          },
-        ),
         GoRoute(
           parentNavigatorKey: navigatorKey,
           path: '/admin',

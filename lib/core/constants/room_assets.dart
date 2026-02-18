@@ -564,6 +564,16 @@ class RoomAssets {
       aspectRatio: 1.0,
     ),
     RoomAsset(
+      id: 'lego_lug',
+      name: '블럭 러그',
+      price: 150,
+      icon: Icons.square,
+      imagePath: 'assets/items/Lego_Lug.png',
+      sizeMultiplier: 1.4,
+      aspectRatio: 2.0,
+      noShadow: true,
+    ),
+    RoomAsset(
       id: 'castle_candle',
       name: '성 촛대',
       price: 150,

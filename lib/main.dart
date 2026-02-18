@@ -13,7 +13,6 @@ import 'services/user_service.dart';
 import 'services/diary_service.dart';
 import 'services/friend_service.dart';
 import 'services/question_service.dart';
-import 'services/alarm_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/morning/controllers/morning_controller.dart';
 import 'features/character/controllers/character_controller.dart';
@@ -78,17 +77,6 @@ void main() async {
     debugPrint('Firebase App Check 초기화 실패: $e');
   }
 
-  // 알람 서비스 초기화 (리스너는 앱 상태 초기화 시 등록)
-  try {
-    await AlarmService.init();
-    debugPrint('알람 서비스 초기화 성공');
-  } catch (e) {
-    debugPrint('알람 서비스 초기화 실패: $e');
-  }
-
-  final bool isAlarmFiring = AlarmService.ringingAlarm != null;
-  final String initialRoute = isAlarmFiring ? '/alarm-ring' : '/splash';
-
   // 광고 SDK 초기화
   try {
     MobileAds.instance.initialize();
@@ -107,7 +95,7 @@ void main() async {
   // FCM 백그라운드 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  runApp(MorningMateApp(initialRoute: initialRoute));
+  runApp(MorningMateApp(initialRoute: '/splash'));
 }
 
 class MorningMateApp extends StatefulWidget {
@@ -157,20 +145,6 @@ class _MorningMateAppState extends State<MorningMateApp> {
 
     // 3. Router 초기화 (AuthController 의존성 주입)
     _router = AppRouter.createRouter(_authController, widget.initialRoute);
-
-    // 4. 알람 리스너 설정 (Router 사용)
-    AlarmService.setAlarmListener((alarmSettings) {
-      final context = AppRouter.navigatorKey.currentContext;
-      if (context == null) return;
-
-      final router = GoRouter.of(context);
-      // 현재 이미 알람 화면이 아니면 이동
-      if (!router.routerDelegate.currentConfiguration.uri
-          .toString()
-          .contains('alarm-ring')) {
-        router.push('/alarm-ring', extra: alarmSettings);
-      }
-    });
 
     // 5. 광고 로드 (화면 빌드 후)
     WidgetsBinding.instance.addPostFrameCallback((_) {

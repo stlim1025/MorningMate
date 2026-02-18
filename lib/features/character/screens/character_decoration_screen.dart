@@ -717,6 +717,8 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
     final characterController = context.read<CharacterController>();
     final canAfford = user.points >= item.price;
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+    final l10n = AppLocalizations.of(context);
+    final localizedName = l10n?.get('item_name_${item.id}') ?? item.name;
 
     final shouldPurchase = await AppDialog.show<bool>(
       context: context,
@@ -747,17 +749,15 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            AppLocalizations.of(context)
-                    ?.getFormat('purchaseConfirm', {'item': item.name}) ??
-                'Do you want to purchase ${item.name}?',
+            l10n?.getFormat('purchaseConfirm', {'item': localizedName}) ??
+                'Do you want to purchase $localizedName?',
             style: const TextStyle(fontFamily: 'BMJUA'),
           ),
           const SizedBox(height: 12),
           if (!canAfford) ...[
             const SizedBox(height: 12),
             Text(
-              AppLocalizations.of(context)?.get('notEnoughBranch') ??
-                  'Not enough branches.',
+              l10n?.get('notEnoughBranch') ?? 'Not enough branches.',
               style: TextStyle(
                 color: colorScheme.error,
                 fontSize: 13,
@@ -839,7 +839,8 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
               ),
               const SizedBox(height: 24),
               Text(
-                '${item.name}을(를) 구매했습니다.',
+                l10n?.getFormat('purchaseSuccess', {'item': localizedName}) ??
+                    '$localizedName을(를) 구매했습니다.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 16, fontFamily: 'BMJUA'),
               ),
@@ -848,7 +849,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
           ),
           actions: [
             AppDialogAction(
-              label: '확인',
+              label: l10n?.get('confirm') ?? 'Confirm',
               isPrimary: true,
               onPressed: (context) => Navigator.pop(context),
             ),
@@ -905,10 +906,11 @@ class _BulkPurchaseContentState extends State<_BulkPurchaseContent> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          '구매하지 않은 상품이 있습니다.\n일괄 구매하시겠습니까?',
+        Text(
+          AppLocalizations.of(context)?.get('bulkPurchaseConfirm') ??
+              'There are unowned items.\nDo you want to purchase them all?',
           textAlign: TextAlign.center,
-          style: TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+          style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -956,7 +958,9 @@ class _BulkPurchaseContentState extends State<_BulkPurchaseContent> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        item.name,
+                        AppLocalizations.of(context)
+                                ?.get('item_name_${item.id}') ??
+                            item.name,
                         style: const TextStyle(
                           fontFamily: 'BMJUA',
                           fontSize: 14,
@@ -987,9 +991,9 @@ class _BulkPurchaseContentState extends State<_BulkPurchaseContent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              '총 합계: ',
-              style: TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+            Text(
+              AppLocalizations.of(context)?.get('totalPrice') ?? 'Total: ',
+              style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
             ),
             Image.asset('assets/images/branch.png', width: 20, height: 20),
             const SizedBox(width: 4),

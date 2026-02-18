@@ -1,6 +1,7 @@
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const logger = require("firebase-functions/logger");
 
@@ -476,4 +477,85 @@ exports.sendFriendRejectNotification = onCall(async (request) => {
         logger.error("Error sending friend reject:", error);
         throw new HttpsError("internal", "Error sending friend reject.");
     }
+});
+
+// 아침 일기 작성 알림 예약 함수 (매 5분마다 실행)
+exports.morningReminder = onSchedule("every 5 minutes", async (event) => {
+    const now = new Date();
+    // 한국 시간 (UTC+9) 기준 시간 계산
+    const krTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+    const hours = krTime.getUTCHours().toString().padStart(2, "0");
+    const minutes = krTime.getUTCMinutes().toString().padStart(2, "0");
+    const currentTimeStr = `${hours}:${minutes}`;
+
+    logger.info(`Running morningReminder at ${currentTimeStr} (KR Time)`);
+
+    const usersRef = admin.firestore().collection("users");
+    // 알림이 켜져 있는 사용자 쿼리
+    const snapshot = await usersRef
+        .where("morningDiaryNoti", "==", true)
+        .where("morningDiaryNotiTime", "==", currentTimeStr)
+        .get();
+
+    if (snapshot.empty) {
+        logger.info("No users to remind at this time.");
+        return;
+    }
+
+    const todayStr = krTime.toISOString().split("T")[0]; // YYYY-MM-DD
+
+    const promises = snapshot.docs.map(async (doc) => {
+        const userData = doc.data();
+        const userId = doc.id;
+
+        // 오늘 이미 일기를 썼는지 확인
+        if (userData.lastDiaryDate) {
+            const lastDate = userData.lastDiaryDate.toDate();
+            const lastDateKR = new Date(lastDate.getTime() + (9 * 60 * 60 * 1000));
+            const lastDateStr = lastDateKR.toISOString().split("T")[0];
+
+            if (lastDateStr === todayStr) {
+                logger.info(`User ${userId} already wrote a diary today.`);
+                return;
+            }
+        }
+
+        const fcmToken = userData.fcmToken;
+        if (!fcmToken) return;
+
+        const message = {
+            token: fcmToken,
+            notification: {
+                title: "아침 일기",
+                body: "일기를 작성하고 캐릭터를 깨워주세요! ☀️",
+            },
+            data: {
+                type: "morning_reminder",
+                click_action: "FLUTTER_NOTIFICATION_CLICK",
+            },
+            android: {
+                priority: "high",
+                notification: {
+                    channelId: "high_importance_channel",
+                },
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        contentAvailable: true,
+                        sound: "default",
+                    },
+                },
+            },
+        };
+
+        try {
+            await admin.messaging().send(message);
+            logger.info(`Sent morning reminder to user ${userId}`);
+        } catch (error) {
+            logger.error(`Error sending reminder to user ${userId}:`, error);
+        }
+    });
+
+    await Promise.all(promises);
 });
