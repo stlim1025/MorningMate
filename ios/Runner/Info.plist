@@ -22,10 +22,32 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleIdentifier</key>
+			<string></string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kakaob85bd2621b6bf24cf21211b92e352c50</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>GIDClientID</key>
+	<string>237548170950-gspdk280eifqjb7140kba89bqikn79ol.apps.googleusercontent.com</string>
+	<key>KAKAO_APP_KEY</key>
+	<string>85bd2621b6bf24cf21211b92e352c50</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>kakaokompassauth</string>
+		<string>kakaolink</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -77,25 +99,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-   <key>CFBundleURLTypes</key>
-   <array>
-       <dict>
-           <key>CFBundleTypeRole</key>
-           <string>Editor</string>
-           <key>CFBundleURLSchemes</key>
-           <array>
-               <string>kakaob85bd2621b6bf24cf21211b92e352c50</string>
-           </array>
-       </dict>
-   </array>
-   
-   <key>LSApplicationQueriesSchemes</key>
-   <array>
-       <string>kakaokompassauth</string>
-       <string>kakaolink</string>
-   </array>
-   
-   <key>KAKAO_APP_KEY</key>
-   <string>85bd2621b6bf24cf21211b92e352c50</string>
 </dict>
 </plist>

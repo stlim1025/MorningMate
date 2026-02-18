@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -56,6 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // 소셜 로그인 화면 (첫 화면)
   Widget _buildSocialLoginScreen(AppColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -70,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 32),
 
         Text(
-          'Morning Mate',
+          l10n?.get('introTitle') ?? 'Morning Mate',
           style: Theme.of(context).textTheme.displayMedium?.copyWith(
             fontFamily: 'BMJUA',
             color: Colors.white,
@@ -86,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          '아침을 함께하는 당신의 메이트',
+          l10n?.get('introSubtitle') ?? 'Your mate for the morning',
           style: TextStyle(
             fontFamily: 'BMJUA',
             color: Colors.white,
@@ -105,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // 소셜 로그인 버튼들
         _buildSocialLoginButton(
-          label: 'Google로 계속하기',
+          label: l10n?.get('loginWithGoogle') ?? 'Continue with Google',
           icon: Icons.g_mobiledata,
           color: Colors.white,
           textColor: Colors.black87,
@@ -116,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 12),
 
         _buildSocialLoginButton(
-          label: '카카오로 계속하기',
+          label: l10n?.get('loginWithKakao') ?? 'Continue with Kakao',
           icon: Icons.chat_bubble,
           color: const Color(0xFFFEE500),
           textColor: Colors.black87,
@@ -127,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 12),
 
         _buildSocialLoginButton(
-          label: 'Apple로 계속하기',
+          label: l10n?.get('loginWithApple') ?? 'Continue with Apple',
           icon: Icons.apple,
           color: Colors.black,
           textColor: Colors.white,
@@ -151,9 +153,9 @@ class _LoginScreenState extends State<LoginScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: const Text(
-            'ID로 로그인',
-            style: TextStyle(
+          child: Text(
+            l10n?.get('loginWithID') ?? 'Login with ID',
+            style: const TextStyle(
               fontFamily: 'BMJUA',
               color: Colors.white,
               fontSize: 16,
@@ -167,6 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // 이메일 로그인 폼
   Widget _buildEmailLoginForm(AppColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -198,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 24),
 
           Text(
-            'ID 로그인',
+            l10n?.get('idLogin') ?? 'ID Login',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontFamily: 'BMJUA',
               color: Colors.white,
@@ -218,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // 이메일 필드
           _buildTextField(
             controller: _emailController,
-            label: '이메일',
+            label: l10n?.get('emailPlaceholder') ?? 'Email',
             icon: Icons.email,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
@@ -227,8 +230,12 @@ class _LoginScreenState extends State<LoginScreen> {
               FocusScope.of(context).requestFocus(_passwordFocusNode);
             },
             validator: (value) {
-              if (value == null || value.isEmpty) return '이메일을 입력해주세요';
-              if (!value.contains('@')) return '올바른 이메일 형식이 아닙니다';
+              if (value == null || value.isEmpty) {
+                return l10n?.get('emailRequired') ?? 'Please enter email';
+              }
+              if (!value.contains('@')) {
+                return l10n?.get('emailInvalid') ?? 'Invalid email format';
+              }
               return null;
             },
           ),
@@ -238,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // 비밀번호 필드
           _buildTextField(
             controller: _passwordController,
-            label: '비밀번호',
+            label: l10n?.get('passwordPlaceholder') ?? 'Password',
             icon: Icons.lock,
             focusNode: _passwordFocusNode,
             obscureText: _obscurePassword,
@@ -254,8 +261,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   setState(() => _obscurePassword = !_obscurePassword),
             ),
             validator: (value) {
-              if (value == null || value.isEmpty) return '비밀번호를 입력해주세요';
-              if (value.length < 6) return '비밀번호는 최소 6자 이상이어야 합니다';
+              if (value == null || value.isEmpty) {
+                return l10n?.get('passwordRequired') ?? 'Please enter password';
+              }
+              if (value.length < 6) {
+                return l10n?.get('passwordLengthError') ??
+                    'Password must be at least 6 characters';
+              }
               return null;
             },
           ),
@@ -285,9 +297,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                  : const Text(
-                      '로그인',
-                      style: TextStyle(
+                  : Text(
+                      l10n?.get('login') ?? 'Login',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -300,9 +312,9 @@ class _LoginScreenState extends State<LoginScreen> {
           // 회원가입 버튼
           TextButton(
             onPressed: () => context.push('/signup'),
-            child: const Text(
-              '계정이 없으신가요? 회원가입',
-              style: TextStyle(
+            child: Text(
+              l10n?.get('noAccountSignup') ?? "Don't have an account? Sign Up",
+              style: const TextStyle(
                 fontFamily: 'BMJUA',
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
