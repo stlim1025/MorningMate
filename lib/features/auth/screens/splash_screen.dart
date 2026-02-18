@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../controllers/auth_controller.dart';
+import '../../../data/models/user_model.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,9 +43,18 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final user = authController.userModel;
 
-    // 로그인이 안 되어 있으면 /login으로 이동 (Router의 redirect로 처리되기도 하지만 명시적으로 처리)
+    // 로그인이 안 되어 있으면 /login으로 이동
     if (user == null) {
       if (mounted) context.go('/login');
+      return;
+    }
+
+    // 정지 상태 확인
+    if (user.suspendedUntil != null &&
+        user.suspendedUntil!.isAfter(DateTime.now())) {
+      if (mounted) {
+        await _showSuspendedDialog(context, user);
+      }
       return;
     }
 
@@ -97,6 +108,129 @@ class _SplashScreenState extends State<SplashScreen> {
       ],
     );
     return result ?? false;
+  }
+
+  Future<void> _showSuspendedDialog(
+      BuildContext context, UserModel user) async {
+    String remainingTime = '';
+    final suspendedUntil = user.suspendedUntil!;
+    final now = DateTime.now();
+    final diff = suspendedUntil.difference(now);
+
+    final l10n = AppLocalizations.of(context);
+    if (suspendedUntil.year >= 2090) {
+      remainingTime = l10n?.get('permanentSuspension') ?? '영구 정지';
+    } else if (diff.inDays > 0) {
+      remainingTime = l10n?.getFormat('daysRemaining', {
+            'days': diff.inDays.toString(),
+            'hours': (diff.inHours % 24).toString(),
+          }) ??
+          '${diff.inDays}일 ${diff.inHours % 24}시간 남음';
+    } else if (diff.inHours > 0) {
+      remainingTime = l10n?.getFormat('hoursRemaining', {
+            'hours': diff.inHours.toString(),
+            'minutes': (diff.inMinutes % 60).toString(),
+          }) ??
+          '${diff.inHours}시간 ${diff.inMinutes % 60}분 남음';
+    } else {
+      remainingTime = l10n?.getFormat('minutesRemaining', {
+            'minutes': diff.inMinutes.toString(),
+          }) ??
+          '${diff.inMinutes}분 남음';
+    }
+
+    await AppDialog.show(
+      context: context,
+      key: AppDialogKey.suspension,
+      barrierDismissible: false,
+      content: SizedBox(
+        width: double.infinity,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              l10n?.get('suspensionContent') ??
+                  '커뮤니티 가이드라인 위반으로 인해\n서비스 이용이 일시적으로 제한되었습니다.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontFamily: 'BMJUA',
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/Option_Area.png'),
+                  fit: BoxFit.fill,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    l10n?.get('remainingTimeTitle') ?? '해제까지 남은 시간',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                      fontFamily: 'BMJUA',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    remainingTime,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                      fontFamily: 'BMJUA',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (user.suspensionReason != null) ...[
+              const SizedBox(height: 16),
+              Builder(builder: (context) {
+                String reasonStr = user.suspensionReason!;
+                if (reasonStr == '커뮤니티 가이드라인 위반') {
+                  reasonStr =
+                      l10n?.get('reason_community_violation') ?? reasonStr;
+                }
+                return Text(
+                  l10n?.getFormat('suspensionReason', {'reason': reasonStr}) ??
+                      '사유: $reasonStr',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black45,
+                    fontFamily: 'BMJUA',
+                  ),
+                );
+              }),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        AppDialogAction(
+          label: l10n?.get('logout') ?? '로그아웃',
+          isPrimary: true,
+          onPressed: (BuildContext dialogContext) async {
+            // Re-accessing authController through the dialog's context
+            final auth = dialogContext.read<AuthController>();
+            Navigator.pop(dialogContext);
+            await auth.signOut();
+            // AuthController.signOut notifies GoRouter to redirect,
+            // no need to call GoRouter here on a potentially deactivated context.
+          },
+        ),
+      ],
+    );
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../data/models/user_model.dart';
 import '../../../services/question_service.dart';
 
 class AdminController extends ChangeNotifier {
@@ -218,6 +219,174 @@ class AdminController extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> suspendUser({
+    required String reportId,
+    required String targetUserId,
+    required String reporterId,
+    required int days,
+    String? reason,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final userRef = _firestore.collection('users').doc(targetUserId);
+        final reporterRef = _firestore.collection('users').doc(reporterId);
+        final reportRef = _firestore.collection('reports').doc(reportId);
+
+        // 1. 모든 읽기(Read) 작업은 처음에 수행해야 함
+        final reporterSnapshot = await transaction.get(reporterRef);
+
+        // 2. 데이터 계산
+        DateTime suspendedUntil;
+        String durationStr;
+
+        if (days == -1) {
+          suspendedUntil = DateTime(2099, 12, 31); // Permanent
+          durationStr = '영구';
+        } else {
+          suspendedUntil = DateTime.now().add(Duration(days: days));
+          durationStr = '${days}일';
+        }
+
+        // 3. 쓰기(Write) 작업 수행
+        transaction.update(userRef, {
+          'suspendedUntil': Timestamp.fromDate(suspendedUntil),
+          'suspensionReason': reason ?? '커뮤니티 가이드라인 위반',
+        });
+
+        transaction.update(reportRef, {'status': 'resolved'});
+
+        final reporterNotiRef = _firestore.collection('notifications').doc();
+        transaction.set(reporterNotiRef, {
+          'userId': reporterId,
+          'type': 'reportResult',
+          'message':
+              '신고하신 회원이 $durationStr 정지 처리되었습니다. 보상으로 100가지가 지급되었습니다. 건전한 커뮤니티를 위해 힘써주셔서 감사합니다.',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // 신고자 보상 (100가지)
+        if (reporterSnapshot.exists) {
+          final currentPoints = reporterSnapshot.data()?['points'] ?? 0;
+          transaction.update(reporterRef, {'points': currentPoints + 100});
+        }
+      });
+      await fetchReports();
+    } catch (e) {
+      debugPrint('사용자 정지 오류: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // 사용자 관리 기능
+  List<UserModel> _allUsers = [];
+  List<UserModel> get allUsers => _allUsers;
+  String? _searchQuery;
+  String? get searchQuery => _searchQuery;
+  DocumentSnapshot? _lastUserDoc;
+  bool _hasMoreUsers = true;
+  bool get hasMoreUsers => _hasMoreUsers;
+
+  Future<void> fetchUsers({bool isRefresh = false, String? searchQuery}) async {
+    if (_isLoading) return;
+    if (!isRefresh && !_hasMoreUsers && searchQuery == _searchQuery) return;
+
+    // 검색어 변경 시 초기화
+    if (searchQuery != _searchQuery) {
+      isRefresh = true;
+      _searchQuery = searchQuery;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      Query query = _firestore.collection('users');
+
+      if (_searchQuery != null && _searchQuery!.isNotEmpty) {
+        // 닉네임 전방 일치 검색
+        query = query
+            .where('nickname', isGreaterThanOrEqualTo: _searchQuery)
+            .where('nickname', isLessThanOrEqualTo: '$_searchQuery\uf8ff')
+            .orderBy('nickname');
+      } else {
+        query = query.orderBy('createdAt', descending: true);
+      }
+
+      query = query.limit(20);
+
+      if (!isRefresh && _lastUserDoc != null) {
+        query = query.startAfterDocument(_lastUserDoc!);
+      }
+
+      final snapshot = await query.get();
+
+      if (isRefresh) {
+        _allUsers = [];
+        _lastUserDoc = null;
+        _hasMoreUsers = true;
+      }
+
+      if (snapshot.docs.isNotEmpty) {
+        final newUsers =
+            snapshot.docs.map((doc) => UserModel.fromFirestore(doc)).toList();
+        _allUsers.addAll(newUsers);
+        _lastUserDoc = snapshot.docs.last;
+        _hasMoreUsers = snapshot.docs.length == 20;
+      } else {
+        _hasMoreUsers = false;
+      }
+    } catch (e) {
+      debugPrint('사용자 목록 가져오기 오류: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> unsuspendUser(String userId) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _firestore.collection('users').doc(userId).update({
+        'suspendedUntil': FieldValue.delete(),
+        'suspensionReason': FieldValue.delete(),
+      });
+
+      _isLoading =
+          false; // fetchUsers를 호출하기 전에 꺼주어서 fetchUsers 내부의 중복 실행 방지 로직을 통과하게 함
+      await fetchUsers(isRefresh: true, searchQuery: _searchQuery);
+    } catch (e) {
+      debugPrint('정지 해제 오류: $e');
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateUserPoints(String userId, int points) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _firestore.collection('users').doc(userId).update({
+        'points': points,
+      });
+
+      _isLoading = false;
+      await fetchUsers(isRefresh: true, searchQuery: _searchQuery);
+    } catch (e) {
+      debugPrint('가지 수정 오류: $e');
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   int _dailyVisitorCount = 0;

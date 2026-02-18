@@ -25,6 +25,10 @@ enum AppDialogKey {
   adReward,
   deleteFriend,
   report,
+  suspension,
+  unsuspend,
+  editPoints,
+  challengeCompleted,
 }
 
 class AppDialogAction {
@@ -353,6 +357,42 @@ class AppDialog {
                 ),
               ],
         );
+      case AppDialogKey.suspension:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('suspensionTitle') ??
+              '이용 제한 안내',
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.unsuspend:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('unsuspendTitle') ?? '정지 해제',
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.editPoints:
+        return AppDialogConfig(
+          title: '가지 수량 수정',
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.challengeCompleted:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('challengeCompleted') ??
+              'Challenge Completed!',
+          showConfetti: true,
+          content: content,
+          actionsAlignment: MainAxisAlignment.center,
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context),
+                ),
+              ],
+        );
     }
   }
 
@@ -414,7 +454,9 @@ class AppDialog {
           'Delete',
           'Delete Account',
           '중단',
-          'Stop'
+          'Stop',
+          '로그아웃',
+          'Logout'
         ].contains(action.label);
 
     // 'Cancel' or 'Close' style buttons. Includes '계속 작성'
@@ -447,7 +489,8 @@ class AppDialog {
         child: action.labelWidget,
         onPressed: () {
           if (action.onPressed is Function(BuildContext)) {
-            action.onPressed(context);
+            action.onPressed(
+                context); // context is dialogContext passed to _buildActionButton
           } else {
             action.onPressed?.call();
           }
@@ -482,12 +525,13 @@ class AppDialog {
 
     return ValueListenableBuilder<bool>(
       valueListenable: action.isEnabled ?? const AlwaysStoppedAnimation(true),
-      builder: (context, isEnabled, child) {
+      builder: (_, isEnabled, child) {
         final button = ElevatedButton(
           onPressed: isEnabled
               ? () {
                   if (action.onPressed is Function(BuildContext)) {
-                    action.onPressed(context);
+                    action.onPressed(
+                        context); // Uses dialogContext, not ValueListenableBuilder context
                   } else {
                     action.onPressed?.call();
                   }
@@ -690,17 +734,20 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
                               ],
                               // Content
                               if (config.content != null)
-                                DefaultTextStyle.merge(
-                                  style: TextStyle(
-                                    color: colors?.dialogBody ??
-                                        Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium
-                                            ?.color,
-                                    fontFamily: 'BMJUA', // 팝업 내용에도 폰트 적용
-                                    fontSize: 18,
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: DefaultTextStyle.merge(
+                                    style: TextStyle(
+                                      color: colors?.dialogBody ??
+                                          Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color,
+                                      fontFamily: 'BMJUA', // 팝업 내용에도 폰트 적용
+                                      fontSize: 18,
+                                    ),
+                                    child: config.content!,
                                   ),
-                                  child: config.content!,
                                 ),
                               if (_errorMessage != null)
                                 Container(
@@ -849,7 +896,7 @@ class _ImageActionButtonState extends State<_ImageActionButton> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: widget.isEnabled ?? const AlwaysStoppedAnimation(true),
-      builder: (context, isEnabled, child) {
+      builder: (_, isEnabled, child) {
         return GestureDetector(
           onTapDown:
               isEnabled ? (_) => setState(() => _isPressed = true) : null,

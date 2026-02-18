@@ -109,50 +109,6 @@ class _CharacterDisplayState extends State<CharacterDisplay>
             ),
 
             // 3. Expression Layer - Position face
-            Positioned(
-              top: widget.isAwake ? charHeight * 0.18 : charHeight * 0.13,
-              left: charWidth * 0.075,
-              child: SizedBox(
-                width: charWidth * 0.85,
-                height: charHeight * 0.85,
-                child: widget.enableAnimation
-                    ? AnimatedCrossFade(
-                        duration: const Duration(milliseconds: 200),
-                        alignment: Alignment.center,
-                        crossFadeState: widget.isTapped
-                            ? CrossFadeState.showSecond
-                            : CrossFadeState.showFirst,
-                        firstChild: Image.asset(
-                          widget.isAwake
-                              ? 'assets/images/Face_Default.png'
-                              : 'assets/images/Face_Sleep.png',
-                          fit: BoxFit.contain,
-                          key: const ValueKey('face_normal'),
-                          cacheWidth: 300,
-                        ),
-                        secondChild: Padding(
-                          padding: EdgeInsets.only(
-                            top: widget.isAwake ? 10 : 0,
-                          ),
-                          child: Image.asset(
-                            widget.isAwake
-                                ? 'assets/images/Face_Wink.png'
-                                : 'assets/images/Face_Drool.png',
-                            fit: BoxFit.contain,
-                            key: const ValueKey('face_tapped'),
-                            cacheWidth: 300,
-                          ),
-                        ),
-                      )
-                    : Image.asset(
-                        widget.isAwake
-                            ? 'assets/images/Face_Default.png'
-                            : 'assets/images/Face_Sleep.png',
-                        fit: BoxFit.contain,
-                        cacheWidth: 300,
-                      ),
-              ),
-            ),
 
             // 4. Clothes Slot
             if (widget.equippedItems != null &&
@@ -204,16 +160,69 @@ class _CharacterDisplayState extends State<CharacterDisplay>
 
                   return Positioned(
                     bottom: charHeight * bottomPct,
-                    child: Image.asset(
-                      asset.imagePath!,
-                      width: charWidth * widthPct,
-                      fit: BoxFit.contain,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Image.asset(
+                        asset.imagePath!,
+                        width: charWidth * widthPct,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   );
                 } catch (e) {
                   return const SizedBox.shrink();
                 }
               }),
+
+            // 3. Expression Layer - Position face (Moved after Clothes/Body Slot)
+            Positioned(
+              top: widget.isAwake ? charHeight * 0.18 : charHeight * 0.13,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: SizedBox(
+                  width: charWidth * 0.85,
+                  height: charHeight * 0.85,
+                  child: widget.enableAnimation
+                      ? AnimatedCrossFade(
+                          duration: const Duration(milliseconds: 200),
+                          alignment: Alignment.center,
+                          crossFadeState: widget.isTapped
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          firstChild: Image.asset(
+                            widget.isAwake
+                                ? 'assets/images/Face_Default.png'
+                                : 'assets/images/Face_Sleep.png',
+                            fit: BoxFit.contain,
+                            key: const ValueKey('face_normal'),
+                            cacheWidth: 300,
+                          ),
+                          secondChild: Padding(
+                            padding: EdgeInsets.only(
+                              top: widget.isAwake ? 10 : 0,
+                            ),
+                            child: Image.asset(
+                              widget.isAwake
+                                  ? 'assets/images/Face_Wink.png'
+                                  : 'assets/images/Face_Drool.png',
+                              fit: BoxFit.contain,
+                              key: const ValueKey('face_tapped'),
+                              cacheWidth: 300,
+                            ),
+                          ),
+                        )
+                      : Image.asset(
+                          widget.isAwake
+                              ? 'assets/images/Face_Default.png'
+                              : 'assets/images/Face_Sleep.png',
+                          fit: BoxFit.contain,
+                          cacheWidth: 300,
+                        ),
+                ),
+              ),
+            ),
 
             // Expression Layer is already at index 3 (lines 103-151)
 

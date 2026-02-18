@@ -13,6 +13,7 @@ import '../../../core/widgets/app_dialog.dart';
 import '../widgets/friend_card.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../character/widgets/character_display.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -314,15 +315,21 @@ class _SocialScreenState extends State<SocialScreen> {
       // Decoration removed as requested
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: colorScheme.secondary.withOpacity(0.2),
-            child: Text(
-              user.nickname[0],
-              style: TextStyle(
-                color: colorScheme.secondary,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'BMJUA',
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: colorScheme.secondary.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            clipBehavior: Clip.antiAlias, // 동그라미 영역 밖으로 나가는 부분 자르기
+            child: Center(
+              child: CharacterDisplay(
+                characterLevel: user.characterLevel,
+                equippedItems: user.equippedCharacterItems,
+                size: 48, // 컨테이너(48x48)에 딱 맞춰서 하단이 잘리지 않게 함
+                enableAnimation: false,
+                isAwake: context.read<SocialController>().isFriendAwake(user),
               ),
             ),
           ),
@@ -401,7 +408,6 @@ class _SocialScreenState extends State<SocialScreen> {
       String requestId, String friendId, String friendNickname) async {
     final socialController = context.read<SocialController>();
     final authController = context.read<AuthController>();
-    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
     try {
       await socialController.acceptFriendRequest(
@@ -412,23 +418,16 @@ class _SocialScreenState extends State<SocialScreen> {
         friendNickname,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)?.getFormat(
-                    'youBecameFriends', {'nickname': friendNickname}) ??
-                'You became friends with $friendNickname!'),
-            backgroundColor: colorScheme.success,
-          ),
+        MemoNotification.show(
+          context,
+          AppLocalizations.of(context)?.getFormat(
+                  'youBecameFriends', {'nickname': friendNickname}) ??
+              'You became friends with $friendNickname! ✨',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: colorScheme.error,
-          ),
-        );
+        MemoNotification.show(context, e.toString());
       }
     }
   }
@@ -447,13 +446,7 @@ class _SocialScreenState extends State<SocialScreen> {
       );
     } catch (e) {
       if (mounted) {
-        final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: colorScheme.error,
-          ),
-        );
+        MemoNotification.show(context, e.toString());
       }
     }
   }

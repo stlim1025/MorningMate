@@ -62,15 +62,17 @@ class AppRouter {
         final isLoggedIn = authController.userModel != null;
 
         if (isLoggedIn) {
+          final user = authController.userModel;
+          final isSuspended = user?.suspendedUntil != null &&
+              user!.suspendedUntil!.isAfter(DateTime.now());
+
           // 관리자 리다이렉트 로직
-          final email = authController.userModel?.email;
+          final email = user?.email;
           const adminEmails = ['admin@morningmate.com', 'admin@test.com'];
           if (adminEmails.contains(email)) {
-            // 이미 관리자 페이지에 있거나 관리자 페이지로 이동 중이면 리다이렉트 하지 않음
             if (location.startsWith('/admin')) {
               return null;
             }
-            // 그 외의 경우 (로그인 직후, 스플래시 등) 관리자 페이지로 강제 이동
             return '/admin';
           }
 
@@ -78,8 +80,12 @@ class AppRouter {
             return null;
           }
 
+          // 정지된 사용자는 메인으로 이동하지 않고 현재 페이지(다이얼로그 노출 중) 유지
+          if (isSuspended) {
+            return null;
+          }
+
           // 생체 인증이 필요한 경우 체크
-          final user = authController.userModel;
           final needsBiometric = user?.biometricEnabled ?? false;
           final isVerified = authController.isBiometricVerified;
 

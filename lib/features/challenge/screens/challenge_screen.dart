@@ -14,6 +14,7 @@ class ChallengeScreen extends StatelessWidget {
     final user = characterController.currentUser;
 
     final List<Map<String, dynamic>> challenges = [
+      // 1. Streak Challenges
       {
         'title':
             AppLocalizations.of(context)?.get('challenge_dawn_start_title') ??
@@ -49,14 +50,49 @@ class ChallengeScreen extends StatelessWidget {
       },
       {
         'title':
-            AppLocalizations.of(context)?.get('challenge_rich_room_title') ??
-                'Rich Room',
+            AppLocalizations.of(context)?.get('challenge_streak_14_title') ??
+                '2 Weeks Streak',
         'description':
-            AppLocalizations.of(context)?.get('challenge_rich_room_desc') ??
-                'Buy 3 or more props',
-        'isCompleted': (user?.purchasedPropIds.length ?? 0) >= 3,
+            AppLocalizations.of(context)?.get('challenge_streak_14_desc') ??
+                'Write diary for 14 consecutive days',
+        'isCompleted': (user?.displayConsecutiveDays ?? 0) >= 14,
         'reward':
-            '150 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+            '500 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title':
+            AppLocalizations.of(context)?.get('challenge_streak_21_title') ??
+                '3 Weeks Streak',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_streak_21_desc') ??
+                'Write diary for 21 consecutive days',
+        'isCompleted': (user?.displayConsecutiveDays ?? 0) >= 21,
+        'reward':
+            '700 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title':
+            AppLocalizations.of(context)?.get('challenge_streak_30_title') ??
+                'Monthly Master',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_streak_30_desc') ??
+                'Write diary for 30 consecutive days',
+        'isCompleted': (user?.displayConsecutiveDays ?? 0) >= 30,
+        'reward':
+            '1000 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+
+      // 2. Social Challenges
+      {
+        'title':
+            AppLocalizations.of(context)?.get('challenge_friend_1_title') ??
+                'First Friend',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_friend_1_desc') ??
+                'Make your first friend',
+        'isCompleted': (user?.friendIds.length ?? 0) >= 1,
+        'reward':
+            '50 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
         'title':
@@ -71,6 +107,193 @@ class ChallengeScreen extends StatelessWidget {
       },
       {
         'title':
+            AppLocalizations.of(context)?.get('challenge_friend_10_title') ??
+                'Popular',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_friend_10_desc') ??
+                'Make 10 friends',
+        'isCompleted': (user?.friendIds.length ?? 0) >= 10,
+        'reward':
+            '400 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title':
+            AppLocalizations.of(context)?.get('challenge_friend_20_title') ??
+                'Social Celebrity',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_friend_20_desc') ??
+                'Make 20 friends',
+        'isCompleted': (user?.friendIds.length ?? 0) >= 20,
+        'reward':
+            '800 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+
+      // 3. Prop Collection
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_prop_1_title') ??
+            'First Decoration',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_prop_1_desc') ??
+                'Buy 1 prop',
+        'isCompleted': (user?.purchasedPropIds.length ?? 0) >= 1,
+        'reward':
+            '30 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title':
+            AppLocalizations.of(context)?.get('challenge_rich_room_title') ??
+                'Rich Room',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_rich_room_desc') ??
+                'Buy 3 or more props',
+        'isCompleted': (user?.purchasedPropIds.length ?? 0) >= 3,
+        'reward':
+            '150 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_prop_5_title') ??
+            'Decorator',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_prop_5_desc') ??
+                'Buy 5 props',
+        'isCompleted': (user?.purchasedPropIds.length ?? 0) >= 5,
+        'reward':
+            '300 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_prop_10_title') ??
+            'Maximalist',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_prop_10_desc') ??
+                'Buy 10 props',
+        'isCompleted': (user?.purchasedPropIds.length ?? 0) >= 10,
+        'reward':
+            '600 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+
+      // 4. Character Items
+      {
+        'title':
+            AppLocalizations.of(context)?.get('challenge_fashion_3_title') ??
+                'Fashionista',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_fashion_3_desc') ??
+                'Buy 3 character items',
+        'isCompleted': (user?.purchasedCharacterItemIds.length ?? 0) >= 3,
+        'reward':
+            '200 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title':
+            AppLocalizations.of(context)?.get('challenge_fashion_5_title') ??
+                'Trendsetter',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_fashion_5_desc') ??
+                'Buy 5 character items',
+        'isCompleted': (user?.purchasedCharacterItemIds.length ?? 0) >= 5,
+        'reward':
+            '400 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+
+      // 5. Backgrounds
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_bg_1_title') ??
+            'Mood Change',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_bg_1_desc') ??
+                'Buy 1 background',
+        'isCompleted':
+            (user?.purchasedBackgroundIds.where((e) => e != 'none').length ??
+                    0) >=
+                1,
+        'reward':
+            '100 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_bg_3_title') ??
+            'Atmosphere Master',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_bg_3_desc') ??
+                'Buy 3 backgrounds',
+        'isCompleted':
+            (user?.purchasedBackgroundIds.where((e) => e != 'none').length ??
+                    0) >=
+                3,
+        'reward':
+            '300 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+
+      // 6. Growth
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_level_2_title') ??
+            'First Growth',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_level_2_desc') ??
+                'Reach Character Level 2',
+        'isCompleted': (user?.characterLevel ?? 1) >= 2,
+        'reward':
+            '100 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_level_5_title') ??
+            'Fully Grown',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_level_5_desc') ??
+                'Reach Character Level 5',
+        'isCompleted': (user?.characterLevel ?? 1) >= 5,
+        'reward':
+            '500 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+
+      // 7. Memos
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_memo_1_title') ??
+            'First Memo',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_memo_1_desc') ??
+                'Write your first memo',
+        // TODO: Update condition with actual memo count from user model
+        'isCompleted': false,
+        'reward':
+            '30 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_memo_3_title') ??
+            'Memo Collector',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_memo_3_desc') ??
+                'Write 3 memos',
+        // TODO: Update condition with actual memo count from user model
+        'isCompleted': false,
+        'reward':
+            '100 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_memo_10_title') ??
+            'Memo Maniac',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_memo_10_desc') ??
+                'Write 10 memos',
+        // TODO: Update condition with actual memo count from user model
+        'isCompleted': false,
+        'reward':
+            '300 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'title': AppLocalizations.of(context)?.get('challenge_memo_30_title') ??
+            'Memo Master',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_memo_30_desc') ??
+                'Write 30 memos',
+        // TODO: Update condition with actual memo count from user model
+        'isCompleted': false,
+        'reward':
+            '500 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+
+      // 8. General
+      {
+        'title':
             AppLocalizations.of(context)?.get('challenge_diary_master_title') ??
                 'Diary Master',
         'description':
@@ -81,6 +304,14 @@ class ChallengeScreen extends StatelessWidget {
             '500 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
     ];
+
+    // isCompleted가 true인 항목을 뒤로 보내기
+    challenges.sort((a, b) {
+      bool aCompleted = a['isCompleted'];
+      bool bCompleted = b['isCompleted'];
+      if (aCompleted == bCompleted) return 0;
+      return aCompleted ? 1 : -1;
+    });
 
     final completedCount = challenges.where((c) => c['isCompleted']).length;
 
@@ -132,7 +363,7 @@ class ChallengeScreen extends StatelessWidget {
                     // List Section
                     Expanded(
                       child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(35, 10, 35, 60),
+                        padding: const EdgeInsets.fromLTRB(35, 10, 35, 120),
                         itemCount: challenges.length,
                         itemBuilder: (context, index) {
                           return _buildChallengeListItem(
@@ -140,6 +371,9 @@ class ChallengeScreen extends StatelessWidget {
                         },
                       ),
                     ),
+                    const SizedBox(
+                        height:
+                            25), // Bottom margin to keep list inside note image
                   ],
                 ),
               ),
@@ -298,8 +532,6 @@ class ChallengeScreen extends StatelessWidget {
                               fontSize: 12,
                               color: const Color(0xFF4E342E).withOpacity(0.6),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

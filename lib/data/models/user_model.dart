@@ -39,6 +39,12 @@ class UserModel {
       equippedCharacterItems; // 장착된 캐릭터 아이템 (slot: itemId)
   final String currentThemeId; // 현재 선택된 테마 ID
   final RoomDecorationModel roomDecoration;
+  final DateTime? suspendedUntil; // 정지 종료 일시
+  final String? suspensionReason; // 정지 사유
+  final String? provider; // 로그인 방식 (email, google, kakao, apple)
+  final List<String> completedChallengeIds; // 완료된 도전과제 ID 목록
+  final int memoCount; // 작성한 메모 개수
+  final int diaryCount; // 작성한 총 일기 개수
 
   UserModel({
     required this.uid,
@@ -87,6 +93,12 @@ class UserModel {
     this.equippedCharacterItems = const {},
     this.currentThemeId = 'light',
     RoomDecorationModel? roomDecoration,
+    this.suspendedUntil,
+    this.suspensionReason,
+    this.provider,
+    this.completedChallengeIds = const [],
+    this.memoCount = 0,
+    this.diaryCount = 0,
   }) : roomDecoration = roomDecoration ?? RoomDecorationModel();
 
   // Firestore에서 가져오기
@@ -147,6 +159,15 @@ class UserModel {
           ? RoomDecorationModel.fromMap(
               data['roomDecoration'] as Map<String, dynamic>)
           : RoomDecorationModel(),
+      suspendedUntil: data['suspendedUntil'] != null
+          ? (data['suspendedUntil'] as Timestamp).toDate()
+          : null,
+      suspensionReason: data['suspensionReason'],
+      provider: data['provider'],
+      completedChallengeIds:
+          List<String>.from(data['completedChallengeIds'] ?? []),
+      memoCount: data['memoCount'] ?? 0,
+      diaryCount: data['diaryCount'] ?? 0,
     );
   }
 
@@ -194,6 +215,13 @@ class UserModel {
       'equippedCharacterItems': equippedCharacterItems,
       'currentThemeId': currentThemeId,
       'roomDecoration': roomDecoration.toMap(),
+      'suspendedUntil':
+          suspendedUntil != null ? Timestamp.fromDate(suspendedUntil!) : null,
+      'suspensionReason': suspensionReason,
+      'provider': provider,
+      'completedChallengeIds': completedChallengeIds,
+      'memoCount': memoCount,
+      'diaryCount': diaryCount,
     };
   }
 
@@ -235,6 +263,12 @@ class UserModel {
     Map<String, dynamic>? equippedCharacterItems,
     String? currentThemeId,
     RoomDecorationModel? roomDecoration,
+    DateTime? suspendedUntil,
+    String? suspensionReason,
+    String? provider,
+    List<String>? completedChallengeIds,
+    int? memoCount,
+    int? diaryCount,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -277,6 +311,13 @@ class UserModel {
           equippedCharacterItems ?? this.equippedCharacterItems,
       currentThemeId: currentThemeId ?? this.currentThemeId,
       roomDecoration: roomDecoration ?? this.roomDecoration,
+      suspendedUntil: suspendedUntil ?? this.suspendedUntil,
+      suspensionReason: suspensionReason ?? this.suspensionReason,
+      provider: provider ?? this.provider,
+      completedChallengeIds:
+          completedChallengeIds ?? this.completedChallengeIds,
+      memoCount: memoCount ?? this.memoCount,
+      diaryCount: diaryCount ?? this.diaryCount,
     );
   }
 
@@ -319,5 +360,26 @@ class UserModel {
 
     // 그 외(2일 이상 지남)는 깨짐
     return 0;
+  }
+
+  // 로그인 방식 표시용 헬퍼
+  String get loginProviderLabel {
+    if (provider != null) {
+      switch (provider) {
+        case 'kakao':
+          return '카카오';
+        case 'google':
+          return '구글';
+        case 'apple':
+          return '애플';
+        case 'email':
+          return '이메일';
+      }
+    }
+
+    // fallback: 이메일 형식을 통해 추측
+    if (email.contains('kakao_')) return '카카오';
+    if (email.contains('google')) return '구글'; // 구글은 아닐수도 있지만...
+    return '이메일';
   }
 }

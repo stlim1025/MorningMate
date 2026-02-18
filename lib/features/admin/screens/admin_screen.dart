@@ -5,6 +5,7 @@ import 'shop_management_tab.dart';
 import '../controllers/admin_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../data/models/user_model.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -31,8 +32,9 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     String title = '관리자 홈';
-    if (_currentIndex == 1) title = '신고 관리';
-    if (_currentIndex == 2) title = '상점 관리';
+    if (_currentIndex == 1) title = '유저 관리';
+    if (_currentIndex == 2) title = '신고 관리';
+    if (_currentIndex == 3) title = '상점 관리';
 
     return Scaffold(
       appBar: AppBar(
@@ -48,13 +50,16 @@ class _AdminScreenState extends State<AdminScreen> {
       body: _currentIndex == 0
           ? const AdminHomeTab()
           : _currentIndex == 1
-              ? const ReportListTab()
-              : const ShopManagementTab(),
+              ? const UserListTab()
+              : _currentIndex == 2
+                  ? const ReportListTab()
+                  : const ShopManagementTab(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: '유저'),
           BottomNavigationBarItem(icon: Icon(Icons.report), label: '신고'),
           BottomNavigationBarItem(icon: Icon(Icons.store), label: '상점'),
         ],
@@ -197,6 +202,232 @@ class AdminHomeTab extends StatelessWidget {
   }
 }
 
+class UserListTab extends StatefulWidget {
+  const UserListTab({super.key});
+
+  @override
+  State<UserListTab> createState() => _UserListTabState();
+}
+
+class _UserListTabState extends State<UserListTab> {
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+        () => context.read<AdminController>().fetchUsers(isRefresh: true));
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        context.read<AdminController>().fetchUsers();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AdminController>(
+      builder: (context, controller, child) {
+        final users = controller.allUsers;
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: '닉네임으로 검색...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            controller.fetchUsers(
+                                isRefresh: true, searchQuery: '');
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onSubmitted: (value) {
+                  controller.fetchUsers(isRefresh: true, searchQuery: value);
+                },
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => controller.fetchUsers(
+                    isRefresh: true, searchQuery: _searchController.text),
+                child: ListView.separated(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: users.length + (controller.hasMoreUsers ? 1 : 0),
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemBuilder: (context, index) {
+                    if (index == users.length) {
+                      return const Center(
+                          child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ));
+                    }
+
+                    final user = users[index];
+                    final isSuspended = user.suspendedUntil != null &&
+                        user.suspendedUntil!.isAfter(DateTime.now());
+
+                    return ListTile(
+                      title: Text(user.nickname),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('이메일: ${user.email}'),
+                          Text('가입경로: ${user.loginProviderLabel}'),
+                          Row(
+                            children: [
+                              const Text('보유 가지: '),
+                              Text(
+                                '${user.points}개',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.brown,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () =>
+                                    _showEditPointsDialog(context, user),
+                                child: const Icon(
+                                  Icons.edit,
+                                  size: 16,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (isSuspended) ...[
+                            Text('정지상태: ${_formatDate(user.suspendedUntil)} 까지',
+                                style: const TextStyle(color: Colors.red)),
+                            Text('사유: ${user.suspensionReason ?? "없음"}',
+                                style: const TextStyle(
+                                    color: Colors.red, fontSize: 12)),
+                          ],
+                        ],
+                      ),
+                      trailing: isSuspended
+                          ? ElevatedButton(
+                              onPressed: () => _confirmUnsuspend(context, user),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue),
+                              child: const Text('정지 해제',
+                                  style: TextStyle(color: Colors.white)),
+                            )
+                          : null,
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditPointsDialog(BuildContext context, UserModel user) {
+    final pointsController =
+        TextEditingController(text: user.points.toString());
+
+    AppDialog.show(
+      context: context,
+      key: AppDialogKey.editPoints,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('${user.nickname}님의 가지 수량을 수정합니다.'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: pointsController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: '수정할 가지 갯수',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: '수정',
+          isPrimary: true,
+          onPressed: () {
+            final newPoints = int.tryParse(pointsController.text);
+            if (newPoints != null) {
+              Navigator.pop(context);
+              context
+                  .read<AdminController>()
+                  .updateUserPoints(user.uid, newPoints);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content:
+                        Text('${user.nickname}님의 가지가 $newPoints개로 수정되었습니다.')),
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  void _confirmUnsuspend(BuildContext context, UserModel user) {
+    AppDialog.show(
+      context: context,
+      key: AppDialogKey.unsuspend,
+      content: Text('${user.nickname}님의 이용 정지를 해제하시겠습니까?'),
+      actions: [
+        AppDialogAction(
+          label: '취소',
+          onPressed: () => Navigator.pop(context),
+        ),
+        AppDialogAction(
+          label: '해제',
+          isPrimary: true,
+          onPressed: () {
+            Navigator.pop(context);
+            context.read<AdminController>().unsuspendUser(user.uid);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${user.nickname}님의 정지가 해제되었습니다.')),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    return DateFormat('yyyy-MM-dd HH:mm').format(date);
+  }
+}
+
 class ReportListTab extends StatelessWidget {
   const ReportListTab({super.key});
 
@@ -304,9 +535,9 @@ class ReportListTab extends StatelessWidget {
                     style:
                         ElevatedButton.styleFrom(backgroundColor: Colors.red),
                     onPressed: () =>
-                        _showDeleteConfirmDialog(context, controller, report),
+                        _showSuspendDialog(context, controller, report),
                     child:
-                        const Text('삭제', style: TextStyle(color: Colors.white)),
+                        const Text('정지', style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
@@ -358,31 +589,54 @@ class ReportListTab extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmDialog(BuildContext context,
-      AdminController controller, Map<String, dynamic> report) {
+  void _showSuspendDialog(BuildContext context, AdminController controller,
+      Map<String, dynamic> report) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('노트 삭제'),
-        content: const Text('정말로 이 노트를 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              controller.deleteNote(
-                report['id'],
-                report['targetUserId'],
-                report['targetId'],
-                report['reporterId'],
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('삭제', style: TextStyle(color: Colors.red)),
+      builder: (context) => SimpleDialog(
+        title: const Text('사용자 정지 기간 선택'),
+        children: [
+          _suspendSimpleAction(context, controller, report, '1일 정지', 1),
+          _suspendSimpleAction(context, controller, report, '3일 정지', 3),
+          _suspendSimpleAction(context, controller, report, '5일 정지', 5),
+          _suspendSimpleAction(context, controller, report, '7일 정지', 7),
+          _suspendSimpleAction(context, controller, report, '한달 정지', 30),
+          _suspendSimpleAction(context, controller, report, '영구 정지', -1),
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소'),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _suspendSimpleAction(BuildContext context, AdminController controller,
+      Map<String, dynamic> report, String label, int days) {
+    return SimpleDialogOption(
+      onPressed: () {
+        controller.suspendUser(
+          reportId: report['id'],
+          targetUserId: report['targetUserId'],
+          reporterId: report['reporterId'],
+          days: days,
+        );
+        Navigator.pop(context);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 16,
+            color: days == -1 ? Colors.red : Colors.blue[800],
+            fontWeight: days == -1 ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }

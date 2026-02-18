@@ -5,6 +5,7 @@ enum NotificationType {
   friendRequest,
   cheerMessage,
   system,
+  challenge,
 }
 
 class NotificationModel {

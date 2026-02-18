@@ -8,6 +8,9 @@ import '../../../data/models/user_model.dart';
 import '../../../data/models/room_decoration_model.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
+import '../../challenge/data/challenge_data.dart';
+import '../../../data/models/notification_model.dart';
+import '../../../core/localization/app_localizations.dart';
 
 // 캐릭터 상태 정의 - 6단계로 확장
 enum CharacterState {
@@ -270,6 +273,9 @@ class CharacterController extends ChangeNotifier {
 
     // 레벨업 체크
     await _checkLevelUp(userId);
+
+    // 도전과제 달성 체크
+    await checkAchievements();
   }
 
   // 외부에서 상태 강제 설정 (앱 초기화용)
@@ -392,6 +398,8 @@ class CharacterController extends ChangeNotifier {
       purchasedThemeIds: newPurchasedThemes,
     );
     notifyListeners();
+
+    await checkAchievements();
   }
 
   // 배경 구매
@@ -418,6 +426,8 @@ class CharacterController extends ChangeNotifier {
       purchasedBackgroundIds: newPurchasedBackgrounds,
     );
     notifyListeners();
+
+    await checkAchievements();
   }
 
   // 벽지 구매
@@ -444,6 +454,8 @@ class CharacterController extends ChangeNotifier {
       purchasedThemeIds: newPurchasedThemes,
     );
     notifyListeners();
+
+    await checkAchievements();
   }
 
   // 소품 구매
@@ -479,6 +491,8 @@ class CharacterController extends ChangeNotifier {
       purchasedPropIds: newPurchasedProps,
     );
     notifyListeners();
+
+    await checkAchievements();
   }
 
   // 이모티콘 구매
@@ -504,6 +518,8 @@ class CharacterController extends ChangeNotifier {
       purchasedEmoticonIds: newPurchasedEmoticons,
     );
     notifyListeners();
+
+    await checkAchievements();
   }
 
   // 바닥 구매
@@ -528,6 +544,8 @@ class CharacterController extends ChangeNotifier {
       purchasedFloorIds: newPurchasedFloors,
     );
     notifyListeners();
+
+    await checkAchievements();
   }
 
   // 캐릭터 아이템 구매
@@ -553,6 +571,8 @@ class CharacterController extends ChangeNotifier {
       purchasedCharacterItemIds: newPurchasedItems,
     );
     notifyListeners();
+
+    await checkAchievements();
   }
 
   // 캐릭터 아이템 장착/해제
@@ -779,5 +799,117 @@ class CharacterController extends ChangeNotifier {
 
     // assets/images/character/{state}_{animation}.png
     return 'assets/images/character/${state.toString().split('.').last}_$animation.png';
+  }
+
+  // 도전과제 달성 체크
+  Future<void> checkAchievements([BuildContext? context]) async {
+    if (_currentUser == null) return;
+
+    final currentContext = context ?? AppRouter.navigatorKey.currentContext;
+    // context가 없으면 다이얼로그나 로컬라이제이션을 사용할 수 없으므로 중단
+    if (currentContext == null) return;
+
+    final user = _currentUser!;
+    final List<Challenge> completedNow = [];
+
+    // 1. 달성된 도전과제 찾기
+    for (final challenge in challenges) {
+      // 이미 완료된 도전과제는 스킵
+      if (!user.completedChallengeIds.contains(challenge.id)) {
+        // 조건 충족 시
+        if (challenge.isCompleted(user)) {
+          completedNow.add(challenge);
+        }
+      }
+    }
+
+    if (completedNow.isEmpty) return;
+
+    // 2. 보상 지급 및 상태 업데이트 (Firestore)
+    // List를 복사하여 수정 불가능한 리스트 오류 방지
+    final newCompletedIds = List<String>.from(user.completedChallengeIds)
+      ..addAll(completedNow.map((c) => c.id));
+
+    int totalReward = 0;
+    for (final c in completedNow) {
+      totalReward += c.reward;
+    }
+
+    final newPoints = user.points + totalReward;
+
+    await _userService.updateUser(user.uid, {
+      'completedChallengeIds': newCompletedIds,
+      'points': newPoints,
+    });
+
+    // 3. 로컬 상태 업데이트
+    _currentUser = _currentUser!.copyWith(
+      completedChallengeIds: newCompletedIds,
+      points: newPoints,
+    );
+    notifyListeners();
+
+    // 4. 알림 생성 및 다이얼로그 표시 (각 도전과제별)
+    for (final challenge in completedNow) {
+      final title =
+          AppLocalizations.of(currentContext)?.get(challenge.titleKey) ?? '';
+      final challengeCompletedText =
+          AppLocalizations.of(currentContext)?.get('challengeCompleted') ??
+              'Challenge Completed!';
+      final message = '$challengeCompletedText: $title';
+      final branchText =
+          AppLocalizations.of(currentContext)?.get('branch') ?? 'Branch';
+
+      // 알림 추가 (Firestore 직접 접근)
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'userId': user.uid,
+        'senderId': 'system',
+        'senderNickname': 'MorningMate',
+        'type': NotificationType.challenge.toString().split('.').last,
+        'message': message,
+        'isRead': false,
+        'fcmSent': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // 팝업 표시
+      if (currentContext.mounted) {
+        await AppDialog.show(
+          context: currentContext,
+          key: AppDialogKey.challengeCompleted,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'BMJUA',
+                  fontSize: 20,
+                  color: Color(0xFF4E342E),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Image.asset(
+                'assets/images/branch.png',
+                width: 60,
+                height: 60,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '+ ${challenge.reward} $branchText',
+                style: const TextStyle(
+                  fontFamily: 'BMJUA',
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.brown,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 }

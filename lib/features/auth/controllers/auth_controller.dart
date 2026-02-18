@@ -137,6 +137,7 @@ class AuthController extends ChangeNotifier {
           email: email,
           nickname: nickname,
           createdAt: DateTime.now(),
+          provider: 'email',
         );
 
         await _userService.createUser(userModel);
@@ -249,6 +250,7 @@ class AuthController extends ChangeNotifier {
             email: user.email ?? '',
             nickname: initialNickname,
             createdAt: DateTime.now(),
+            provider: 'kakao',
           );
           await _userService.createUser(userModel);
           _userModel = userModel;
