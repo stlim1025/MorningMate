@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:morning_mate/features/morning/controllers/morning_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../../data/models/question_model.dart';
 
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../services/alarm_service.dart';
@@ -143,42 +144,41 @@ class _AlarmRingScreenState extends State<AlarmRingScreen> {
   Future<void> _handleDiaryStart() async {
     setState(() => _isWakingUp = true);
 
-      // 1. 알람 소리 먼저 끄기
-      await AlarmService.stopAlarm(widget.alarmSettings.id);
+    // 1. 알람 소리 먼저 끄기
+    await AlarmService.stopAlarm(widget.alarmSettings.id);
 
-      // 2. 중요: Provider나 시스템이 안정화될 시간을 확보 (1.5초)
-      await Future.delayed(const Duration(milliseconds: 1500));
-      if (!mounted) return;
+    // 2. 중요: Provider나 시스템이 안정화될 시간을 확보 (1.5초)
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
 
-      // 3. Provider 안전하게 호출 (try-catch로 감싸서 Provider 없음 에러 방지)
-      MorningController? morningController;
+    // 3. Provider 안전하게 호출 (try-catch로 감싸서 Provider 없음 에러 방지)
+    MorningController? morningController;
+    try {
+      morningController =
+          Provider.of<MorningController>(context, listen: false);
+    } catch (providerError) {
+      debugPrint('Controller Not Found: $providerError');
+    }
+
+    // 4. 질문 데이터 가져오기 시도
+    QuestionModel? question;
+    if (morningController != null) {
       try {
-        morningController =
-            Provider.of<MorningController>(context, listen: false);
-      } catch (providerError) {
-        debugPrint('Controller Not Found: $providerError');
-      }
-
-      // 4. 질문 데이터 가져오기 시도
-      String? question;
-      if (morningController != null) {
-        try {
-          if (morningController.currentQuestion == null) {
-            await morningController
-                .fetchRandomQuestion()
-                .timeout(const Duration(seconds: 3));
-          }
-          question = morningController.currentQuestion;
-          morningController.startWriting();
-        } catch (apiError) {
-          debugPrint('질문 로드 중 API 에러: $apiError');
+        if (morningController.currentQuestion == null) {
+          await morningController
+              .fetchRandomQuestion()
+              .timeout(const Duration(seconds: 3));
         }
+        question = morningController.currentQuestion;
+        morningController.startWriting();
+      } catch (apiError) {
+        debugPrint('질문 로드 중 API 에러: $apiError');
       }
+    }
 
-      // 5. 무조건 화면 이동 (데이터 없으면 기본값이라도 들고 가야 앱이 안 죽음)
-      if (mounted) {
-        context.go('/writing', extra: question ?? "오늘 하루는 어떠셨나요?");
-      }
-
+    // 5. 무조건 화면 이동 (데이터 없으면 기본값이라도 들고 가야 앱이 안 죽음)
+    if (mounted) {
+      context.go('/writing', extra: question);
+    }
   }
 }

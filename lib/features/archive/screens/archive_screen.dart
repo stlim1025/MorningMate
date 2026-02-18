@@ -13,6 +13,8 @@ import '../../character/widgets/character_display.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../morning/controllers/morning_controller.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../admin/controllers/admin_controller.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -153,7 +155,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '마이페이지',
+            AppLocalizations.of(context)?.get('myPage') ?? 'My Page',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: const Color(0xFF4E342E), // Dark brown color
                   fontWeight: FontWeight.bold,
@@ -298,7 +300,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                                 Center(
                                   child: Text(
                                     user.characterLevel >= 6
-                                        ? 'Max Level'
+                                        ? (AppLocalizations.of(context)
+                                                ?.get('maxLevel') ??
+                                            'Max Level')
                                         : '${user.experience} / ${user.requiredExpForNextLevel}',
                                     style: const TextStyle(
                                       fontFamily: 'BMJUA',
@@ -329,40 +333,44 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     image: DecorationImage(
                       image: AssetImage('assets/images/TextBox_Background.png'),
                       fit: BoxFit.fill,
-                      filterQuality: FilterQuality.none,
+                      filterQuality: FilterQuality.medium,
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/images/branch.png',
-                        width: 18,
-                        height: 18,
-                        cacheWidth: 72,
-                        filterQuality: FilterQuality.none,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${user?.points ?? 0}',
-                        style: const TextStyle(
-                          color: Color(0xFF5D4037),
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'BMJUA',
-                          fontSize: 14,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/branch.png',
+                          width: 18,
+                          height: 18,
+                          cacheWidth: 72,
+                          filterQuality: FilterQuality.medium,
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Text(
-                        '가지',
-                        style: TextStyle(
-                          color: Color(0xFF8D6E63),
-                          fontFamily: 'BMJUA',
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(width: 8),
+                        Text(
+                          '${user?.points ?? 0}',
+                          style: const TextStyle(
+                            color: Color(0xFF5D4037),
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'BMJUA',
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Text(
+                          AppLocalizations.of(context)?.get('branch') ??
+                              'Branch',
+                          style: TextStyle(
+                            color: Color(0xFF8D6E63),
+                            fontFamily: 'BMJUA',
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -394,11 +402,12 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           ),
           child: Column(
             children: [
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '캐릭터 정보',
-                  style: TextStyle(
+                  AppLocalizations.of(context)?.get('characterInfo') ??
+                      'Character Info',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'BMJUA',
@@ -464,7 +473,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           alignment: Alignment.centerLeft,
           child: Text(
-            '일기 작성 정보',
+            AppLocalizations.of(context)?.get('diaryWritingInfo') ??
+                'Diary Writing Info',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -506,6 +516,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         firstDay: DateTime.utc(2020, 1, 1),
         lastDay: DateTime.utc(2030, 12, 31),
         focusedDay: _focusedDay,
+        locale: Localizations.localeOf(context).languageCode,
         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
         calendarFormat: _calendarFormat,
         onDaySelected: (selectedDay, focusedDay) {
@@ -692,7 +703,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    DateFormat('M월 d일').format(_selectedDay!),
+                    AppLocalizations.of(context)?.getFormat('monthDayFormat', {
+                          'month': _selectedDay!.month.toString(),
+                          'day': _selectedDay!.day.toString(),
+                        }) ??
+                        DateFormat('M월 d일').format(_selectedDay!),
                     style: const TextStyle(
                       fontFamily: 'BMJUA',
                       color: Color(0xFF4E342E),
@@ -701,9 +716,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '이 날은 일기를 작성하지 않았습니다',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)?.get('noDiaryForDay') ??
+                        '이 날은 일기를 작성하지 않았습니다',
+                    style: const TextStyle(
                       fontFamily: 'BMJUA',
                       color: Color(0xFF8D6E63),
                       fontSize: 16,
@@ -720,7 +736,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     return _AnimatedDiaryCard(
       diary: diary,
       onTap: () => _viewDiaryContent(diary),
-      dateText: DateFormat('M월 d일 기록').format(diary.dateOnly),
+      dateText: AppLocalizations.of(context)?.getFormat('diaryRecordForDay', {
+            'date': AppLocalizations.of(context)?.getFormat('monthDayFormat', {
+                  'month': diary.dateOnly.month.toString(),
+                  'day': diary.dateOnly.day.toString(),
+                }) ??
+                DateFormat('M월 d일').format(diary.dateOnly)
+          }) ??
+          DateFormat('M월 d일 기록').format(diary.dateOnly),
       moodWidget: _buildMoodWidget(
           diary.moods.isNotEmpty ? diary.moods.first : '',
           64), // Increased size from 48 to 64
@@ -735,11 +758,16 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     final userModel = authController.userModel;
     if (userModel?.biometricEnabled == true) {
       final authenticated = await authController.authenticateWithBiometric(
-        localizedReason: '과거 기록을 확인하기 위해 인증이 필요합니다',
+        localizedReason: AppLocalizations.of(context)
+                ?.get('biometricAuthReasonPastRecords') ??
+            '과거 기록을 확인하기 위해 인증이 필요합니다',
       );
       if (!authenticated) {
         if (mounted) {
-          MemoNotification.show(context, '생체 인증에 실패했습니다. 🔒');
+          MemoNotification.show(
+              context,
+              AppLocalizations.of(context)?.get('biometricAuthFailed') ??
+                  '생체 인증에 실패했습니다. 🔒');
         }
         return;
       }
@@ -784,6 +812,29 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       child: _AnimatedImageButton(
         onTap: _showMyMemosBottomSheet,
         imagePath: 'assets/images/MemoView_Button.png',
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                AppLocalizations.of(context)?.get('collectMyMemos') ??
+                    'Collect My Memos',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontFamily: 'KyoboHandwriting2024psw',
+                  color: Color(0xFF4E342E),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Color(0xFF4E342E),
+                size: 18,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -834,9 +885,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                               const SizedBox(
                                   height:
                                       10), // Reduced since Positioned adds 45
-                              const Text(
-                                '내 메모',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)?.get('myMemos') ??
+                                    '내 메모',
+                                style: const TextStyle(
                                   fontFamily: 'BMJUA',
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
@@ -888,7 +940,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                                           color: Colors.grey.shade300),
                                       const SizedBox(height: 16),
                                       Text(
-                                        '작성한 메모가 없습니다',
+                                        AppLocalizations.of(context)
+                                                ?.get('noMemos') ??
+                                            '작성한 메모가 없습니다',
                                         style: TextStyle(
                                             color: Colors.grey.shade500),
                                       ),
@@ -1028,19 +1082,20 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   String _getStateName(CharacterState state) {
     switch (state) {
       case CharacterState.egg:
-        return '알 🥚';
+        return AppLocalizations.of(context)?.get('state_egg') ?? '알 🥚';
       case CharacterState.cracking:
-        return '금이 간 알 🥚✨';
+        return AppLocalizations.of(context)?.get('state_cracking') ??
+            '금이 간 알 🥚✨';
       case CharacterState.hatching:
-        return '부화 중 🐣';
+        return AppLocalizations.of(context)?.get('state_hatching') ?? '부화 중 🐣';
       case CharacterState.baby:
-        return '새끼 새 🐥';
+        return AppLocalizations.of(context)?.get('state_baby') ?? '새끼 새 🐥';
       case CharacterState.young:
-        return '아기 새 🐦';
+        return AppLocalizations.of(context)?.get('state_young') ?? '아기 새 🐦';
       case CharacterState.adult:
-        return '귀여운 새 🕊️';
+        return AppLocalizations.of(context)?.get('state_adult') ?? '귀여운 새 🕊️';
       case CharacterState.sleeping:
-        return '수면 중 💤';
+        return AppLocalizations.of(context)?.get('state_sleeping') ?? '수면 중 💤';
     }
   }
 }
@@ -1207,31 +1262,56 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                     const SizedBox(height: 16),
                     // Question
                     if (widget.diary.promptQuestion != null) ...[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(top: 2),
-                            child: Icon(
-                              Icons.lightbulb_outline,
-                              color: Color(0xFF8D6E63),
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              widget.diary.promptQuestion!,
-                              style: const TextStyle(
-                                fontFamily: 'BMJUA',
-                                fontSize: 16,
-                                color: Color(0xFF4E342E),
-                                height: 1.4,
+                      Builder(builder: (context) {
+                        String displayQuestion = widget.diary.promptQuestion!;
+
+                        // 영어 모드일 경우 번역 시도
+                        if (Localizations.localeOf(context).languageCode ==
+                            'en') {
+                          // 정규화 함수 (공백, 문장부호 제거)
+                          String normalize(String text) {
+                            return text.replaceAll(RegExp(r'[\s\?\!.,]'), '');
+                          }
+
+                          final String normalizedOriginal =
+                              normalize(displayQuestion);
+
+                          // 번역 맵에서 검색
+                          for (var entry in AdminController
+                              .questionTranslationMap.entries) {
+                            if (normalize(entry.key) == normalizedOriginal) {
+                              displayQuestion = entry.value;
+                              break;
+                            }
+                          }
+                        }
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(top: 2),
+                              child: Icon(
+                                Icons.lightbulb_outline,
+                                color: Color(0xFF8D6E63),
+                                size: 20,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                displayQuestion,
+                                style: const TextStyle(
+                                  fontFamily: 'BMJUA',
+                                  fontSize: 16,
+                                  color: Color(0xFF4E342E),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
                       const SizedBox(height: 16),
                     ],
                     // Divider 2
@@ -1255,9 +1335,11 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                               ),
                             ),
                             padding: const EdgeInsets.only(bottom: 1),
-                            child: const Text(
-                              '일기 내용 보기',
-                              style: TextStyle(
+                            child: Text(
+                              AppLocalizations.of(context)
+                                      ?.get('viewDiaryContent') ??
+                                  '일기 내용 보기',
+                              style: const TextStyle(
                                 fontFamily: 'BMJUA',
                                 fontSize: 18,
                                 color: Color(0xFF4E342E),

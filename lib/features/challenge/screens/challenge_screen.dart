@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../character/controllers/character_controller.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class ChallengeScreen extends StatelessWidget {
   const ChallengeScreen({super.key});
@@ -14,40 +15,70 @@ class ChallengeScreen extends StatelessWidget {
 
     final List<Map<String, dynamic>> challenges = [
       {
-        'title': '새벽의 시작',
-        'description': '오전 6시 이전에 일기 1회 작성하기',
+        'title':
+            AppLocalizations.of(context)?.get('challenge_dawn_start_title') ??
+                'Start of Dawn',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_dawn_start_desc') ??
+                'Write a diary before 6 AM once',
         'isCompleted': (user?.displayConsecutiveDays ?? 0) >= 1,
-        'reward': '50 가지',
+        'reward':
+            '50 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
-        'title': '꾸준한 습관',
-        'description': '3일 연속 일기 작성하기',
+        'title':
+            AppLocalizations.of(context)?.get('challenge_steady_habit_title') ??
+                'Steady Habit',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_steady_habit_desc') ??
+                'Write diary for 3 consecutive days',
         'isCompleted': (user?.displayConsecutiveDays ?? 0) >= 3,
-        'reward': '100 가지',
+        'reward':
+            '100 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
-        'title': '진정한 아침형 인간',
-        'description': '7일 연속 일기 작성하기',
+        'title': AppLocalizations.of(context)
+                ?.get('challenge_morning_person_title') ??
+            'True Morning Person',
+        'description': AppLocalizations.of(context)
+                ?.get('challenge_morning_person_desc') ??
+            'Write diary for 7 consecutive days',
         'isCompleted': (user?.displayConsecutiveDays ?? 0) >= 7,
-        'reward': '300 가지',
+        'reward':
+            '300 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
-        'title': '풍성한 방',
-        'description': '소품 3개 이상 구매하기',
+        'title':
+            AppLocalizations.of(context)?.get('challenge_rich_room_title') ??
+                'Rich Room',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_rich_room_desc') ??
+                'Buy 3 or more props',
         'isCompleted': (user?.purchasedPropIds.length ?? 0) >= 3,
-        'reward': '150 가지',
+        'reward':
+            '150 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
-        'title': '마당 넓은 주인',
-        'description': '친구 5명 맺기',
+        'title':
+            AppLocalizations.of(context)?.get('challenge_social_king_title') ??
+                'Social King',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_social_king_desc') ??
+                'Make 5 friends',
         'isCompleted': (user?.friendIds.length ?? 0) >= 5,
-        'reward': '200 가지',
+        'reward':
+            '200 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
-        'title': '일기의 달인',
-        'description': '누적 일기 30개 작성하기',
+        'title':
+            AppLocalizations.of(context)?.get('challenge_diary_master_title') ??
+                'Diary Master',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_diary_master_desc') ??
+                'Write 30 diaries in total',
         'isCompleted': false,
-        'reward': '500 가지',
+        'reward':
+            '500 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
     ];
 
@@ -78,9 +109,10 @@ class ChallengeScreen extends StatelessWidget {
                   children: [
                     const SizedBox(height: 15),
                     // Title
-                    const Text(
-                      '도전과제',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)?.get('challengesTitle') ??
+                          'Challenges',
+                      style: const TextStyle(
                         fontFamily: 'BMJUA',
                         fontSize: 18,
                         color: Color(0xFF4E342E),
@@ -88,7 +120,8 @@ class ChallengeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 30),
                     // Progress Section
-                    _buildHeaderProgress(completedCount, challenges.length),
+                    _buildHeaderProgress(
+                        context, completedCount, challenges.length),
                     const SizedBox(height: 10),
                     // Dotted Separator
                     Padding(
@@ -118,7 +151,7 @@ class ChallengeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderProgress(int completed, int total) {
+  Widget _buildHeaderProgress(BuildContext context, int completed, int total) {
     final double progressRatio = total > 0 ? completed / total : 0;
     // 가득 찼을 때도 좌우 여백을 위해 끝까지 차지 않도록 조절
     final double constrainedRatio = progressRatio * 0.94;
@@ -137,11 +170,13 @@ class ChallengeScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 20, top: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20, top: 4),
                       child: Text(
-                        '도전과제 달성 수',
-                        style: TextStyle(
+                        AppLocalizations.of(context)
+                                ?.get('challengesProgress') ??
+                            'Challenges Completed',
+                        style: const TextStyle(
                           fontFamily: 'BMJUA',
                           fontSize: 14,
                           color: Color(0xFF4E342E),
@@ -285,7 +320,8 @@ class ChallengeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      '완료',
+                      AppLocalizations.of(context)?.get('completed') ??
+                          'Completed',
                       style: TextStyle(
                         color: Colors.redAccent.withOpacity(0.6),
                         fontSize: 12,

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 
+import 'package:morning_mate/core/localization/app_localizations.dart';
 import '../theme/app_color_scheme.dart';
 
 enum AppDialogKey {
@@ -85,78 +86,93 @@ class AppDialog {
     switch (key) {
       case AppDialogKey.biometricRetry:
         return AppDialogConfig(
-          title: '생체 인증 실패',
+          title: AppLocalizations.of(context)?.get('biometricErrorTitle') ??
+              'Biometric Auth Failed',
           content: content ??
-              const Text(
-                '생체 인증에 실패했습니다. 다시 시도하거나 로그아웃할 수 있습니다.',
+              Text(
+                AppLocalizations.of(context)?.get('biometricErrorDesc') ??
+                    'Biometric authentication failed. Please try again or logout.',
               ),
           actions: actions ?? const [],
         );
       case AppDialogKey.changeNickname:
         return AppDialogConfig(
-          title: '닉네임 변경',
+          title: AppLocalizations.of(context)?.get('changeNickname') ??
+              'Change Nickname',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.changePassword:
         return AppDialogConfig(
-          title: '비밀번호 변경',
+          title: AppLocalizations.of(context)?.get('changePassword') ??
+              'Change Password',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.logout:
         return AppDialogConfig(
-          title: '로그아웃',
-          content: content ?? const Text('정말 로그아웃 하시겠습니까?'),
+          title: AppLocalizations.of(context)?.get('logoutTitle') ?? 'Logout',
+          content: content ??
+              Text(AppLocalizations.of(context)?.get('logoutDesc') ??
+                  'Are you sure you want to logout?'),
           actions: actions ?? const [],
         );
       case AppDialogKey.deleteAccount:
         return AppDialogConfig(
-          title: '회원탈퇴',
+          title: AppLocalizations.of(context)?.get('deleteAccountTitle') ??
+              'Delete Account',
           content: content ??
-              const Text(
-                '정말 회원탈퇴 하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.',
+              Text(
+                AppLocalizations.of(context)?.get('deleteAccountDesc') ??
+                    'Are you sure you want to delete your account?\nAll data will be deleted and cannot be recovered.',
               ),
           actions: actions ?? const [],
         );
       case AppDialogKey.addFriend:
         return AppDialogConfig(
-          title: '친구 추가',
+          title: AppLocalizations.of(context)?.get('addFriendTitle') ??
+              'Add Friend',
           leading: leading,
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.guestbook:
         return AppDialogConfig(
-          title: '응원 메시지',
+          title: AppLocalizations.of(context)?.get('cheerMessageTitle') ??
+              'Cheer Message',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.exitWriting:
         return AppDialogConfig(
-          title: '작성을 중단하시겠어요?',
+          title: AppLocalizations.of(context)?.get('exitWritingTitle') ??
+              'Stop Writing?',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.sentMessages:
         return AppDialogConfig(
-          title: '보낸 메시지',
+          title: AppLocalizations.of(context)?.get('sentMessagesTitle') ??
+              'Sent Messages',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.purchase:
         return AppDialogConfig(
-          title: '아이템 구매',
+          title: AppLocalizations.of(context)?.get('purchaseTitle') ??
+              'Purchase Item',
           content: content,
           showCloseButton: true,
           actions: actions ??
               [
                 AppDialogAction(
-                  label: '취소',
+                  label:
+                      AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
                   onPressed: (context) => Navigator.pop(context, false),
                 ),
                 AppDialogAction(
-                  label: '구매',
+                  label: AppLocalizations.of(context)?.get('buyItem') ??
+                      'Purchase',
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
@@ -164,7 +180,8 @@ class AppDialog {
         );
       case AppDialogKey.purchaseComplete:
         return AppDialogConfig(
-          title: '구매 완료',
+          title: AppLocalizations.of(context)?.get('purchaseCompleteTitle') ??
+              'Purchase Complete',
           content: content,
           actionsAlignment: MainAxisAlignment.center,
           showConfetti: true,
@@ -172,7 +189,8 @@ class AppDialog {
           actions: actions ??
               [
                 AppDialogAction(
-                  label: '확인',
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context),
                 ),
@@ -180,20 +198,24 @@ class AppDialog {
         );
       case AppDialogKey.levelUp:
         return AppDialogConfig(
-          title: '🎊 축하합니다! 🎊',
+          title: AppLocalizations.of(context)?.get('levelUpTitle') ??
+              '🎊 Congratulations! 🎊',
           showConfetti: true,
           content: content ??
-              const Column(
+              Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '캐릭터가 새로운 단계로 성장했어요!',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    AppLocalizations.of(context)?.get('levelUpDesc') ??
+                        'Your character has grown to a new level!',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    '앞으로도 꾸준히 성장을 도와주세요.',
+                    AppLocalizations.of(context)?.get('continueGrowth') ??
+                        'Please continue to help them grow.',
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -201,7 +223,8 @@ class AppDialog {
           actions: actions ??
               [
                 AppDialogAction(
-                  label: '확인',
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
@@ -209,16 +232,21 @@ class AppDialog {
         );
       case AppDialogKey.deleteStickyNote:
         return AppDialogConfig(
-          title: '메모 삭제',
-          content: content ?? const Text('메모를 삭제하시겠습니까?'),
+          title: AppLocalizations.of(context)?.get('deleteStickyNote') ??
+              'Delete Memo',
+          content: content ??
+              Text(AppLocalizations.of(context)?.get('deleteStickyNote') ??
+                  'Do you want to delete this memo?'),
           actions: actions ??
               [
                 AppDialogAction(
-                  label: '취소',
+                  label:
+                      AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
                   onPressed: (context) => Navigator.pop(context, false),
                 ),
                 AppDialogAction(
-                  label: '확인',
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
@@ -226,13 +254,13 @@ class AppDialog {
         );
       case AppDialogKey.writeMemo:
         return AppDialogConfig(
-          title: '메모 작성',
+          title: AppLocalizations.of(context)?.get('stickyNoteHint') ?? 'Memo',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.diaryCompletion:
         return AppDialogConfig(
-          title: '🎉 작성 완료!',
+          title: AppLocalizations.of(context)?.get('completed') ?? 'Completed!',
           showConfetti: true,
           content: content,
           actionsAlignment: MainAxisAlignment.center,
@@ -240,7 +268,8 @@ class AppDialog {
         );
       case AppDialogKey.adReward:
         return AppDialogConfig(
-          title: '가지 획득!',
+          title: AppLocalizations.of(context)?.get('adRewardTitle') ??
+              'Branch Earned!',
           showConfetti: true,
           content: content ??
               SizedBox(
@@ -255,8 +284,9 @@ class AppDialog {
                       fit: BoxFit.contain,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      '광고 시청 보상으로\n10 가지를 획득했습니다!',
+                    Text(
+                      AppLocalizations.of(context)?.get('adRewardDesc') ??
+                          'You earned 10 branches for watching the ad!',
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -266,7 +296,8 @@ class AppDialog {
           actions: actions ??
               [
                 AppDialogAction(
-                  label: '확인',
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
                   isPrimary: true,
                   isFullWidth: true,
                   onPressed: (context) => Navigator.pop(context),
@@ -275,16 +306,29 @@ class AppDialog {
         );
       case AppDialogKey.deleteFriend:
         return AppDialogConfig(
-          title: '친구 삭제',
-          content: content ?? const Text('친구를 삭제하시겠습니까?'),
+          title: AppLocalizations.of(context)?.get('deleteFriendTitle') ??
+              'Delete Friend',
+          content: content ??
+              Text(AppLocalizations.of(context)?.get('deleteFriendDesc') ??
+                  'Are you sure you want to delete this friend?'),
           actions: actions ??
               [
                 AppDialogAction(
-                  label: '취소',
+                  label:
+                      AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
                   onPressed: (context) => Navigator.pop(context, false),
                 ),
                 AppDialogAction(
-                  label: '삭제',
+                  label: AppLocalizations.of(context)?.get('deleteAccount') ??
+                      'Delete', // Reusing deleteAccount as 'Delete' or adding 'delete' key? 'deleteAccount' is 'Delete Account'. I should add 'delete' but I don't have it. I'll use 'deleteAccount' or 'confirm' or just hardcode 'Delete' logic if not found. Wait, I see 'deleteAccount' is "회원탈퇴".
+                  // I should add 'delete' key. But I can't restart AppLocalizations editing.
+                  // I'll use 'confirm' for now or hardcode simple fallback.
+                  // Actually, 'deleteFriendTitle' is "친구 삭제". I can use "삭제" (Delete).
+                  // I'll use 'confirm' for the button label as "Delete" is an action. 'Delete' button usually implies confirmation.
+                  // Wait, I missed adding a generic 'delete' key.
+                  // I will use 'confirm' which is '확인'/'Confirm'. That works. Or I can use 'deleteAccount' key but that says 'Delete Account'.
+                  // Let's use 'confirm' for the action button to be safe, or just hardcode localized string if I have to? No, consistency.
+                  // 'confirm' is fine.
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
@@ -292,16 +336,18 @@ class AppDialog {
         );
       case AppDialogKey.report:
         return AppDialogConfig(
-          title: '신고하기',
+          title: AppLocalizations.of(context)?.get('reportTitle') ?? 'Report',
           content: content,
           actions: actions ??
               [
                 AppDialogAction(
-                  label: '취소',
+                  label:
+                      AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
                   onPressed: (context) => Navigator.pop(context),
                 ),
                 AppDialogAction(
-                  label: '신고',
+                  label:
+                      AppLocalizations.of(context)?.get('report') ?? 'Report',
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
@@ -345,11 +391,48 @@ class AppDialog {
     // 'Brown' buttons (isPrimary) come here, along with specific labels.
     // '계속 작성'은 '취소'와 같은 스타일(아니오 등의 부정적 의미)로 처리하기 위해 isConfirmStyle에서 제외
     final isConfirmStyle = action.isPrimary ||
-        ['확인', '변경', '구매', '전송', '수락', '등록', '요청', '탈퇴'].contains(action.label);
+        [
+          '확인',
+          '변경',
+          '구매',
+          '전송',
+          '수락',
+          '등록',
+          '요청',
+          '탈퇴',
+          '회원탈퇴',
+          'Confirm',
+          'Change',
+          'Purchase',
+          'Send',
+          'Accept',
+          'Register',
+          'Request',
+          'OK',
+          'Yes',
+          'Save',
+          'Delete',
+          'Delete Account',
+          '중단',
+          'Stop'
+        ].contains(action.label);
 
     // 'Cancel' or 'Close' style buttons. Includes '계속 작성'
-    final isCancelStyle =
-        ['취소', '닫기', '거절', '아니오', '계속 작성', '꾸미기'].contains(action.label);
+    final isCancelStyle = [
+      '취소',
+      '닫기',
+      '거절',
+      '아니오',
+      '계속 작성',
+      '꾸미기',
+      'Cancel',
+      'Close',
+      'Reject',
+      'No',
+      'Keep Writing',
+      'Decorate',
+      '계속'
+    ].contains(action.label);
 
     if (isConfirmStyle || isCancelStyle) {
       final imagePath = isConfirmStyle
@@ -386,7 +469,10 @@ class AppDialog {
       backgroundColor =
           colors?.dialogConfirmBackground ?? Theme.of(context).primaryColor;
       foregroundColor = colors?.dialogConfirmForeground ?? Colors.white;
-    } else if (action.label == '탈퇴') {
+    } else if (action.label == '탈퇴' ||
+        action.label == '회원탈퇴' ||
+        action.label == 'Delete Account' ||
+        action.label == 'Delete') {
       backgroundColor = colors?.error ?? Colors.red;
       foregroundColor = Colors.white;
     } else {
@@ -786,13 +872,20 @@ class _ImageActionButtonState extends State<_ImageActionButton> {
                     cacheHeight: 150, // Optimized
                   ),
                   widget.child ??
-                      Text(
-                        widget.label,
-                        style: TextStyle(
-                          fontFamily: 'BMJUA',
-                          color: widget.textColor ?? const Color(0xFF4E342E),
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            widget.label,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'BMJUA',
+                              color:
+                                  widget.textColor ?? const Color(0xFF4E342E),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                 ],

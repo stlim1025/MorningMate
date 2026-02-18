@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class CharacterDecorationButton extends StatefulWidget {
   const CharacterDecorationButton({super.key});
@@ -48,10 +49,15 @@ class _CharacterDecorationButtonState extends State<CharacterDecorationButton> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: const Text(
-                '꾸미기',
-                style: TextStyle(
+              padding: EdgeInsets.only(
+                bottom:
+                    AppLocalizations.of(context)?.locale.languageCode == 'en'
+                        ? 18
+                        : 12,
+              ),
+              child: Text(
+                AppLocalizations.of(context)?.get('decorate') ?? 'Decorate',
+                style: const TextStyle(
                   fontFamily: 'BMJUA',
                   fontSize: 12,
                   color: Color(0xFF5D4E37),
@@ -62,7 +68,11 @@ class _CharacterDecorationButtonState extends State<CharacterDecorationButton> {
                       blurRadius: 4,
                     ),
                   ],
+                  height: 1.0,
                 ),
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.visible,
               ),
             ),
           ],

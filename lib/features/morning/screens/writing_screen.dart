@@ -11,9 +11,11 @@ import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../data/models/question_model.dart';
 
 class WritingScreen extends StatefulWidget {
-  final String? initialQuestion;
+  final QuestionModel? initialQuestion;
 
   const WritingScreen({
     super.key,
@@ -245,8 +247,17 @@ class _WritingScreenState extends State<WritingScreen> {
   Widget _buildHeader(BuildContext context, AppColorScheme colorScheme,
       MorningController controller) {
     final now = DateTime.now();
-    final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    final weekday = weekdays[now.weekday - 1];
+    final weekdayKeys = [
+      'weekday_mon',
+      'weekday_tue',
+      'weekday_wed',
+      'weekday_thu',
+      'weekday_fri',
+      'weekday_sat',
+      'weekday_sun'
+    ];
+    final weekday =
+        AppLocalizations.of(context)?.get(weekdayKeys[now.weekday - 1]) ?? '';
 
     return Padding(
       padding:
@@ -323,9 +334,10 @@ class _WritingScreenState extends State<WritingScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         alignment: Alignment.center,
-                        child: const Text(
-                          '임시저장',
-                          style: TextStyle(
+                        child: Text(
+                          AppLocalizations.of(context)?.get('tempSave') ??
+                              'Draft',
+                          style: const TextStyle(
                             fontFamily: 'BMJUA',
                             color: Color(0xFF5D4037),
                             fontSize: 14,
@@ -344,7 +356,10 @@ class _WritingScreenState extends State<WritingScreen> {
                               _completeDiary(context, controller, colorScheme)
                           : () {
                               MemoNotification.show(
-                                  context, '조금만 더 작성해주세요! ✍️');
+                                  context,
+                                  AppLocalizations.of(context)
+                                          ?.get('moreWriting') ??
+                                      'Please write a bit more! ✍️');
                             },
                       child: Opacity(
                         opacity: controller.isGoalReached() ? 1.0 : 0.5,
@@ -357,9 +372,10 @@ class _WritingScreenState extends State<WritingScreen> {
                               height: 44,
                               fit: BoxFit.fill,
                             ),
-                            const Text(
-                              '저장하기',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)?.get('save') ??
+                                  'Save',
+                              style: const TextStyle(
                                 fontFamily: 'BMJUA',
                                 color: Color(0xFF5D4037), // Brown color
                                 fontSize: 16,
@@ -381,7 +397,7 @@ class _WritingScreenState extends State<WritingScreen> {
             alignment: Alignment.center,
             children: [
               Image.asset('assets/images/Date_Icon.png',
-                  width: 190, height: 50, fit: BoxFit.fill),
+                  width: 200, height: 50, fit: BoxFit.fill),
               Positioned(
                 left: 20,
                 child: Padding(
@@ -396,7 +412,14 @@ class _WritingScreenState extends State<WritingScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${now.year}.${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')} ($weekday)',
+                        AppLocalizations.of(context)
+                                ?.getFormat('fullDateFormat', {
+                              'year': now.year.toString(),
+                              'month': now.month.toString(),
+                              'day': now.day.toString(),
+                              'weekday': weekday
+                            }) ??
+                            '${now.year}.${now.month}.${now.day} ($weekday)',
                         style: TextStyle(
                           fontFamily: 'BMJUA',
                           color: colorScheme.textPrimary,
@@ -433,7 +456,8 @@ class _WritingScreenState extends State<WritingScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '오늘의 질문',
+                  AppLocalizations.of(context)?.get('todayQuestion') ??
+                      'Today\'s Question',
                   style: TextStyle(
                     fontFamily: 'BMJUA',
                     color: colorScheme.textSecondary.withOpacity(0.8),
@@ -443,7 +467,9 @@ class _WritingScreenState extends State<WritingScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.initialQuestion ?? '...',
+                  widget.initialQuestion?.getLocalizedText(
+                          Localizations.localeOf(context).languageCode) ??
+                      '...',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'BMJUA',
@@ -643,7 +669,8 @@ class _WritingScreenState extends State<WritingScreen> {
           errorBorder: InputBorder.none,
           disabledBorder: InputBorder.none,
           filled: false,
-          hintText: '지금 머릿속에 떠오르는 생각을 자유롭게 적어보세요.',
+          hintText: AppLocalizations.of(context)?.get('writingHint') ??
+              'Write down whatever comes to your mind freely.',
           hintStyle: TextStyle(
             fontFamily: 'KyoboHandwriting2024psw',
             color: colorScheme.textHint.withOpacity(0.6),
@@ -661,11 +688,16 @@ class _WritingScreenState extends State<WritingScreen> {
     // 생체 인증이 활성화되어 있다면 저장 전 인증 진행
     if (authController.userModel?.biometricEnabled == true) {
       final authenticated = await authController.authenticateWithBiometric(
-        localizedReason: '일기를 안전하게 저장하기 위해 인증이 필요합니다',
+        localizedReason:
+            AppLocalizations.of(context)?.get('authRequiredForSave') ??
+                'Authentication required to save diary',
       );
       if (!authenticated) {
         if (context.mounted) {
-          MemoNotification.show(context, '인증에 실패하여 일기를 저장할 수 없습니다. 🔒');
+          MemoNotification.show(
+              context,
+              AppLocalizations.of(context)?.get('authFailedForSave') ??
+                  'Authentication failed. Cannot save diary. 🔒');
         }
         return;
       }
@@ -689,7 +721,10 @@ class _WritingScreenState extends State<WritingScreen> {
         context.go('/morning');
       }
     } else if (context.mounted) {
-      MemoNotification.show(context, '저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. ⚠️');
+      MemoNotification.show(
+          context,
+          AppLocalizations.of(context)?.get('saveDiaryError') ??
+              'Error saving diary. ⚠️');
     }
   }
 
@@ -701,7 +736,10 @@ class _WritingScreenState extends State<WritingScreen> {
     if (userId == null) return;
 
     if (_textController.text.trim().isEmpty) {
-      MemoNotification.show(context, '내용을 입력해주세요! ✍️');
+      MemoNotification.show(
+          context,
+          AppLocalizations.of(context)?.get('moreWriting') ??
+              'Please write a bit more! ✍️');
       return;
     }
 
@@ -712,9 +750,15 @@ class _WritingScreenState extends State<WritingScreen> {
     );
 
     if (success && context.mounted) {
-      MemoNotification.show(context, '임시 저장되었습니다. 📝');
+      MemoNotification.show(
+          context,
+          AppLocalizations.of(context)?.get('saveDraftSuccess') ??
+              'Draft saved. 📝');
     } else if (context.mounted) {
-      MemoNotification.show(context, '임시 저장 중 오류가 발생했습니다. ⚠️');
+      MemoNotification.show(
+          context,
+          AppLocalizations.of(context)?.get('saveDraftError') ??
+              'Error saving draft. ⚠️');
     }
   }
 
@@ -739,7 +783,8 @@ class _WritingScreenState extends State<WritingScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              '캐릭터가 깨어났어요!',
+              AppLocalizations.of(context)?.get('diaryCompletionTitle') ??
+                  'Character Woke Up!',
               style: TextStyle(
                 fontFamily: 'BMJUA',
                 color: colorScheme.textSecondary,
@@ -769,7 +814,16 @@ class _WritingScreenState extends State<WritingScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '+${10 + (controller.currentUser?.consecutiveDays ?? 0) * 2} 가지 획득',
+                        AppLocalizations.of(context)?.getFormat(
+                                'branchEarned', {
+                              'amount': (10 +
+                                      (controller.currentUser
+                                                  ?.consecutiveDays ??
+                                              0) *
+                                          2)
+                                  .toString()
+                            }) ??
+                            '+${10 + (controller.currentUser?.consecutiveDays ?? 0) * 2} Branch Earned',
                         style: TextStyle(
                           fontFamily: 'BMJUA',
                           color: colorScheme.twig,
@@ -787,7 +841,7 @@ class _WritingScreenState extends State<WritingScreen> {
       ),
       actions: [
         AppDialogAction(
-          label: '확인',
+          label: AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
           isPrimary: true,
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -799,17 +853,19 @@ class _WritingScreenState extends State<WritingScreen> {
     return AppDialog.show<bool>(
       context: context,
       key: AppDialogKey.exitWriting,
-      content: const Text(
-        '작성 중인 내용은 저장되지 않습니다.',
-        style: TextStyle(fontFamily: 'BMJUA'),
+      content: Text(
+        AppLocalizations.of(context)?.get('exitConfirmationDesc') ??
+            'Unsaved content will be lost.',
+        style: const TextStyle(fontFamily: 'BMJUA'),
       ),
       actions: [
         AppDialogAction(
-          label: '계속 작성',
+          label: AppLocalizations.of(context)?.get('keepWriting') ??
+              'Keep Writing',
           onPressed: (context) => Navigator.of(context).pop(false),
         ),
         AppDialogAction(
-          label: '중단',
+          label: AppLocalizations.of(context)?.get('stop') ?? 'Stop',
           isPrimary: true,
           onPressed: (context) => Navigator.of(context).pop(true),
         ),

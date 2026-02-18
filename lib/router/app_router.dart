@@ -29,6 +29,7 @@ import '../features/alarm/screens/alarm_ring_screen.dart';
 
 import '../features/auth/controllers/auth_controller.dart';
 import '../data/models/diary_model.dart';
+import '../data/models/question_model.dart';
 
 import '../features/common/screens/main_shell.dart';
 
@@ -183,7 +184,7 @@ class AppRouter {
           path: '/writing',
           name: 'writing',
           builder: (context, state) {
-            final question = state.extra as String?;
+            final question = state.extra as QuestionModel?;
             return WritingScreen(initialQuestion: question);
           },
         ),

@@ -13,6 +13,7 @@ import '../../morning/widgets/enhanced_character_room_widget.dart';
 import '../../../data/models/room_decoration_model.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class DecorationScreen extends StatefulWidget {
   const DecorationScreen({super.key});
@@ -50,17 +51,18 @@ class _DecorationScreenState extends State<DecorationScreen> {
         content: PopupTextField(
           autofocus: true,
           controller: controller,
-          hintText: '짧은 메시지를 남겨보세요',
+          hintText: AppLocalizations.of(context)?.get('stickyNoteHint') ??
+              'Leave a short message',
           maxLength: 50,
           maxLines: 3,
         ),
         actions: [
           AppDialogAction(
-            label: '취소',
+            label: AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
             onPressed: (context) => Navigator.pop(context),
           ),
           AppDialogAction(
-            label: '확인',
+            label: AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
             isPrimary: true,
             onPressed: (context) => Navigator.pop(context, controller.text),
           ),
@@ -139,9 +141,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
             height: 40,
           ),
         ),
-        title: const Text(
-          '방 꾸미기',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(context)?.get('decorateRoom') ?? 'Decorate Room',
+          style: const TextStyle(
             color: Color(0xFF4E342E),
             fontWeight: FontWeight.bold,
             fontFamily: 'BMJUA',
@@ -162,13 +164,22 @@ class _DecorationScreenState extends State<DecorationScreen> {
                   await characterController.updateRoomDecoration(
                       user.uid, _decorationNotifier.value);
                   if (context.mounted) {
-                    MemoNotification.show(context, '설정이 저장되었습니다! ✨');
+                    MemoNotification.show(
+                        context,
+                        AppLocalizations.of(context)?.get('decorationSaved') ??
+                            'Settings saved! ✨');
                     Navigator.of(context).pop();
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    MemoNotification.show(context,
-                        '저장 실패: ${e.toString().replaceFirst('Exception: ', '')}');
+                    MemoNotification.show(
+                      context,
+                      AppLocalizations.of(context)?.getFormat('saveFailed', {
+                            'error':
+                                e.toString().replaceFirst('Exception: ', '')
+                          }) ??
+                          'Save failed: ${e.toString().replaceFirst('Exception: ', '')}',
+                    );
                   }
                 }
               },
@@ -183,9 +194,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
                   ),
                 ),
                 alignment: Alignment.center,
-                child: const Text(
-                  '저장',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)?.get('save') ?? 'Save',
+                  style: const TextStyle(
                     color: Color(0xFF5D4E37),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -404,17 +415,34 @@ class _DecorationScreenState extends State<DecorationScreen> {
         child: Row(
           children: [
             _buildTabItem(
-                'background', '배경', Icons.landscape_outlined, colorScheme),
-            const SizedBox(width: 8),
-            _buildTabItem('wallpaper', '벽지', Icons.wallpaper, colorScheme),
-            const SizedBox(width: 8),
-            _buildTabItem(
-                'props', '소품', Icons.auto_awesome_motion, colorScheme),
-            const SizedBox(width: 8),
-            _buildTabItem('floor', '바닥', Icons.grid_on_outlined, colorScheme),
+                'background',
+                AppLocalizations.of(context)?.get('background') ?? 'Background',
+                Icons.landscape_outlined,
+                colorScheme),
             const SizedBox(width: 8),
             _buildTabItem(
-                'emoticon', '이모티콘', Icons.emoji_emotions, colorScheme),
+                'wallpaper',
+                AppLocalizations.of(context)?.get('wallpaper') ?? 'Wallpaper',
+                Icons.wallpaper,
+                colorScheme),
+            const SizedBox(width: 8),
+            _buildTabItem(
+                'props',
+                AppLocalizations.of(context)?.get('prop') ?? 'Prop',
+                Icons.auto_awesome_motion,
+                colorScheme),
+            const SizedBox(width: 8),
+            _buildTabItem(
+                'floor',
+                AppLocalizations.of(context)?.get('floor') ?? 'Floor',
+                Icons.grid_on_outlined,
+                colorScheme),
+            const SizedBox(width: 8),
+            _buildTabItem(
+                'emoticon',
+                AppLocalizations.of(context)?.get('emoticon') ?? 'Emoticon',
+                Icons.emoji_emotions,
+                colorScheme),
           ],
         ),
       ),
@@ -517,7 +545,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
             final b = purchased[index];
             final isSelected = decoration.backgroundId == b.id;
             return _buildSelectionCard(
-              label: b.name,
+              label: AppLocalizations.of(context)?.get('item_name_${b.id}') ??
+                  b.name,
               icon: b.icon,
               imagePath: b.imagePath,
               color: b.color ??
@@ -557,7 +586,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
             final w = purchased[index];
             final isSelected = decoration.wallpaperId == w.id;
             return _buildSelectionCard(
-              label: w.name,
+              label: AppLocalizations.of(context)?.get('item_name_${w.id}') ??
+                  w.name,
               color: w.color ?? colorScheme.backgroundLight,
               imagePath: w.imagePath,
               isSelected: isSelected,
@@ -595,7 +625,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
             final isSelected = decoration.floorId == f.id;
 
             return _buildSelectionCard(
-              label: f.name,
+              label: AppLocalizations.of(context)?.get('item_name_${f.id}') ??
+                  f.name,
               color: f.color ?? colorScheme.backgroundLight,
               imagePath: f.imagePath,
               icon: f.icon,
@@ -625,7 +656,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
             .toList();
 
         if (availableProps.isEmpty) {
-          return const Center(child: Text('구매한 소품이 없습니다. 상점에서 구매해 보세요!'));
+          return Center(
+              child: Text(AppLocalizations.of(context)?.get('noProps') ??
+                  'You don\'t have any props. Buy some in the shop!'));
         }
 
         final now = DateTime.now();
@@ -648,7 +681,8 @@ class _DecorationScreenState extends State<DecorationScreen> {
             final exists = decoration.props.any((prop) => prop.type == p.id);
 
             return _buildSelectionCard(
-              label: p.name,
+              label: AppLocalizations.of(context)?.get('item_name_${p.id}') ??
+                  p.name,
               imagePath: p.imagePath,
               icon: p.icon,
               isSelected: exists,
@@ -659,6 +693,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
                     final confirm = await AppDialog.show<bool>(
                       context: context,
                       key: AppDialogKey.deleteStickyNote,
+                      content: Text(AppLocalizations.of(context)
+                              ?.get('deleteStickyNote') ??
+                          'Do you want to delete this memo? 🗑️'),
                     );
                     if (confirm != true) return;
                   }
@@ -676,14 +713,18 @@ class _DecorationScreenState extends State<DecorationScreen> {
                   // 오늘 이미 작성했는지 체크
                   if (isUsedToday) {
                     MemoNotification.show(
-                        context, '메모는 하루에 한 번만 작성할 수 있습니다. ✍️');
+                        context,
+                        AppLocalizations.of(context)?.get('stickyNoteLimit') ??
+                            'You can only write a note once a day. ✍️');
                     return;
                   }
 
                   // 인벤토리에 있는지 체크 (이미 배치된 걸 제거했다가 다시 넣는 경우 대비)
                   if (!user.purchasedPropIds.contains('sticky_note')) {
                     MemoNotification.show(
-                        context, '보관 중인 메모 노트가 없습니다. 상점에서 구매해 주세요. 📦');
+                        context,
+                        AppLocalizations.of(context)?.get('noStickyNote') ??
+                            'You don\'t have a sticky note. Please buy one from the shop. 📦');
                     return;
                   }
 
@@ -752,7 +793,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
         final isSelected = selIndex != -1;
 
         return _buildSelectionCard(
-          label: emoticon.name,
+          label:
+              AppLocalizations.of(context)?.get('item_name_${emoticon.id}') ??
+                  emoticon.name,
           imagePath: emoticon.imagePath,
           icon: emoticon.icon,
           isSelected: isSelected,
@@ -887,11 +930,12 @@ class _DecorationScreenState extends State<DecorationScreen> {
                       height: stampSize,
                       fit: BoxFit.contain,
                     ),
-                    const Positioned(
+                    Positioned(
                       top: 15,
                       child: Text(
-                        '장착',
-                        style: TextStyle(
+                        AppLocalizations.of(context)?.get('stampEquipped') ??
+                            'Equipped',
+                        style: const TextStyle(
                           color: Color(0xFFE57373),
                           fontWeight: FontWeight.bold,
                           fontSize: 14,

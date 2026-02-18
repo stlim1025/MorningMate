@@ -7,6 +7,7 @@ import '../../../core/constants/room_assets.dart';
 import '../../../core/constants/character_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../controllers/character_controller.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -87,9 +88,9 @@ class _ShopScreenState extends State<ShopScreen> {
         child: Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
-            title: const Text(
-              '상점',
-              style: TextStyle(
+            title: Text(
+              AppLocalizations.of(context)?.get('shop') ?? 'Shop',
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontFamily: 'BMJUA',
                 color: Color(0xFF4E342E),
@@ -143,7 +144,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '가지',
+                      AppLocalizations.of(context)?.get('branch') ?? 'Branch',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.black54,
@@ -184,7 +185,9 @@ class _ShopScreenState extends State<ShopScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: _buildTabItem(
-                          entry.value,
+                          context,
+                          AppLocalizations.of(context)?.get(entry.key) ??
+                              entry.value,
                           _selectedCategory == entry.key,
                           () {
                             final index = _categories.indexOf(entry.key);
@@ -292,9 +295,10 @@ class _ShopScreenState extends State<ShopScreen> {
                                     : null,
                               ),
                               const SizedBox(width: 8),
-                              const Text(
-                                '미보유',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)?.get('unowned') ??
+                                    'Unowned',
+                                style: const TextStyle(
                                   fontFamily: 'BMJUA',
                                   fontSize: 14,
                                   color: Color(0xFF5D4037),
@@ -316,7 +320,8 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  Widget _buildTabItem(String label, bool isSelected, VoidCallback onTap) {
+  Widget _buildTabItem(
+      BuildContext context, String label, bool isSelected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -384,11 +389,12 @@ class _ShopScreenState extends State<ShopScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '광고 보고 가지 받기',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)?.get('watchAdGetBranch') ??
+                      'Watch Ad Get 10 Branches',
+                  style: const TextStyle(
                     color: Color(0xFF5D4037), // 갈색 계열 (메모지에 어울리는)
-                    fontSize: 16, // 18 -> 16 축소
+                    fontSize: 14, // 16 -> 14 축소 (영어 텍스트 길어질 수 있음)
                     fontWeight: FontWeight.bold,
                     fontFamily: 'BMJUA',
                   ),
@@ -399,9 +405,9 @@ class _ShopScreenState extends State<ShopScreen> {
                     Image.asset('assets/images/branch.png',
                         width: 14, height: 14, cacheWidth: 56), // 16 -> 14 축소
                     const SizedBox(width: 4),
-                    const Text(
-                      '+10 가지',
-                      style: TextStyle(
+                    Text(
+                      '+10 ${AppLocalizations.of(context)?.get('branch') ?? 'Branches'}',
+                      style: const TextStyle(
                         color: Color(0xFF8D6E63),
                         fontSize: 14, // 16 -> 14 축소
                         fontWeight: FontWeight.bold,
@@ -439,7 +445,11 @@ class _ShopScreenState extends State<ShopScreen> {
                     fit: BoxFit.fill,
                   ),
                   Text(
-                    isLimitReached ? '완료' : '보기',
+                    isLimitReached
+                        ? (AppLocalizations.of(context)?.get('completed') ??
+                            'Completed')
+                        : (AppLocalizations.of(context)?.get('watch') ??
+                            'Watch'),
                     style: const TextStyle(
                       color: Color(0xFF5D4037), // 갈색으로 변경
                       fontWeight: FontWeight.bold,
@@ -661,7 +671,8 @@ class _ShopScreenState extends State<ShopScreen> {
                 const SizedBox(height: 8),
                 // 아이템 이름
                 Text(
-                  item.name,
+                  AppLocalizations.of(context)?.get('item_name_${item.id}') ??
+                      item.name,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -709,14 +720,33 @@ class _ShopScreenState extends State<ShopScreen> {
                                         ),
                                 ),
                                 const SizedBox(height: 16),
+                                const SizedBox(height: 16),
                                 Text(
-                                  '${item.name}을(를) 구매하시겠습니까?',
+                                  AppLocalizations.of(itemContext)?.getFormat(
+                                        'purchaseConfirm',
+                                        {
+                                          'item': AppLocalizations.of(
+                                                      itemContext)
+                                                  ?.get(
+                                                      'item_name_${item.id}') ??
+                                              item.name
+                                        },
+                                      ) ??
+                                      'Do you want to purchase ${item.name}?',
                                   style: const TextStyle(fontFamily: 'BMJUA'),
                                 ),
                                 const SizedBox(height: 12),
                                 if (isDiscounted)
                                   Text(
-                                    'SALE! ${item.price} -> $discountedPrice 가지',
+                                    AppLocalizations.of(itemContext)?.getFormat(
+                                          'salePrice',
+                                          {
+                                            'original': item.price.toString(),
+                                            'discounted':
+                                                discountedPrice.toString()
+                                          },
+                                        ) ??
+                                        'SALE! ${item.price} -> $discountedPrice 가지',
                                     style: const TextStyle(
                                       color: Colors.red,
                                       fontWeight: FontWeight.bold,
@@ -726,7 +756,9 @@ class _ShopScreenState extends State<ShopScreen> {
                                 if (!canAfford) ...[
                                   const SizedBox(height: 12),
                                   Text(
-                                    '가지가 부족합니다.',
+                                    AppLocalizations.of(itemContext)
+                                            ?.get('notEnoughBranch') ??
+                                        'Not enough branches.',
                                     style: TextStyle(
                                       color: colorScheme.error,
                                       fontSize: 13,
@@ -810,7 +842,12 @@ class _ShopScreenState extends State<ShopScreen> {
                                       ),
                                       const SizedBox(height: 24),
                                       Text(
-                                        '${item.name}을(를) 구매했습니다.',
+                                        AppLocalizations.of(itemContext)
+                                                ?.getFormat(
+                                              'purchaseSuccess',
+                                              {'item': item.name},
+                                            ) ??
+                                            '${item.name}을(를) 구매했습니다.',
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
                                             fontSize: 16, fontFamily: 'BMJUA'),
@@ -820,13 +857,17 @@ class _ShopScreenState extends State<ShopScreen> {
                                   ),
                                   actions: [
                                     AppDialogAction(
-                                      label: '꾸미기',
+                                      label: AppLocalizations.of(itemContext)
+                                              ?.get('decorate') ??
+                                          'Decorate',
                                       onPressed: (context) {
                                         Navigator.pop(context, 'decorate');
                                       },
                                     ),
                                     AppDialogAction(
-                                      label: '확인',
+                                      label: AppLocalizations.of(itemContext)
+                                              ?.get('confirm') ??
+                                          'Confirm',
                                       isPrimary: true,
                                       onPressed: (context) =>
                                           Navigator.pop(context),
@@ -875,9 +916,11 @@ class _ShopScreenState extends State<ShopScreen> {
                           ),
                           Center(
                             child: isPurchased
-                                ? const Text(
-                                    '보유중',
-                                    style: TextStyle(
+                                ? Text(
+                                    AppLocalizations.of(itemContext)
+                                            ?.get('owned') ??
+                                        'Owned',
+                                    style: const TextStyle(
                                       fontSize: 11, // 폰트 사이즈 살짝 축소
                                       color: Color(0xFF5D4037), // 갈색으로 변경
                                       fontWeight: FontWeight.bold,
@@ -927,9 +970,9 @@ class _ShopScreenState extends State<ShopScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.white, width: 2),
                 ),
-                child: const Text(
-                  'SALE',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(itemContext)?.get('sale') ?? 'SALE',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 10,
@@ -942,7 +985,9 @@ class _ShopScreenState extends State<ShopScreen> {
               child: Opacity(
                 opacity: 0.9,
                 child: Image.asset(
-                  'assets/icons/purchase_Icon.png',
+                  AppLocalizations.of(context)?.locale.languageCode == 'en'
+                      ? 'assets/icons/Purchase_IconEng.png'
+                      : 'assets/icons/purchase_Icon.png',
                   width: 80,
                   height: 80,
                   fit: BoxFit.contain,

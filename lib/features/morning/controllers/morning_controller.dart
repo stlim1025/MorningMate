@@ -4,8 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/diary_service.dart';
 import '../../../services/question_service.dart';
 import '../../../data/models/diary_model.dart';
+import '../../../data/models/question_model.dart';
 import '../../../utils/encryption.dart';
 import 'dart:async';
+import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
@@ -24,9 +26,15 @@ class MorningController extends ChangeNotifier {
   Future<void> _loadCachedQuestion() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final cached = prefs.getString('cached_question');
+      final cached = prefs.getString('cached_question_json');
       if (cached != null && _currentQuestion == null) {
-        _currentQuestion = cached;
+        final data = json.decode(cached);
+        _currentQuestion = QuestionModel(
+          id: data['id'] ?? '',
+          text: data['text'] ?? '',
+          engText: data['engText'],
+          category: data['category'] ?? 'default',
+        );
         notifyListeners();
       }
     } catch (e) {
@@ -34,33 +42,39 @@ class MorningController extends ChangeNotifier {
     }
   }
 
-  Future<void> _saveQuestionToCache(String question) async {
+  Future<void> _saveQuestionToCache(QuestionModel question) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('cached_question', question);
+      final questionData = {
+        'id': question.id,
+        'text': question.text,
+        'engText': question.engText,
+        'category': question.category,
+      };
+      await prefs.setString('cached_question_json', json.encode(questionData));
     } catch (e) {
       debugPrint('질문 캐시 저장 오류: $e');
     }
   }
 
   // 상태 변수
-  bool _isLoading = false; // 초기값 false로 변경 (stuck 방지)
-  bool _hasInitialized = false; // 초기 데이터 로드 여부
+  bool _isLoading = false;
+  bool _hasInitialized = false;
   bool _isWriting = false;
-  String? _currentQuestion;
+  QuestionModel? _currentQuestion;
   DiaryModel? _todayDiary;
   Timer? _writingTimer;
   int _writingDuration = 0;
-  int _charCount = 0; // 글자 수로 변경
+  int _charCount = 0;
 
   // Getters
   bool get isLoading => _isLoading;
   bool get hasInitialized => _hasInitialized;
   bool get isWriting => _isWriting;
-  String? get currentQuestion => _currentQuestion;
+  QuestionModel? get currentQuestion => _currentQuestion;
   DiaryModel? get todayDiary => _todayDiary;
   int get writingDuration => _writingDuration;
-  int get charCount => _charCount; // Getter 이름 변경
+  int get charCount => _charCount;
   bool get hasDiaryToday {
     if (_todayDiary == null || !_todayDiary!.isCompleted) return false;
     return _todayDiary!.dateKey == DiaryModel.buildDateKey(DateTime.now());
@@ -113,7 +127,6 @@ class MorningController extends ChangeNotifier {
 
   // 오늘의 일기 확인
   Future<void> checkTodayDiary(String userId) async {
-    // 이미 메모리에 오늘의 일기가 있고 완료 상태라면 건너뜀
     if (hasDiaryToday) {
       _isLoading = false;
       _hasInitialized = true;
@@ -122,42 +135,35 @@ class MorningController extends ChangeNotifier {
     }
 
     _isLoading = true;
-    // Build 단계에서 호출될 경우를 대비해 처리
     Future.microtask(() => notifyListeners());
 
     try {
-      // 1. 먼저 로컬 파일 확인 (가장 빠름)
       final now = DateTime.now();
       final filePath = await _getDiaryFilePath(userId, now);
       final file = File(filePath);
 
       if (await file.exists()) {
         final encryptedContent = await file.readAsString();
-        // 로컬에 파일이 있으면 일단 작성 완료로 간주 (상세 메타데이터는 null이어도 isCompleted=true)
         _todayDiary = DiaryModel(
           id: 'local_temp',
           userId: userId,
           date: now,
           dateKey: _dateKey(now),
           encryptedContent: encryptedContent,
-          isCompleted: false, // 임시저장 데이터이므로 false로 설정
+          isCompleted: false,
           createdAt: now,
         );
         _isLoading = false;
-        _hasInitialized = true; // 로컬 파일 있으면 즉시 초기화 완료 처리
+        _hasInitialized = true;
         notifyListeners();
-        // 여기서 return하지 않고 서버에서도 최신 메타데이터를 가져오도록 진행
       }
 
-      // 2. Firestore에서 실제 데이터(메타데이터 포함) 가져오기
       final diary = await _diaryService.getDiaryByDate(userId, DateTime.now());
       if (diary != null) {
         _todayDiary = diary;
       } else {
-        // Firestore에 데이터가 없다면(삭제됨), 로컬 상태도 초기화
         if (_todayDiary != null) {
           _todayDiary = null;
-          // 로컬 파일도 삭제하여 싱크 맞춤
           if (await file.exists()) {
             await file.delete();
           }
@@ -172,7 +178,6 @@ class MorningController extends ChangeNotifier {
     }
   }
 
-  // 강제로 로딩 종료 (예외 발생 대비)
   void finishLoading() {
     _isLoading = false;
     _hasInitialized = true;
@@ -184,14 +189,19 @@ class MorningController extends ChangeNotifier {
   // 랜덤 질문 가져오기
   Future<void> fetchRandomQuestion() async {
     try {
-      _currentQuestion = await _questionService.getRandomQuestion();
-      _saveQuestionToCache(_currentQuestion!);
+      final question = await _questionService.getRandomQuestion();
+      if (question != null) {
+        _currentQuestion = question;
+        _saveQuestionToCache(_currentQuestion!);
+      }
       Future.microtask(() {
         notifyListeners();
       });
     } catch (e) {
       debugPrint('랜덤 질문 가져오기 오류: $e');
-      _currentQuestion = _currentQuestion ?? '오늘 하루는 어땠나요?';
+      _currentQuestion = _currentQuestion ??
+          QuestionModel(
+              id: 'fallback', text: '오늘 하루는 어땠나요?', category: 'default');
       Future.microtask(() {
         notifyListeners();
       });
@@ -204,10 +214,8 @@ class MorningController extends ChangeNotifier {
     _writingDuration = 0;
     _charCount = 0;
 
-    // 기존 타이머가 있다면 취소
     _writingTimer?.cancel();
 
-    // 작성 시간 타이머 시작
     _writingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _writingDuration++;
       Future.microtask(() {
@@ -220,9 +228,9 @@ class MorningController extends ChangeNotifier {
     });
   }
 
-  // 글자 수 업데이트 (글자 수로 변경)
+  // 글자 수 업데이트
   void updateCharCount(String text) {
-    _charCount = text.length; // 전체 글자 수 (공백 포함)
+    _charCount = text.length;
     Future.microtask(() {
       notifyListeners();
     });
@@ -268,7 +276,6 @@ class MorningController extends ChangeNotifier {
         _writingTimer!.cancel();
         _writingTimer = null;
       }
-      // 임시 저장은 타이머 계속 유지
     }
 
     if (_isLoading) return false;
@@ -276,20 +283,16 @@ class MorningController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. 일기 내용 암호화
       final encryptedContent =
           await EncryptionUtil.encryptText(content, userId);
 
-      // 2. 로컬에 암호화된 일기 저장
       await _saveEncryptedDiaryLocally(userId, encryptedContent);
 
-      // 3. Firestore 저장 (생성 또는 업데이트)
       final now = DateTime.now();
       final diaryDate = DateTime(now.year, now.month, now.day);
 
-      // 기존 일기(임시저장 포함)가 있는지 확인
       String? existingId = _todayDiary?.id;
-      if (existingId == 'local_temp') existingId = null; // 로컬만 있는 경우 ID 없음
+      if (existingId == 'local_temp') existingId = null;
 
       final diary = DiaryModel(
         id: existingId ?? '',
@@ -300,22 +303,20 @@ class MorningController extends ChangeNotifier {
         wordCount: _charCount,
         writingDuration: _writingDuration,
         moods: moods ?? [],
-        isCompleted: !isDraft, // 완료 여부 설정
+        isCompleted: !isDraft,
         createdAt: _todayDiary?.createdAt ?? now,
-        promptQuestion: _currentQuestion,
+        promptQuestion: _currentQuestion?.text,
+        promptQuestionEng: _currentQuestion?.engText,
       );
 
       if (existingId != null && existingId.isNotEmpty) {
-        // 업데이트
         await _diaryService.updateDiary(existingId, diary.toFirestore());
         _todayDiary = diary;
       } else {
-        // 생성
         final newId = await _diaryService.createDiary(diary);
         _todayDiary = diary.copyWith(id: newId);
       }
 
-      // 4. 완료 시에만 연속 기록 및 점수 업데이트
       if (!isDraft) {
         await _userService.updateConsecutiveDays(userId);
         await _userService.updateUser(userId, {
@@ -355,7 +356,7 @@ class MorningController extends ChangeNotifier {
     }
   }
 
-  // 일기 파일 경로 가져오기 (공통 로직)
+  // 일기 파일 경로 가져오기
   Future<String> _getDiaryFilePath(String userId, DateTime date,
       {bool createDir = false}) async {
     final directory = await getApplicationDocumentsDirectory();
@@ -372,7 +373,7 @@ class MorningController extends ChangeNotifier {
     return '${directory.path}$pathSeparator$fileName';
   }
 
-  // 일기 내용 읽기 (전달된 데이터 우선 -> Firestore -> 로컬 파일 순)
+  // 일기 내용 읽기
   Future<String> loadDiaryContent({
     required String userId,
     required DateTime date,
@@ -381,7 +382,6 @@ class MorningController extends ChangeNotifier {
     try {
       String? contentToDecrypt = encryptedContent;
 
-      // 1. 전달받은 내용이 없다면 Firestore에서 가져오기
       if (contentToDecrypt == null) {
         final diary = await _diaryService.getDiaryByDate(userId, date);
         contentToDecrypt = diary?.encryptedContent;
@@ -391,7 +391,6 @@ class MorningController extends ChangeNotifier {
         return await EncryptionUtil.decryptText(contentToDecrypt, userId);
       }
 
-      // 2. Firestore에 없으면 로컬 파일에서 읽기
       final filePath = await _getDiaryFilePath(userId, date);
       final file = File(filePath);
 
@@ -400,7 +399,6 @@ class MorningController extends ChangeNotifier {
         return await EncryptionUtil.decryptText(encryptedFromFile, userId);
       }
 
-      // 이전 버전 파일명 시도 (패딩 없음)
       final directory = await getApplicationDocumentsDirectory();
       final oldFileName = '${userId}_${date.year}${date.month}${date.day}.enc';
       final pathSeparator = Platform.isWindows ? '\\' : '/';
@@ -413,24 +411,21 @@ class MorningController extends ChangeNotifier {
       throw Exception('일기 내용을 찾을 수 없습니다.');
     } catch (e) {
       debugPrint('일기 읽기 오류: $e');
-      rethrow; // 에러를 그대로 전달
+      rethrow;
     }
   }
 
-  // 진행률 계산 (목표: 100자 또는 5분)
   double getProgress({int targetChars = 500, int targetMinutes = 5}) {
     final charProgress = _charCount / targetChars;
     final timeProgress = _writingDuration / (targetMinutes * 60);
     return (charProgress + timeProgress) / 2;
   }
 
-  // 목표 달성 여부
   bool isGoalReached({int targetChars = 10, int targetMinutes = 5}) {
     return _charCount >= targetChars ||
         _writingDuration >= (targetMinutes * 60);
   }
 
-  // 모든 상태 초기화 (로그아웃용)
   void clear() {
     _writingTimer?.cancel();
     _writingTimer = null;

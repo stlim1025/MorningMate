@@ -10,6 +10,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../character/widgets/character_display.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../services/user_service.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class FriendCard extends StatelessWidget {
   final UserModel friend;
@@ -33,7 +34,12 @@ class FriendCard extends StatelessWidget {
 
     final friendId = friend.uid;
     final friendNickname = friend.nickname;
-    MemoNotification.show(context, '$friendNickname님을 깨웠습니다! ⏰');
+    MemoNotification.show(
+      context,
+      AppLocalizations.of(context)
+              ?.getFormat('wakeUpSuccess', {'nickname': friendNickname}) ??
+          '$friendNickname님을 깨웠습니다! ⏰',
+    );
 
     // 3. 실제 전송은 백그라운드에서 진행
     unawaited(() async {
@@ -47,7 +53,8 @@ class FriendCard extends StatelessWidget {
       } catch (e) {
         debugPrint('깨우기 요청 실패: $e');
         if (context.mounted) {
-          MemoNotification.show(context, '깨우기 요청 실패');
+          MemoNotification.show(context,
+              AppLocalizations.of(context)?.get('wakeUpFailed') ?? '깨우기 요청 실패');
         }
       }
     }());
@@ -104,7 +111,11 @@ class FriendCard extends StatelessWidget {
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   child: Text(
-                    isCooldown ? '${seconds}초' : '깨우기',
+                    isCooldown
+                        ? AppLocalizations.of(context)?.getFormat(
+                                'secondsUnit', {'seconds': '$seconds'}) ??
+                            '${seconds}s'
+                        : AppLocalizations.of(context)?.get('wakeUp') ?? '깨우기',
                     key: ValueKey(isCooldown ? seconds : -1),
                     style: TextStyle(
                       fontFamily: 'BMJUA',
@@ -284,7 +295,7 @@ class FriendCard extends StatelessWidget {
                                           TextStyle(fontSize: fontSizeSmall)),
                                   const SizedBox(width: 2),
                                   Text(
-                                    '${currentFriend.displayConsecutiveDays}일',
+                                    '${currentFriend.displayConsecutiveDays}${AppLocalizations.of(context)?.get('days') ?? '일'}',
                                     style: TextStyle(
                                       fontFamily: 'BMJUA',
                                       color: Colors.brown,
@@ -308,7 +319,9 @@ class FriendCard extends StatelessWidget {
                                         color: Colors.brown, size: iconSize),
                                     const SizedBox(width: 2),
                                     Text(
-                                      '작성 완료',
+                                      AppLocalizations.of(context)
+                                              ?.get('written') ??
+                                          '작성 완료',
                                       style: TextStyle(
                                         fontFamily: 'BMJUA',
                                         color: Colors.brown,

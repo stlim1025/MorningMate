@@ -8,6 +8,7 @@ import '../../social/controllers/social_controller.dart';
 import '../controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
 import '../../social/widgets/reply_dialog.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
@@ -20,7 +21,7 @@ class NotificationScreen extends StatelessWidget {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
-          '알림',
+          AppLocalizations.of(context)?.get('notifications') ?? 'Notifications',
           style: TextStyle(
             fontFamily: 'BMJUA',
             color: colorScheme.textPrimary,
@@ -70,10 +71,11 @@ class NotificationScreen extends StatelessWidget {
                       fit: BoxFit.fill,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      '모두 읽음',
-                      style: TextStyle(
+                      AppLocalizations.of(context)?.get('markAllAsRead') ??
+                          'Mark all as read',
+                      style: const TextStyle(
                         fontFamily: 'BMJUA',
                         color: Color(0xFF4E342E),
                         fontWeight: FontWeight.bold,
@@ -116,16 +118,24 @@ class NotificationScreen extends StatelessWidget {
                     return _buildEmptyState(
                       context,
                       colorScheme,
-                      title: '알림을 불러오는 중이에요',
-                      subtitle: '잠시만 기다려주세요',
+                      title: AppLocalizations.of(context)
+                              ?.get('loadingNotifications') ??
+                          'Loading notifications...',
+                      subtitle:
+                          AppLocalizations.of(context)?.get('pleaseWait') ??
+                              'Please wait',
                     );
                   }
                   if (snapshot.hasError) {
                     return _buildEmptyState(
                       context,
                       colorScheme,
-                      title: '알림을 불러오는 중 오류가 발생했습니다',
-                      subtitle: '잠시 후 다시 시도해주세요',
+                      title: AppLocalizations.of(context)
+                              ?.get('errorLoadingNotifications') ??
+                          'Error loading notifications',
+                      subtitle:
+                          AppLocalizations.of(context)?.get('tryAgainLater') ??
+                              'Please try again later',
                     );
                   }
 
@@ -135,8 +145,12 @@ class NotificationScreen extends StatelessWidget {
                     return _buildEmptyState(
                       context,
                       colorScheme,
-                      title: '알림이 없습니다',
-                      subtitle: '새로운 소식이 생기면 이곳에 알려드릴게요',
+                      title: AppLocalizations.of(context)
+                              ?.get('noNotifications') ??
+                          'No notifications',
+                      subtitle: AppLocalizations.of(context)
+                              ?.get('noNotificationsDesc') ??
+                          'We will notify you when there is news',
                     );
                   }
 
@@ -211,19 +225,25 @@ class NotificationScreen extends StatelessWidget {
                                         Text(
                                           notification.type ==
                                                   NotificationType.cheerMessage
-                                              ? (notification
-                                                          .data?['isReply'] ==
-                                                      true
-                                                  ? '${notification.senderNickname}님의 답장'
-                                                  : '${notification.senderNickname}님의 응원')
+                                              ? (notification.data?['isReply'] == true
+                                                  ? (AppLocalizations.of(context)?.getFormat('replyFrom', {'username': notification.senderNickname}) ??
+                                                      '${notification.senderNickname}\'s reply')
+                                                  : (AppLocalizations.of(context)
+                                                          ?.getFormat('cheerFrom', {
+                                                        'username': notification
+                                                            .senderNickname
+                                                      }) ??
+                                                      '${notification.senderNickname}\'s cheer'))
                                               : (notification.type ==
                                                       NotificationType.wakeUp
-                                                  ? '깨우기 알림'
-                                                  : (notification.type ==
-                                                          NotificationType
-                                                              .friendRequest
-                                                      ? '친구 요청'
-                                                      : '알림')),
+                                                  ? (AppLocalizations.of(context)?.get('wakeUpAlert') ??
+                                                      'Wake up alert')
+                                                  : (notification.type == NotificationType.friendRequest
+                                                      ? (AppLocalizations.of(context)?.get('friendRequest') ??
+                                                          'Friend Request')
+                                                      : (AppLocalizations.of(context)
+                                                              ?.get('notifications') ??
+                                                          'Notifications'))),
                                           style: TextStyle(
                                             fontFamily: 'BMJUA',
                                             color: colorScheme.textSecondary,
@@ -288,10 +308,12 @@ class NotificationScreen extends StatelessWidget {
                                                 fit: BoxFit.fill,
                                               ),
                                             ),
-                                            child: const Center(
+                                            child: Center(
                                               child: Text(
-                                                '수락',
-                                                style: TextStyle(
+                                                AppLocalizations.of(context)
+                                                        ?.get('accept') ??
+                                                    'Accept',
+                                                style: const TextStyle(
                                                   fontFamily: 'BMJUA',
                                                   fontSize: 12,
                                                   color: Color(0xFF4E342E),
@@ -326,10 +348,12 @@ class NotificationScreen extends StatelessWidget {
                                                 fit: BoxFit.fill,
                                               ),
                                             ),
-                                            child: const Center(
+                                            child: Center(
                                               child: Text(
-                                                '거절',
-                                                style: TextStyle(
+                                                AppLocalizations.of(context)
+                                                        ?.get('reject') ??
+                                                    'Reject',
+                                                style: const TextStyle(
                                                   fontFamily: 'BMJUA',
                                                   fontSize: 12,
                                                   color: Color(0xFF4E342E),
@@ -359,10 +383,13 @@ class NotificationScreen extends StatelessWidget {
                                                   fit: BoxFit.fill,
                                                 ),
                                               ),
-                                              child: const Center(
+                                              child: Center(
                                                 child: Text(
-                                                  '답장 완료',
-                                                  style: TextStyle(
+                                                  AppLocalizations.of(context)
+                                                          ?.get(
+                                                              'replyCompleted') ??
+                                                      'Replied',
+                                                  style: const TextStyle(
                                                     fontFamily: 'BMJUA',
                                                     fontSize: 11,
                                                     color: Color(0xFF4E342E),
@@ -390,9 +417,11 @@ class NotificationScreen extends StatelessWidget {
                                                   fit: BoxFit.fill,
                                                 ),
                                               ),
-                                              child: const Center(
+                                              child: Center(
                                                 child: Text(
-                                                  '답장',
+                                                  AppLocalizations.of(context)
+                                                          ?.get('reply') ??
+                                                      'Reply',
                                                   style: TextStyle(
                                                     fontFamily: 'BMJUA',
                                                     fontSize: 12,

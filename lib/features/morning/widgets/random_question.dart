@@ -47,7 +47,9 @@ class RandomQuestionWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        controller.currentQuestion ?? '탭하여 질문 보기',
+                        controller.currentQuestion?.getLocalizedText(
+                                Localizations.localeOf(context).languageCode) ??
+                            '탭하여 질문 보기',
                         style: TextStyle(
                           color: colorScheme.textPrimary,
                           fontSize: 14,

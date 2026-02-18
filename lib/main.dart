@@ -25,6 +25,9 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'; // import flutter_localizations
+import 'core/localization/language_provider.dart';
+import 'core/localization/app_localizations.dart';
 
 // FCM 백그라운드 핸들러 (최상위 함수)
 @pragma('vm:entry-point')
@@ -198,6 +201,9 @@ class _MorningMateAppState extends State<MorningMateApp> {
         // AuthController (이미 생성된 인스턴스 주입)
         ChangeNotifierProvider.value(value: _authController),
 
+        // LanguageProvider
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+
         // ProxyManagers (의존성 있는 컨트롤러들은 기존대로 Proxy 사용)
         ChangeNotifierProxyProvider<AuthController, MorningController>(
           create: (context) => MorningController(
@@ -286,14 +292,27 @@ class _MorningMateAppState extends State<MorningMateApp> {
           } catch (_) {}
         });
 
-        return Consumer<ThemeController>(
-          builder: (context, themeController, child) {
+        return Consumer2<ThemeController, LanguageProvider>(
+          builder: (context, themeController, languageProvider, child) {
             return MaterialApp.router(
               title: 'Morning Mate',
               debugShowCheckedModeBanner: false,
               theme: themeController.themeData,
               scaffoldMessengerKey: MorningMateApp.scaffoldMessengerKey,
               routerConfig: _router, // 생성된 라우터 사용
+
+              // Localization
+              locale: languageProvider.locale,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('ko', ''),
+                Locale('en', ''),
+              ],
             );
           },
         );

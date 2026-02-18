@@ -119,17 +119,28 @@ class _RoomActionButtonState extends State<RoomActionButton>
                     // 버튼 텍스트 - Flexible로 감싸서 잘리지 않도록
                     Flexible(
                       flex: 1,
-                      child: Text(
-                        widget.label,
-                        style: const TextStyle(
-                          fontFamily: 'BMJUA',
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4E342E), // Dark Brown
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.center,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth:
+                                60, // 'Decorate' 단어가 잘리지 않도록 폭을 약간 넓힘 (60 정도면 Decorate가 한 줄에 들어감)
+                          ),
+                          child: Text(
+                            widget.label,
+                            style: const TextStyle(
+                              fontFamily: 'BMJUA',
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4E342E), // Dark Brown
+                              height: 1.0,
+                            ),
+                            maxLines: 2,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.visible,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
                       ),
                     ),
                   ],

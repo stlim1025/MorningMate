@@ -120,6 +120,26 @@ class AdminHomeTab extends StatelessWidget {
                       icon: Icons.group,
                       color: Colors.green,
                     ),
+                    const SizedBox(height: 40),
+                    ElevatedButton.icon(
+                      onPressed: controller.isLoading
+                          ? null
+                          : () async {
+                              await controller.updateQuestionTranslations();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('질문 번역이 업데이트되었습니다.')),
+                                );
+                              }
+                            },
+                      icon: const Icon(Icons.translate),
+                      label: const Text('모든 질문 번역하기 (Firebase)'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                      ),
+                    ),
                   ],
                 ),
               ),

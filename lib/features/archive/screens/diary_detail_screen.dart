@@ -5,6 +5,8 @@ import '../../../data/models/diary_model.dart';
 import '../../morning/controllers/morning_controller.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/theme/app_color_scheme.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../admin/controllers/admin_controller.dart'; // Import AdminController correctly
 
 class DiaryDetailScreen extends StatefulWidget {
   final List<DiaryModel> diaries;
@@ -196,8 +198,18 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   }
 
   Widget _buildHeader(BuildContext context, AppColorScheme colorScheme) {
-    final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    final weekday = weekdays[_currentDate.weekday - 1];
+    final weekdayKeys = [
+      'weekday_mon',
+      'weekday_tue',
+      'weekday_wed',
+      'weekday_thu',
+      'weekday_fri',
+      'weekday_sat',
+      'weekday_sun'
+    ];
+    final weekday = AppLocalizations.of(context)
+            ?.get(weekdayKeys[_currentDate.weekday - 1]) ??
+        '';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
@@ -209,7 +221,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
             alignment: Alignment.center,
             children: [
               Image.asset('assets/images/Date_Icon.png',
-                  width: 190, height: 50, fit: BoxFit.fill),
+                  width: 220, height: 50, fit: BoxFit.fill),
               Positioned(
                 left: 20,
                 child: Padding(
@@ -224,7 +236,14 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${_currentDate.year}.${_currentDate.month.toString().padLeft(2, '0')}.${_currentDate.day.toString().padLeft(2, '0')} ($weekday)',
+                        AppLocalizations.of(context)
+                                ?.getFormat('fullDateFormat', {
+                              'year': _currentDate.year.toString(),
+                              'month': _currentDate.month.toString(),
+                              'day': _currentDate.day.toString(),
+                              'weekday': weekday
+                            }) ??
+                            '${_currentDate.year}.${_currentDate.month.toString().padLeft(2, '0')}.${_currentDate.day.toString().padLeft(2, '0')} ($weekday)',
                         style: TextStyle(
                           fontFamily: 'BMJUA',
                           color: colorScheme.textPrimary,
@@ -252,8 +271,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                     height: 38,
                     fit: BoxFit.fill,
                   ),
-                  const Text(
-                    '닫기',
+                  Text(
+                    AppLocalizations.of(context)?.get('close') ?? 'Close',
                     style: TextStyle(
                       fontFamily: 'BMJUA',
                       color: Color(0xFF5D4037),
@@ -271,6 +290,31 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   }
 
   Widget _buildQuestionCard(AppColorScheme colorScheme) {
+    // 1. 현재 질문 텍스트 가져오기
+    String questionText = _currentDiary?.promptQuestion ??
+        (AppLocalizations.of(context)?.get('noQuestion') ?? 'No Question');
+
+    // 2. 언어 설정 확인 (영어 모드일 때만 번역 시도)
+    if (Localizations.localeOf(context).languageCode == 'en' &&
+        _currentDiary?.promptQuestion != null) {
+      final String originalText = _currentDiary!.promptQuestion!;
+
+      // 정규화 함수 (공백, 문장부호 제거)
+      String normalize(String text) {
+        return text.replaceAll(RegExp(r'[\s\?\!.,]'), '');
+      }
+
+      final String normalizedOriginal = normalize(originalText);
+
+      // 번역 맵에서 검색
+      for (var entry in AdminController.questionTranslationMap.entries) {
+        if (normalize(entry.key) == normalizedOriginal) {
+          questionText = entry.value;
+          break;
+        }
+      }
+    }
+
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
@@ -287,7 +331,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '오늘의 질문',
+                  AppLocalizations.of(context)?.get('todayQuestion') ??
+                      'Today\'s Question',
                   style: TextStyle(
                     fontFamily: 'BMJUA',
                     color: colorScheme.textSecondary.withOpacity(0.8),
@@ -296,15 +341,20 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  _currentDiary?.promptQuestion ?? '질문이 없습니다.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'BMJUA',
-                    color: colorScheme.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    height: 1.3,
+                // Padding 추가로 텍스트가 너무 가장자리에 붙지 않게 함
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Text(
+                    questionText,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'BMJUA', // 한글 원문일 경우 BMJUA
+                      // 영어일 경우 가독성을 위해 다른 폰트를 고려할 수도 있으나 통일성 유지
+                      color: colorScheme.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      height: 1.3,
+                    ),
                   ),
                 ),
               ],
@@ -407,7 +457,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
           : _currentDiary == null
               ? Center(
                   child: Text(
-                    '작성된 일기가 없습니다.',
+                    AppLocalizations.of(context)?.get('noDiaryContent') ??
+                        'No content.',
                     style: TextStyle(
                       fontFamily: 'BMJUA',
                       color: colorScheme.textHint,
@@ -437,13 +488,13 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
         children: [
           _buildNavButton(
             onPressed: _navigateToPrevious,
-            label: '이전',
+            label: AppLocalizations.of(context)?.get('previous') ?? 'Previous',
             icon: Icons.arrow_back_ios_new,
             enabled: true,
           ),
           _buildNavButton(
             onPressed: hasNext ? _navigateToNext : null,
-            label: '다음',
+            label: AppLocalizations.of(context)?.get('next') ?? 'Next',
             icon: Icons.arrow_forward_ios,
             enabled: hasNext,
             isRight: true,

@@ -84,7 +84,7 @@
            <string>Editor</string>
            <key>CFBundleURLSchemes</key>
            <array>
-               <string>kakao{428c577ddcef7bb2c5ad8130a2086fd1}</string>
+               <string>kakaob85bd2621b6bf24cf21211b92e352c50</string>
            </array>
        </dict>
    </array>
@@ -96,6 +96,6 @@
    </array>
    
    <key>KAKAO_APP_KEY</key>
-   <string>{428c577ddcef7bb2c5ad8130a2086fd1}</string>
+   <string>85bd2621b6bf24cf21211b92e352c50</string>
 </dict>
 </plist>

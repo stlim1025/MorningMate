@@ -9,6 +9,7 @@ import '../widgets/character_display.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class CharacterDecorationScreen extends StatefulWidget {
   const CharacterDecorationScreen({super.key});
@@ -29,15 +30,21 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
   late AnimationController _buttonController;
   late Animation<double> _scaleAnimation;
 
-  final Map<String, String> _categoryNames = {
-    'all': '전체',
-    'head': '머리',
-    'face': '얼굴',
-    'clothes': '옷',
-    'body': '장식',
-  };
+  final List<String> _categories = ['all', 'head', 'face', 'clothes', 'body'];
 
-  late final List<String> _categories = _categoryNames.keys.toList();
+  String _getCategoryLabel(BuildContext context, String category) {
+    if (category == 'all')
+      return AppLocalizations.of(context)?.get('all') ?? 'All';
+    if (category == 'head')
+      return AppLocalizations.of(context)?.get('head') ?? 'Head';
+    if (category == 'face')
+      return AppLocalizations.of(context)?.get('face') ?? 'Face';
+    if (category == 'clothes')
+      return AppLocalizations.of(context)?.get('clothes') ?? 'Clothes';
+    if (category == 'body')
+      return AppLocalizations.of(context)?.get('accessory') ?? 'Accessory';
+    return category;
+  }
 
   @override
   void initState() {
@@ -106,9 +113,10 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
             height: 40,
           ),
         ),
-        title: const Text(
-          '캐릭터 꾸미기',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(context)?.get('decorateCharacter') ??
+              'Decorate Character',
+          style: const TextStyle(
             color: Color(0xFF4E342E),
             fontWeight: FontWeight.bold,
             fontFamily: 'BMJUA',
@@ -132,9 +140,9 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                   ),
                 ),
                 alignment: Alignment.center,
-                child: const Text(
-                  '저장',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)?.get('save') ?? 'Save',
+                  style: const TextStyle(
                     color: Color(0xFF5D4E37),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -197,9 +205,10 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                               fit: BoxFit.fill,
                             ),
                           ),
-                          child: const Text(
-                            '모두 해제',
-                            style: TextStyle(
+                          child: Text(
+                            AppLocalizations.of(context)?.get('unequipAll') ??
+                                'Unequip All',
+                            style: const TextStyle(
                               fontFamily: 'BMJUA',
                               fontSize: 14,
                               color: Color(0xFF5D4037),
@@ -246,9 +255,11 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                                   ),
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            '보유중인 상품만 보기',
-                            style: TextStyle(
+                          Text(
+                            AppLocalizations.of(context)
+                                    ?.get('showOwnedOnly') ??
+                                'Show Owned Only',
+                            style: const TextStyle(
                               fontFamily: 'BMJUA',
                               fontSize: 14,
                               color: Color(0xFF5D4037),
@@ -292,16 +303,16 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: _categoryNames.entries.map((entry) {
+                        children: _categories.map((category) {
                           return Padding(
                             padding: const EdgeInsets.only(right: 8.0),
                             child: _buildTabItem(
-                                entry.value, _selectedCategory == entry.key,
-                                () {
-                              final newIndex = _categories.indexOf(entry.key);
+                                _getCategoryLabel(context, category),
+                                _selectedCategory == category, () {
+                              final newIndex = _categories.indexOf(category);
                               setState(() {
                                 _currentIndex = newIndex;
-                                _selectedCategory = entry.key;
+                                _selectedCategory = category;
                               });
                               _pageController.animateToPage(
                                 newIndex,
@@ -419,7 +430,10 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
       await characterController.updateEquippedCharacterItems(
           user.uid, _previewEquippedItems);
       if (mounted) {
-        MemoNotification.show(context, '설정이 저장되었습니다! ✨');
+        MemoNotification.show(
+            context,
+            AppLocalizations.of(context)?.get('decorationSaved') ??
+                'Settings saved! ✨');
         context.pop();
       }
       return;
@@ -449,11 +463,12 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
       ),
       actions: [
         AppDialogAction(
-          label: '취소',
+          label: AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
           onPressed: (context) => Navigator.pop(context, false),
         ),
         AppDialogAction(
-          label: '일괄구매',
+          label: AppLocalizations.of(context)?.get('bulkPurchase') ??
+              'Bulk Purchase',
           isPrimary: true,
           isEnabled: isEnabledNotifier,
           onPressed: (context) => Navigator.pop(context, true),
@@ -468,7 +483,10 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
 
       if (user.points < finalPrice) {
         if (mounted) {
-          MemoNotification.show(context, '가지가 부족합니다!');
+          MemoNotification.show(
+              context,
+              AppLocalizations.of(context)?.get('notEnoughBranch') ??
+                  'Not enough branches.');
         }
         return;
       }
@@ -503,12 +521,16 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
             user.uid, newPreviewEquipped);
 
         if (mounted) {
-          MemoNotification.show(context, '구매 및 저장이 완료되었습니다! ✨');
+          MemoNotification.show(
+              context,
+              AppLocalizations.of(context)?.get('purchaseAndSaveSuccess') ??
+                  'Purchase and Save Complete! ✨');
           context.pop();
         }
       } catch (e) {
         if (mounted) {
-          MemoNotification.show(context, '오류가 발생했습니다: $e');
+          MemoNotification.show(context,
+              '${AppLocalizations.of(context)?.get('error') ?? 'Error'}: $e');
         }
       }
     }
@@ -599,7 +621,8 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
               left: 4,
               right: 4,
               child: Text(
-                item.name,
+                AppLocalizations.of(context)?.get('item_name_${item.id}') ??
+                    item.name,
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -669,10 +692,11 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                     height: 110,
                     fit: BoxFit.contain,
                   ),
-                  const Positioned(
+                  Positioned(
                     top: 20,
                     child: Text(
-                      '장착',
+                      AppLocalizations.of(context)?.get('stampEquipped') ??
+                          'Equipped',
                       style: TextStyle(
                         color: Color(0xFFE57373),
                         fontWeight: FontWeight.bold,
@@ -723,14 +747,17 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            '${item.name}을(를) 구매하시겠습니까?',
+            AppLocalizations.of(context)
+                    ?.getFormat('purchaseConfirm', {'item': item.name}) ??
+                'Do you want to purchase ${item.name}?',
             style: const TextStyle(fontFamily: 'BMJUA'),
           ),
           const SizedBox(height: 12),
           if (!canAfford) ...[
             const SizedBox(height: 12),
             Text(
-              '가지가 부족합니다.',
+              AppLocalizations.of(context)?.get('notEnoughBranch') ??
+                  'Not enough branches.',
               style: TextStyle(
                 color: colorScheme.error,
                 fontSize: 13,

@@ -7,6 +7,8 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/localization/language_provider.dart';
 
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -53,7 +55,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          '설정',
+          AppLocalizations.of(context)?.get('settings') ?? 'Settings',
           style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
                 color: colorScheme.textPrimary,
                 fontFamily: 'BMJUA',
@@ -79,7 +81,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: const EdgeInsets.all(20),
                   children: [
                     // 계정 설정
-                    _buildSectionTitle('계정', colorScheme),
+                    _buildSectionTitle(
+                        AppLocalizations.of(context)?.get('account') ??
+                            'Account',
+                        colorScheme),
                     const SizedBox(height: 12),
                     _buildOptionArea(
                       context,
@@ -88,7 +93,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           colorScheme,
                           icon: Icons.person,
-                          title: '닉네임 변경',
+                          title: AppLocalizations.of(context)
+                                  ?.get('changeNickname') ??
+                              'Change Nickname',
                           subtitle: user?.nickname ?? '',
                           onTap: () => _showChangeNicknameDialog(
                               context, user?.nickname ?? '', colorScheme),
@@ -98,7 +105,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           colorScheme,
                           icon: Icons.email,
-                          title: '이메일',
+                          title: AppLocalizations.of(context)?.get('email') ??
+                              'Email',
                           subtitle: (user?.email?.startsWith('kakao_') ?? false)
                               ? '카카오 로그인'
                               : (user?.email?.startsWith('apple_') ??
@@ -113,7 +121,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 12),
 
                     // 보안 설정
-                    _buildSectionTitle('보안', colorScheme),
+                    _buildSectionTitle(
+                        AppLocalizations.of(context)?.get('security') ??
+                            'Security',
+                        colorScheme),
                     const SizedBox(height: 12),
                     _buildOptionArea(
                       context,
@@ -125,7 +136,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           colorScheme,
                           icon: Icons.lock,
-                          title: '비밀번호 변경',
+                          title: AppLocalizations.of(context)
+                                  ?.get('changePassword') ??
+                              'Change Password',
                           onTap: () =>
                               _showChangePasswordDialog(context, colorScheme),
                         ),
@@ -135,7 +148,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 12),
 
                     // 앱 설정
-                    _buildSectionTitle('앱 설정', colorScheme),
+                    _buildSectionTitle(
+                        AppLocalizations.of(context)?.get('appSettings') ??
+                            'App Settings',
+                        colorScheme),
                     const SizedBox(height: 12),
                     _buildOptionArea(
                       context,
@@ -146,8 +162,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _buildSettingsTile(
                           context,
                           colorScheme,
+                          icon: Icons.language,
+                          title:
+                              AppLocalizations.of(context)?.get('language') ??
+                                  'Language',
+                          subtitle:
+                              Localizations.localeOf(context).languageCode ==
+                                      'ko'
+                                  ? '한국어'
+                                  : 'English',
+                          onTap: () =>
+                              _showLanguageDialog(context, colorScheme),
+                        ),
+                        _buildDivider(colorScheme),
+                        _buildSettingsTile(
+                          context,
+                          colorScheme,
                           icon: Icons.notifications,
-                          title: '알림 설정',
+                          title: AppLocalizations.of(context)
+                                  ?.get('notificationSettings') ??
+                              'Notification Settings',
                           onTap: () {
                             context.pushNamed('notificationSettings');
                           },
@@ -158,7 +192,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 12),
 
                     // 정보
-                    _buildSectionTitle('정보', colorScheme),
+                    _buildSectionTitle(
+                        AppLocalizations.of(context)?.get('info') ?? 'Info',
+                        colorScheme),
                     const SizedBox(height: 12),
                     _buildOptionArea(
                       context,
@@ -167,8 +203,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           colorScheme,
                           icon: Icons.info,
-                          title: '버전 정보',
-                          subtitle: _version.isEmpty ? '불러오는 중...' : _version,
+                          title: AppLocalizations.of(context)
+                                  ?.get('versionInfo') ??
+                              'Version Info',
+                          subtitle: _version.isEmpty ? 'Loading...' : _version,
                           onTap: null,
                         ),
                         _buildDivider(colorScheme),
@@ -176,7 +214,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           colorScheme,
                           icon: Icons.description,
-                          title: '이용약관',
+                          title: AppLocalizations.of(context)
+                                  ?.get('termsOfService') ??
+                              'Terms of Service',
                           onTap: () {
                             context.pushNamed('termsOfService');
                           },
@@ -186,7 +226,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           colorScheme,
                           icon: Icons.privacy_tip,
-                          title: '개인정보 처리방침',
+                          title: AppLocalizations.of(context)
+                                  ?.get('privacyPolicy') ??
+                              'Privacy Policy',
                           onTap: () {
                             context.pushNamed('privacyPolicy');
                           },
@@ -480,7 +522,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       title: Text(
-        '글 작성 블러 기본값',
+        AppLocalizations.of(context)?.get('writingBlur') ??
+            'Writing Blur Default',
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: colorScheme.textPrimary,
@@ -490,7 +533,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Text(
-          blurEnabled ? '작성 중인 글을 기본으로 블러 처리합니다' : '작성 중인 글을 기본으로 표시합니다',
+          blurEnabled
+              ? (AppLocalizations.of(context)?.get('writingBlurDescEnabled') ??
+                  'Blur writing by default')
+              : (AppLocalizations.of(context)?.get('writingBlurDescDisabled') ??
+                  'Show writing by default'),
           style: TextStyle(
             color: colorScheme.textSecondary,
             fontSize: 13,
@@ -531,7 +578,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       title: Text(
-        '생체 인증',
+        AppLocalizations.of(context)?.get('biometricAuth') ?? 'Biometric Auth',
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: colorScheme.textPrimary,
@@ -541,7 +588,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Text(
-          biometricEnabled ? '앱 실행과 일기 열기에 생체 인증이 필요합니다' : '생체 인증으로 앱을 보호합니다',
+          biometricEnabled
+              ? (AppLocalizations.of(context)
+                      ?.get('biometricAuthDescEnabled') ??
+                  'Biometric auth required')
+              : (AppLocalizations.of(context)
+                      ?.get('biometricAuthDescDisabled') ??
+                  'Protect app with biometric auth'),
           style: TextStyle(
             color: colorScheme.textSecondary,
             fontSize: 13,
@@ -582,9 +635,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               const Icon(Icons.logout, size: 20, color: Color(0xFF5D4037)),
               const SizedBox(width: 8),
-              const Text(
-                '로그아웃',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)?.get('logout') ?? 'Logout',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'BMJUA',
@@ -605,9 +658,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onPressed: () =>
             _showDeleteAccountDialog(context, authController, colorScheme),
         child: Text(
-          '회원탈퇴',
-          style: TextStyle(
-            color: const Color(0xFF5D4037),
+          AppLocalizations.of(context)?.get('deleteAccount') ??
+              'Delete Account',
+          style: const TextStyle(
+            color: Color(0xFF5D4037),
             decoration: TextDecoration.underline,
             fontSize: 15,
             fontWeight: FontWeight.bold,
@@ -634,7 +688,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: PopupTextField(
               controller: controller,
-              hintText: '새 닉네임 입력',
+              hintText: AppLocalizations.of(context)?.get('enterNewNickname') ??
+                  'Enter new nickname',
               maxLength: 10,
             ),
           ),
@@ -661,18 +716,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       actions: [
         AppDialogAction(
-          label: '취소',
+          label: AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
           onPressed: () => context.pop(),
         ),
         AppDialogAction(
-          label: '변경',
+          label: AppLocalizations.of(context)?.get('change') ?? 'Change',
           isPrimary: true,
           onPressed: (BuildContext context) async {
             final newNickname = controller.text.trim();
             AppDialog.showError(context, null); // Clear prev error
 
             if (newNickname.isEmpty || newNickname.length < 2) {
-              AppDialog.showError(context, '닉네임은 2자 이상이어야 합니다');
+              AppDialog.showError(
+                  context,
+                  AppLocalizations.of(context)?.get('nicknameLengthError') ??
+                      'Nickname must be at least 2 characters');
               return;
             }
 
@@ -689,7 +747,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   isCheckingNotifier.value = false;
 
                   if (!isAvailable) {
-                    AppDialog.showError(context, '이미 사용 중인 닉네임입니다');
+                    AppDialog.showError(
+                        context,
+                        AppLocalizations.of(context)
+                                ?.get('nicknameTakenError') ??
+                            'Nickname is already taken');
                     return;
                   }
                 }
@@ -704,12 +766,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 if (context.mounted) {
                   Navigator.pop(context);
-                  MemoNotification.show(context, '닉네임이 변경되었습니다! ✨');
+                  MemoNotification.show(
+                      context,
+                      AppLocalizations.of(context)?.get('nicknameChanged') ??
+                          'Nickname changed! ✨');
                 }
               } catch (e) {
                 if (context.mounted) {
                   isCheckingNotifier.value = false;
-                  AppDialog.showError(context, '오류: $e');
+                  AppDialog.showError(context,
+                      '${AppLocalizations.of(context)?.get('error') ?? 'Error'}: $e');
                 }
               }
             }
@@ -740,7 +806,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        _buildSnackBar('설정 저장 중 오류가 발생했습니다: $e', colorScheme),
+        _buildSnackBar(
+            '${AppLocalizations.of(context)?.get('errorSavingSettings') ?? 'Error saving settings: '}$e',
+            colorScheme),
       );
     }
   }
@@ -793,6 +861,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     }
+  }
+
+  void _showLanguageDialog(BuildContext context, AppColorScheme colorScheme) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  AppLocalizations.of(context)?.get('selectLanguage') ??
+                      'Select Language',
+                  style: TextStyle(
+                    fontFamily: 'BMJUA',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.textPrimary,
+                  ),
+                ),
+              ),
+              ListTile(
+                title: const Text('한국어', style: TextStyle(fontFamily: 'BMJUA')),
+                trailing: Localizations.localeOf(context).languageCode == 'ko'
+                    ? Icon(Icons.check, color: colorScheme.primaryButton)
+                    : null,
+                onTap: () {
+                  context
+                      .read<LanguageProvider>()
+                      .setLocale(const Locale('ko'));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('English',
+                    style: TextStyle(fontFamily: 'BMJUA')),
+                trailing: Localizations.localeOf(context).languageCode == 'en'
+                    ? Icon(Icons.check, color: colorScheme.primaryButton)
+                    : null,
+                onTap: () {
+                  context
+                      .read<LanguageProvider>()
+                      .setLocale(const Locale('en'));
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _showChangePasswordDialog(
@@ -865,11 +992,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       actions: [
         AppDialogAction(
-          label: '취소',
+          label: AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: '변경',
+          label: AppLocalizations.of(context)?.get('change') ?? 'Change',
           isPrimary: true,
           onPressed: (BuildContext context) async {
             AppDialog.showError(context, null);
@@ -922,11 +1049,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       key: AppDialogKey.logout,
       actions: [
         AppDialogAction(
-          label: '취소',
+          label: AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: '로그아웃',
+          label: AppLocalizations.of(context)?.get('logout') ?? 'Logout',
           isPrimary: true,
           onPressed: () async {
             await authController.signOut();
@@ -949,14 +1076,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       key: AppDialogKey.deleteAccount,
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text('정말로 탈퇴하시겠습니까?\n모든 데이터가 영구적으로 삭제됩니다.'),
+          Text(
+            AppLocalizations.of(context)?.get('deleteAccountConfirmDesc') ??
+                '정말로 탈퇴하시겠습니까?\n모든 데이터가 영구적으로 삭제됩니다.',
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
           PopupTextField(
             controller: passwordController,
             obscureText: true,
-            hintText: '비밀번호 확인',
+            hintText:
+                AppLocalizations.of(context)?.get('passwordConfirmHint') ??
+                    '비밀번호 확인',
           ),
           const SizedBox(height: 16),
           ValueListenableBuilder<bool>(
@@ -995,7 +1128,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '안내 사항을 모두 확인하였으며, 탈퇴에 동의합니다.',
+                        AppLocalizations.of(context)
+                                ?.get('deleteAccountConsent') ??
+                            '안내 사항을 모두 확인하였으며, 탈퇴에 동의합니다.',
                         style: TextStyle(
                           fontSize: 13,
                           color: colorScheme.textSecondary,
@@ -1011,18 +1146,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       actions: [
         AppDialogAction(
-          label: '취소',
+          label: AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: '탈퇴',
+          label: AppLocalizations.of(context)?.get('deleteAccount') ??
+              'Delete Account',
           isEnabled: isCheckedNotifier,
           onPressed: (BuildContext context) async {
             final password = passwordController.text.trim();
             AppDialog.showError(context, null);
 
             if (password.isEmpty) {
-              AppDialog.showError(context, '비밀번호를 입력해주세요');
+              AppDialog.showError(
+                  context,
+                  AppLocalizations.of(context)?.get('passwordRequired') ??
+                      '비밀번호를 입력해주세요');
               return;
             }
 

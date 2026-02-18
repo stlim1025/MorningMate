@@ -4,6 +4,7 @@ import '../../../core/theme/app_color_scheme.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
 import '../../../core/widgets/memo_notification.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
   const NotificationSettingsScreen({super.key});
@@ -26,7 +27,8 @@ class NotificationSettingsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          '알림 설정',
+          AppLocalizations.of(context)?.get('notificationSettings') ??
+              'Notification Settings',
           style: TextStyle(
             color: colorScheme.textPrimary,
             fontWeight: FontWeight.bold,
@@ -42,15 +44,20 @@ class NotificationSettingsScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              _buildSectionTitle('서비스 알림', colorScheme),
+              _buildSectionTitle(
+                  AppLocalizations.of(context)?.get('serviceNotification') ??
+                      'Service Notifications',
+                  colorScheme),
               const SizedBox(height: 12),
               _buildOptionArea(
                 context,
                 children: [
                   _buildNotiTile(
                     context,
-                    '아침 일기 알림',
-                    '아침마다 일기 작성을 잊지 않도록 알려드려요',
+                    AppLocalizations.of(context)?.get('morningDiaryNoti') ??
+                        'Morning Diary Alert',
+                    AppLocalizations.of(context)?.get('morningDiaryNotiDesc') ??
+                        'Remind you to write diary every morning',
                     user.morningDiaryNoti,
                     (val) => _updateNoti(
                         context, authController, {'morningDiaryNoti': val}),
@@ -59,15 +66,20 @@ class NotificationSettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              _buildSectionTitle('활동 알림', colorScheme),
+              _buildSectionTitle(
+                  AppLocalizations.of(context)?.get('activityNotification') ??
+                      'Activity Notifications',
+                  colorScheme),
               const SizedBox(height: 12),
               _buildOptionArea(
                 context,
                 children: [
                   _buildNotiTile(
                     context,
-                    '깨우기 알림',
-                    '친구가 나를 깨웠을 때 알림을 받아요',
+                    AppLocalizations.of(context)?.get('wakeUpNoti') ??
+                        'Wake Up Alert',
+                    AppLocalizations.of(context)?.get('wakeUpNotiDesc') ??
+                        'Get notified when a friend wakes you up',
                     user.wakeUpNoti,
                     (val) => _updateNoti(
                         context, authController, {'wakeUpNoti': val}),
@@ -76,8 +88,10 @@ class NotificationSettingsScreen extends StatelessWidget {
                   _buildDivider(colorScheme),
                   _buildNotiTile(
                     context,
-                    '응원 메시지 알림',
-                    '친구가 응원 메시지를 남겼을 때 알림을 받아요',
+                    AppLocalizations.of(context)?.get('cheerMessageNoti') ??
+                        'Cheer Message Alert',
+                    AppLocalizations.of(context)?.get('cheerMessageNotiDesc') ??
+                        'Get notified when a friend sends a cheer',
                     user.cheerMessageNoti,
                     (val) => _updateNoti(
                         context, authController, {'cheerMessageNoti': val}),
@@ -86,15 +100,21 @@ class NotificationSettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              _buildSectionTitle('친구 알림', colorScheme),
+              _buildSectionTitle(
+                  AppLocalizations.of(context)?.get('friendNotification') ??
+                      'Friend Notifications',
+                  colorScheme),
               const SizedBox(height: 12),
               _buildOptionArea(
                 context,
                 children: [
                   _buildNotiTile(
                     context,
-                    '친구 요청 알림',
-                    '새로운 친구 요청이 오면 알려드려요',
+                    AppLocalizations.of(context)?.get('friendRequestNoti') ??
+                        'Friend Request Alert',
+                    AppLocalizations.of(context)
+                            ?.get('friendRequestNotiDesc') ??
+                        'Get notified of new friend requests',
                     user.friendRequestNoti,
                     (val) => _updateNoti(
                         context, authController, {'friendRequestNoti': val}),
@@ -103,8 +123,10 @@ class NotificationSettingsScreen extends StatelessWidget {
                   _buildDivider(colorScheme),
                   _buildNotiTile(
                     context,
-                    '친구 수락 알림',
-                    '상대방이 내 친구 요청을 수락하면 알려드려요',
+                    AppLocalizations.of(context)?.get('friendAcceptNoti') ??
+                        'Friend Accept Alert',
+                    AppLocalizations.of(context)?.get('friendAcceptNotiDesc') ??
+                        'Get notified when your request is accepted',
                     user.friendAcceptNoti,
                     (val) => _updateNoti(
                         context, authController, {'friendAcceptNoti': val}),
@@ -113,8 +135,10 @@ class NotificationSettingsScreen extends StatelessWidget {
                   _buildDivider(colorScheme),
                   _buildNotiTile(
                     context,
-                    '친구 거절 알림',
-                    '내 친구 요청이 거절되었을 때 알림을 받아요',
+                    AppLocalizations.of(context)?.get('friendRejectNoti') ??
+                        'Friend Reject Alert',
+                    AppLocalizations.of(context)?.get('friendRejectNotiDesc') ??
+                        'Get notified when your request is rejected',
                     user.friendRejectNoti,
                     (val) => _updateNoti(
                         context, authController, {'friendRejectNoti': val}),
@@ -135,17 +159,18 @@ class NotificationSettingsScreen extends StatelessWidget {
       child: Transform.translate(
         offset: const Offset(-10, 0),
         child: Container(
-          width: 120,
-          height: 32,
+          width: 140, // Increased from 120
+          height: 42, // Increased from 32 to prevent clipping
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/icons/Store_Tab.png'),
               fit: BoxFit.fill,
             ),
           ),
-          alignment: Alignment.center,
+          alignment: Alignment.centerLeft,
           child: Padding(
-            padding: const EdgeInsets.only(left: 20),
+            padding: const EdgeInsets.fromLTRB(
+                45, 2, 16, 0), // Increased left padding from 20 to 32
             child: Text(
               title,
               style: const TextStyle(
@@ -153,7 +178,10 @@ class NotificationSettingsScreen extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'BMJUA',
+                height: 1.1, // Adjusted line height
               ),
+              maxLines: 2,
+              overflow: TextOverflow.visible,
             ),
           ),
         ),
@@ -267,7 +295,8 @@ class NotificationSettingsScreen extends StatelessWidget {
       );
     } catch (e) {
       if (context.mounted) {
-        MemoNotification.show(context, '설정 저장 중 오류가 발생했습니다. 다시 시도해 주세요. ⚠️');
+        MemoNotification.show(context,
+            '${AppLocalizations.of(context)?.get('errorSavingSettings') ?? 'Error saving settings: '} ⚠️');
       }
     }
   }

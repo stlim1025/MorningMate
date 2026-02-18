@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class DiaryButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -52,11 +53,12 @@ class _DiaryButtonState extends State<DiaryButton>
               fit: BoxFit.fill,
               cacheHeight: 200, // Optimize memory for fixed height
             ),
-            const Padding(
-              padding: EdgeInsets.only(top: 6),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
               child: Text(
-                '일기 작성하기',
-                style: TextStyle(
+                AppLocalizations.of(context)?.get('writeDiary') ??
+                    'Write Diary',
+                style: const TextStyle(
                   fontFamily: 'BMJUA',
                   fontSize: 23,
                   fontWeight: FontWeight.bold,

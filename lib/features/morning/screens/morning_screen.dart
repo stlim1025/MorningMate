@@ -19,6 +19,7 @@ import '../widgets/diary_button.dart';
 import '../widgets/decoration_button.dart';
 import '../widgets/header_image_button.dart';
 import '../widgets/character_decoration_button.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class MorningScreen extends StatefulWidget {
   const MorningScreen({super.key});
@@ -201,9 +202,10 @@ class _MorningScreenState extends State<MorningScreen>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '반가워요! 사용하실 닉네임을 입력해주세요.',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)?.get('nicknameIntro') ??
+                'Nice to meet you! Please enter your nickname.',
+            style: const TextStyle(
               fontFamily: 'BMJUA',
               fontSize: 16,
               color: Color(0xFF4E342E),
@@ -214,7 +216,9 @@ class _MorningScreenState extends State<MorningScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: PopupTextField(
               controller: controller,
-              hintText: '닉네임 입력 (2~10자)',
+              hintText:
+                  AppLocalizations.of(context)?.get('nicknamePlaceholder') ??
+                      'Enter nickname (2-10 chars)',
               maxLength: 10,
             ),
           ),
@@ -242,14 +246,17 @@ class _MorningScreenState extends State<MorningScreen>
       actions: [
         // 취소 버튼 없음 (필수 설정 유도)
         AppDialogAction(
-          label: '시작하기',
+          label: AppLocalizations.of(context)?.get('start') ?? 'Start',
           isPrimary: true,
           onPressed: (BuildContext context) async {
             final newNickname = controller.text.trim();
             AppDialog.showError(context, null);
 
             if (newNickname.isEmpty || newNickname.length < 2) {
-              AppDialog.showError(context, '닉네임은 2자 이상이어야 합니다');
+              AppDialog.showError(
+                  context,
+                  AppLocalizations.of(context)?.get('nicknameLengthError') ??
+                      'Nickname must be at least 2 characters');
               return;
             }
 
@@ -265,7 +272,10 @@ class _MorningScreenState extends State<MorningScreen>
                 isCheckingNotifier.value = false;
 
                 if (!isAvailable) {
-                  AppDialog.showError(context, '이미 사용 중인 닉네임입니다');
+                  AppDialog.showError(
+                      context,
+                      AppLocalizations.of(context)?.get('nicknameTakenError') ??
+                          'Nickname is already taken');
                   return;
                 }
 
@@ -280,7 +290,8 @@ class _MorningScreenState extends State<MorningScreen>
               } catch (e) {
                 if (context.mounted) {
                   isCheckingNotifier.value = false;
-                  AppDialog.showError(context, '오류: $e');
+                  AppDialog.showError(context,
+                      '${AppLocalizations.of(context)?.get('error') ?? 'Error'}: $e');
                 }
               }
             }
@@ -510,7 +521,14 @@ class _MorningScreenState extends State<MorningScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${characterController.currentUser?.displayConsecutiveDays ?? 0}일 연속 기록 중 🔥',
+                  AppLocalizations.of(context)?.getFormat(
+                        'consecutiveDays',
+                        {
+                          'days':
+                              '${characterController.currentUser?.displayConsecutiveDays ?? 0}'
+                        },
+                      ) ??
+                      '${characterController.currentUser?.displayConsecutiveDays ?? 0} days consecutive streak 🔥',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: textColor.withOpacity(0.9),
                     fontWeight: FontWeight.w600,
@@ -621,8 +639,15 @@ class _MorningScreenState extends State<MorningScreen>
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return '좋은 아침이에요!';
-    if (hour < 18) return '좋은 오후에요!';
-    return '좋은 저녁이에요!';
+    if (hour < 12) {
+      return AppLocalizations.of(context)?.get('greetingMorning') ??
+          'Good morning!';
+    }
+    if (hour < 18) {
+      return AppLocalizations.of(context)?.get('greetingAfternoon') ??
+          'Good afternoon!';
+    }
+    return AppLocalizations.of(context)?.get('greetingEvening') ??
+        'Good evening!';
   }
 }

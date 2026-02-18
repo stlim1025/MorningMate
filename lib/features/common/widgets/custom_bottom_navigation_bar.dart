@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -47,7 +48,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 children: [
                   _TabItem(
                     iconPath: 'assets/icons/Home_Icon.png',
-                    label: '홈',
+                    label: AppLocalizations.of(context)?.get('home') ?? 'Home',
                     width: 38,
                     height: 38,
                     isSelected: currentIndex == 0,
@@ -55,7 +56,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   ),
                   _TabItem(
                     iconPath: 'assets/icons/Challenge_Icon.png',
-                    label: '도전과제',
+                    label: AppLocalizations.of(context)?.get('challenge') ??
+                        'Challenge',
                     width: 54,
                     height: 38,
                     isSelected: currentIndex == 1,
@@ -63,7 +65,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   ),
                   _TabItem(
                     iconPath: 'assets/icons/Friend_Icon.png',
-                    label: '친구',
+                    label: AppLocalizations.of(context)?.get('friends') ??
+                        'Friends',
                     width: 64,
                     height: 45,
                     isSelected: currentIndex == 2,
@@ -72,7 +75,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   ),
                   _TabItem(
                     iconPath: 'assets/icons/Calander_Icon.png',
-                    label: '마이페이지',
+                    label: AppLocalizations.of(context)?.get('myPage') ??
+                        'My Page',
                     width: 48,
                     height: 38,
                     isSelected: currentIndex == 3,

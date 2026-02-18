@@ -11,7 +11,8 @@ class DiaryModel {
   final List<String> moods; // ['happy', 'neutral', 'sad', 'excited'] 등
   final bool isCompleted;
   final DateTime createdAt;
-  final String? promptQuestion; // 사용한 랜덤 질문
+  final String? promptQuestion; // 사용한 랜덤 질문 (기본/한국어)
+  final String? promptQuestionEng; // 사용한 랜덤 질문 (영어)
 
   DiaryModel({
     required this.id,
@@ -25,6 +26,7 @@ class DiaryModel {
     this.isCompleted = false,
     required this.createdAt,
     this.promptQuestion,
+    this.promptQuestionEng,
   });
 
   // Firestore에서 가져오기
@@ -52,6 +54,7 @@ class DiaryModel {
       isCompleted: data['isCompleted'] ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       promptQuestion: data['promptQuestion'],
+      promptQuestionEng: data['promptQuestionEng'],
     );
   }
 
@@ -68,6 +71,7 @@ class DiaryModel {
       'isCompleted': isCompleted,
       'createdAt': Timestamp.fromDate(createdAt),
       'promptQuestion': promptQuestion,
+      'promptQuestionEng': promptQuestionEng,
     };
   }
 
@@ -83,6 +87,7 @@ class DiaryModel {
     bool? isCompleted,
     DateTime? createdAt,
     String? promptQuestion,
+    String? promptQuestionEng,
   }) {
     return DiaryModel(
       id: id ?? this.id,
@@ -96,6 +101,7 @@ class DiaryModel {
       isCompleted: isCompleted ?? this.isCompleted,
       createdAt: createdAt ?? this.createdAt,
       promptQuestion: promptQuestion ?? this.promptQuestion,
+      promptQuestionEng: promptQuestionEng ?? this.promptQuestionEng,
     );
   }
 
