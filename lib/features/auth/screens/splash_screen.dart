@@ -94,14 +94,14 @@ class _SplashScreenState extends State<SplashScreen> {
       barrierDismissible: false,
       actions: [
         AppDialogAction(
-          label: '로그아웃',
+          label: AppLocalizations.of(context)?.get('logout') ?? '로그아웃',
           onPressed: () {
             context.read<AuthController>().signOut();
             Navigator.pop(context, false);
           },
         ),
         AppDialogAction(
-          label: '다시 시도',
+          label: AppLocalizations.of(context)?.get('retry') ?? '다시 시도',
           onPressed: () => Navigator.pop(context, true),
           useHighlight: true,
         ),
@@ -123,22 +123,19 @@ class _SplashScreenState extends State<SplashScreen> {
     if (suspendedUntil.year >= 2090) {
       remainingTime = l10n?.get('permanentSuspension') ?? '영구 정지';
     } else if (diff.inDays > 0) {
-      remainingTime =
-          l10n?.getFormat('daysRemaining', {
+      remainingTime = l10n?.getFormat('daysRemaining', {
             'days': diff.inDays.toString(),
             'hours': (diff.inHours % 24).toString(),
           }) ??
           '${diff.inDays}일 ${diff.inHours % 24}시간 남음';
     } else if (diff.inHours > 0) {
-      remainingTime =
-          l10n?.getFormat('hoursRemaining', {
+      remainingTime = l10n?.getFormat('hoursRemaining', {
             'hours': diff.inHours.toString(),
             'minutes': (diff.inMinutes % 60).toString(),
           }) ??
           '${diff.inHours}시간 ${diff.inMinutes % 60}분 남음';
     } else {
-      remainingTime =
-          l10n?.getFormat('minutesRemaining', {
+      remainingTime = l10n?.getFormat('minutesRemaining', {
             'minutes': diff.inMinutes.toString(),
           }) ??
           '${diff.inMinutes}분 남음';

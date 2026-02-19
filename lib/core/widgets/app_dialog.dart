@@ -448,6 +448,8 @@ class AppDialog {
           'Accept',
           'Register',
           'Request',
+          'Retry',
+          '다시 시도',
           'OK',
           'Yes',
           'Save',
@@ -455,8 +457,6 @@ class AppDialog {
           'Delete Account',
           '중단',
           'Stop',
-          '로그아웃',
-          'Logout'
         ].contains(action.label);
 
     // 'Cancel' or 'Close' style buttons. Includes '계속 작성'
@@ -473,7 +473,9 @@ class AppDialog {
       'No',
       'Keep Writing',
       'Decorate',
-      '계속'
+      '계속',
+      '로그아웃',
+      'Logout'
     ].contains(action.label);
 
     if (isConfirmStyle || isCancelStyle) {
