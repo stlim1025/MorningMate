@@ -19,6 +19,7 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
 import '../../common/widgets/room_action_button.dart';
 import '../../../core/widgets/memo_notification.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class FriendRoomScreen extends StatefulWidget {
   final String friendId;
@@ -199,7 +200,13 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                               if (!isSmallScreen) ...[
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  '${_friend!.displayConsecutiveDays}일 연속 기록 중 🔥',
+                                                  AppLocalizations.of(context)!
+                                                      .getFormat(
+                                                          'consecutiveDays', {
+                                                    'days': _friend!
+                                                        .displayConsecutiveDays
+                                                        .toString()
+                                                  }),
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .bodyMedium
@@ -301,7 +308,10 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                         Navigator.pop(context);
                                                         _showReportDialog(
                                                             _friend!.uid,
-                                                            '사용자 신고',
+                                                            AppLocalizations.of(
+                                                                    context)!
+                                                                .get(
+                                                                    'userReport'),
                                                             'user');
                                                       },
                                                       child: Row(
@@ -313,8 +323,13 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                           ),
                                                           const SizedBox(
                                                               width: 8),
-                                                          const Text('신고하기',
-                                                              style: TextStyle(
+                                                          Text(
+                                                              AppLocalizations.of(
+                                                                      context)!
+                                                                  .get(
+                                                                      'report'),
+                                                              style:
+                                                                  const TextStyle(
                                                                 fontFamily:
                                                                     'BMJUA',
                                                                 color: Colors
@@ -340,8 +355,13 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                           ),
                                                           const SizedBox(
                                                               width: 8),
-                                                          const Text('친구 삭제',
-                                                              style: TextStyle(
+                                                          Text(
+                                                              AppLocalizations.of(
+                                                                      context)!
+                                                                  .get(
+                                                                      'deleteFriendTitle'),
+                                                              style:
+                                                                  const TextStyle(
                                                                 fontFamily:
                                                                     'BMJUA',
                                                                 color:
@@ -422,8 +442,18 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                   const EdgeInsets.only(top: 6),
                                               child: Text(
                                                 isCooldown
-                                                    ? '$seconds초 후 재전송'
-                                                    : '응원메시지 보내기',
+                                                    ? AppLocalizations.of(
+                                                            context)!
+                                                        .getFormat(
+                                                            'resendAfterSeconds',
+                                                            {
+                                                            'seconds': seconds
+                                                                .toString()
+                                                          })
+                                                    : AppLocalizations.of(
+                                                            context)!
+                                                        .get(
+                                                            'sendCheerMessage'),
                                                 style: TextStyle(
                                                   fontFamily: 'BMJUA',
                                                   fontSize: 23,
@@ -447,7 +477,8 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                 padding: const EdgeInsets.only(right: 20),
                                 child: RoomActionButton(
                                   iconPath: 'assets/icons/SendRecord_Icon.png',
-                                  label: '보낸기록',
+                                  label: AppLocalizations.of(context)!
+                                      .get('sentHistory'),
                                   backgroundImagePath:
                                       'assets/images/SendHistory_Button.png',
                                   size: 90,
@@ -520,7 +551,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
               PopupTextField(
                 controller: messageController,
                 maxLines: 3,
-                hintText: '친구에게 응원의 메시지를 남겨주세요',
+                hintText: AppLocalizations.of(context)!.get('cheerMessageHint'),
                 fontFamily: 'KyoboHandwriting2024psw',
                 errorText: errorText,
                 onChanged: (_) {
@@ -535,11 +566,11 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
       ),
       actions: [
         AppDialogAction(
-          label: '취소',
+          label: AppLocalizations.of(context)!.get('cancel'),
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: '남기기',
+          label: AppLocalizations.of(context)!.get('leave'),
           isPrimary: true,
           onPressed: () async {
             final message = messageController.text.trim();
@@ -565,7 +596,8 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
             socialController.startCheerCooldown(_friend!.uid);
 
             final friendId = _friend!.uid;
-            MemoNotification.show(parentContext, '응원 메시지를 보냈습니다! 💌');
+            MemoNotification.show(parentContext,
+                AppLocalizations.of(parentContext)!.get('cheerMessageSent'));
 
             // 3. 실제 전송은 백그라운드에서 진행
             unawaited(() async {
@@ -596,7 +628,10 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
               } catch (e) {
                 debugPrint('응원 메시지 전송 오류: $e');
                 if (parentContext.mounted) {
-                  MemoNotification.show(parentContext, '응원 메시지 전송에 실패했습니다.');
+                  MemoNotification.show(
+                      parentContext,
+                      AppLocalizations.of(parentContext)!
+                          .get('cheerMessageSendFailed'));
                 }
               }
             }());
@@ -637,7 +672,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                         size: 48, color: colorScheme.textHint.withOpacity(0.5)),
                     const SizedBox(height: 12),
                     Text(
-                      '아직 보낸 메시지가 없어요',
+                      AppLocalizations.of(context)!.get('noSentMessages'),
                       style: TextStyle(color: colorScheme.textSecondary),
                     ),
                   ],
@@ -735,7 +770,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
       ),
       actions: [
         AppDialogAction(
-          label: '닫기',
+          label: AppLocalizations.of(context)!.get('close'),
           onPressed: () => Navigator.pop(context),
         ),
       ],
@@ -892,10 +927,10 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
   void _showReportDialog(String targetId, String content, String type) {
     String? selectedReason;
     final reasons = [
-      '부적절한 내용',
-      '욕설/비하 발언',
-      '스팸/광고',
-      '기타',
+      AppLocalizations.of(context)!.get('reportReasonInappropriate'),
+      AppLocalizations.of(context)!.get('reportReasonAbusive'),
+      AppLocalizations.of(context)!.get('reportReasonSpam'),
+      AppLocalizations.of(context)!.get('reportReasonOther'),
     ];
 
     AppDialog.show(
@@ -956,15 +991,16 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
       ),
       actions: [
         AppDialogAction(
-          label: '취소',
+          label: AppLocalizations.of(context)!.get('cancel'),
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: '신고',
+          label: AppLocalizations.of(context)!.get('report'),
           isPrimary: true,
           onPressed: () async {
             if (selectedReason == null) {
-              MemoNotification.show(context, '신고 사유를 선택해주세요.');
+              MemoNotification.show(context,
+                  AppLocalizations.of(context)!.get('reportReasonSelect'));
               return;
             }
 
@@ -987,11 +1023,13 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
               );
 
               if (mounted) {
-                MemoNotification.show(context, '신고가 접수되었습니다.');
+                MemoNotification.show(context,
+                    AppLocalizations.of(context)!.get('reportSubmitted'));
               }
             } catch (e) {
               if (mounted) {
-                MemoNotification.show(context, '신고 접수 중 오류가 발생했습니다.');
+                MemoNotification.show(
+                    context, AppLocalizations.of(context)!.get('reportError'));
               }
             }
           },
@@ -1006,31 +1044,26 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
       key: AppDialogKey.deleteFriend,
       content: SizedBox(
         width: double.maxFinite,
-        child: Text.rich(
-          TextSpan(
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 16,
-              fontFamily: 'BMJUA', // Ensure font family is applied
-            ),
-            children: [
-              TextSpan(
-                text: '${_friend?.nickname ?? '친구'}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const TextSpan(text: '님을 친구 목록에서\n삭제하시겠습니까?'),
-            ],
+        child: Text(
+          AppLocalizations.of(context)!.getFormat('deleteFriendConfirm', {
+            'nickname':
+                _friend?.nickname ?? AppLocalizations.of(context)!.get('friend')
+          }),
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 16,
+            fontFamily: 'BMJUA',
           ),
           textAlign: TextAlign.center,
         ),
       ),
       actions: [
         AppDialogAction(
-          label: '취소',
+          label: AppLocalizations.of(context)!.get('cancel'),
           onPressed: () => Navigator.pop(context, false),
         ),
         AppDialogAction(
-          label: '삭제',
+          label: AppLocalizations.of(context)!.get('delete'),
           isPrimary: true,
           onPressed: () => Navigator.pop(context, true),
         ),
@@ -1047,12 +1080,14 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
         try {
           await socialController.deleteFriend(myId, _friend!.uid);
           if (mounted) {
-            MemoNotification.show(context, '친구가 삭제되었습니다.');
+            MemoNotification.show(
+                context, AppLocalizations.of(context)!.get('friendDeleted'));
             Navigator.pop(context); // Close screen
           }
         } catch (e) {
           if (mounted) {
-            MemoNotification.show(context, '친구 삭제 중 오류가 발생했습니다.');
+            MemoNotification.show(context,
+                AppLocalizations.of(context)!.get('friendDeleteError'));
           }
         }
       }
