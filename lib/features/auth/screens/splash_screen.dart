@@ -111,7 +111,9 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _showSuspendedDialog(
-      BuildContext context, UserModel user) async {
+    BuildContext context,
+    UserModel user,
+  ) async {
     String remainingTime = '';
     final suspendedUntil = user.suspendedUntil!;
     final now = DateTime.now();
@@ -121,19 +123,22 @@ class _SplashScreenState extends State<SplashScreen> {
     if (suspendedUntil.year >= 2090) {
       remainingTime = l10n?.get('permanentSuspension') ?? '영구 정지';
     } else if (diff.inDays > 0) {
-      remainingTime = l10n?.getFormat('daysRemaining', {
+      remainingTime =
+          l10n?.getFormat('daysRemaining', {
             'days': diff.inDays.toString(),
             'hours': (diff.inHours % 24).toString(),
           }) ??
           '${diff.inDays}일 ${diff.inHours % 24}시간 남음';
     } else if (diff.inHours > 0) {
-      remainingTime = l10n?.getFormat('hoursRemaining', {
+      remainingTime =
+          l10n?.getFormat('hoursRemaining', {
             'hours': diff.inHours.toString(),
             'minutes': (diff.inMinutes % 60).toString(),
           }) ??
           '${diff.inHours}시간 ${diff.inMinutes % 60}분 남음';
     } else {
-      remainingTime = l10n?.getFormat('minutesRemaining', {
+      remainingTime =
+          l10n?.getFormat('minutesRemaining', {
             'minutes': diff.inMinutes.toString(),
           }) ??
           '${diff.inMinutes}분 남음';
@@ -195,23 +200,27 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             if (user.suspensionReason != null) ...[
               const SizedBox(height: 16),
-              Builder(builder: (context) {
-                String reasonStr = user.suspensionReason!;
-                if (reasonStr == '커뮤니티 가이드라인 위반') {
-                  reasonStr =
-                      l10n?.get('reason_community_violation') ?? reasonStr;
-                }
-                return Text(
-                  l10n?.getFormat('suspensionReason', {'reason': reasonStr}) ??
-                      '사유: $reasonStr',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black45,
-                    fontFamily: 'BMJUA',
-                  ),
-                );
-              }),
+              Builder(
+                builder: (context) {
+                  String reasonStr = user.suspensionReason!;
+                  if (reasonStr == '커뮤니티 가이드라인 위반') {
+                    reasonStr =
+                        l10n?.get('reason_community_violation') ?? reasonStr;
+                  }
+                  return Text(
+                    l10n?.getFormat('suspensionReason', {
+                          'reason': reasonStr,
+                        }) ??
+                        '사유: $reasonStr',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black45,
+                      fontFamily: 'BMJUA',
+                    ),
+                  );
+                },
+              ),
             ],
           ],
         ),
@@ -248,13 +257,15 @@ class _SplashScreenState extends State<SplashScreen> {
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 24),
-            const Text("Morning Mate",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'BMJUA',
-                  color: Color(0xFF4E342E),
-                )),
+            const Text(
+              "Morni",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'BMJUA',
+                color: Color(0xFF4E342E),
+              ),
+            ),
             const SizedBox(height: 40),
             if (_hasError)
               Column(
@@ -293,18 +304,13 @@ class _SplashScreenState extends State<SplashScreen> {
                     },
                     child: const Text(
                       "다른 계정으로 로그인",
-                      style: TextStyle(
-                        fontFamily: 'BMJUA',
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontFamily: 'BMJUA', color: Colors.grey),
                     ),
                   ),
                 ],
               )
             else
-              const CircularProgressIndicator(
-                color: Color(0xFF4E342E),
-              ),
+              const CircularProgressIndicator(color: Color(0xFF4E342E)),
           ],
         ),
       ),

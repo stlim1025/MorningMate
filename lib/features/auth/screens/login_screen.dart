@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 32),
 
         Text(
-          l10n?.get('introTitle') ?? 'Morning Mate',
+          l10n?.get('introTitle') ?? 'Morni',
           style: Theme.of(context).textTheme.displayMedium?.copyWith(
             fontFamily: 'BMJUA',
             color: Colors.white,
@@ -589,7 +589,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _showSuspensionDialog(
-      BuildContext context, UserModel user) async {
+    BuildContext context,
+    UserModel user,
+  ) async {
     String remainingTime = '';
     final suspendedUntil = user.suspendedUntil!;
     final now = DateTime.now();
@@ -599,19 +601,22 @@ class _LoginScreenState extends State<LoginScreen> {
     if (suspendedUntil.year >= 2090) {
       remainingTime = l10n?.get('permanentSuspension') ?? '영구 정지';
     } else if (diff.inDays > 0) {
-      remainingTime = l10n?.getFormat('daysRemaining', {
+      remainingTime =
+          l10n?.getFormat('daysRemaining', {
             'days': diff.inDays.toString(),
             'hours': (diff.inHours % 24).toString(),
           }) ??
           '${diff.inDays}일 ${diff.inHours % 24}시간 남음';
     } else if (diff.inHours > 0) {
-      remainingTime = l10n?.getFormat('hoursRemaining', {
+      remainingTime =
+          l10n?.getFormat('hoursRemaining', {
             'hours': diff.inHours.toString(),
             'minutes': (diff.inMinutes % 60).toString(),
           }) ??
           '${diff.inHours}시간 ${diff.inMinutes % 60}분 남음';
     } else {
-      remainingTime = l10n?.getFormat('minutesRemaining', {
+      remainingTime =
+          l10n?.getFormat('minutesRemaining', {
             'minutes': diff.inMinutes.toString(),
           }) ??
           '${diff.inMinutes}분 남음';
@@ -673,23 +678,27 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             if (user.suspensionReason != null) ...[
               const SizedBox(height: 16),
-              Builder(builder: (context) {
-                String reasonStr = user.suspensionReason!;
-                if (reasonStr == '커뮤니티 가이드라인 위반') {
-                  reasonStr =
-                      l10n?.get('reason_community_violation') ?? reasonStr;
-                }
-                return Text(
-                  l10n?.getFormat('suspensionReason', {'reason': reasonStr}) ??
-                      '사유: $reasonStr',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black45,
-                    fontFamily: 'BMJUA',
-                  ),
-                );
-              }),
+              Builder(
+                builder: (context) {
+                  String reasonStr = user.suspensionReason!;
+                  if (reasonStr == '커뮤니티 가이드라인 위반') {
+                    reasonStr =
+                        l10n?.get('reason_community_violation') ?? reasonStr;
+                  }
+                  return Text(
+                    l10n?.getFormat('suspensionReason', {
+                          'reason': reasonStr,
+                        }) ??
+                        '사유: $reasonStr',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black45,
+                      fontFamily: 'BMJUA',
+                    ),
+                  );
+                },
+              ),
             ],
           ],
         ),

@@ -59,16 +59,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildSection(
               colorScheme,
               '6. 개인정보의 보호 (암호화)',
-              '사용자가 작성한 일기 내용은 강력한 암호화 기술을 사용하여 안전하게 저장됩니다. MorningMate는 사용자의 소중한 기록을 보호하기 위해 최선을 다하고 있습니다.',
+              '사용자가 작성한 일기 내용은 강력한 암호화 기술을 사용하여 안전하게 저장됩니다. Morni는 사용자의 소중한 기록을 보호하기 위해 최선을 다하고 있습니다.',
             ),
             const SizedBox(height: 40),
             Center(
               child: Text(
                 '시행일자: 2026년 2월 1일',
-                style: TextStyle(
-                  color: colorScheme.textHint,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: colorScheme.textHint, fontSize: 12),
               ),
             ),
             const SizedBox(height: 20),
@@ -79,7 +76,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 
   Widget _buildSection(
-      AppColorScheme colorScheme, String title, String content) {
+    AppColorScheme colorScheme,
+    String title,
+    String content,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24.0),
       child: Column(

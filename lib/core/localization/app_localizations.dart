@@ -340,7 +340,7 @@ class AppLocalizations {
       'signupSuccess': 'Sign up successful! Please login.',
       'loginError': 'Login failed',
       'signupError': 'Sign up failed',
-      'introTitle': 'Morning Mate',
+      'introTitle': 'Morni',
       'introSubtitle': 'Your mate for the morning',
       // Notification Settings
       'serviceNotification': 'Service Notifications',
@@ -780,7 +780,7 @@ class AppLocalizations {
       'signupSuccess': '회원가입이 완료되었습니다! 로그인해주세요.',
       'loginError': '로그인 실패',
       'signupError': '회원가입 실패',
-      'introTitle': 'Morning Mate',
+      'introTitle': 'Morni',
       'introSubtitle': '아침을 함께하는 당신의 메이트',
       // Notification Settings
       'serviceNotification': '서비스 알림',

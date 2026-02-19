@@ -41,17 +41,17 @@ class CharacterController extends ChangeNotifier {
         .doc('shop')
         .snapshots()
         .listen((snapshot) {
-      if (snapshot.exists && snapshot.data() != null) {
-        final data = snapshot.data()!;
-        if (data['discounts'] != null) {
-          _shopDiscounts = Map<String, int>.from(data['discounts']);
-          notifyListeners();
-        }
-      } else {
-        _shopDiscounts = {};
-        notifyListeners();
-      }
-    });
+          if (snapshot.exists && snapshot.data() != null) {
+            final data = snapshot.data()!;
+            if (data['discounts'] != null) {
+              _shopDiscounts = Map<String, int>.from(data['discounts']);
+              notifyListeners();
+            }
+          } else {
+            _shopDiscounts = {};
+            notifyListeners();
+          }
+        });
   }
 
   @override
@@ -131,7 +131,9 @@ class CharacterController extends ChangeNotifier {
 
   // 방 꾸미기 설정 저장
   Future<void> updateRoomDecoration(
-      String userId, RoomDecorationModel decoration) async {
+    String userId,
+    RoomDecorationModel decoration,
+  ) async {
     if (_currentUser == null) return;
 
     final oldProps = _currentUser!.roomDecoration.props;
@@ -139,17 +141,17 @@ class CharacterController extends ChangeNotifier {
 
     // 새롭게 추가된 스티커 메모가 있는지 확인
     // 기존 소품에 스티커 메모가 없었고, 새로운 소품에 스티커 메모가 있다면 새로 추가된 것으로 간주
-    bool newlyAddedStickyNote = !oldProps.any((p) => p.type == 'sticky_note') &&
+    bool newlyAddedStickyNote =
+        !oldProps.any((p) => p.type == 'sticky_note') &&
         newProps.any((p) => p.type == 'sticky_note');
 
-    Map<String, dynamic> updates = {
-      'roomDecoration': decoration.toMap(),
-    };
+    Map<String, dynamic> updates = {'roomDecoration': decoration.toMap()};
 
     if (newlyAddedStickyNote) {
       // 1. 일회용 소품 소비 (인벤토리에서 제거)
-      final updatedPurchasedProps =
-          List<String>.from(_currentUser!.purchasedPropIds);
+      final updatedPurchasedProps = List<String>.from(
+        _currentUser!.purchasedPropIds,
+      );
       updatedPurchasedProps.remove('sticky_note');
 
       updates['purchasedPropIds'] = updatedPurchasedProps;
@@ -177,18 +179,15 @@ class CharacterController extends ChangeNotifier {
             .collection('memos')
             .doc(prop.id);
 
-        batch.set(
-            memoRef,
-            {
-              'id': prop.id,
-              'content': prop.metadata!['content'],
-              'heartCount': prop.metadata!['heartCount'] ?? 0,
-              'likedBy': prop.metadata!['likedBy'] ?? [],
-              'createdAt': prop.metadata!['createdAt'] ??
-                  DateTime.now().toIso8601String(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true));
+        batch.set(memoRef, {
+          'id': prop.id,
+          'content': prop.metadata!['content'],
+          'heartCount': prop.metadata!['heartCount'] ?? 0,
+          'likedBy': prop.metadata!['likedBy'] ?? [],
+          'createdAt':
+              prop.metadata!['createdAt'] ?? DateTime.now().toIso8601String(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
         hasMemos = true;
       }
     }
@@ -384,8 +383,9 @@ class CharacterController extends ChangeNotifier {
       throw Exception('이미 구매한 테마입니다');
     }
 
-    final newPurchasedThemes =
-        List<String>.from(_currentUser!.purchasedThemeIds)..add(themeId);
+    final newPurchasedThemes = List<String>.from(
+      _currentUser!.purchasedThemeIds,
+    )..add(themeId);
     final newPoints = _currentUser!.points - price;
 
     await _userService.updateUser(userId, {
@@ -404,16 +404,19 @@ class CharacterController extends ChangeNotifier {
 
   // 배경 구매
   Future<void> purchaseBackground(
-      String userId, String backgroundId, int price) async {
+    String userId,
+    String backgroundId,
+    int price,
+  ) async {
     if (_currentUser == null) return;
     if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
     if (_currentUser!.purchasedBackgroundIds.contains(backgroundId)) {
       throw Exception('이미 구매한 배경입니다');
     }
 
-    final newPurchasedBackgrounds =
-        List<String>.from(_currentUser!.purchasedBackgroundIds)
-          ..add(backgroundId);
+    final newPurchasedBackgrounds = List<String>.from(
+      _currentUser!.purchasedBackgroundIds,
+    )..add(backgroundId);
     final newPoints = _currentUser!.points - price;
 
     await _userService.updateUser(userId, {
@@ -432,7 +435,10 @@ class CharacterController extends ChangeNotifier {
 
   // 벽지 구매
   Future<void> purchaseWallpaper(
-      String userId, String wallpaperId, int price) async {
+    String userId,
+    String wallpaperId,
+    int price,
+  ) async {
     if (_currentUser == null) return;
     if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
 
@@ -440,8 +446,9 @@ class CharacterController extends ChangeNotifier {
       throw Exception('이미 구매한 벽지입니다');
     }
 
-    final newPurchasedThemes =
-        List<String>.from(_currentUser!.purchasedThemeIds)..add(wallpaperId);
+    final newPurchasedThemes = List<String>.from(
+      _currentUser!.purchasedThemeIds,
+    )..add(wallpaperId);
     final newPoints = _currentUser!.points - price;
 
     await _userService.updateUser(userId, {
@@ -497,15 +504,19 @@ class CharacterController extends ChangeNotifier {
 
   // 이모티콘 구매
   Future<void> purchaseEmoticon(
-      String userId, String emoticonId, int price) async {
+    String userId,
+    String emoticonId,
+    int price,
+  ) async {
     if (_currentUser == null) return;
     if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
     if (_currentUser!.purchasedEmoticonIds.contains(emoticonId)) {
       throw Exception('이미 구매한 이모티콘입니다');
     }
 
-    final newPurchasedEmoticons =
-        List<String>.from(_currentUser!.purchasedEmoticonIds)..add(emoticonId);
+    final newPurchasedEmoticons = List<String>.from(
+      _currentUser!.purchasedEmoticonIds,
+    )..add(emoticonId);
     final newPoints = _currentUser!.points - price;
 
     await _userService.updateUser(userId, {
@@ -530,8 +541,9 @@ class CharacterController extends ChangeNotifier {
       throw Exception('이미 구매한 바닥입니다');
     }
 
-    final newPurchasedFloors =
-        List<String>.from(_currentUser!.purchasedFloorIds)..add(floorId);
+    final newPurchasedFloors = List<String>.from(
+      _currentUser!.purchasedFloorIds,
+    )..add(floorId);
     final newPoints = _currentUser!.points - price;
 
     await _userService.updateUser(userId, {
@@ -550,15 +562,19 @@ class CharacterController extends ChangeNotifier {
 
   // 캐릭터 아이템 구매
   Future<void> purchaseCharacterItem(
-      String userId, String itemId, int price) async {
+    String userId,
+    String itemId,
+    int price,
+  ) async {
     if (_currentUser == null) return;
     if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
     if (_currentUser!.purchasedCharacterItemIds.contains(itemId)) {
       throw Exception('이미 구매한 아이템입니다');
     }
 
-    final newPurchasedItems =
-        List<String>.from(_currentUser!.purchasedCharacterItemIds)..add(itemId);
+    final newPurchasedItems = List<String>.from(
+      _currentUser!.purchasedCharacterItemIds,
+    )..add(itemId);
     final newPoints = _currentUser!.points - price;
 
     await _userService.updateUser(userId, {
@@ -585,8 +601,9 @@ class CharacterController extends ChangeNotifier {
       throw Exception('구매하지 않은 아이템입니다');
     }
 
-    final currentEquipped =
-        Map<String, dynamic>.from(_currentUser!.equippedCharacterItems);
+    final currentEquipped = Map<String, dynamic>.from(
+      _currentUser!.equippedCharacterItems,
+    );
 
     // 아이템별 슬롯 지정
     String slot = 'face';
@@ -618,22 +635,26 @@ class CharacterController extends ChangeNotifier {
       'equippedCharacterItems': currentEquipped,
     });
 
-    _currentUser =
-        _currentUser!.copyWith(equippedCharacterItems: currentEquipped);
+    _currentUser = _currentUser!.copyWith(
+      equippedCharacterItems: currentEquipped,
+    );
     notifyListeners();
   }
 
   // 캐릭터 아이템 일괄 장착 (저장하기용)
   Future<void> updateEquippedCharacterItems(
-      String userId, Map<String, String> newEquippedItems) async {
+    String userId,
+    Map<String, String> newEquippedItems,
+  ) async {
     if (_currentUser == null) return;
 
     await _userService.updateUser(userId, {
       'equippedCharacterItems': newEquippedItems,
     });
 
-    _currentUser =
-        _currentUser!.copyWith(equippedCharacterItems: newEquippedItems);
+    _currentUser = _currentUser!.copyWith(
+      equippedCharacterItems: newEquippedItems,
+    );
     notifyListeners();
   }
 
@@ -644,9 +665,7 @@ class CharacterController extends ChangeNotifier {
       throw Exception('구매하지 않은 테마입니다');
     }
 
-    await _userService.updateUser(userId, {
-      'currentThemeId': themeId,
-    });
+    await _userService.updateUser(userId, {'currentThemeId': themeId});
 
     _currentUser = _currentUser!.copyWith(currentThemeId: themeId);
     notifyListeners();
@@ -654,7 +673,9 @@ class CharacterController extends ChangeNotifier {
 
   // 활성 이모티콘 설정
   Future<void> updateActiveEmoticons(
-      String userId, List<String> emoticonIds) async {
+    String userId,
+    List<String> emoticonIds,
+  ) async {
     if (_currentUser == null) return;
     // Limit removed as per user request (4 or more allowed)
 
@@ -665,9 +686,7 @@ class CharacterController extends ChangeNotifier {
       }
     }
 
-    await _userService.updateUser(userId, {
-      'activeEmoticonIds': emoticonIds,
-    });
+    await _userService.updateUser(userId, {'activeEmoticonIds': emoticonIds});
 
     _currentUser = _currentUser!.copyWith(activeEmoticonIds: emoticonIds);
     notifyListeners();
@@ -736,10 +755,7 @@ class CharacterController extends ChangeNotifier {
           await watchAdAndGetPoints(_currentUser!.uid);
           if (context.mounted) {
             // 팝업 표시
-            await AppDialog.show(
-              context: context,
-              key: AppDialogKey.adReward,
-            );
+            await AppDialog.show(context: context, key: AppDialogKey.adReward);
           }
         }
       },
@@ -855,7 +871,7 @@ class CharacterController extends ChangeNotifier {
           AppLocalizations.of(currentContext)?.get(challenge.titleKey) ?? '';
       final challengeCompletedText =
           AppLocalizations.of(currentContext)?.get('challengeCompleted') ??
-              'Challenge Completed!';
+          'Challenge Completed!';
       final message = '$challengeCompletedText: $title';
       final branchText =
           AppLocalizations.of(currentContext)?.get('branch') ?? 'Branch';
@@ -864,7 +880,7 @@ class CharacterController extends ChangeNotifier {
       await FirebaseFirestore.instance.collection('notifications').add({
         'userId': user.uid,
         'senderId': 'system',
-        'senderNickname': 'MorningMate',
+        'senderNickname': 'Morni',
         'type': NotificationType.challenge.toString().split('.').last,
         'message': message,
         'isRead': false,

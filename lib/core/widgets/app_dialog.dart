@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 
-import 'package:morning_mate/core/localization/app_localizations.dart';
+import 'package:morni/core/localization/app_localizations.dart';
 import '../theme/app_color_scheme.dart';
 
 enum AppDialogKey {

@@ -1,4 +1,4 @@
-# morningmate
+# Morni
 
 A new Flutter project.
 

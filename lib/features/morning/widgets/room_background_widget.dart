@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:morning_mate/core/constants/room_assets.dart';
+import 'package:morni/core/constants/room_assets.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../data/models/room_decoration_model.dart';
 
@@ -51,7 +51,7 @@ class RoomBackgroundWidget extends StatelessWidget {
     List<RoomAsset> assets = RoomAssets.backgrounds;
     try {
       final asset = RoomAssets.backgrounds.firstWhere(
-            (item) => item.id == backgroundId,
+        (item) => item.id == backgroundId,
       );
       return asset.imagePath ?? null;
     } catch (e) {

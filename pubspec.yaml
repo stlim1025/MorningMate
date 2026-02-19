@@ -1,4 +1,4 @@
-name: morning_mate
+name: morni
 description: A morning diary app with character growth and social features
 publish_to: 'none'
 version: 0.1.1
@@ -69,9 +69,14 @@ dependency_overrides:
   path_provider_foundation: 2.5.1
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
-  image_path: "assets/images/app_icon.png"
+  web:
+    generate: true
+    image_path: "assets/icons/App_Icon.png"
+  image_path: "assets/icons/App_Icon.png"
+  adaptive_icon_foreground: "assets/icons/App_Icon.png"
+  adaptive_icon_background: "#F5E6C8"
 
 flutter:
   uses-material-design: true

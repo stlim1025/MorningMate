@@ -34,7 +34,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             _buildSection(
               colorScheme,
               '제 1조 (목적)',
-              '본 약관은 "MorningMate"(이하 "서비스")가 제공하는 모든 서비스의 이용 조건 및 절차, 이용자와 서비스 운영자의 권리, 의무 및 책임 사항을 규정함을 목적으로 합니다.',
+              '본 약관은 "Morni"(이하 "서비스")가 제공하는 모든 서비스의 이용 조건 및 절차, 이용자와 서비스 운영자의 권리, 의무 및 책임 사항을 규정함을 목적으로 합니다.',
             ),
             _buildSection(
               colorScheme,
@@ -60,10 +60,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             Center(
               child: Text(
                 '시행일자: 2026년 2월 1일',
-                style: TextStyle(
-                  color: colorScheme.textHint,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: colorScheme.textHint, fontSize: 12),
               ),
             ),
             const SizedBox(height: 20),
@@ -74,7 +71,10 @@ class TermsOfServiceScreen extends StatelessWidget {
   }
 
   Widget _buildSection(
-      AppColorScheme colorScheme, String title, String content) {
+    AppColorScheme colorScheme,
+    String title,
+    String content,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24.0),
       child: Column(

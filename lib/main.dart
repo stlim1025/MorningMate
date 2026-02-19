@@ -95,21 +95,21 @@ void main() async {
   // FCM 백그라운드 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  runApp(MorningMateApp(initialRoute: '/splash'));
+  runApp(MorniApp(initialRoute: '/splash'));
 }
 
-class MorningMateApp extends StatefulWidget {
+class MorniApp extends StatefulWidget {
   final String initialRoute;
-  const MorningMateApp({super.key, required this.initialRoute});
+  const MorniApp({super.key, required this.initialRoute});
 
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
   @override
-  State<MorningMateApp> createState() => _MorningMateAppState();
+  State<MorniApp> createState() => _MorniAppState();
 }
 
-class _MorningMateAppState extends State<MorningMateApp> {
+class _MorniAppState extends State<MorniApp> {
   late final AuthService _authService;
   late final UserService _userService;
   late final NotificationService _notificationService;
@@ -128,8 +128,9 @@ class _MorningMateAppState extends State<MorningMateApp> {
     _authService = AuthService();
     _userService = UserService();
     _notificationService = NotificationService();
-    _notificationService
-        .setScaffoldMessengerKey(MorningMateApp.scaffoldMessengerKey);
+    _notificationService.setScaffoldMessengerKey(
+      MorniApp.scaffoldMessengerKey,
+    );
     _notificationService.setNavigatorKey(AppRouter.navigatorKey);
 
     _diaryService = DiaryService();
@@ -180,11 +181,8 @@ class _MorningMateAppState extends State<MorningMateApp> {
 
         // ProxyManagers (의존성 있는 컨트롤러들은 기존대로 Proxy 사용)
         ChangeNotifierProxyProvider<AuthController, MorningController>(
-          create: (context) => MorningController(
-            _diaryService,
-            _questionService,
-            _userService,
-          ),
+          create: (context) =>
+              MorningController(_diaryService, _questionService, _userService),
           update: (context, auth, previous) {
             final controller = previous ??
                 MorningController(
@@ -219,7 +217,8 @@ class _MorningMateAppState extends State<MorningMateApp> {
             } else {
               // 사용자 정보가 로드되면 친구 목록을 미리 로드
               Future.microtask(
-                  () => controller.initialize(auth.currentUser!.uid));
+                () => controller.initialize(auth.currentUser!.uid),
+              );
             }
             return controller;
           },
@@ -255,42 +254,40 @@ class _MorningMateAppState extends State<MorningMateApp> {
           },
         ),
       ],
-      child: Builder(// ThemeController 접근을 위해 Builder 또는 Consumer 사용
-          builder: (context) {
-        // 광고 로드 (Context 접근 가능)
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          try {
-            context
-                .read<CharacterController>()
-                .loadRewardedAd(context: context);
-          } catch (_) {}
-        });
+      child: Builder(
+        // ThemeController 접근을 위해 Builder 또는 Consumer 사용
+        builder: (context) {
+          // 광고 로드 (Context 접근 가능)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            try {
+              context.read<CharacterController>().loadRewardedAd(
+                    context: context,
+                  );
+            } catch (_) {}
+          });
 
-        return Consumer2<ThemeController, LanguageProvider>(
-          builder: (context, themeController, languageProvider, child) {
-            return MaterialApp.router(
-              title: 'Morning Mate',
-              debugShowCheckedModeBanner: false,
-              theme: themeController.themeData,
-              scaffoldMessengerKey: MorningMateApp.scaffoldMessengerKey,
-              routerConfig: _router, // 생성된 라우터 사용
-
-              // Localization
-              locale: languageProvider.locale,
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              supportedLocales: const [
-                Locale('ko', ''),
-                Locale('en', ''),
-              ],
-            );
-          },
-        );
-      }),
+          return Consumer2<ThemeController, LanguageProvider>(
+            builder: (context, themeController, languageProvider, child) {
+              return MaterialApp.router(
+                title: 'Morni',
+                debugShowCheckedModeBanner: false,
+                theme: themeController.themeData,
+                scaffoldMessengerKey: MorniApp.scaffoldMessengerKey,
+                routerConfig: _router, // 생성된 라우터 사용
+                // Localization
+                locale: languageProvider.locale,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: const [Locale('ko', ''), Locale('en', '')],
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
