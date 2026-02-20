@@ -549,7 +549,7 @@ class AppLocalizations {
       'deleteStickyNote': '메모를 삭제하시겠습니까? 🗑️',
       // Main & Strings
       'greetingMorning': '좋은 아침이에요!',
-      'greetingAfternoon': '좋은 오후이에요!',
+      'greetingAfternoon': '좋은 오후예요!',
       'greetingEvening': '좋은 저녁이에요!',
       'consecutiveDays': '{days}일 연속 기록 중 🔥',
       'nicknameIntro': '반가워요! 사용하실 닉네임을 입력해주세요.',

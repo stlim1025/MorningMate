@@ -81,7 +81,8 @@ class AuthController extends ChangeNotifier {
         }
       });
 
-      await _updateFcmToken(user.uid);
+      // UI 블로킹 방지를 위해 await 제거
+      _updateFcmToken(user.uid);
       try {
         await _userService.updateLastLogin(user.uid);
       } catch (e) {
@@ -143,11 +144,12 @@ class AuthController extends ChangeNotifier {
         await _userService.createUser(userModel);
         _userModel = userModel;
 
-        // FCM 토큰 업데이트
-        await _updateFcmToken(user.uid);
+        // FCM 토큰 업데이트 - 비동기로 처리하여 UI 블로킹 방지
+        _updateFcmToken(user.uid);
       }
     } finally {
-      // ...
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -166,10 +168,11 @@ class AuthController extends ChangeNotifier {
         _userModel = await _userService.getUser(_currentUser!.uid);
 
         // FCM 토큰 업데이트
-        await _updateFcmToken(_currentUser!.uid);
+        _updateFcmToken(_currentUser!.uid);
       }
     } finally {
-      // ...
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -202,11 +205,12 @@ class AuthController extends ChangeNotifier {
           _userModel = existingUser;
         }
 
-        // FCM 토큰 업데이트
-        await _updateFcmToken(user.uid);
+        // FCM 토큰 업데이트 - 비동기로 처리하여 UI 블로킹 방지
+        _updateFcmToken(user.uid);
       }
     } finally {
-      // ...
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -258,11 +262,12 @@ class AuthController extends ChangeNotifier {
           _userModel = existingUser;
         }
 
-        // FCM 토큰 업데이트
-        await _updateFcmToken(user.uid);
+        // FCM 토큰 업데이트 - 비동기로 처리하여 UI 블로킹 방지
+        _updateFcmToken(user.uid);
       }
     } finally {
-      // ...
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -295,11 +300,12 @@ class AuthController extends ChangeNotifier {
           _userModel = existingUser;
         }
 
-        // FCM 토큰 업데이트
-        await _updateFcmToken(user.uid);
+        // FCM 토큰 업데이트 - 비동기로 처리하여 UI 블로킹 방지
+        _updateFcmToken(user.uid);
       }
     } finally {
-      // ...
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
