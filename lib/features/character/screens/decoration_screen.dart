@@ -22,7 +22,8 @@ class DecorationScreen extends StatefulWidget {
   State<DecorationScreen> createState() => _DecorationScreenState();
 }
 
-class _DecorationScreenState extends State<DecorationScreen> {
+class _DecorationScreenState extends State<DecorationScreen>
+    with SingleTickerProviderStateMixin {
   late ValueNotifier<RoomDecorationModel> _decorationNotifier;
   String _selectedCategory = 'background'; // 'background', 'wallpaper', 'props'
   int? _selectedPropIndex; // Track selected prop for editing
@@ -40,6 +41,9 @@ class _DecorationScreenState extends State<DecorationScreen> {
   ];
   int _currentIndex = 0;
   late PageController _pageController;
+
+  late AnimationController _removeAllButtonController;
+  late Animation<double> _removeAllScaleAnimation;
 
   Future<String?> _showStickyNoteInput(BuildContext context) async {
     final controller = TextEditingController();
@@ -81,6 +85,15 @@ class _DecorationScreenState extends State<DecorationScreen> {
     super.initState();
     final controller = context.read<CharacterController>();
 
+    _removeAllButtonController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _removeAllScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(
+          parent: _removeAllButtonController, curve: Curves.easeInOut),
+    );
+
     var initialDecoration =
         controller.currentUser?.roomDecoration ?? RoomDecorationModel();
     // Validate Props
@@ -98,6 +111,7 @@ class _DecorationScreenState extends State<DecorationScreen> {
 
   @override
   void dispose() {
+    _removeAllButtonController.dispose();
     _pageController.dispose();
     _decorationNotifier.dispose();
     super.dispose();
@@ -396,6 +410,54 @@ class _DecorationScreenState extends State<DecorationScreen> {
                 width: 60,
                 height: 30,
                 fit: BoxFit.contain,
+              ),
+            ),
+          ),
+
+          // 4. Remove All Props Button (follows panel animation)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) + 10,
+            left: 20,
+            child: GestureDetector(
+              onTapDown: (_) => _removeAllButtonController.forward(),
+              onTapUp: (_) {
+                _removeAllButtonController.reverse();
+                final currentDecoration = _decorationNotifier.value;
+                if (currentDecoration.props.isNotEmpty) {
+                  _decorationNotifier.value =
+                      currentDecoration.copyWith(props: []);
+                  setState(() {
+                    _selectedPropIndex = null;
+                  });
+                }
+              },
+              onTapCancel: () => _removeAllButtonController.reverse(),
+              behavior: HitTestBehavior.opaque,
+              child: ScaleTransition(
+                scale: _removeAllScaleAnimation,
+                child: Container(
+                  width: 80,
+                  height: 35,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/Message_Button.png'),
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)?.get('removeAllProps') ??
+                        'Remove All',
+                    style: const TextStyle(
+                      fontFamily: 'BMJUA',
+                      fontSize: 14,
+                      color: Color(0xFF5D4037),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),

@@ -416,6 +416,7 @@ class AppLocalizations {
       'item_name_castle_gargoyle_statue': 'Gargoyle Statue',
       'decorateCharacter': 'Decorate Character',
       'unequipAll': 'Unequip All',
+      'removeAllProps': 'Remove All',
       'showOwnedOnly': 'Show Owned Only',
       'bulkPurchase': 'Bulk Purchase',
       'bulkPurchaseConfirm':
@@ -857,6 +858,7 @@ class AppLocalizations {
       'item_name_castle_gargoyle_statue': '가고일 석상',
       'decorateCharacter': '캐릭터 꾸미기',
       'unequipAll': '모두 해제',
+      'removeAllProps': '모두 제거',
       'showOwnedOnly': '보유중인 상품만 보기',
       'bulkPurchase': '일괄구매',
       'bulkPurchaseConfirm': '구매하지 않은 상품이 있습니다.\n일괄 구매하시겠습니까?',
