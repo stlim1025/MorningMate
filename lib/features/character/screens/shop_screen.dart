@@ -260,7 +260,7 @@ class _ShopScreenState extends State<ShopScreen> {
                           });
                         },
                         child: Container(
-                          width: 120, // 텍스트 포함 적절한 너비
+                          width: 105, // 너비 축소 (기존 120)
                           height: 40,
                           alignment: Alignment.center,
                           decoration: const BoxDecoration(

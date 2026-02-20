@@ -252,8 +252,7 @@ class ChallengeScreen extends StatelessWidget {
         'description':
             AppLocalizations.of(context)?.get('challenge_memo_1_desc') ??
                 'Write your first memo',
-        // TODO: Update condition with actual memo count from user model
-        'isCompleted': false,
+        'isCompleted': (user?.memoCount ?? 0) >= 1,
         'reward':
             '30 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
@@ -263,8 +262,7 @@ class ChallengeScreen extends StatelessWidget {
         'description':
             AppLocalizations.of(context)?.get('challenge_memo_3_desc') ??
                 'Write 3 memos',
-        // TODO: Update condition with actual memo count from user model
-        'isCompleted': false,
+        'isCompleted': (user?.memoCount ?? 0) >= 3,
         'reward':
             '100 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
@@ -274,8 +272,7 @@ class ChallengeScreen extends StatelessWidget {
         'description':
             AppLocalizations.of(context)?.get('challenge_memo_10_desc') ??
                 'Write 10 memos',
-        // TODO: Update condition with actual memo count from user model
-        'isCompleted': false,
+        'isCompleted': (user?.memoCount ?? 0) >= 10,
         'reward':
             '300 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
@@ -285,8 +282,7 @@ class ChallengeScreen extends StatelessWidget {
         'description':
             AppLocalizations.of(context)?.get('challenge_memo_30_desc') ??
                 'Write 30 memos',
-        // TODO: Update condition with actual memo count from user model
-        'isCompleted': false,
+        'isCompleted': (user?.memoCount ?? 0) >= 30,
         'reward':
             '500 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
@@ -299,7 +295,7 @@ class ChallengeScreen extends StatelessWidget {
         'description':
             AppLocalizations.of(context)?.get('challenge_diary_master_desc') ??
                 'Write 30 diaries in total',
-        'isCompleted': false,
+        'isCompleted': (user?.diaryCount ?? 0) >= 30,
         'reward':
             '500 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },

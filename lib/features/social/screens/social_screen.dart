@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../controllers/social_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../character/controllers/character_controller.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/user_service.dart';
 import '../../../core/widgets/app_dialog.dart';
@@ -418,6 +419,10 @@ class _SocialScreenState extends State<SocialScreen> {
         friendNickname,
       );
       if (mounted) {
+        // 친구 관련 도전과제 체크
+        final characterController = context.read<CharacterController>();
+        await characterController.checkAchievements(context);
+
         MemoNotification.show(
           context,
           AppLocalizations.of(context)?.getFormat(

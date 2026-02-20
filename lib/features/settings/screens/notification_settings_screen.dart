@@ -853,7 +853,7 @@ class NotificationSettingsScreen extends StatelessWidget {
           fit: BoxFit.fill,
         ),
       ),
-      padding: const EdgeInsets.only(top: 30, bottom: 12),
+      padding: const EdgeInsets.only(top: 32, bottom: 12),
       child: Column(
         children: children,
       ),

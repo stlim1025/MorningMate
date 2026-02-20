@@ -41,17 +41,17 @@ class CharacterController extends ChangeNotifier {
         .doc('shop')
         .snapshots()
         .listen((snapshot) {
-          if (snapshot.exists && snapshot.data() != null) {
-            final data = snapshot.data()!;
-            if (data['discounts'] != null) {
-              _shopDiscounts = Map<String, int>.from(data['discounts']);
-              notifyListeners();
-            }
-          } else {
-            _shopDiscounts = {};
-            notifyListeners();
-          }
-        });
+      if (snapshot.exists && snapshot.data() != null) {
+        final data = snapshot.data()!;
+        if (data['discounts'] != null) {
+          _shopDiscounts = Map<String, int>.from(data['discounts']);
+          notifyListeners();
+        }
+      } else {
+        _shopDiscounts = {};
+        notifyListeners();
+      }
+    });
   }
 
   @override
@@ -123,7 +123,13 @@ class CharacterController extends ChangeNotifier {
         _currentUser?.roomDecoration.floorId != user.roomDecoration.floorId ||
         _currentUser?.roomDecoration.props.length !=
             user.roomDecoration.props.length ||
-        _currentUser?.equippedCharacterItems != user.equippedCharacterItems) {
+        _currentUser?.equippedCharacterItems != user.equippedCharacterItems ||
+        _currentUser?.friendIds.length != user.friendIds.length ||
+        _currentUser?.memoCount != user.memoCount ||
+        _currentUser?.diaryCount != user.diaryCount ||
+        _currentUser?.consecutiveDays != user.consecutiveDays ||
+        _currentUser?.completedChallengeIds.length !=
+            user.completedChallengeIds.length) {
       _currentUser = user;
       notifyListeners();
     }
@@ -141,8 +147,7 @@ class CharacterController extends ChangeNotifier {
 
     // 새롭게 추가된 스티커 메모가 있는지 확인
     // 기존 소품에 스티커 메모가 없었고, 새로운 소품에 스티커 메모가 있다면 새로 추가된 것으로 간주
-    bool newlyAddedStickyNote =
-        !oldProps.any((p) => p.type == 'sticky_note') &&
+    bool newlyAddedStickyNote = !oldProps.any((p) => p.type == 'sticky_note') &&
         newProps.any((p) => p.type == 'sticky_note');
 
     Map<String, dynamic> updates = {'roomDecoration': decoration.toMap()};
@@ -156,11 +161,13 @@ class CharacterController extends ChangeNotifier {
 
       updates['purchasedPropIds'] = updatedPurchasedProps;
       updates['lastStickyNoteDate'] = FieldValue.serverTimestamp();
+      updates['memoCount'] = FieldValue.increment(1);
 
       // 로컬 모델 미리 업데이트 (UI 반영용)
       _currentUser = _currentUser!.copyWith(
         purchasedPropIds: updatedPurchasedProps,
         lastStickyNoteDate: DateTime.now(),
+        memoCount: _currentUser!.memoCount + 1,
       );
     }
 
@@ -179,15 +186,18 @@ class CharacterController extends ChangeNotifier {
             .collection('memos')
             .doc(prop.id);
 
-        batch.set(memoRef, {
-          'id': prop.id,
-          'content': prop.metadata!['content'],
-          'heartCount': prop.metadata!['heartCount'] ?? 0,
-          'likedBy': prop.metadata!['likedBy'] ?? [],
-          'createdAt':
-              prop.metadata!['createdAt'] ?? DateTime.now().toIso8601String(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        batch.set(
+            memoRef,
+            {
+              'id': prop.id,
+              'content': prop.metadata!['content'],
+              'heartCount': prop.metadata!['heartCount'] ?? 0,
+              'likedBy': prop.metadata!['likedBy'] ?? [],
+              'createdAt': prop.metadata!['createdAt'] ??
+                  DateTime.now().toIso8601String(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
         hasMemos = true;
       }
     }
@@ -198,6 +208,11 @@ class CharacterController extends ChangeNotifier {
 
     _currentUser = _currentUser!.copyWith(roomDecoration: decoration);
     notifyListeners();
+
+    // 메모 작성 등으로 인한 도전과제 달성 체크
+    if (newlyAddedStickyNote) {
+      await checkAchievements();
+    }
   }
 
   /// 만료된(오늘 날짜가 아닌) 메모를 확인하고 제거합니다.
@@ -871,7 +886,7 @@ class CharacterController extends ChangeNotifier {
           AppLocalizations.of(currentContext)?.get(challenge.titleKey) ?? '';
       final challengeCompletedText =
           AppLocalizations.of(currentContext)?.get('challengeCompleted') ??
-          'Challenge Completed!';
+              'Challenge Completed!';
       final message = '$challengeCompletedText: $title';
       final branchText =
           AppLocalizations.of(currentContext)?.get('branch') ?? 'Branch';

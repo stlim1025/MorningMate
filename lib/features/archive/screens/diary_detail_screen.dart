@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../data/models/diary_model.dart';
+import '../../../data/models/question_model.dart';
 import '../../morning/controllers/morning_controller.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/localization/app_localizations.dart';
-import '../../admin/controllers/admin_controller.dart'; // Import AdminController correctly
+import '../../admin/controllers/admin_controller.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../../services/diary_service.dart';
 
 class DiaryDetailScreen extends StatefulWidget {
   final List<DiaryModel> diaries;
@@ -27,10 +31,12 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   String _decryptedContent = '';
   bool _isLoading = true;
   DiaryModel? _currentDiary;
+  late List<DiaryModel> _localDiaries;
 
   @override
   void initState() {
     super.initState();
+    _localDiaries = List<DiaryModel>.from(widget.diaries);
     // Normalize to date only (00:00:00)
     _currentDate = DateTime(
       widget.initialDate.year,
@@ -42,9 +48,52 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
 
   // ... (previous methods)
 
+  Future<void> _loadCurrentDiaryByDate() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final authController = context.read<AuthController>();
+      final diaryService = context.read<DiaryService>();
+      final userId = authController.currentUser?.uid;
+
+      if (userId != null) {
+        final diary = await diaryService.getDiaryByDate(userId, _currentDate);
+        if (mounted) {
+          setState(() {
+            _currentDiary = diary;
+            if (_currentDiary != null) {
+              // Update local list with fresh data
+              final index = _localDiaries
+                  .indexWhere((d) => d.dateKey == _currentDiary!.dateKey);
+              if (index != -1) {
+                _localDiaries[index] = _currentDiary!;
+              } else {
+                _localDiaries.add(_currentDiary!);
+              }
+            } else {
+              _isLoading = false;
+              _decryptedContent = '';
+            }
+          });
+          if (_currentDiary != null) {
+            await _fetchDecryptedContent();
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   void _loadCurrentDiary() {
     try {
-      _currentDiary = widget.diaries.firstWhere(
+      _currentDiary = _localDiaries.firstWhere(
         (d) => d.dateKey == DiaryModel.buildDateKey(_currentDate),
       );
     } catch (_) {
@@ -54,10 +103,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     if (_currentDiary != null) {
       _fetchDecryptedContent();
     } else {
-      setState(() {
-        _isLoading = false;
-        _decryptedContent = '';
-      });
+      _loadCurrentDiaryByDate(); // Fallback to DB if not in list
     }
   }
 
@@ -212,7 +258,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
         '';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -221,11 +267,14 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
             alignment: Alignment.center,
             children: [
               Image.asset('assets/images/Date_Icon.png',
-                  width: 220, height: 50, fit: BoxFit.fill),
+                  width: 150,
+                  height: 44,
+                  fit: BoxFit.fill,
+                  filterQuality: FilterQuality.medium),
               Positioned(
-                left: 20,
+                left: 10,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
+                  padding: const EdgeInsets.only(top: 2.0),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -247,7 +296,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                         style: TextStyle(
                           fontFamily: 'BMJUA',
                           color: colorScheme.textPrimary,
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -257,32 +306,84 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
               ),
             ],
           ),
-          // Close Button
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/Cancel_Button.png',
-                    width: 80,
-                    height: 38,
-                    fit: BoxFit.fill,
-                  ),
-                  Text(
-                    AppLocalizations.of(context)?.get('close') ?? 'Close',
-                    style: TextStyle(
-                      fontFamily: 'BMJUA',
-                      color: Color(0xFF5D4037),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+          // Action Buttons (Edit & Close)
+          Row(
+            children: [
+              // Edit Button
+              if (_currentDiary != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 5, right: 4),
+                  child: GestureDetector(
+                    onTap: () async {
+                      await context.push('/writing', extra: {
+                        'isEditing': true,
+                        'existingDiary': _currentDiary,
+                        'existingContent': _decryptedContent,
+                        'initialQuestion': QuestionModel(
+                          id: 'existing',
+                          text: _currentDiary!.promptQuestion ?? '',
+                          engText: _currentDiary!.promptQuestionEng,
+                          category: 'default',
+                        ),
+                      });
+                      if (context.mounted) {
+                        _loadCurrentDiaryByDate();
+                      }
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/Confirm_Button.png',
+                          width: 90,
+                          height: 43,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.medium,
+                          cacheHeight: 120,
+                        ),
+                        Text(
+                          AppLocalizations.of(context)?.get('edit') ?? 'Edit',
+                          style: const TextStyle(
+                            fontFamily: 'BMJUA',
+                            color: Color(0xFF5D4037),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
+              // Close Button
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/Cancel_Button.png',
+                        width: 90,
+                        height: 43,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.medium,
+                        cacheHeight: 120,
+                      ),
+                      Text(
+                        AppLocalizations.of(context)?.get('close') ?? 'Close',
+                        style: const TextStyle(
+                          fontFamily: 'BMJUA',
+                          color: Color(0xFF5D4037),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

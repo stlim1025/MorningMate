@@ -53,7 +53,7 @@ class _CharacterDecorationButtonState extends State<CharacterDecorationButton> {
                 bottom:
                     AppLocalizations.of(context)?.locale.languageCode == 'en'
                         ? 18
-                        : 12,
+                        : 17, // 한국어일 때 글자를 조금 더 위로 (기존 12)
               ),
               child: Text(
                 AppLocalizations.of(context)?.get('decorate') ?? 'Decorate',

@@ -178,6 +178,15 @@ class AppRouter {
           path: '/writing',
           name: 'writing',
           builder: (context, state) {
+            if (state.extra is Map<String, dynamic>) {
+              final extra = state.extra as Map<String, dynamic>;
+              return WritingScreen(
+                initialQuestion: extra['initialQuestion'] as QuestionModel?,
+                isEditing: extra['isEditing'] ?? false,
+                existingDiary: extra['existingDiary'] as DiaryModel?,
+                existingContent: extra['existingContent'] as String?,
+              );
+            }
             final question = state.extra as QuestionModel?;
             return WritingScreen(initialQuestion: question);
           },

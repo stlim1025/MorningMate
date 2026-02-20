@@ -241,12 +241,16 @@ class MorningController extends ChangeNotifier {
     required String userId,
     required String content,
     List<String>? moods,
+    DateTime? customDate,
+    String? existingId,
   }) async {
     return _saveDiaryInternal(
       userId: userId,
       content: content,
       moods: moods,
       isDraft: false,
+      customDate: customDate,
+      existingId: existingId,
     );
   }
 
@@ -255,12 +259,16 @@ class MorningController extends ChangeNotifier {
     required String userId,
     required String content,
     List<String>? moods,
+    DateTime? customDate,
+    String? existingId,
   }) async {
     return _saveDiaryInternal(
       userId: userId,
       content: content,
       moods: moods,
       isDraft: true,
+      customDate: customDate,
+      existingId: existingId,
     );
   }
 
@@ -270,6 +278,8 @@ class MorningController extends ChangeNotifier {
     required String content,
     List<String>? moods,
     required bool isDraft,
+    DateTime? customDate,
+    String? existingId,
   }) async {
     if (_writingTimer != null) {
       if (!isDraft) {
@@ -286,44 +296,72 @@ class MorningController extends ChangeNotifier {
       final encryptedContent =
           await EncryptionUtil.encryptText(content, userId);
 
-      await _saveEncryptedDiaryLocally(userId, encryptedContent);
-
       final now = DateTime.now();
-      final diaryDate = DateTime(now.year, now.month, now.day);
+      final diaryDate = customDate ?? DateTime(now.year, now.month, now.day);
 
-      String? existingId = _todayDiary?.id;
-      if (existingId == 'local_temp') existingId = null;
+      await _saveEncryptedDiaryLocally(userId, encryptedContent,
+          date: diaryDate);
+
+      String? targetId = existingId ?? _todayDiary?.id;
+      if (targetId == 'local_temp') targetId = null;
 
       final diary = DiaryModel(
-        id: existingId ?? '',
+        id: targetId ?? '',
         userId: userId,
         date: diaryDate,
-        dateKey: _dateKey(now),
+        dateKey: _dateKey(diaryDate),
         encryptedContent: encryptedContent,
-        wordCount: _charCount,
+        wordCount: content.length,
         writingDuration: _writingDuration,
         moods: moods ?? [],
         isCompleted: !isDraft,
-        createdAt: _todayDiary?.createdAt ?? now,
+        createdAt: (targetId != null && targetId.isNotEmpty)
+            ? (_todayDiary?.createdAt ?? now)
+            : now,
         promptQuestion: _currentQuestion?.text,
         promptQuestionEng: _currentQuestion?.engText,
       );
 
-      if (existingId != null && existingId.isNotEmpty) {
-        await _diaryService.updateDiary(existingId, diary.toFirestore());
-        _todayDiary = diary;
+      final bool isNewDiary = targetId == null || targetId.isEmpty;
+
+      if (!isNewDiary) {
+        await _diaryService.updateDiary(targetId, diary.toFirestore());
+        // 오늘 일기인 경우에만 상태 업데이트
+        if (_todayDiary?.id == targetId ||
+            _dateKey(diaryDate) == _dateKey(now)) {
+          _todayDiary = diary;
+        }
       } else {
         final newId = await _diaryService.createDiary(diary);
-        _todayDiary = diary.copyWith(id: newId);
+        // 오늘 일기인 경우에만 상태 저장
+        if (_dateKey(diaryDate) == _dateKey(now)) {
+          _todayDiary = diary.copyWith(id: newId);
+        }
       }
 
+      // 새로 완료된 경우에만 보상 (임시저장 아님 AND (새 일기거나 기존에 미완료였던 경우))
+      // 단, 과거 일기 수정 시에는 보상을 주지 않음 (isNewDiary && 오늘 날짜인 경우에만 지급하는 것이 안전할 수도 있음)
       if (!isDraft) {
-        await _userService.updateConsecutiveDays(userId);
-        await _userService.updateUser(userId, {
-          'points': FieldValue.increment(10),
-          'lastDiaryDate': Timestamp.fromDate(now),
-          'lastDiaryMood': moods?.isNotEmpty == true ? moods!.first : null,
-        });
+        bool shouldReward = false;
+        if (isNewDiary && _dateKey(diaryDate) == _dateKey(now)) {
+          shouldReward = true;
+        } else if (!isNewDiary &&
+            _todayDiary != null &&
+            !_todayDiary!.isCompleted &&
+            _dateKey(diaryDate) == _dateKey(now)) {
+          // 기존에 오늘 날짜 임시저장이었는데 지금 완료하는 경우
+          shouldReward = true;
+        }
+
+        if (shouldReward) {
+          await _userService.updateConsecutiveDays(userId);
+          await _userService.updateUser(userId, {
+            'points': FieldValue.increment(10),
+            'diaryCount': FieldValue.increment(1),
+            'lastDiaryDate': Timestamp.fromDate(now),
+            'lastDiaryMood': moods?.isNotEmpty == true ? moods!.first : null,
+          });
+        }
 
         _isWriting = false;
       }
@@ -342,9 +380,10 @@ class MorningController extends ChangeNotifier {
 
   // 로컬에 암호화된 일기 저장
   Future<void> _saveEncryptedDiaryLocally(
-      String userId, String encryptedContent) async {
+      String userId, String encryptedContent,
+      {DateTime? date}) async {
     try {
-      final now = DateTime.now();
+      final now = date ?? DateTime.now();
       final filePath = await _getDiaryFilePath(userId, now, createDir: true);
       final file = File(filePath);
 

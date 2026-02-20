@@ -13,13 +13,20 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../data/models/question_model.dart';
+import '../../../data/models/diary_model.dart';
 
 class WritingScreen extends StatefulWidget {
   final QuestionModel? initialQuestion;
+  final bool isEditing;
+  final DiaryModel? existingDiary;
+  final String? existingContent;
 
   const WritingScreen({
     super.key,
     this.initialQuestion,
+    this.isEditing = false,
+    this.existingDiary,
+    this.existingContent,
   });
 
   @override
@@ -46,20 +53,31 @@ class _WritingScreenState extends State<WritingScreen> {
       colorScheme: AppColorScheme.light,
     );
 
+    // 편집 모드 초기화
+    if (widget.isEditing && widget.existingDiary != null) {
+      _textController.text = widget.existingContent ?? '';
+      _selectedMoods.clear();
+      _selectedMoods.addAll(widget.existingDiary!.moods);
+
+      // 글자수 업데이트 Trigger
+      morningController.updateCharCount(_textController.text);
+    } else {
+      final characterController = context.read<CharacterController>();
+      final activeIds =
+          characterController.currentUser?.activeEmoticonIds ?? [];
+      if (activeIds.isNotEmpty) {
+        _selectedMoods.add(activeIds.first);
+      } else {
+        _selectedMoods.add('normal');
+      }
+
+      // 드래프트 로드 (편집 모드가 아닐 때만)
+      _loadDraft();
+    }
+
     _textController.addListener(() {
       morningController.updateCharCount(_textController.text);
     });
-
-    final characterController = context.read<CharacterController>();
-    final activeIds = characterController.currentUser?.activeEmoticonIds ?? [];
-    if (activeIds.isNotEmpty) {
-      _selectedMoods.add(activeIds.first);
-    } else {
-      _selectedMoods.add('normal');
-    }
-
-    // 드래프트 로드
-    _loadDraft();
   }
 
   Future<void> _loadDraft() async {
@@ -246,7 +264,6 @@ class _WritingScreenState extends State<WritingScreen> {
 
   Widget _buildHeader(BuildContext context, AppColorScheme colorScheme,
       MorningController controller) {
-    final now = DateTime.now();
     final weekdayKeys = [
       'weekday_mon',
       'weekday_tue',
@@ -256,8 +273,12 @@ class _WritingScreenState extends State<WritingScreen> {
       'weekday_sat',
       'weekday_sun'
     ];
-    final weekday =
-        AppLocalizations.of(context)?.get(weekdayKeys[now.weekday - 1]) ?? '';
+    final displayDate = widget.isEditing && widget.existingDiary != null
+        ? widget.existingDiary!.date
+        : DateTime.now();
+    final weekday = AppLocalizations.of(context)
+            ?.get(weekdayKeys[displayDate.weekday - 1]) ??
+        '';
 
     return Padding(
       padding:
@@ -285,9 +306,11 @@ class _WritingScreenState extends State<WritingScreen> {
                     children: [
                       Image.asset(
                         'assets/icons/X_Button.png',
-                        width: 55, // 시각적으로 더 크게 표시
+                        width: 55,
                         height: 55,
                         fit: BoxFit.contain,
+                        filterQuality: FilterQuality.medium,
+                        cacheWidth: 150,
                       ),
                     ],
                   ),
@@ -313,6 +336,8 @@ class _WritingScreenState extends State<WritingScreen> {
                         width: 80,
                         height: 38,
                         fit: BoxFit.contain,
+                        filterQuality: FilterQuality.medium,
+                        cacheHeight: 120,
                       ),
                     ),
                   ),
@@ -322,28 +347,28 @@ class _WritingScreenState extends State<WritingScreen> {
                     padding: const EdgeInsets.only(top: 0),
                     child: GestureDetector(
                       onTap: () => _saveDraft(context, controller),
-                      child: Container(
-                        height: 38,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          image: const DecorationImage(
-                            image:
-                                AssetImage('assets/images/Cancel_Button.png'),
-                            fit: BoxFit.fill,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                      child: Stack(
                         alignment: Alignment.center,
-                        child: Text(
-                          AppLocalizations.of(context)?.get('tempSave') ??
-                              'Draft',
-                          style: const TextStyle(
-                            fontFamily: 'BMJUA',
-                            color: Color(0xFF5D4037),
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                        children: [
+                          Image.asset(
+                            'assets/images/Cancel_Button.png',
+                            width: 80,
+                            height: 38,
+                            fit: BoxFit.contain,
+                            filterQuality: FilterQuality.medium,
+                            cacheHeight: 120,
                           ),
-                        ),
+                          Text(
+                            AppLocalizations.of(context)?.get('tempSave') ??
+                                'Draft',
+                            style: const TextStyle(
+                              fontFamily: 'BMJUA',
+                              color: Color(0xFF5D4037),
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -370,7 +395,9 @@ class _WritingScreenState extends State<WritingScreen> {
                               'assets/images/Confirm_Button.png',
                               width: 110,
                               height: 44,
-                              fit: BoxFit.fill,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.medium,
+                              cacheHeight: 150,
                             ),
                             Text(
                               AppLocalizations.of(context)?.get('save') ??
@@ -397,7 +424,10 @@ class _WritingScreenState extends State<WritingScreen> {
             alignment: Alignment.center,
             children: [
               Image.asset('assets/images/Date_Icon.png',
-                  width: 200, height: 50, fit: BoxFit.fill),
+                  width: 200,
+                  height: 50,
+                  fit: BoxFit.fill,
+                  filterQuality: FilterQuality.medium),
               Positioned(
                 left: 20,
                 child: Padding(
@@ -414,12 +444,12 @@ class _WritingScreenState extends State<WritingScreen> {
                       Text(
                         AppLocalizations.of(context)
                                 ?.getFormat('fullDateFormat', {
-                              'year': now.year.toString(),
-                              'month': now.month.toString(),
-                              'day': now.day.toString(),
+                              'year': displayDate.year.toString(),
+                              'month': displayDate.month.toString(),
+                              'day': displayDate.day.toString(),
                               'weekday': weekday
                             }) ??
-                            '${now.year}.${now.month}.${now.day} ($weekday)',
+                            '${displayDate.year}.${displayDate.month}.${displayDate.day} ($weekday)',
                         style: TextStyle(
                           fontFamily: 'BMJUA',
                           color: colorScheme.textPrimary,
@@ -712,13 +742,24 @@ class _WritingScreenState extends State<WritingScreen> {
       userId: userId,
       content: _textController.text,
       moods: _selectedMoods,
+      customDate: widget.isEditing ? widget.existingDiary?.date : null,
+      existingId: widget.isEditing ? widget.existingDiary?.id : null,
     );
 
     if (success && context.mounted) {
-      unawaited(characterController.wakeUpCharacter(userId));
-      await _showCompletionDialog(context, colorScheme);
-      if (context.mounted) {
-        context.go('/morning');
+      if (widget.isEditing) {
+        MemoNotification.show(
+          context,
+          AppLocalizations.of(context)?.get('decorationSaved') ??
+              'Settings saved! ✨',
+        );
+        context.pop(); // 상세보기 화면으로 복귀
+      } else {
+        unawaited(characterController.wakeUpCharacter(userId));
+        await _showCompletionDialog(context, colorScheme);
+        if (context.mounted) {
+          context.go('/morning');
+        }
       }
     } else if (context.mounted) {
       MemoNotification.show(

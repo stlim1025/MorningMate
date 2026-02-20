@@ -467,7 +467,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           fit: BoxFit.fill,
         ),
       ),
-      padding: const EdgeInsets.only(top: 20, bottom: 15),
+      padding: const EdgeInsets.only(top: 32, bottom: 15),
       child: Column(
         children: children,
       ),

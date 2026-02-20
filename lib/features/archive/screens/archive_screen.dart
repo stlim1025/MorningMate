@@ -774,10 +774,13 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     }
 
     if (mounted) {
-      context.push('/diary-detail', extra: {
+      await context.push('/diary-detail', extra: {
         'diaries': _diaries,
         'initialDate': _selectedDay ?? DateTime.now(),
       });
+      if (mounted) {
+        _loadDiaries(silent: true);
+      }
     }
   }
 
