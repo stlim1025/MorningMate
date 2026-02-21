@@ -302,7 +302,12 @@ class MorningController extends ChangeNotifier {
       await _saveEncryptedDiaryLocally(userId, encryptedContent,
           date: diaryDate);
 
-      String? targetId = existingId ?? _todayDiary?.id;
+      String? targetId = existingId;
+      if (targetId == null && _todayDiary != null) {
+        if (_todayDiary!.dateKey == _dateKey(diaryDate)) {
+          targetId = _todayDiary!.id;
+        }
+      }
       if (targetId == 'local_temp') targetId = null;
 
       final diary = DiaryModel(
@@ -323,6 +328,8 @@ class MorningController extends ChangeNotifier {
       );
 
       final bool isNewDiary = targetId == null || targetId.isEmpty;
+      final bool wasUncompletedBefore =
+          _todayDiary != null && !_todayDiary!.isCompleted;
 
       if (!isNewDiary) {
         await _diaryService.updateDiary(targetId, diary.toFirestore());
@@ -346,8 +353,7 @@ class MorningController extends ChangeNotifier {
         if (isNewDiary && _dateKey(diaryDate) == _dateKey(now)) {
           shouldReward = true;
         } else if (!isNewDiary &&
-            _todayDiary != null &&
-            !_todayDiary!.isCompleted &&
+            wasUncompletedBefore &&
             _dateKey(diaryDate) == _dateKey(now)) {
           // 기존에 오늘 날짜 임시저장이었는데 지금 완료하는 경우
           shouldReward = true;

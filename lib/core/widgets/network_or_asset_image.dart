@@ -23,16 +23,14 @@ class NetworkOrAssetImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imagePath.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: imagePath,
+      return Image(
+        image: CachedNetworkImageProvider(imagePath),
         fit: fit,
         width: width,
         height: height,
         color: color,
         colorBlendMode: colorBlendMode,
-        placeholder: (context, url) =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        errorWidget: (context, url, error) => const Icon(Icons.error),
+        errorBuilder: (context, error, stackTrace) => const SizedBox(),
       );
     } else if (imagePath.endsWith('.svg')) {
       return SvgPicture.asset(

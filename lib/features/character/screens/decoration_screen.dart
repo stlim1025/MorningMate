@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_color_scheme.dart';
@@ -11,7 +10,9 @@ import '../../morning/controllers/morning_controller.dart';
 import '../../morning/widgets/enhanced_character_room_widget.dart';
 
 import '../../../data/models/room_decoration_model.dart';
+import '../../../core/services/asset_precache_service.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
 
@@ -107,6 +108,9 @@ class _DecorationScreenState extends State<DecorationScreen>
         List<String>.from(controller.currentUser?.activeEmoticonIds ?? []);
     _decorationNotifier = ValueNotifier<RoomDecorationModel>(initialDecoration);
     _pageController = PageController(initialPage: _currentIndex);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AssetPrecacheService().precacheCategory(context, _selectedCategory);
+    });
   }
 
   @override
@@ -372,6 +376,8 @@ class _DecorationScreenState extends State<DecorationScreen>
                               _currentIndex = index;
                               _selectedCategory = _categories[index];
                             });
+                            AssetPrecacheService()
+                                .precacheCategory(context, _categories[index]);
                           },
                           itemBuilder: (context, index) {
                             return _buildCategoryContentByIndex(
@@ -517,6 +523,7 @@ class _DecorationScreenState extends State<DecorationScreen>
           _selectedCategory = id;
           _isPanelExpanded = true; // Automatically expand when a tab is clicked
         });
+        AssetPrecacheService().precacheCategory(context, id);
 
         _pageController.animateToPage(
           newIndex,
@@ -921,16 +928,11 @@ class _DecorationScreenState extends State<DecorationScreen>
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 18.0, vertical: 26.0),
-                    child: imagePath.endsWith('.svg')
-                        ? SvgPicture.asset(
-                            imagePath,
-                            fit: BoxFit.contain,
-                          )
-                        : Image.asset(
-                            imagePath,
-                            width: 200,
-                            fit: BoxFit.contain,
-                          ),
+                    child: NetworkOrAssetImage(
+                      imagePath: imagePath,
+                      fit: BoxFit.contain,
+                      width: 200,
+                    ),
                   ),
                 ),
               if (icon != null && imagePath == null)

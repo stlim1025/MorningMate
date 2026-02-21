@@ -9,6 +9,7 @@ import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
 import '../controllers/character_controller.dart';
+import '../../../core/services/asset_precache_service.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -40,6 +41,7 @@ class _ShopScreenState extends State<ShopScreen> {
     _pageController = PageController(initialPage: _currentIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CharacterController>().loadRewardedAd();
+      AssetPrecacheService().precacheCategory(context, _selectedCategory);
     });
   }
 
@@ -195,6 +197,8 @@ class _ShopScreenState extends State<ShopScreen> {
                               _currentIndex = index;
                               _selectedCategory = entry.key;
                             });
+                            AssetPrecacheService()
+                                .precacheCategory(context, entry.key);
                             _pageController.animateToPage(
                               index,
                               duration: const Duration(milliseconds: 300),
@@ -216,10 +220,13 @@ class _ShopScreenState extends State<ShopScreen> {
                     PageView.builder(
                       controller: _pageController,
                       onPageChanged: (index) {
+                        final category = _categories[index];
                         setState(() {
                           _currentIndex = index;
-                          _selectedCategory = _categories[index];
+                          _selectedCategory = category;
                         });
+                        AssetPrecacheService()
+                            .precacheCategory(context, category);
                       },
                       itemCount: _categories.length,
                       itemBuilder: (context, index) {

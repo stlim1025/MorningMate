@@ -11,6 +11,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../admin/controllers/admin_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/diary_service.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 
 class DiaryDetailScreen extends StatefulWidget {
   final List<DiaryModel> diaries;
@@ -267,7 +268,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
             alignment: Alignment.center,
             children: [
               Image.asset('assets/images/Date_Icon.png',
-                  width: 150,
+                  width: 170,
                   height: 44,
                   fit: BoxFit.fill,
                   filterQuality: FilterQuality.medium),
@@ -498,8 +499,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
         ),
         Padding(
           padding: const EdgeInsets.all(12.0), // 배경이 작아졌으므로 내부 여백은 다시 줄임
-          child: Image.asset(
-            emoticon.imagePath!,
+          child: NetworkOrAssetImage(
+            imagePath: emoticon.imagePath!,
             fit: BoxFit.contain,
           ),
         ),
@@ -531,7 +532,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
             return SizedBox(
               width: moods.length <= 2 ? 60 : 45,
               height: moods.length <= 2 ? 60 : 45,
-              child: Image.asset(emoticon.imagePath!, fit: BoxFit.contain),
+              child: NetworkOrAssetImage(
+                  imagePath: emoticon.imagePath!, fit: BoxFit.contain),
             );
           }).toList(),
         ),

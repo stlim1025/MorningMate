@@ -76,7 +76,7 @@ class UserModel {
     this.friendAcceptNoti = true,
     this.friendRejectNoti = true,
     this.purchasedThemeIds = const ['light'],
-    this.purchasedBackgroundIds = const ['none'],
+    this.purchasedBackgroundIds = const ['default'],
     this.purchasedPropIds = const [],
     this.purchasedFloorIds = const ['default'],
     this.purchasedEmoticonIds = const [
@@ -145,7 +145,7 @@ class UserModel {
       purchasedThemeIds:
           List<String>.from(data['purchasedThemeIds'] ?? ['light']),
       purchasedBackgroundIds:
-          List<String>.from(data['purchasedBackgroundIds'] ?? ['none']),
+          List<String>.from(data['purchasedBackgroundIds'] ?? ['default']),
       purchasedPropIds: List<String>.from(data['purchasedPropIds'] ?? []),
       purchasedFloorIds:
           List<String>.from(data['purchasedFloorIds'] ?? ['default']),

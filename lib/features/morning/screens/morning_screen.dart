@@ -13,6 +13,7 @@ import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/models/room_decoration_model.dart';
+import '../../../core/services/asset_precache_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/store_button.dart';
 import '../widgets/diary_button.dart';
@@ -183,6 +184,11 @@ class _MorningScreenState extends State<MorningScreen>
       }
     } catch (e) {
       debugPrint('Error initializing morning screen: $e');
+    }
+
+    // 프리캐싱 시작 (화면 렌더링에 방해되지 않게 마지막에 실행)
+    if (mounted) {
+      AssetPrecacheService().precacheAllRoomAssets(context);
     }
   }
 

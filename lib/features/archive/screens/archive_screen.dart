@@ -15,6 +15,7 @@ import '../../../core/widgets/memo_notification.dart';
 import '../../morning/controllers/morning_controller.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../admin/controllers/admin_controller.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -799,8 +800,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       );
 
       if (emoticon.imagePath != null) {
-        return Image.asset(
-          emoticon.imagePath!,
+        return NetworkOrAssetImage(
+          imagePath: emoticon.imagePath!,
           width: size,
           height: size,
           fit: BoxFit.contain,

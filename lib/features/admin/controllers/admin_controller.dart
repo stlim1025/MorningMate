@@ -3,6 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/question_service.dart';
 import '../../../services/asset_service.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import '../../../data/models/diary_model.dart';
+import '../../../utils/encryption.dart';
 
 class AdminController extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -809,5 +813,156 @@ class AdminController extends ChangeNotifier {
     }
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<List<String>> scanLocalDiaries(String targetUserId) async {
+    List<String> foundDates = [];
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final files = directory.listSync();
+
+      for (var file in files) {
+        if (file is File) {
+          final filename = file.uri.pathSegments.last;
+          if (filename.startsWith('${targetUserId}_') &&
+              filename.endsWith('.enc')) {
+            final datePart = filename.substring(
+                targetUserId.length + 1, filename.length - 4);
+            foundDates.add(datePart);
+          }
+        }
+      }
+      foundDates.sort((a, b) => b.compareTo(a));
+    } catch (e) {
+      debugPrint('로컬 일기 스캔 오류: $e');
+    }
+    return foundDates;
+  }
+
+  Future<bool> recoverLocalDiary(String targetUserId, String dateStr) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      int year, month, day;
+
+      if (dateStr.contains('-')) {
+        final dateParts = dateStr.split('-');
+        if (dateParts.length != 3) {
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+        year = int.parse(dateParts[0]);
+        month = int.parse(dateParts[1]);
+        day = int.parse(dateParts[2]);
+      } else if (dateStr.length == 8) {
+        year = int.parse(dateStr.substring(0, 4));
+        month = int.parse(dateStr.substring(4, 6));
+        day = int.parse(dateStr.substring(6, 8));
+      } else if (dateStr.length >= 6) {
+        year = int.parse(dateStr.substring(0, 4));
+        if (dateStr.length == 6) {
+          month = int.parse(dateStr.substring(4, 5));
+          day = int.parse(dateStr.substring(5, 6));
+        } else {
+          final m2 = int.parse(dateStr.substring(4, 6));
+          if (m2 <= 12) {
+            month = m2;
+            day = int.parse(dateStr.substring(6));
+          } else {
+            month = int.parse(dateStr.substring(4, 5));
+            day = int.parse(dateStr.substring(5));
+          }
+        }
+      } else {
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      final directory = await getApplicationDocumentsDirectory();
+
+      final filename1 = '${targetUserId}_$dateStr.enc';
+      final pathSeparator = Platform.isWindows ? '\\' : '/';
+
+      final filePath1 = '${directory.path}$pathSeparator$filename1';
+      final file1 = File(filePath1);
+
+      // Fallback for when dateStr contains '-' and we want to try the parsed digits
+      final filename2 =
+          '${targetUserId}_${year}${month.toString().padLeft(2, '0')}${day.toString().padLeft(2, '0')}.enc';
+      final filePath2 = '${directory.path}$pathSeparator$filename2';
+      final file2 = File(filePath2);
+
+      // Fallback for unpadded parsed digits
+      final filename3 = '${targetUserId}_$year$month$day.enc';
+      final filePath3 = '${directory.path}$pathSeparator$filename3';
+      final file3 = File(filePath3);
+
+      File targetFile;
+      if (await file1.exists()) {
+        targetFile = file1;
+      } else if (await file2.exists()) {
+        targetFile = file2;
+      } else if (await file3.exists()) {
+        targetFile = file3;
+      } else {
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      final encryptedContent = await targetFile.readAsString();
+
+      final customDate = DateTime(year, month, day);
+      final dateKey = DiaryModel.buildDateKey(customDate);
+
+      final query = await _firestore
+          .collection('diaries')
+          .where('userId', isEqualTo: targetUserId)
+          .where('dateKey', isEqualTo: dateKey)
+          .limit(1)
+          .get();
+
+      String? existingId;
+      if (query.docs.isNotEmpty) {
+        existingId = query.docs.first.id;
+      }
+
+      final decrypted =
+          await EncryptionUtil.decryptText(encryptedContent, targetUserId);
+
+      final diary = DiaryModel(
+        id: existingId ?? '',
+        userId: targetUserId,
+        date: customDate,
+        dateKey: dateKey,
+        encryptedContent: encryptedContent,
+        wordCount: decrypted.length,
+        writingDuration: 0,
+        moods: ['normal'],
+        isCompleted: true,
+        createdAt: DateTime.now(),
+      );
+
+      if (existingId != null && existingId.isNotEmpty) {
+        await _firestore
+            .collection('diaries')
+            .doc(existingId)
+            .update(diary.toFirestore());
+      } else {
+        await _firestore.collection('diaries').add(diary.toFirestore());
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('로컬 일기 복구 오류: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
 }

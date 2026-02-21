@@ -14,6 +14,7 @@ import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../data/models/question_model.dart';
 import '../../../data/models/diary_model.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 
 class WritingScreen extends StatefulWidget {
   final QuestionModel? initialQuestion;
@@ -650,7 +651,8 @@ class _WritingScreenState extends State<WritingScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(4.0),
-                  child: Image.asset(assetPath, fit: BoxFit.contain),
+                  child: NetworkOrAssetImage(
+                      imagePath: assetPath, fit: BoxFit.contain),
                 ),
                 if (isSelected)
                   Positioned(

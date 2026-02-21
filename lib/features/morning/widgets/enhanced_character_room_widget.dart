@@ -8,6 +8,7 @@ import '../../../data/models/room_decoration_model.dart';
 import '../../character/widgets/character_display.dart';
 import 'room_background_widget.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class EnhancedCharacterRoomWidget extends StatefulWidget {
   final bool isAwake;
@@ -168,8 +169,55 @@ class _EnhancedCharacterRoomWidgetState
             ResizeImage(const AssetImage('assets/images/Egg_Wing4.png'),
                 width: 300),
             context);
+
+        _precacheCurrentDecoration();
       }
     });
+  }
+
+  void _precacheCurrentDecoration() {
+    final decoration = widget.roomDecoration;
+    if (decoration == null) return;
+
+    // Precache Wallpaper
+    if (decoration.wallpaperId != 'default') {
+      final wallpaper = RoomAssets.wallpapers.firstWhere(
+          (w) => w.id == decoration.wallpaperId,
+          orElse: () => RoomAssets.wallpapers.first);
+      if (wallpaper.imagePath != null) {
+        precacheImage(AssetImage(wallpaper.imagePath!), context);
+      }
+    }
+
+    // Precache Background
+    if (decoration.backgroundId != 'default' &&
+        decoration.backgroundId != 'none') {
+      final background = RoomAssets.backgrounds.firstWhere(
+          (b) => b.id == decoration.backgroundId,
+          orElse: () => RoomAssets.backgrounds.first);
+      if (background.imagePath != null) {
+        precacheImage(AssetImage(background.imagePath!), context);
+      }
+    }
+
+    // Precache Floor
+    if (decoration.floorId != 'default') {
+      final floor = RoomAssets.floors.firstWhere(
+          (f) => f.id == decoration.floorId,
+          orElse: () => RoomAssets.floors.first);
+      if (floor.imagePath != null) {
+        precacheImage(AssetImage(floor.imagePath!), context);
+      }
+    }
+
+    // Precache Props
+    for (var prop in decoration.props) {
+      final asset = RoomAssets.props.firstWhere((p) => p.id == prop.type,
+          orElse: () => RoomAssets.props.first);
+      if (asset.imagePath != null) {
+        precacheImage(AssetImage(asset.imagePath!), context);
+      }
+    }
   }
 
   void _move() {
@@ -225,9 +273,9 @@ class _EnhancedCharacterRoomWidgetState
     _wanderTimer?.cancel();
     _movementStopTimer?.cancel();
     if (widget.isAwake) {
-      // 利됱떆 泥?踰덉㎏ ?대룞 ?쒖옉
+      // 즉시 첫 번째 이동 시작
       _move();
-      // ?댄썑 6珥덈쭏??諛섎났 ?대룞
+      // 이후 6초마다 반복 이동
       _wanderTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
         _move();
       });
@@ -237,6 +285,11 @@ class _EnhancedCharacterRoomWidgetState
   @override
   void didUpdateWidget(EnhancedCharacterRoomWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    // 0. Precache decoration if changed
+    if (widget.roomDecoration != oldWidget.roomDecoration) {
+      _precacheCurrentDecoration();
+    }
 
     // 1. Main Character wandering logic
     if (widget.isAwake != oldWidget.isAwake) {
@@ -1497,12 +1550,10 @@ class Room3DBackground extends StatelessWidget {
                         ),
                       ),
                       // 2. 창문 프레임 + 커튼 이미지 (Overlay)
-                      Image.asset(
-                        'assets/images/backgrounds/WIndow_Curton.png',
+                      NetworkOrAssetImage(
+                        imagePath:
+                            'assets/images/backgrounds/WIndow_Curton.png',
                         fit: BoxFit.fill,
-                        cacheWidth: 300,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const SizedBox(),
                       ),
                     ],
                   ),
@@ -1539,7 +1590,11 @@ class Room3DBackground extends StatelessWidget {
                           !floorAsset.imagePath!.endsWith('.svg'))
                       ? DecorationImage(
                           image: ResizeImage(
-                            AssetImage(floorAsset.imagePath!),
+                            floorAsset.imagePath!.startsWith('http')
+                                ? CachedNetworkImageProvider(
+                                    floorAsset.imagePath!) as ImageProvider
+                                : AssetImage(floorAsset.imagePath!)
+                                    as ImageProvider,
                             width: 540,
                           ),
                           repeat: ImageRepeat.repeat,
@@ -1617,15 +1672,11 @@ class Room3DBackground extends StatelessWidget {
   }) {
     final base = Container(
       child: wallpaperAsset.imagePath != null
-          ? Image.asset(
-              wallpaperAsset.imagePath!,
+          ? NetworkOrAssetImage(
+              imagePath: wallpaperAsset.imagePath!,
               width: totalWidth,
               height: totalHeight,
               fit: BoxFit.fill,
-              cacheWidth: 540,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(color: wallpaperColor);
-              },
             )
           : (wallpaperAsset.id == 'black_stripe'
               ? Stack(

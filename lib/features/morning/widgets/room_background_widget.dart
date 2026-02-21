@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:morni/core/constants/room_assets.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../data/models/room_decoration_model.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 
 class RoomBackgroundWidget extends StatelessWidget {
   final RoomDecorationModel decoration;
@@ -32,11 +33,9 @@ class RoomBackgroundWidget extends StatelessWidget {
         // 2. 배경 이미지
         if (backgroundImagePath != null)
           Positioned.fill(
-            child: Image.asset(
-              backgroundImagePath,
+            child: NetworkOrAssetImage(
+              imagePath: backgroundImagePath,
               fit: BoxFit.cover,
-              cacheWidth: 400, // Reduced from 800 as it's for a small window
-              alignment: Alignment.topCenter,
             ),
           ),
       ],

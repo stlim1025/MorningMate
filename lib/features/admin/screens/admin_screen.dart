@@ -361,6 +361,17 @@ class _UserListTabState extends State<UserListTab> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 4),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: OutlinedButton.icon(
+                              onPressed: () =>
+                                  _showLocalDiaryRecoveryDialog(context, user),
+                              icon: const Icon(Icons.restore, size: 16),
+                              label: const Text('유실된 로컬 일기 스캔 / 복구',
+                                  style: TextStyle(fontSize: 12)),
+                            ),
+                          ),
                           if (isSuspended) ...[
                             Text('정지상태: ${_formatDate(user.suspendedUntil)} 까지',
                                 style: const TextStyle(color: Colors.red)),
@@ -437,6 +448,77 @@ class _UserListTabState extends State<UserListTab> {
         ),
       ],
     );
+  }
+
+  void _showLocalDiaryRecoveryDialog(BuildContext context, UserModel user) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: (context, setState) {
+            final controller = context.read<AdminController>();
+
+            return AlertDialog(
+              title: Text('${user.nickname}님의 로컬 기기 일기 스캔'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 300,
+                child: FutureBuilder<List<String>>(
+                  future: controller.scanLocalDiaries(user.uid),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('오류 발생: ${snapshot.error}'));
+                    }
+
+                    final availableDates = snapshot.data ?? [];
+                    if (availableDates.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          '현재 기기에 이 사용자의 로컬 암호화 일기 파일이 없습니다.',
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: availableDates.length,
+                      itemBuilder: (context, index) {
+                        final dateStr = availableDates[index];
+                        return ListTile(
+                          title: Text(dateStr),
+                          trailing: ElevatedButton(
+                            onPressed: () async {
+                              final success = await controller
+                                  .recoverLocalDiary(user.uid, dateStr);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(success
+                                        ? '$dateStr 일기 서버 백업/복구 성공!'
+                                        : '복구 실패.'),
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text('복구 (덮어쓰기)'),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('닫기'),
+                ),
+              ],
+            );
+          });
+        });
   }
 
   void _confirmUnsuspend(BuildContext context, UserModel user) {
