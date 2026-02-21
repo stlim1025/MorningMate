@@ -14,6 +14,8 @@ class RoomAsset {
   final bool isWallMounted;
   final bool noShadow;
   final double shadowDyCorrection;
+  final bool isLight;
+  final double lightIntensity;
 
   const RoomAsset({
     required this.id,
@@ -28,6 +30,8 @@ class RoomAsset {
     this.isWallMounted = false,
     this.noShadow = false,
     this.shadowDyCorrection = 0.0,
+    this.isLight = false,
+    this.lightIntensity = 1.0,
     this.category,
     this.charWidthPct,
     this.charTopPctAwake,
@@ -47,7 +51,7 @@ class RoomAsset {
 }
 
 class RoomAssets {
-  static const List<RoomAsset> themes = [
+  static List<RoomAsset> themes = [
     RoomAsset(
       id: 'light',
       name: '라이트',
@@ -58,7 +62,7 @@ class RoomAssets {
     ),
   ];
 
-  static const List<RoomAsset> emoticons = [
+  static List<RoomAsset> emoticons = [
     // 기본 이모티콘 (무료)
     RoomAsset(
       id: 'happy',
@@ -119,7 +123,7 @@ class RoomAssets {
     ),
   ];
 
-  static const List<RoomAsset> wallpapers = [
+  static List<RoomAsset> wallpapers = [
     RoomAsset(
         id: 'default',
         name: '기본',
@@ -195,7 +199,7 @@ class RoomAssets {
         imagePath: 'assets/images/wallpapers/Lego_WallPaper.png'),
   ];
 
-  static const List<RoomAsset> backgrounds = [
+  static List<RoomAsset> backgrounds = [
     RoomAsset(
         id: 'default', name: '기본(달)', price: 0, icon: Icons.nightlight_round),
     RoomAsset(
@@ -228,7 +232,17 @@ class RoomAssets {
         imagePath: 'assets/images/backgrounds/NightMoon.png'),
   ];
 
-  static const List<RoomAsset> props = [
+  static List<RoomAsset> props = [
+    RoomAsset(
+      id: 'sticky_note',
+      name: '메모 노트',
+      price: 50,
+      icon: Icons.note_alt_outlined,
+      imagePath: 'assets/items/StickyNote.png',
+      sizeMultiplier: 0.6,
+      aspectRatio: 1.0,
+      isWallMounted: true,
+    ),
     RoomAsset(
       id: 'alarm_clock',
       name: '알람시계',
@@ -270,8 +284,8 @@ class RoomAssets {
       price: 200,
       icon: Icons.table_restaurant,
       imagePath: 'assets/items/Space_Desk.png',
-      sizeMultiplier: 1.2,
-      aspectRatio: 1.2,
+      sizeMultiplier: 1.0,
+      aspectRatio: 1.6,
     ),
     RoomAsset(
       id: 'space_desk2',
@@ -430,16 +444,6 @@ class RoomAssets {
       noShadow: true,
     ),
     RoomAsset(
-      id: 'sticky_note',
-      name: '메모 노트',
-      price: 50,
-      icon: Icons.note_alt_outlined,
-      imagePath: 'assets/items/StickyNote.png',
-      sizeMultiplier: 0.6,
-      aspectRatio: 1.0,
-      isWallMounted: true,
-    ),
-    RoomAsset(
       id: 'lego_book_desk',
       name: '블럭 독서 책상',
       price: 200,
@@ -490,6 +494,7 @@ class RoomAssets {
       imagePath: 'assets/items/Lego_Door.png',
       sizeMultiplier: 1.3,
       aspectRatio: 0.8,
+      noShadow: true,
     ),
     RoomAsset(
       id: 'lego_flower',
@@ -535,6 +540,8 @@ class RoomAssets {
       icon: Icons.light,
       imagePath: 'assets/items/Lego_Lamp.png',
       sizeMultiplier: 0.7,
+      isLight: true,
+      lightIntensity: 0.9,
     ),
     RoomAsset(
       id: 'lego_mailbox',
@@ -580,6 +587,8 @@ class RoomAssets {
       icon: Icons.light_mode,
       imagePath: 'assets/items/Castle_Candle.png',
       sizeMultiplier: 0.8,
+      isLight: true,
+      lightIntensity: 0.9,
     ),
     RoomAsset(
       id: 'castle_knight_statue',
@@ -596,7 +605,7 @@ class RoomAssets {
       price: 200,
       icon: Icons.inventory_2,
       imagePath: 'assets/items/Castle_TreasureChest.png',
-      sizeMultiplier: 1.4,
+      sizeMultiplier: 1.0,
     ),
     RoomAsset(
       id: 'castle_gargoyle_statue',
@@ -609,7 +618,7 @@ class RoomAssets {
     ),
   ];
 
-  static const List<RoomAsset> floors = [
+  static List<RoomAsset> floors = [
     RoomAsset(
         id: 'default',
         name: '기본 바닥',

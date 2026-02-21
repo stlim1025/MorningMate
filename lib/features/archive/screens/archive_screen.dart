@@ -567,16 +567,19 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           rightChevronIcon:
               Icon(Icons.chevron_right, color: colorScheme.iconPrimary),
         ),
+        daysOfWeekHeight: 28, // 요일 라벨 높이 상향
         daysOfWeekStyle: DaysOfWeekStyle(
           weekdayStyle: TextStyle(
             fontFamily: 'NanumPenScript-Regular',
             color: colorScheme.textSecondary,
             fontSize: 18,
+            height: 1.2, // 줄 높이 설정으로 잘림 방지
           ),
           weekendStyle: TextStyle(
             fontFamily: 'NanumPenScript-Regular',
             color: colorScheme.secondary,
             fontSize: 18,
+            height: 1.2, // 줄 높이 설정으로 잘림 방지
           ),
         ),
         // 커스텀 빌더

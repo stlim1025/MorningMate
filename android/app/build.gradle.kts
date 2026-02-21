@@ -58,4 +58,10 @@ flutter {
 
 dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
+    constraints {
+        implementation("androidx.activity:activity:1.9.3")
+        implementation("androidx.activity:activity-ktx:1.9.3")
+        implementation("androidx.core:core:1.15.0")
+        implementation("androidx.core:core-ktx:1.15.0")
+    }
 }

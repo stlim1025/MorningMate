@@ -14,6 +14,7 @@ import 'services/user_service.dart';
 import 'services/diary_service.dart';
 import 'services/friend_service.dart';
 import 'services/question_service.dart';
+import 'services/asset_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/morning/controllers/morning_controller.dart';
 import 'features/character/controllers/character_controller.dart';
@@ -123,6 +124,7 @@ class _MorniAppState extends State<MorniApp> {
   late final DiaryService _diaryService;
   late final QuestionService _questionService;
   late final FriendService _friendService;
+  late final AssetService _assetService;
 
   late final AuthController _authController;
   late final GoRouter _router;
@@ -143,6 +145,10 @@ class _MorniAppState extends State<MorniApp> {
     _diaryService = DiaryService();
     _questionService = QuestionService();
     _friendService = FriendService(_userService);
+    _assetService = AssetService();
+
+    // Fetch dynamic assets from Firebase
+    _assetService.fetchDynamicAssets();
 
     // 2. AuthController 초기화 (서비스 의존성 주입)
     _authController = AuthController(

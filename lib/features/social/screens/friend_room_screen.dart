@@ -139,14 +139,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                 ),
 
               // 1.5. 밤 모드 전체 오버레이 (친구가 자고 있을 때 방 전체를 어둡게)
-              if (!isAwake && _friend != null && !_isLoading)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: Container(
-                      color: Colors.black.withOpacity(0.30),
-                    ),
-                  ),
-                ),
+              // 이제 EnhancedCharacterRoomWidget 내부에서 광원 효과와 함께 처리됩니다.
 
               // 2. UI Overlay
               SafeArea(

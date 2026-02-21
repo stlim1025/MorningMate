@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/room_assets.dart';
 import '../../../../core/constants/character_assets.dart';
+import '../../../../core/widgets/network_or_asset_image.dart';
 import '../controllers/admin_controller.dart';
+import 'asset_upload_dialog.dart';
 
 class ShopManagementTab extends StatefulWidget {
   const ShopManagementTab({super.key});
@@ -86,131 +88,160 @@ class _ShopManagementTabState extends State<ShopManagementTab>
     final controller = context.watch<AdminController>();
     final discounts = controller.shopDiscounts;
 
-    return Column(
-      children: [
-        // 탭바
-        Container(
-          color: Colors.white,
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelColor: Colors.blue,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.blue,
-            onTap: (_) => setState(() {}),
-            tabs: const [
-              Tab(text: '전체'),
-              Tab(text: '테마'),
-              Tab(text: '이모티콘'),
-              Tab(text: '배경화면'),
-              Tab(text: '배경'),
-              Tab(text: '소품'),
-              Tab(text: '바닥'),
-              Tab(text: '할인중'),
-            ],
-          ),
-        ),
-        // 검색바와 할인 제거 버튼
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: '아이템 검색',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
-              ),
-              if (discounts.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    icon: const Icon(Icons.remove_circle_outline),
-                    label: Text('모든 할인 제거 (${discounts.length}개)'),
-                    onPressed: () =>
-                        _showRemoveAllDiscountsDialog(context, controller),
-                  ),
-                ),
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const AssetUploadDialog(),
+          ).then((_) {
+            // 업로드 완료 후 새로고침 (간단히 setState 혹은 AdminController를 통해 refresh)
+            setState(() {});
+          });
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('신규 아이템 추가'),
+      ),
+      body: Column(
+        children: [
+          // 탭바
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              labelColor: Colors.blue,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: Colors.blue,
+              onTap: (_) => setState(() {}),
+              tabs: const [
+                Tab(text: '전체'),
+                Tab(text: '테마'),
+                Tab(text: '이모티콘'),
+                Tab(text: '배경화면'),
+                Tab(text: '배경'),
+                Tab(text: '소품'),
+                Tab(text: '바닥'),
+                Tab(text: '할인중'),
               ],
-            ],
+            ),
           ),
-        ),
-        // 아이템 리스트
-        Expanded(
-          child: Builder(
-            builder: (context) {
-              final filteredItems = _getFilteredItems(discounts);
-
-              if (filteredItems.isEmpty) {
-                return const Center(child: Text('검색 결과가 없습니다.'));
-              }
-
-              return ListView.builder(
-                itemCount: filteredItems.length,
-                itemBuilder: (context, index) {
-                  final item = filteredItems[index];
-                  final itemId = item.id;
-                  final isDiscounted = discounts.containsKey(itemId);
-                  final discountPrice = discounts[itemId];
-                  final originalPrice = item.price;
-
-                  return Card(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: ListTile(
-                      leading: _buildItemImage(item),
-                      title: Text(item.name),
-                      subtitle: Text(
-                        isDiscounted
-                            ? '원가: $originalPrice 가지 → 할인가: $discountPrice 가지'
-                            : '가격: $originalPrice 가지',
-                        style: TextStyle(
-                          color: isDiscounted ? Colors.red : Colors.black87,
-                          fontWeight: isDiscounted
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
+          // 검색바와 할인 제거 버튼
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: '아이템 검색',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                ),
+                if (discounts.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      trailing: IconButton(
-                        icon: Icon(
-                          Icons.edit,
-                          color: isDiscounted ? Colors.red : Colors.grey,
-                        ),
-                        onPressed: () => _showDiscountDialog(
-                            context, item, discounts, controller),
-                      ),
+                      icon: const Icon(Icons.remove_circle_outline),
+                      label: Text('모든 할인 제거 (${discounts.length}개)'),
+                      onPressed: () =>
+                          _showRemoveAllDiscountsDialog(context, controller),
                     ),
-                  );
-                },
-              );
-            },
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-      ],
+          // 아이템 리스트
+          Expanded(
+            child: Builder(
+              builder: (context) {
+                final filteredItems = _getFilteredItems(discounts);
+
+                if (filteredItems.isEmpty) {
+                  return const Center(child: Text('검색 결과가 없습니다.'));
+                }
+
+                return ListView.builder(
+                  itemCount: filteredItems.length,
+                  itemBuilder: (context, index) {
+                    final item = filteredItems[index];
+                    final itemId = item.id;
+                    final isDiscounted = discounts.containsKey(itemId);
+                    final discountPrice = discounts[itemId];
+                    final originalPrice = item.price;
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: ListTile(
+                        leading: _buildItemImage(item),
+                        title: Text(item.name),
+                        subtitle: Text(
+                          isDiscounted
+                              ? '원가: $originalPrice 가지 → 할인가: $discountPrice 가지'
+                              : '가격: $originalPrice 가지',
+                          style: TextStyle(
+                            color: isDiscounted ? Colors.red : Colors.black87,
+                            fontWeight: isDiscounted
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.local_offer,
+                                color: isDiscounted ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: () => _showDiscountDialog(
+                                  context, item, discounts, controller),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.settings,
+                                  color: Colors.blueGrey),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) =>
+                                      AssetUploadDialog(itemToEdit: item),
+                                ).then((_) => setState(() {}));
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildItemImage(dynamic item) {
     if (item.imagePath != null) {
-      return Image.asset(
-        item.imagePath!,
+      return NetworkOrAssetImage(
+        imagePath: item.imagePath!,
         width: 40,
         height: 40,
         fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) =>
-            const Icon(Icons.image_not_supported),
       );
     }
     return Icon(item.icon ?? Icons.shopping_bag);

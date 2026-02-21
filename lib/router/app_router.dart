@@ -9,6 +9,7 @@ import '../features/auth/screens/splash_screen.dart';
 import '../features/morning/screens/morning_screen.dart';
 import '../features/morning/screens/writing_screen.dart';
 import '../features/challenge/screens/challenge_screen.dart';
+import '../features/challenge/screens/challenge_detail_screen.dart';
 import '../features/character/screens/decoration_screen.dart';
 import '../features/character/screens/shop_screen.dart';
 import '../features/character/screens/character_decoration_screen.dart';
@@ -227,6 +228,15 @@ class AppRouter {
           path: '/notification',
           name: 'notification',
           builder: (context, state) => const NotificationScreen(),
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/challenge-detail/:challengeId',
+          name: 'challengeDetail',
+          builder: (context, state) {
+            final challengeId = state.pathParameters['challengeId']!;
+            return ChallengeDetailScreen(challengeId: challengeId);
+          },
         ),
         GoRoute(
           parentNavigatorKey: navigatorKey,

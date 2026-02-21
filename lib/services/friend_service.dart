@@ -55,6 +55,17 @@ class FriendService {
       'acceptedAt': FieldValue.serverTimestamp(),
     });
 
+    // 3. Update users' friendIds array
+    final userRef = _db.collection('users').doc(userId);
+    batch.update(userRef, {
+      'friendIds': FieldValue.arrayUnion([friendId])
+    });
+
+    final targetFriendRef = _db.collection('users').doc(friendId);
+    batch.update(targetFriendRef, {
+      'friendIds': FieldValue.arrayUnion([userId])
+    });
+
     await batch.commit();
   }
 
@@ -184,6 +195,17 @@ class FriendService {
     for (var doc in friendQuery.docs) {
       batch.delete(doc.reference);
     }
+
+    // 3. Set users' friendIds array
+    final userRef = _db.collection('users').doc(userId);
+    batch.update(userRef, {
+      'friendIds': FieldValue.arrayRemove([friendId])
+    });
+
+    final targetFriendRef = _db.collection('users').doc(friendId);
+    batch.update(targetFriendRef, {
+      'friendIds': FieldValue.arrayRemove([userId])
+    });
 
     await batch.commit();
   }

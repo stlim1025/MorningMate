@@ -145,6 +145,48 @@ class AdminHomeTab extends StatelessWidget {
                             horizontal: 24, vertical: 12),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: controller.isLoading
+                          ? null
+                          : () async {
+                              await controller.syncAllFriendData();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          '모든 기존 유저 친구 동기화 방안 조치가 완료되었습니다.')),
+                                );
+                              }
+                            },
+                      icon: const Icon(Icons.sync),
+                      label: const Text('기존 유저 친구 캐시 동기화'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: controller.isLoading
+                          ? null
+                          : () async {
+                              await controller.migrateAssetsToFirestore();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Firebase 로컬 에셋 마이그레이션 (DB 업로드) 완료!')),
+                                );
+                              }
+                            },
+                      icon: const Icon(Icons.cloud_upload),
+                      label: const Text('초기 소품들을 Firebase로 업로드(마이그레이션)'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                      ),
+                    ),
                   ],
                 ),
               ),

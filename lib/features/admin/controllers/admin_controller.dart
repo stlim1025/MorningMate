@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/question_service.dart';
+import '../../../services/asset_service.dart';
 
 class AdminController extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -760,6 +761,52 @@ class AdminController extends ChangeNotifier {
       debugPrint('질문 번역/동기화 업데이트 오류: $e');
     }
 
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> syncAllFriendData() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final usersSnapshot = await _firestore.collection('users').get();
+      int updatedCount = 0;
+
+      for (var userDoc in usersSnapshot.docs) {
+        final userId = userDoc.id;
+
+        final friendsSnapshot = await _firestore
+            .collection('friends')
+            .where('userId', isEqualTo: userId)
+            .where('status', isEqualTo: 'accepted')
+            .get();
+
+        Set<String> validFriendIds = {};
+        for (var fDoc in friendsSnapshot.docs) {
+          validFriendIds.add(fDoc['friendId'] as String);
+        }
+
+        await userDoc.reference.update({'friendIds': validFriendIds.toList()});
+        updatedCount++;
+      }
+
+      debugPrint('친구 데이터 동기화 완료: $updatedCount명 업데이트됨.');
+    } catch (e) {
+      debugPrint('친구 데이터 동기화 오류: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> migrateAssetsToFirestore() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await AssetService().migrateLocalAssetsToFirestore();
+    } catch (e) {
+      debugPrint('마이그레이션 실패: $e');
+    }
     _isLoading = false;
     notifyListeners();
   }

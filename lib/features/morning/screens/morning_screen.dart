@@ -338,14 +338,7 @@ class _MorningScreenState extends State<MorningScreen>
             ),
 
             // 1.5. 밤 모드 전체 오버레이 (잠들어있을 때 방 전체를 어둡게)
-            if (!isAwake)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.30),
-                  ),
-                ),
-              ),
+            // 이제 EnhancedCharacterRoomWidget 내부에서 광원 효과와 함께 처리됩니다.
 
             // 2. Subtle Top Overlay for UI readability
             Positioned(

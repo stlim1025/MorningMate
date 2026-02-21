@@ -6,6 +6,11 @@ class Challenge {
   final String descKey;
   final int reward;
   final bool Function(UserModel) isCompleted;
+  final String
+      category; // 'streak', 'social', 'prop', 'fashion', 'background', 'growth', 'memo', 'general'
+  final String group; // 같은 계열 그룹 식별자
+  final int targetValue; // 달성 목표 수치
+  final int Function(UserModel) getCurrentValue; // 현재 진행 수치
 
   const Challenge({
     required this.id,
@@ -13,6 +18,10 @@ class Challenge {
     required this.descKey,
     required this.reward,
     required this.isCompleted,
+    required this.category,
+    required this.group,
+    required this.targetValue,
+    required this.getCurrentValue,
   });
 }
 
@@ -24,6 +33,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_dawn_start_desc',
     reward: 50,
     isCompleted: (user) => user.displayConsecutiveDays >= 1,
+    category: 'streak',
+    group: 'streak',
+    targetValue: 1,
+    getCurrentValue: (user) => user.displayConsecutiveDays,
   ),
   Challenge(
     id: 'steady_habit',
@@ -31,6 +44,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_steady_habit_desc',
     reward: 100,
     isCompleted: (user) => user.displayConsecutiveDays >= 3,
+    category: 'streak',
+    group: 'streak',
+    targetValue: 3,
+    getCurrentValue: (user) => user.displayConsecutiveDays,
   ),
   Challenge(
     id: 'morning_person',
@@ -38,6 +55,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_morning_person_desc',
     reward: 300,
     isCompleted: (user) => user.displayConsecutiveDays >= 7,
+    category: 'streak',
+    group: 'streak',
+    targetValue: 7,
+    getCurrentValue: (user) => user.displayConsecutiveDays,
   ),
   Challenge(
     id: 'streak_14',
@@ -45,6 +66,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_streak_14_desc',
     reward: 500,
     isCompleted: (user) => user.displayConsecutiveDays >= 14,
+    category: 'streak',
+    group: 'streak',
+    targetValue: 14,
+    getCurrentValue: (user) => user.displayConsecutiveDays,
   ),
   Challenge(
     id: 'streak_21',
@@ -52,6 +77,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_streak_21_desc',
     reward: 700,
     isCompleted: (user) => user.displayConsecutiveDays >= 21,
+    category: 'streak',
+    group: 'streak',
+    targetValue: 21,
+    getCurrentValue: (user) => user.displayConsecutiveDays,
   ),
   Challenge(
     id: 'streak_30',
@@ -59,6 +88,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_streak_30_desc',
     reward: 1000,
     isCompleted: (user) => user.displayConsecutiveDays >= 30,
+    category: 'streak',
+    group: 'streak',
+    targetValue: 30,
+    getCurrentValue: (user) => user.displayConsecutiveDays,
   ),
 
   // 2. Social Challenges
@@ -68,6 +101,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_friend_1_desc',
     reward: 50,
     isCompleted: (user) => user.friendIds.isNotEmpty,
+    category: 'social',
+    group: 'friend',
+    targetValue: 1,
+    getCurrentValue: (user) => user.friendIds.length,
   ),
   Challenge(
     id: 'social_king',
@@ -75,6 +112,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_social_king_desc',
     reward: 200,
     isCompleted: (user) => user.friendIds.length >= 5,
+    category: 'social',
+    group: 'friend',
+    targetValue: 5,
+    getCurrentValue: (user) => user.friendIds.length,
   ),
   Challenge(
     id: 'friend_10',
@@ -82,6 +123,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_friend_10_desc',
     reward: 400,
     isCompleted: (user) => user.friendIds.length >= 10,
+    category: 'social',
+    group: 'friend',
+    targetValue: 10,
+    getCurrentValue: (user) => user.friendIds.length,
   ),
   Challenge(
     id: 'friend_20',
@@ -89,6 +134,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_friend_20_desc',
     reward: 800,
     isCompleted: (user) => user.friendIds.length >= 20,
+    category: 'social',
+    group: 'friend',
+    targetValue: 20,
+    getCurrentValue: (user) => user.friendIds.length,
   ),
 
   // 3. Prop Collection
@@ -98,6 +147,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_prop_1_desc',
     reward: 30,
     isCompleted: (user) => user.purchasedPropIds.isNotEmpty,
+    category: 'prop',
+    group: 'prop',
+    targetValue: 1,
+    getCurrentValue: (user) => user.purchasedPropIds.length,
   ),
   Challenge(
     id: 'rich_room',
@@ -105,6 +158,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_rich_room_desc',
     reward: 150,
     isCompleted: (user) => user.purchasedPropIds.length >= 3,
+    category: 'prop',
+    group: 'prop',
+    targetValue: 3,
+    getCurrentValue: (user) => user.purchasedPropIds.length,
   ),
   Challenge(
     id: 'prop_5',
@@ -112,6 +169,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_prop_5_desc',
     reward: 300,
     isCompleted: (user) => user.purchasedPropIds.length >= 5,
+    category: 'prop',
+    group: 'prop',
+    targetValue: 5,
+    getCurrentValue: (user) => user.purchasedPropIds.length,
   ),
   Challenge(
     id: 'prop_10',
@@ -119,6 +180,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_prop_10_desc',
     reward: 600,
     isCompleted: (user) => user.purchasedPropIds.length >= 10,
+    category: 'prop',
+    group: 'prop',
+    targetValue: 10,
+    getCurrentValue: (user) => user.purchasedPropIds.length,
   ),
 
   // 4. Character Items
@@ -128,6 +193,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_fashion_3_desc',
     reward: 200,
     isCompleted: (user) => user.purchasedCharacterItemIds.length >= 3,
+    category: 'fashion',
+    group: 'fashion',
+    targetValue: 3,
+    getCurrentValue: (user) => user.purchasedCharacterItemIds.length,
   ),
   Challenge(
     id: 'fashion_5',
@@ -135,6 +204,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_fashion_5_desc',
     reward: 400,
     isCompleted: (user) => user.purchasedCharacterItemIds.length >= 5,
+    category: 'fashion',
+    group: 'fashion',
+    targetValue: 5,
+    getCurrentValue: (user) => user.purchasedCharacterItemIds.length,
   ),
 
   // 5. Backgrounds
@@ -145,6 +218,11 @@ final List<Challenge> challenges = [
     reward: 100,
     isCompleted: (user) =>
         user.purchasedBackgroundIds.where((e) => e != 'none').isNotEmpty,
+    category: 'background',
+    group: 'background',
+    targetValue: 1,
+    getCurrentValue: (user) =>
+        user.purchasedBackgroundIds.where((e) => e != 'none').length,
   ),
   Challenge(
     id: 'bg_3',
@@ -153,6 +231,11 @@ final List<Challenge> challenges = [
     reward: 300,
     isCompleted: (user) =>
         user.purchasedBackgroundIds.where((e) => e != 'none').length >= 3,
+    category: 'background',
+    group: 'background',
+    targetValue: 3,
+    getCurrentValue: (user) =>
+        user.purchasedBackgroundIds.where((e) => e != 'none').length,
   ),
 
   // 6. Growth
@@ -162,6 +245,32 @@ final List<Challenge> challenges = [
     descKey: 'challenge_level_2_desc',
     reward: 100,
     isCompleted: (user) => user.characterLevel >= 2,
+    category: 'growth',
+    group: 'level',
+    targetValue: 2,
+    getCurrentValue: (user) => user.characterLevel,
+  ),
+  Challenge(
+    id: 'level_3',
+    titleKey: 'challenge_level_3_title',
+    descKey: 'challenge_level_3_desc',
+    reward: 200,
+    isCompleted: (user) => user.characterLevel >= 3,
+    category: 'growth',
+    group: 'level',
+    targetValue: 3,
+    getCurrentValue: (user) => user.characterLevel,
+  ),
+  Challenge(
+    id: 'level_4',
+    titleKey: 'challenge_level_4_title',
+    descKey: 'challenge_level_4_desc',
+    reward: 350,
+    isCompleted: (user) => user.characterLevel >= 4,
+    category: 'growth',
+    group: 'level',
+    targetValue: 4,
+    getCurrentValue: (user) => user.characterLevel,
   ),
   Challenge(
     id: 'level_5',
@@ -169,6 +278,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_level_5_desc',
     reward: 500,
     isCompleted: (user) => user.characterLevel >= 5,
+    category: 'growth',
+    group: 'level',
+    targetValue: 5,
+    getCurrentValue: (user) => user.characterLevel,
   ),
 
   // 7. Memos
@@ -178,6 +291,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_memo_1_desc',
     reward: 30,
     isCompleted: (user) => user.memoCount >= 1,
+    category: 'memo',
+    group: 'memo',
+    targetValue: 1,
+    getCurrentValue: (user) => user.memoCount,
   ),
   Challenge(
     id: 'memo_3',
@@ -185,6 +302,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_memo_3_desc',
     reward: 100,
     isCompleted: (user) => user.memoCount >= 3,
+    category: 'memo',
+    group: 'memo',
+    targetValue: 3,
+    getCurrentValue: (user) => user.memoCount,
   ),
   Challenge(
     id: 'memo_10',
@@ -192,6 +313,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_memo_10_desc',
     reward: 300,
     isCompleted: (user) => user.memoCount >= 10,
+    category: 'memo',
+    group: 'memo',
+    targetValue: 10,
+    getCurrentValue: (user) => user.memoCount,
   ),
   Challenge(
     id: 'memo_30',
@@ -199,6 +324,10 @@ final List<Challenge> challenges = [
     descKey: 'challenge_memo_30_desc',
     reward: 500,
     isCompleted: (user) => user.memoCount >= 30,
+    category: 'memo',
+    group: 'memo',
+    targetValue: 30,
+    getCurrentValue: (user) => user.memoCount,
   ),
 
   // 8. General
@@ -208,5 +337,9 @@ final List<Challenge> challenges = [
     descKey: 'challenge_diary_master_desc',
     reward: 500,
     isCompleted: (user) => user.diaryCount >= 30,
+    category: 'general',
+    group: 'diary',
+    targetValue: 30,
+    getCurrentValue: (user) => user.diaryCount,
   ),
 ];

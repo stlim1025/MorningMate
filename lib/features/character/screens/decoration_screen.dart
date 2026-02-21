@@ -316,14 +316,7 @@ class _DecorationScreenState extends State<DecorationScreen>
           ),
 
           // 1.5. Night Mode Overlay (Darken room when sleeping)
-          if (!isAwakePreview)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: Container(
-                  color: Colors.black.withOpacity(0.30),
-                ),
-              ),
-            ),
+          // 이제 EnhancedCharacterRoomWidget 내부에서 광원 효과와 함께 처리됩니다.
 
           // 2. Draggable Decoration Panel (Sliding Up/Down)
           AnimatedPositioned(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
@@ -8,6 +7,7 @@ import '../../../core/constants/character_assets.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 import '../controllers/character_controller.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -659,11 +659,10 @@ class _ShopScreenState extends State<ShopScreen> {
                   height: 40, // 56 -> 40 축소
                   alignment: Alignment.center,
                   child: item.imagePath != null
-                      ? (item.imagePath!.endsWith('.svg')
-                          ? SvgPicture.asset(item.imagePath!,
-                              fit: BoxFit.contain)
-                          : Image.asset(item.imagePath!,
-                              cacheWidth: 150, fit: BoxFit.contain))
+                      ? NetworkOrAssetImage(
+                          imagePath: item.imagePath!,
+                          fit: BoxFit.contain,
+                        )
                       : Icon(item.icon,
                           color: item.color ?? colorScheme.primaryButton,
                           size: 24), // 32 -> 24 축소
@@ -705,16 +704,10 @@ class _ShopScreenState extends State<ShopScreen> {
                                       ? SizedBox(
                                           width: 100,
                                           height: 100,
-                                          child:
-                                              item.imagePath!.endsWith('.svg')
-                                                  ? SvgPicture.asset(
-                                                      item.imagePath!,
-                                                      fit: BoxFit.contain,
-                                                    )
-                                                  : Image.asset(
-                                                      item.imagePath!,
-                                                      fit: BoxFit.contain,
-                                                    ),
+                                          child: NetworkOrAssetImage(
+                                            imagePath: item.imagePath!,
+                                            fit: BoxFit.contain,
+                                          ),
                                         )
                                       : Icon(
                                           item.icon,
@@ -814,16 +807,10 @@ class _ShopScreenState extends State<ShopScreen> {
                                             ? SizedBox(
                                                 width: 120,
                                                 height: 120,
-                                                child: item.imagePath!
-                                                        .endsWith('.svg')
-                                                    ? SvgPicture.asset(
-                                                        item.imagePath!,
-                                                        fit: BoxFit.contain,
-                                                      )
-                                                    : Image.asset(
-                                                        item.imagePath!,
-                                                        fit: BoxFit.contain,
-                                                      ),
+                                                child: NetworkOrAssetImage(
+                                                  imagePath: item.imagePath!,
+                                                  fit: BoxFit.contain,
+                                                ),
                                               )
                                             : Icon(
                                                 item.icon,

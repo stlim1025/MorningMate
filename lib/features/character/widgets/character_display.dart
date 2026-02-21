@@ -78,15 +78,19 @@ class _CharacterDisplayState extends State<CharacterDisplay>
             // 1. Wings (Level 2+) - Static layer
             if (widget.characterLevel >= 2)
               Builder(builder: (context) {
-                // 시각적으로만 크게 보이도록 Transform.scale 사용 (레이아웃 에러 방지)
-                final double wingScale = 1.1;
+                // 4레벨(Egg_Wing3)과 5레벨(Egg_Wing4)일 때만 날개를 더 크게 유지(1.3배), 나머지는 원래 크기인 1.1배
+                final double wingScale = widget.characterLevel >= 4 ? 1.3 : 1.1;
 
                 return Transform.scale(
                   scale: wingScale,
                   child: Image.asset(
-                    widget.characterLevel >= 3
-                        ? 'assets/images/Egg_Wing2.png'
-                        : 'assets/images/Egg_Wing.png',
+                    widget.characterLevel >= 5
+                        ? 'assets/images/Egg_Wing4.png'
+                        : widget.characterLevel >= 4
+                            ? 'assets/images/Egg_Wing3.png'
+                            : widget.characterLevel >= 3
+                                ? 'assets/images/Egg_Wing2.png'
+                                : 'assets/images/Egg_Wing.png',
                     width: charWidth,
                     height: charHeight,
                     fit: BoxFit.contain,

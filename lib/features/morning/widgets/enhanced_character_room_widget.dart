@@ -7,6 +7,7 @@ import '../../../core/constants/room_assets.dart';
 import '../../../data/models/room_decoration_model.dart';
 import '../../character/widgets/character_display.dart';
 import 'room_background_widget.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 
 class EnhancedCharacterRoomWidget extends StatefulWidget {
   final bool isAwake;
@@ -157,6 +158,14 @@ class _EnhancedCharacterRoomWidgetState
             context);
         precacheImage(
             ResizeImage(const AssetImage('assets/images/Egg_Wing2.png'),
+                width: 300),
+            context);
+        precacheImage(
+            ResizeImage(const AssetImage('assets/images/Egg_Wing3.png'),
+                width: 300),
+            context);
+        precacheImage(
+            ResizeImage(const AssetImage('assets/images/Egg_Wing4.png'),
                 width: 300),
             context);
       }
@@ -384,6 +393,20 @@ class _EnhancedCharacterRoomWidgetState
             if (widget.visitorCharacterLevel != null)
               _buildVisitorCharacterContainer3D(true, colorScheme, width,
                   renderHeight), // Visitant always awake
+
+            // Night Overlay (Replaces morning_screen.dart backdrop & provides lighting)
+            if (!widget.isAwake)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _NightOverlayPainter(
+                      props: decoration.props,
+                      width: width,
+                      height: renderHeight,
+                    ),
+                  ),
+                ),
+              ),
 
             // Level Up Effect
             if (widget.currentAnimation == 'evolve') _buildLevelUpEffect(size),
@@ -1055,35 +1078,17 @@ class _EnhancedCharacterRoomWidgetState
     if (asset.id.isEmpty) return SizedBox(width: width, height: height);
 
     if (asset.imagePath != null) {
-      Widget imageWidget = asset.imagePath!.endsWith('.svg')
-          ? SvgPicture.asset(
-              asset.imagePath!,
-              width: width * 0.9,
-              height: height * 0.9,
-              fit: BoxFit.contain,
-              colorFilter: isShadow
-                  ? const ColorFilter.mode(Colors.black, BlendMode.srcIn)
-                  : null,
-            )
-          : Image.asset(
-              asset.imagePath!,
-              width: width * 0.9,
-              height: height * 0.9,
-              fit: BoxFit.contain,
-              cacheWidth: 300,
-              color: isShadow ? Colors.black : null,
-              colorBlendMode: isShadow ? BlendMode.srcIn : null,
-              errorBuilder: (context, error, stackTrace) {
-                // Fallback to icon if image fails to load
-                return Icon(asset.icon,
-                    color: Colors.blueGrey,
-                    size: (width < height ? width : height) * 0.7);
-              },
-            );
+      Widget imageWidget = NetworkOrAssetImage(
+        imagePath: asset.imagePath!,
+        width: width * 0.9,
+        height: height * 0.9,
+        fit: BoxFit.contain,
+        color: isShadow ? Colors.black : null,
+        colorBlendMode: isShadow ? BlendMode.srcIn : null,
+      );
 
-      // 밤 모드 어두운 효과는 morning_screen.dart에서 전체 오버레이로 처리됨
+      // 밤 모드 어두운 효과는 _NightOverlayPainter에서 일괄적으로 구멍을 뚫으면서 조명 처리됨
       if (isShadow) {
-        // 이미 Image.asset에서 colorBlendMode로 처리됨. 추가 처리 불필요하거나 여기서 Opacity 처리 가능.
         // 호출부에서 Opacity 처리하므로 여기서는 색상만 변경.
       }
 
@@ -1701,4 +1706,82 @@ class _SelectedPropPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _NightOverlayPainter extends CustomPainter {
+  final List<RoomPropModel> props;
+  final double width;
+  final double height;
+
+  _NightOverlayPainter({
+    required this.props,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
+
+    // 1. 전체 어두운 오버레이
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = Colors.black.withOpacity(0.35),
+    );
+
+    // 2. 조명 부분 구멍 뚫기 및 따뜻한 광원 방출
+    for (final prop in props) {
+      final asset = RoomAssets.props.firstWhere((a) => a.id == prop.type,
+          orElse: () =>
+              const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
+
+      // isLight 속성이 없으면 패스
+      if (!asset.isLight) continue;
+
+      final xPos = prop.x * width;
+      // prop의 바닥 기준점에서 위로 조금 올려 실제 빛이 나는 위치를 찾음
+      final yPos = prop.y * height - (width + height) * 0.04;
+
+      final double glowRadius =
+          (width > height ? width : height) * 0.2 * asset.lightIntensity;
+      final double brightnessMulti = asset.lightIntensity * 0.7; // 전체 밝기를 조금 낮춤
+
+      // 뚫기 (dstOut) - 어두운 화면에 자연스러운 원형 구멍을 냄
+      final punchHolePaint = Paint()
+        ..blendMode = BlendMode.dstOut
+        ..shader = RadialGradient(
+          colors: [
+            Colors.black.withOpacity(1.0 * brightnessMulti),
+            Colors.black.withOpacity(0.8 * brightnessMulti),
+            Colors.black.withOpacity(0.0),
+          ],
+          stops: const [0.0, 0.4, 1.0],
+        ).createShader(
+            Rect.fromCircle(center: Offset(xPos, yPos), radius: glowRadius));
+
+      canvas.drawCircle(Offset(xPos, yPos), glowRadius, punchHolePaint);
+
+      // 따뜻한 조명 색 더하기 (plus) - 밝아진 구멍 위에 한번 더 은은한 불빛 터치
+      final glowLightPaint = Paint()
+        ..blendMode = BlendMode.plus
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFFFFFACD).withOpacity(0.4 * brightnessMulti),
+            const Color(0xFFFFE066).withOpacity(0.2 * brightnessMulti),
+            const Color(0xFFFFB347).withOpacity(0.0),
+          ],
+          stops: const [0.0, 0.3, 1.0],
+        ).createShader(Rect.fromCircle(
+            center: Offset(xPos, yPos), radius: glowRadius * 1.5));
+
+      canvas.drawCircle(Offset(xPos, yPos), glowRadius * 1.5, glowLightPaint);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _NightOverlayPainter oldDelegate) {
+    return true; // 드래그 등으로 props 좌표가 변경될 수 있음
+  }
 }

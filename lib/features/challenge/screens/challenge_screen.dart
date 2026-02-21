@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -16,6 +17,7 @@ class ChallengeScreen extends StatelessWidget {
     final List<Map<String, dynamic>> challenges = [
       // 1. Streak Challenges
       {
+        'id': 'dawn_start',
         'title':
             AppLocalizations.of(context)?.get('challenge_dawn_start_title') ??
                 'Start of Dawn',
@@ -27,6 +29,7 @@ class ChallengeScreen extends StatelessWidget {
             '50 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'steady_habit',
         'title':
             AppLocalizations.of(context)?.get('challenge_steady_habit_title') ??
                 'Steady Habit',
@@ -38,6 +41,7 @@ class ChallengeScreen extends StatelessWidget {
             '100 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'morning_person',
         'title': AppLocalizations.of(context)
                 ?.get('challenge_morning_person_title') ??
             'True Morning Person',
@@ -49,6 +53,7 @@ class ChallengeScreen extends StatelessWidget {
             '300 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'streak_14',
         'title':
             AppLocalizations.of(context)?.get('challenge_streak_14_title') ??
                 '2 Weeks Streak',
@@ -60,6 +65,7 @@ class ChallengeScreen extends StatelessWidget {
             '500 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'streak_21',
         'title':
             AppLocalizations.of(context)?.get('challenge_streak_21_title') ??
                 '3 Weeks Streak',
@@ -71,6 +77,7 @@ class ChallengeScreen extends StatelessWidget {
             '700 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'streak_30',
         'title':
             AppLocalizations.of(context)?.get('challenge_streak_30_title') ??
                 'Monthly Master',
@@ -84,6 +91,7 @@ class ChallengeScreen extends StatelessWidget {
 
       // 2. Social Challenges
       {
+        'id': 'friend_1',
         'title':
             AppLocalizations.of(context)?.get('challenge_friend_1_title') ??
                 'First Friend',
@@ -95,6 +103,7 @@ class ChallengeScreen extends StatelessWidget {
             '50 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'social_king',
         'title':
             AppLocalizations.of(context)?.get('challenge_social_king_title') ??
                 'Social King',
@@ -106,6 +115,7 @@ class ChallengeScreen extends StatelessWidget {
             '200 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'friend_10',
         'title':
             AppLocalizations.of(context)?.get('challenge_friend_10_title') ??
                 'Popular',
@@ -117,6 +127,7 @@ class ChallengeScreen extends StatelessWidget {
             '400 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'friend_20',
         'title':
             AppLocalizations.of(context)?.get('challenge_friend_20_title') ??
                 'Social Celebrity',
@@ -130,6 +141,7 @@ class ChallengeScreen extends StatelessWidget {
 
       // 3. Prop Collection
       {
+        'id': 'prop_1',
         'title': AppLocalizations.of(context)?.get('challenge_prop_1_title') ??
             'First Decoration',
         'description':
@@ -140,6 +152,7 @@ class ChallengeScreen extends StatelessWidget {
             '30 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'rich_room',
         'title':
             AppLocalizations.of(context)?.get('challenge_rich_room_title') ??
                 'Rich Room',
@@ -151,6 +164,7 @@ class ChallengeScreen extends StatelessWidget {
             '150 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'prop_5',
         'title': AppLocalizations.of(context)?.get('challenge_prop_5_title') ??
             'Decorator',
         'description':
@@ -161,6 +175,7 @@ class ChallengeScreen extends StatelessWidget {
             '300 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'prop_10',
         'title': AppLocalizations.of(context)?.get('challenge_prop_10_title') ??
             'Maximalist',
         'description':
@@ -173,6 +188,7 @@ class ChallengeScreen extends StatelessWidget {
 
       // 4. Character Items
       {
+        'id': 'fashion_3',
         'title':
             AppLocalizations.of(context)?.get('challenge_fashion_3_title') ??
                 'Fashionista',
@@ -184,6 +200,7 @@ class ChallengeScreen extends StatelessWidget {
             '200 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'fashion_5',
         'title':
             AppLocalizations.of(context)?.get('challenge_fashion_5_title') ??
                 'Trendsetter',
@@ -197,6 +214,7 @@ class ChallengeScreen extends StatelessWidget {
 
       // 5. Backgrounds
       {
+        'id': 'bg_1',
         'title': AppLocalizations.of(context)?.get('challenge_bg_1_title') ??
             'Mood Change',
         'description':
@@ -210,6 +228,7 @@ class ChallengeScreen extends StatelessWidget {
             '100 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'bg_3',
         'title': AppLocalizations.of(context)?.get('challenge_bg_3_title') ??
             'Atmosphere Master',
         'description':
@@ -225,6 +244,7 @@ class ChallengeScreen extends StatelessWidget {
 
       // 6. Growth
       {
+        'id': 'level_2',
         'title': AppLocalizations.of(context)?.get('challenge_level_2_title') ??
             'First Growth',
         'description':
@@ -235,6 +255,29 @@ class ChallengeScreen extends StatelessWidget {
             '100 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'level_3',
+        'title': AppLocalizations.of(context)?.get('challenge_level_3_title') ??
+            'Growing Up',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_level_3_desc') ??
+                'Reach Character Level 3',
+        'isCompleted': (user?.characterLevel ?? 1) >= 3,
+        'reward':
+            '200 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'id': 'level_4',
+        'title': AppLocalizations.of(context)?.get('challenge_level_4_title') ??
+            'Almost There',
+        'description':
+            AppLocalizations.of(context)?.get('challenge_level_4_desc') ??
+                'Reach Character Level 4',
+        'isCompleted': (user?.characterLevel ?? 1) >= 4,
+        'reward':
+            '350 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+      },
+      {
+        'id': 'level_5',
         'title': AppLocalizations.of(context)?.get('challenge_level_5_title') ??
             'Fully Grown',
         'description':
@@ -247,6 +290,7 @@ class ChallengeScreen extends StatelessWidget {
 
       // 7. Memos
       {
+        'id': 'memo_1',
         'title': AppLocalizations.of(context)?.get('challenge_memo_1_title') ??
             'First Memo',
         'description':
@@ -257,6 +301,7 @@ class ChallengeScreen extends StatelessWidget {
             '30 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'memo_3',
         'title': AppLocalizations.of(context)?.get('challenge_memo_3_title') ??
             'Memo Collector',
         'description':
@@ -267,6 +312,7 @@ class ChallengeScreen extends StatelessWidget {
             '100 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'memo_10',
         'title': AppLocalizations.of(context)?.get('challenge_memo_10_title') ??
             'Memo Maniac',
         'description':
@@ -277,6 +323,7 @@ class ChallengeScreen extends StatelessWidget {
             '300 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
       },
       {
+        'id': 'memo_30',
         'title': AppLocalizations.of(context)?.get('challenge_memo_30_title') ??
             'Memo Master',
         'description':
@@ -289,6 +336,7 @@ class ChallengeScreen extends StatelessWidget {
 
       // 8. General
       {
+        'id': 'diary_master',
         'title':
             AppLocalizations.of(context)?.get('challenge_diary_master_title') ??
                 'Diary Master',
@@ -486,87 +534,94 @@ class ChallengeScreen extends StatelessWidget {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      challenge['title'],
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
-                        fontSize: 16,
-                        color: Color(0xFF4E342E),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/branch.png',
-                          width: 14,
-                          height: 14,
-                          color: Colors.brown,
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            context.push('/challenge-detail/${challenge['id']}');
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        challenge['title'],
+                        style: const TextStyle(
+                          fontFamily: 'BMJUA',
+                          fontSize: 16,
+                          color: Color(0xFF4E342E),
+                          fontWeight: FontWeight.bold,
                         ),
-                        Text(
-                          ' ${challenge['reward']} ',
-                          style: const TextStyle(
-                            fontFamily: 'BMJUA',
-                            fontSize: 12,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Image.asset(
+                            'assets/images/branch.png',
+                            width: 14,
+                            height: 14,
                             color: Colors.brown,
                           ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            challenge['description'],
-                            style: TextStyle(
-                              fontFamily: 'KyoboHandwriting2024psw',
+                          Text(
+                            ' ${challenge['reward']} ',
+                            style: const TextStyle(
+                              fontFamily: 'BMJUA',
                               fontSize: 12,
-                              color: const Color(0xFF4E342E).withOpacity(0.6),
+                              color: Colors.brown,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          Expanded(
+                            child: Text(
+                              challenge['description'],
+                              style: TextStyle(
+                                fontFamily: 'KyoboHandwriting2024psw',
+                                fontSize: 12,
+                                color: const Color(0xFF4E342E).withOpacity(0.6),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              if (isCompleted)
-                Transform.rotate(
-                  angle: -0.1,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                          color: Colors.redAccent.withOpacity(0.6), width: 1.5),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      AppLocalizations.of(context)?.get('completed') ??
-                          'Completed',
-                      style: TextStyle(
-                        color: Colors.redAccent.withOpacity(0.6),
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'BMJUA',
+                const SizedBox(width: 8),
+                if (isCompleted)
+                  Transform.rotate(
+                    angle: -0.1,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: Colors.redAccent.withOpacity(0.6),
+                            width: 1.5),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)?.get('completed') ??
+                            'Completed',
+                        style: TextStyle(
+                          color: Colors.redAccent.withOpacity(0.6),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'BMJUA',
+                        ),
                       ),
                     ),
+                  )
+                else
+                  Image.asset(
+                    'assets/icons/Lock_Icon.png',
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
                   ),
-                )
-              else
-                Image.asset(
-                  'assets/icons/Lock_Icon.png',
-                  width: 24,
-                  height: 24,
-                  fit: BoxFit.contain,
-                ),
-            ],
+              ],
+            ),
           ),
         ),
         _DottedDivider(color: Colors.brown.withOpacity(0.5)),
