@@ -387,6 +387,44 @@ class SocialController extends ChangeNotifier {
     }
   }
 
+  // 둥지에서 찌르기 (특수 메시지)
+  Future<void> pokeNestMember(String userId, String userNickname,
+      String friendId, String friendName, String nestName) async {
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable('wakeUpFriend');
+      final notificationRef =
+          FirebaseFirestore.instance.collection('notifications').doc();
+      final message = '[$nestName] 둥지에서 $userNickname님이 찔렀습니다! 👉';
+
+      await notificationRef.set({
+        'userId': friendId, // 받는 사람
+        'senderId': userId, // 보낸 사람
+        'senderNickname': userNickname,
+        'type': 'wakeUp',
+        'message': message,
+        'isRead': false,
+        'fcmSent': false,
+        'createdAt': Timestamp.fromDate(DateTime.now()),
+      });
+
+      unawaited(() async {
+        try {
+          await callable.call({
+            'userId': userId,
+            'friendId': friendId,
+            'friendName': userNickname,
+            'message': message,
+          });
+        } catch (e) {
+          print('찌르기 FCM 전송 오류: $e');
+        }
+      }());
+    } catch (e) {
+      print('찌르기 오류: $e');
+      rethrow;
+    }
+  }
+
   // Future<bool> hasFriendWrittenToday(String friendId) removed as it is no longer needed
 
   // 모든 상태 초기화 (로그아웃용)

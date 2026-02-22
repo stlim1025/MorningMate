@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../social/controllers/social_controller.dart';
+import '../../social/controllers/nest_controller.dart';
 import '../controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
 import '../../social/widgets/reply_dialog.dart';
@@ -108,6 +109,7 @@ class NotificationScreen extends StatelessWidget {
               final notificationController =
                   context.read<NotificationController>();
               final socialController = context.read<SocialController>();
+              final nestController = context.read<NestController>();
 
               return StreamBuilder<List<NotificationModel>>(
                 stream: notificationController.getNotificationsStream(userId),
@@ -172,6 +174,9 @@ class NotificationScreen extends StatelessWidget {
                           notification.type == NotificationType.friendRequest &&
                               requestId != null &&
                               requestId.isNotEmpty;
+                      final isNestInvite =
+                          notification.type == NotificationType.nestInvite &&
+                              notification.data?['inviteId'] != null;
                       return Dismissible(
                         key: Key(notification.id),
                         direction: DismissDirection.endToStart,
@@ -223,8 +228,7 @@ class NotificationScreen extends StatelessWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          notification.type ==
-                                                  NotificationType.cheerMessage
+                                          notification.type == NotificationType.cheerMessage
                                               ? (notification.data?['isReply'] == true
                                                   ? (AppLocalizations.of(context)?.getFormat('replyFrom', {'username': notification.senderNickname}) ??
                                                       '${notification.senderNickname}\'s reply')
@@ -241,9 +245,12 @@ class NotificationScreen extends StatelessWidget {
                                                   : (notification.type == NotificationType.friendRequest
                                                       ? (AppLocalizations.of(context)?.get('friendRequest') ??
                                                           'Friend Request')
-                                                      : (AppLocalizations.of(context)
-                                                              ?.get('notifications') ??
-                                                          'Notifications'))),
+                                                      : (notification.type == NotificationType.nestInvite
+                                                          ? '둥지 초대'
+                                                          : (notification.type == NotificationType.nestDonation
+                                                              ? '둥지 기부'
+                                                              : (AppLocalizations.of(context)?.get('notifications') ??
+                                                                  'Notifications'))))),
                                           style: TextStyle(
                                             fontFamily: 'BMJUA',
                                             color: colorScheme.textSecondary,
@@ -366,6 +373,92 @@ class NotificationScreen extends StatelessWidget {
                                       ],
                                     ),
                                   ),
+                                ] else if (isNestInvite) ...[
+                                  const SizedBox(width: 16),
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () async {
+                                          final inviteId = notification
+                                              .data!['inviteId']
+                                              .toString();
+                                          final nestId = notification
+                                              .data!['nestId']
+                                              .toString();
+                                          await nestController.acceptNestInvite(
+                                            inviteId,
+                                            nestId,
+                                            userId,
+                                          );
+                                          // 알림 업데이트 (읽음 처리)
+                                          await notificationController
+                                              .markAsRead(notification.id);
+                                        },
+                                        child: Container(
+                                          width: 70,
+                                          height: 36,
+                                          decoration: const BoxDecoration(
+                                            image: DecorationImage(
+                                              image: AssetImage(
+                                                  'assets/images/Confirm_Button.png'),
+                                              fit: BoxFit.fill,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              AppLocalizations.of(context)
+                                                      ?.get('accept') ??
+                                                  'Accept',
+                                              style: const TextStyle(
+                                                fontFamily: 'BMJUA',
+                                                fontSize: 12,
+                                                color: Color(0xFF4E342E),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      GestureDetector(
+                                        onTap: () async {
+                                          final inviteId = notification
+                                              .data!['inviteId']
+                                              .toString();
+                                          await nestController
+                                              .rejectNestInvite(inviteId);
+                                          // 알림 업데이트 (읽음 처리)
+                                          await notificationController
+                                              .markAsRead(notification.id);
+                                        },
+                                        child: Container(
+                                          width: 70,
+                                          height: 36,
+                                          decoration: const BoxDecoration(
+                                            image: DecorationImage(
+                                              image: AssetImage(
+                                                  'assets/images/Cancel_Button.png'),
+                                              fit: BoxFit.fill,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              AppLocalizations.of(context)
+                                                      ?.get('reject') ??
+                                                  'Reject',
+                                              style: const TextStyle(
+                                                fontFamily: 'BMJUA',
+                                                fontSize: 12,
+                                                color: Color(0xFF4E342E),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ] else if (notification.type ==
                                     NotificationType.cheerMessage)
                                   Padding(
@@ -472,6 +565,10 @@ class NotificationScreen extends StatelessWidget {
         break;
       case NotificationType.friendRequest:
         iconPath = 'assets/icons/Friend_NotiIcon.png';
+        break;
+      case NotificationType.nestInvite:
+      case NotificationType.nestDonation:
+        iconPath = 'assets/icons/Bell_Icon.png';
         break;
       default:
         iconPath = 'assets/icons/Bell_Icon.png';

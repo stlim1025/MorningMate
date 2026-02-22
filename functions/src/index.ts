@@ -65,6 +65,10 @@ const normalizeNotificationType = (type?: string) => {
       return "friend_request";
     case "cheerMessage":
       return "cheer_message";
+    case "nestInvite":
+      return "nest_invite";
+    case "nestDonation":
+      return "nest_donation";
     case "reportResult":
       return "report_result";
     case "system":
@@ -94,6 +98,16 @@ const buildNotificationContent = (
       return {
         title: "친구가 응원 메시지를 보냈어요.",
         body: message ?? "응원 메시지가 도착했어요.",
+      };
+    case "nest_invite":
+      return {
+        title: "둥지 초대",
+        body: message ?? `${senderNickname ?? "친구"}님이 둥지에 초대했습니다!`,
+      };
+    case "nest_donation":
+      return {
+        title: "둥지 기부 알림",
+        body: message ?? "둥지에 새로운 기부가 도착했습니다.",
       };
     case "report_result":
       return {
@@ -190,7 +204,7 @@ export const wakeUpFriend = onCall(async (request) => {
     );
   }
 
-  const { userId, friendId, friendName } = request.data;
+  const { userId, friendId, friendName, message: customMessage } = request.data;
 
   // 유효성 검사
   if (!userId || !friendId || !friendName) {
@@ -226,13 +240,14 @@ export const wakeUpFriend = onCall(async (request) => {
     const message = {
       token: fcmToken,
       notification: {
-        title: "일어나세요! ☀️",
-        body: `${friendName}님이 당신을 깨우고 있어요!`,
+        title: customMessage ? "찌르기 알림" : "일어나세요! ☀️",
+        body: customMessage ?? `${friendName}님이 당신을 깨우고 있어요!`,
       },
       data: {
         type: "wake_up",
         friendId: userId,
         friendName: friendName,
+        message: customMessage ?? "",
         click_action: "FLUTTER_NOTIFICATION_CLICK",
       },
       android: {

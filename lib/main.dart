@@ -13,6 +13,7 @@ import 'services/notification_service.dart';
 import 'services/user_service.dart';
 import 'services/diary_service.dart';
 import 'services/friend_service.dart';
+import 'services/nest_service.dart';
 import 'services/question_service.dart';
 import 'services/asset_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
@@ -21,6 +22,7 @@ import 'features/character/controllers/character_controller.dart';
 import 'features/social/controllers/social_controller.dart';
 import 'features/notification/controllers/notification_controller.dart';
 import 'features/admin/controllers/admin_controller.dart';
+import 'features/social/controllers/nest_controller.dart';
 import 'core/theme/theme_controller.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -124,6 +126,7 @@ class _MorniAppState extends State<MorniApp> {
   late final DiaryService _diaryService;
   late final QuestionService _questionService;
   late final FriendService _friendService;
+  late final NestService _nestService;
   late final AssetService _assetService;
 
   late final AuthController _authController;
@@ -145,6 +148,7 @@ class _MorniAppState extends State<MorniApp> {
     _diaryService = DiaryService();
     _questionService = QuestionService();
     _friendService = FriendService(_userService);
+    _nestService = NestService();
     _assetService = AssetService();
 
     // Fetch dynamic assets from Firebase
@@ -184,6 +188,7 @@ class _MorniAppState extends State<MorniApp> {
         Provider.value(value: _diaryService),
         Provider.value(value: _questionService),
         Provider.value(value: _friendService),
+        Provider.value(value: _nestService),
 
         // Controllers
         // AuthController (이미 생성된 인스턴스 주입)
@@ -229,6 +234,20 @@ class _MorniAppState extends State<MorniApp> {
               controller.clear();
             } else {
               // 사용자 정보가 로드되면 친구 목록을 미리 로드
+              Future.microtask(
+                () => controller.initialize(auth.currentUser!.uid),
+              );
+            }
+            return controller;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthController, NestController>(
+          create: (context) => NestController(_nestService),
+          update: (context, auth, previous) {
+            final controller = previous ?? NestController(_nestService);
+            if (auth.userModel == null) {
+              controller.clear();
+            } else {
               Future.microtask(
                 () => controller.initialize(auth.currentUser!.uid),
               );

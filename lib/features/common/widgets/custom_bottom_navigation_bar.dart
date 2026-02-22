@@ -74,13 +74,22 @@ class CustomBottomNavigationBar extends StatelessWidget {
                     onTap: () => _handleNavigation(context, 2),
                   ),
                   _TabItem(
+                    iconPath: 'assets/icons/Nest_Icon.png',
+                    label: AppLocalizations.of(context)?.get('nest') ?? 'Nest',
+                    width: 48,
+                    height: 48,
+                    isSelected: currentIndex == 3,
+                    labelOffset: -10,
+                    onTap: () => _handleNavigation(context, 3),
+                  ),
+                  _TabItem(
                     iconPath: 'assets/icons/Calander_Icon.png',
                     label: AppLocalizations.of(context)?.get('myPage') ??
                         'My Page',
                     width: 48,
                     height: 38,
-                    isSelected: currentIndex == 3,
-                    onTap: () => _handleNavigation(context, 3),
+                    isSelected: currentIndex == 4,
+                    onTap: () => _handleNavigation(context, 4),
                   ),
                 ],
               ),
@@ -112,6 +121,9 @@ class CustomBottomNavigationBar extends StatelessWidget {
           context.go('/social');
           break;
         case 3:
+          context.go('/nest_list');
+          break;
+        case 4:
           context.go('/archive');
           break;
       }

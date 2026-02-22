@@ -11,6 +11,7 @@ import '../../character/widgets/character_display.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../services/user_service.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 
 class FriendCard extends StatelessWidget {
   final UserModel friend;
@@ -149,14 +150,12 @@ class FriendCard extends StatelessWidget {
             final friendMood = controller.getFriendMood(currentFriend);
             String? moodAsset;
             if (isAwakeRequested && friendMood != null) {
-              try {
-                final asset =
-                    RoomAssets.emoticons.firstWhere((e) => e.id == friendMood);
-                moodAsset = asset.imagePath;
-              } catch (e) {
-                // 매칭되는 이모티콘이 없을 경우 기본 'happy' 사용
-                moodAsset = 'assets/imoticon/Imoticon_Happy.png';
-              }
+              final asset = RoomAssets.emoticons.cast<RoomAsset?>().firstWhere(
+                    (e) => e?.id == friendMood,
+                    orElse: () => null,
+                  );
+              moodAsset =
+                  asset?.imagePath ?? 'assets/imoticon/Imoticon_Happy.png';
             }
 
             final cardIndex = (currentFriend.uid.hashCode % 5) + 1;
@@ -221,8 +220,8 @@ class FriendCard extends StatelessWidget {
                                               .equippedCharacterItems,
                                         )
                                       : moodAsset != null
-                                          ? Image.asset(
-                                              moodAsset,
+                                          ? NetworkOrAssetImage(
+                                              imagePath: moodAsset,
                                               width: moodIconSize,
                                               height: moodIconSize,
                                               fit: BoxFit.contain,

@@ -29,6 +29,9 @@ enum AppDialogKey {
   unsuspend,
   editPoints,
   challengeCompleted,
+  createNest,
+  inviteToNest,
+  donateGaji,
 }
 
 class AppDialogAction {
@@ -392,6 +395,24 @@ class AppDialog {
                   onPressed: (context) => Navigator.pop(context),
                 ),
               ],
+        );
+      case AppDialogKey.createNest:
+        return AppDialogConfig(
+          title: '둥지 만들기',
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.inviteToNest:
+        return AppDialogConfig(
+          title: '친구 초대',
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.donateGaji:
+        return AppDialogConfig(
+          title: '가지 기부',
+          content: content,
+          actions: actions ?? const [],
         );
     }
   }

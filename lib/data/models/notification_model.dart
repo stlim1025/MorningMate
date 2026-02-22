@@ -6,6 +6,8 @@ enum NotificationType {
   cheerMessage,
   system,
   challenge,
+  nestInvite,
+  nestDonation,
 }
 
 class NotificationModel {

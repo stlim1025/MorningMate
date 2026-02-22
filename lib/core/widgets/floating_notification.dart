@@ -92,6 +92,11 @@ class _FloatingNotificationState extends State<FloatingNotification>
         return Icons.person_remove_rounded;
       case 'character_evolved':
         return Icons.auto_awesome_rounded;
+      case 'nest_invite':
+      case 'nestInvite':
+      case 'nest_donation':
+      case 'nestDonation':
+        return Icons.house_rounded;
       default:
         return Icons.notifications_active_rounded;
     }
@@ -107,6 +112,10 @@ class _FloatingNotificationState extends State<FloatingNotification>
       case 'friend_accept':
         return colors.success;
       case 'character_evolved':
+      case 'nest_invite':
+      case 'nestInvite':
+      case 'nest_donation':
+      case 'nestDonation':
         return colors.accent;
       default:
         return colors.primaryButton;

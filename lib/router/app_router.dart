@@ -15,6 +15,8 @@ import '../features/character/screens/shop_screen.dart';
 import '../features/character/screens/character_decoration_screen.dart';
 import '../features/social/screens/social_screen.dart';
 import '../features/social/screens/friend_room_screen.dart';
+import '../features/social/screens/nest_list_screen.dart';
+import '../features/social/screens/nest_room_screen.dart';
 import '../features/notification/screens/notification_screen.dart';
 import '../features/archive/screens/archive_screen.dart';
 import '../features/archive/screens/diary_detail_screen.dart';
@@ -22,8 +24,8 @@ import '../features/settings/screens/settings_screen.dart';
 import '../features/settings/screens/notification_settings_screen.dart';
 import '../features/settings/screens/terms_of_service_screen.dart';
 import '../features/settings/screens/privacy_policy_screen.dart';
-
 import '../features/auth/controllers/auth_controller.dart';
+import '../models/nest_model.dart';
 import '../data/models/diary_model.dart';
 import '../data/models/question_model.dart';
 
@@ -165,6 +167,15 @@ class AppRouter {
             StatefulShellBranch(
               routes: [
                 GoRoute(
+                  path: '/nest_list',
+                  name: 'nestList',
+                  builder: (context, state) => const NestListScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
                   path: '/archive',
                   name: 'archive',
                   builder: (context, state) => const ArchiveScreen(),
@@ -236,6 +247,15 @@ class AppRouter {
           builder: (context, state) {
             final challengeId = state.pathParameters['challengeId']!;
             return ChallengeDetailScreen(challengeId: challengeId);
+          },
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/nest_room',
+          name: 'nestRoom',
+          builder: (context, state) {
+            final nest = state.extra as NestModel;
+            return NestRoomScreen(nest: nest);
           },
         ),
         GoRoute(

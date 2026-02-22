@@ -179,14 +179,22 @@ class _EnhancedCharacterRoomWidgetState
     final decoration = widget.roomDecoration;
     if (decoration == null) return;
 
+    // Helper to handle both asset and network paths for precaching
+    void precacheHelper(String? path) {
+      if (path == null || path.isEmpty) return;
+      if (path.startsWith('http')) {
+        precacheImage(CachedNetworkImageProvider(path), context);
+      } else {
+        precacheImage(AssetImage(path), context);
+      }
+    }
+
     // Precache Wallpaper
     if (decoration.wallpaperId != 'default') {
       final wallpaper = RoomAssets.wallpapers.firstWhere(
           (w) => w.id == decoration.wallpaperId,
           orElse: () => RoomAssets.wallpapers.first);
-      if (wallpaper.imagePath != null) {
-        precacheImage(AssetImage(wallpaper.imagePath!), context);
-      }
+      precacheHelper(wallpaper.imagePath);
     }
 
     // Precache Background
@@ -195,9 +203,7 @@ class _EnhancedCharacterRoomWidgetState
       final background = RoomAssets.backgrounds.firstWhere(
           (b) => b.id == decoration.backgroundId,
           orElse: () => RoomAssets.backgrounds.first);
-      if (background.imagePath != null) {
-        precacheImage(AssetImage(background.imagePath!), context);
-      }
+      precacheHelper(background.imagePath);
     }
 
     // Precache Floor
@@ -205,18 +211,14 @@ class _EnhancedCharacterRoomWidgetState
       final floor = RoomAssets.floors.firstWhere(
           (f) => f.id == decoration.floorId,
           orElse: () => RoomAssets.floors.first);
-      if (floor.imagePath != null) {
-        precacheImage(AssetImage(floor.imagePath!), context);
-      }
+      precacheHelper(floor.imagePath);
     }
 
     // Precache Props
     for (var prop in decoration.props) {
       final asset = RoomAssets.props.firstWhere((p) => p.id == prop.type,
           orElse: () => RoomAssets.props.first);
-      if (asset.imagePath != null) {
-        precacheImage(AssetImage(asset.imagePath!), context);
-      }
+      precacheHelper(asset.imagePath);
     }
   }
 
@@ -1175,74 +1177,59 @@ class _EnhancedCharacterRoomWidgetState
   Widget _buildMoodBubble(String mood, double charSize) {
     Widget moodContent;
 
-    switch (mood) {
-      case 'happy':
+    // Try to find the matching emoticon asset
+    final asset = RoomAssets.emoticons.cast<RoomAsset?>().firstWhere(
+          (e) => e?.id == mood,
+          orElse: () => null,
+        );
+
+    if (asset != null && asset.imagePath != null) {
+      moodContent = NetworkOrAssetImage(
+        imagePath: asset.imagePath!,
+        width: charSize * 0.4,
+        height: charSize * 0.4,
+        fit: BoxFit.contain,
+      );
+    } else {
+      // Handle legacy mood strings or direct emojis
+      String? imageAssetPath;
+      switch (mood) {
+        case 'happy':
+          imageAssetPath = 'assets/imoticon/Imoticon_Happy.png';
+          break;
+        case 'normal':
+        case 'neutral':
+          imageAssetPath = 'assets/imoticon/Imoticon_Normal.png';
+          break;
+        case 'sad':
+          imageAssetPath = 'assets/imoticon/Imoticon_Sad.png';
+          break;
+        case 'love':
+        case 'excited':
+          imageAssetPath = 'assets/imoticon/Imoticon_Love.png';
+          break;
+        case 'angry':
+          imageAssetPath = 'assets/imoticon/Imoticon_Angry.png';
+          break;
+        case 'awkward':
+          imageAssetPath = 'assets/imoticon/Imoticon_Awkward.png';
+          break;
+        case 'move':
+          imageAssetPath = 'assets/imoticon/Imoticon_Move.png';
+          break;
+        case 'sleep':
+          imageAssetPath = 'assets/imoticon/Imoticon_Sleep.png';
+          break;
+      }
+
+      if (imageAssetPath != null) {
         moodContent = Image.asset(
-          'assets/imoticon/Imoticon_Happy.png',
+          imageAssetPath,
           width: charSize * 0.4,
           height: charSize * 0.4,
           fit: BoxFit.contain,
         );
-        break;
-      case 'normal':
-      case 'neutral':
-        moodContent = Image.asset(
-          'assets/imoticon/Imoticon_Normal.png',
-          width: charSize * 0.4,
-          height: charSize * 0.4,
-          fit: BoxFit.contain,
-        );
-        break;
-      case 'sad':
-        moodContent = Image.asset(
-          'assets/imoticon/Imoticon_Sad.png',
-          width: charSize * 0.4,
-          height: charSize * 0.4,
-          fit: BoxFit.contain,
-        );
-        break;
-      case 'love':
-      case 'excited':
-        moodContent = Image.asset(
-          'assets/imoticon/Imoticon_Love.png',
-          width: charSize * 0.4,
-          height: charSize * 0.4,
-          fit: BoxFit.contain,
-        );
-        break;
-      case 'angry':
-        moodContent = Image.asset(
-          'assets/imoticon/Imoticon_Angry.png',
-          width: charSize * 0.4,
-          height: charSize * 0.4,
-          fit: BoxFit.contain,
-        );
-        break;
-      case 'awkward':
-        moodContent = Image.asset(
-          'assets/imoticon/Imoticon_Awkward.png',
-          width: charSize * 0.4,
-          height: charSize * 0.4,
-          fit: BoxFit.contain,
-        );
-        break;
-      case 'move':
-        moodContent = Image.asset(
-          'assets/imoticon/Imoticon_Move.png',
-          width: charSize * 0.4,
-          height: charSize * 0.4,
-          fit: BoxFit.contain,
-        );
-        break;
-      case 'sleep':
-        moodContent = Image.asset(
-          'assets/imoticon/Imoticon_Sleep.png',
-          width: charSize * 0.4,
-          height: charSize * 0.4,
-          fit: BoxFit.contain,
-        );
-        break;
-      default:
+      } else {
         String emoji = '📝';
         final emojiRegex = RegExp(
             r'[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]',
@@ -1254,6 +1241,7 @@ class _EnhancedCharacterRoomWidgetState
             fontSize: charSize * 0.25,
           ),
         );
+      }
     }
 
     return TweenAnimationBuilder<double>(

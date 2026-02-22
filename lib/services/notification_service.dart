@@ -219,6 +219,14 @@ class NotificationService {
             ? '친구 요청이 거절되었어요.'
             : '$friendName님이 친구 요청을 거절했어요.';
         break;
+      case 'nestInvite':
+        title = '둥지 초대';
+        body = data['message']?.toString();
+        break;
+      case 'nestDonation':
+        title = '둥지 기부 알림';
+        body = data['message']?.toString();
+        break;
       default:
         title = '알림';
         body = data['message']?.toString();

@@ -57,6 +57,10 @@ const normalizeNotificationType = (type) => {
             return "friend_reject";
         case "cheerMessage":
             return "cheer_message";
+        case "nestInvite":
+            return "nest_invite";
+        case "nestDonation":
+            return "nest_donation";
         case "reportResult":
             return "report_result";
         case "morning_diary":
@@ -98,6 +102,16 @@ const buildNotificationContent = (type, message, senderNickname, extraData) => {
             return {
                 title: "친구 요청 거절",
                 body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 거절했어요.`,
+            };
+        case "nest_invite":
+            return {
+                title: "둥지 초대",
+                body: message ?? `${senderNickname ?? "친구"}님이 둥지에 초대했습니다!`,
+            };
+        case "nest_donation":
+            return {
+                title: "둥지 기부 알림",
+                body: message ?? "둥지에 새로운 기부가 도착했습니다.",
             };
         case "report_result":
             return {
@@ -217,7 +231,7 @@ exports.wakeUpFriend = onCall(async (request) => {
         );
     }
 
-    const { userId, friendId, friendName } = request.data;
+    const { userId, friendId, friendName, message } = request.data;
 
     // 유효성 검사
     if (!userId || !friendId || !friendName) {
