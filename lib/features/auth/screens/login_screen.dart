@@ -387,8 +387,10 @@ class _LoginScreenState extends State<LoginScreen> {
           hintText: label,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          onFieldSubmitted: onSubmitted,
+          focusNode: focusNode,
           validator: validator,
-          // PopupTextField는 인프라적으로 TextField를 래핑하므로 커스터마이징이 필요할 수 있음
         ),
       ],
     );

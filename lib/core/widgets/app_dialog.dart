@@ -1005,6 +1005,13 @@ class PopupTextField extends StatelessWidget {
   final FormFieldValidator<String>? validator;
   final int? maxLength;
   final bool autofocus;
+  final FocusNode? focusNode;
+
+  final String? errorText;
+  final String fontFamily;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
+  final TextCapitalization textCapitalization;
 
   const PopupTextField({
     super.key,
@@ -1019,10 +1026,11 @@ class PopupTextField extends StatelessWidget {
     this.autofocus = false,
     this.errorText,
     this.fontFamily = 'BMJUA',
+    this.textInputAction,
+    this.onFieldSubmitted,
+    this.textCapitalization = TextCapitalization.none,
+    this.focusNode,
   });
-
-  final String? errorText;
-  final String fontFamily;
 
   @override
   Widget build(BuildContext context) {
@@ -1042,6 +1050,7 @@ class PopupTextField extends StatelessWidget {
       child: validator != null
           ? TextFormField(
               autofocus: autofocus,
+              focusNode: focusNode,
               controller: controller,
               obscureText: obscureText,
               maxLines: maxLines,
@@ -1054,6 +1063,9 @@ class PopupTextField extends StatelessWidget {
               onChanged: onChanged,
               validator: validator,
               maxLength: maxLength,
+              textInputAction: textInputAction,
+              onFieldSubmitted: onFieldSubmitted,
+              textCapitalization: textCapitalization,
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: TextStyle(
@@ -1081,6 +1093,7 @@ class PopupTextField extends StatelessWidget {
             )
           : TextField(
               autofocus: autofocus,
+              focusNode: focusNode,
               controller: controller,
               obscureText: obscureText,
               maxLines: maxLines,
@@ -1092,6 +1105,9 @@ class PopupTextField extends StatelessWidget {
               ),
               onChanged: onChanged,
               maxLength: maxLength,
+              textInputAction: textInputAction,
+              onSubmitted: onFieldSubmitted,
+              textCapitalization: textCapitalization,
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: TextStyle(
