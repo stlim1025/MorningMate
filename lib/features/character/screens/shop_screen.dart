@@ -562,7 +562,9 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildPropGrid(user, characterController, colorScheme) {
-    var purchasableProps = RoomAssets.props.where((p) => p.price > 0).toList();
+    var purchasableProps = RoomAssets.props
+        .where((p) => p.price > 0 && p.id != 'sticky_note')
+        .toList();
 
     if (_isUnownedOnly) {
       purchasableProps = purchasableProps

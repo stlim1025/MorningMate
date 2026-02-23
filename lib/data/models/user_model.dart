@@ -29,6 +29,8 @@ class UserModel {
   final bool friendRequestNoti;
   final bool friendAcceptNoti;
   final bool friendRejectNoti;
+  final bool nestInviteNoti; // 둥지 초대 알림
+  final bool nestDonationNoti; // 둥지 가지 기부 알림
   final List<String> purchasedThemeIds; // 구매한 테마 ID 목록
   final List<String> purchasedBackgroundIds; // 구매한 배경 ID 목록
   final List<String> purchasedPropIds; // 구매한 소품 ID 목록
@@ -75,6 +77,8 @@ class UserModel {
     this.friendRequestNoti = true,
     this.friendAcceptNoti = true,
     this.friendRejectNoti = true,
+    this.nestInviteNoti = true,
+    this.nestDonationNoti = true,
     this.purchasedThemeIds = const ['light'],
     this.purchasedBackgroundIds = const ['default'],
     this.purchasedPropIds = const [],
@@ -110,12 +114,12 @@ class UserModel {
       uid: doc.id,
       email: data['email'] ?? '',
       nickname: data['nickname'] ?? '',
-      points: data['points'] ?? 0,
-      characterLevel: data['characterLevel'] ?? 1,
-      experience: data['experience'] ?? 0, // 경험치 필드 추가
+      points: (data['points'] as num?)?.toInt() ?? 0,
+      characterLevel: (data['characterLevel'] as num?)?.toInt() ?? 1,
+      experience: (data['experience'] as num?)?.toInt() ?? 0, // 경험치 필드 추가
       characterState: data['characterState'] ?? 'egg',
-      consecutiveDays: data['consecutiveDays'] ?? 0,
-      maxConsecutiveDays: data['maxConsecutiveDays'] ?? 0,
+      consecutiveDays: (data['consecutiveDays'] as num?)?.toInt() ?? 0,
+      maxConsecutiveDays: (data['maxConsecutiveDays'] as num?)?.toInt() ?? 0,
       lastLoginDate: data['lastLoginDate'] != null
           ? (data['lastLoginDate'] as Timestamp).toDate()
           : null,
@@ -129,7 +133,7 @@ class UserModel {
       lastAdRewardDate: data['lastAdRewardDate'] != null
           ? (data['lastAdRewardDate'] as Timestamp).toDate()
           : null,
-      adRewardCount: data['adRewardCount'] ?? 0,
+      adRewardCount: (data['adRewardCount'] as num?)?.toInt() ?? 0,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       characterCustomization: data['characterCustomization'] ?? {},
       friendIds: List<String>.from(data['friendIds'] ?? []),
@@ -142,6 +146,8 @@ class UserModel {
       friendRequestNoti: data['friendRequestNoti'] ?? true,
       friendAcceptNoti: data['friendAcceptNoti'] ?? true,
       friendRejectNoti: data['friendRejectNoti'] ?? true,
+      nestInviteNoti: data['nestInviteNoti'] ?? true,
+      nestDonationNoti: data['nestDonationNoti'] ?? true,
       purchasedThemeIds:
           List<String>.from(data['purchasedThemeIds'] ?? ['light']),
       purchasedBackgroundIds:
@@ -169,8 +175,8 @@ class UserModel {
       provider: data['provider'],
       completedChallengeIds:
           List<String>.from(data['completedChallengeIds'] ?? []),
-      memoCount: data['memoCount'] ?? 0,
-      diaryCount: data['diaryCount'] ?? 0,
+      memoCount: (data['memoCount'] as num?)?.toInt() ?? 0,
+      diaryCount: (data['diaryCount'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -209,6 +215,8 @@ class UserModel {
       'friendRequestNoti': friendRequestNoti,
       'friendAcceptNoti': friendAcceptNoti,
       'friendRejectNoti': friendRejectNoti,
+      'nestInviteNoti': nestInviteNoti,
+      'nestDonationNoti': nestDonationNoti,
       'purchasedThemeIds': purchasedThemeIds,
       'purchasedBackgroundIds': purchasedBackgroundIds,
       'purchasedPropIds': purchasedPropIds,
@@ -258,6 +266,8 @@ class UserModel {
     bool? friendRequestNoti,
     bool? friendAcceptNoti,
     bool? friendRejectNoti,
+    bool? nestInviteNoti,
+    bool? nestDonationNoti,
     List<String>? purchasedThemeIds,
     List<String>? purchasedBackgroundIds,
     List<String>? purchasedPropIds,
@@ -304,6 +314,8 @@ class UserModel {
       friendRequestNoti: friendRequestNoti ?? this.friendRequestNoti,
       friendAcceptNoti: friendAcceptNoti ?? this.friendAcceptNoti,
       friendRejectNoti: friendRejectNoti ?? this.friendRejectNoti,
+      nestInviteNoti: nestInviteNoti ?? this.nestInviteNoti,
+      nestDonationNoti: nestDonationNoti ?? this.nestDonationNoti,
       purchasedThemeIds: purchasedThemeIds ?? this.purchasedThemeIds,
       purchasedBackgroundIds:
           purchasedBackgroundIds ?? this.purchasedBackgroundIds,

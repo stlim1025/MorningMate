@@ -31,7 +31,8 @@ enum AppDialogKey {
   challengeCompleted,
   createNest,
   inviteToNest,
-  donateGaji,
+  collectGaji,
+  nestCollectSuccess,
 }
 
 class AppDialogAction {
@@ -398,21 +399,41 @@ class AppDialog {
         );
       case AppDialogKey.createNest:
         return AppDialogConfig(
-          title: '둥지 만들기',
+          title:
+              AppLocalizations.of(context)?.get('nestCreateTitle') ?? '둥지 만들기',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.inviteToNest:
         return AppDialogConfig(
-          title: '친구 초대',
+          title: AppLocalizations.of(context)?.get('nestInvitePopupTitle') ??
+              '둥지 초대',
           content: content,
           actions: actions ?? const [],
         );
-      case AppDialogKey.donateGaji:
+      case AppDialogKey.collectGaji:
         return AppDialogConfig(
-          title: '가지 기부',
+          title:
+              AppLocalizations.of(context)?.get('collectGajiTitle') ?? '가지 모으기',
           content: content,
           actions: actions ?? const [],
+        );
+      case AppDialogKey.nestCollectSuccess:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('nestCollectSuccessTitle') ??
+              '모으기 완료',
+          content: content,
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context),
+                ),
+              ],
+          actionsAlignment: MainAxisAlignment.center,
+          showConfetti: true,
         );
     }
   }
@@ -478,6 +499,7 @@ class AppDialog {
           'Delete Account',
           '중단',
           'Stop',
+          '30',
         ].contains(action.label);
 
     // 'Cancel' or 'Close' style buttons. Includes '계속 작성'

@@ -1164,10 +1164,8 @@ class _EnhancedCharacterRoomWidgetState
     try {
       final now = DateTime.now();
       final createdAt = DateTime.parse(prop.metadata!['createdAt']);
-      // 같은 날짜인지 확인 (년, 월, 일)
-      return createdAt.year == now.year &&
-          createdAt.month == now.month &&
-          createdAt.day == now.day;
+      // 작성 시간으로부터 72시간(3일) 동안 유지
+      return now.difference(createdAt).inHours < 72;
     } catch (e) {
       debugPrint('메모 날짜 파싱 오류: $e');
       return false;

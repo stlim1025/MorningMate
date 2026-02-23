@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class NestModel {
   final String id;
   final String name;
+  final String description; // Short description (up to 15 chars)
   final String creatorId; // UID of the creator
   final List<String> memberIds;
   final int level;
@@ -13,6 +14,7 @@ class NestModel {
   NestModel({
     required this.id,
     required this.name,
+    this.description = '',
     required this.creatorId,
     required this.memberIds,
     this.level = 1,
@@ -25,10 +27,11 @@ class NestModel {
     return NestModel(
       id: id,
       name: data['name'] ?? '',
+      description: data['description'] ?? '',
       creatorId: data['creatorId'] ?? '',
       memberIds: List<String>.from(data['memberIds'] ?? []),
-      level: data['level'] ?? 1,
-      totalGaji: data['totalGaji'] ?? 0,
+      level: (data['level'] as num?)?.toInt() ?? 1,
+      totalGaji: (data['totalGaji'] as num?)?.toInt() ?? 0,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       lastActivityAt:
           (data['lastActivityAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -38,6 +41,7 @@ class NestModel {
   Map<String, dynamic> toMap() {
     return {
       'name': name,
+      'description': description,
       'creatorId': creatorId,
       'memberIds': memberIds,
       'level': level,
@@ -49,6 +53,7 @@ class NestModel {
 
   NestModel copyWith({
     String? name,
+    String? description,
     List<String>? memberIds,
     int? level,
     int? totalGaji,
@@ -57,6 +62,7 @@ class NestModel {
     return NestModel(
       id: id,
       name: name ?? this.name,
+      description: description ?? this.description,
       creatorId: creatorId,
       memberIds: memberIds ?? this.memberIds,
       level: level ?? this.level,

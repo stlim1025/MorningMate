@@ -132,6 +132,8 @@ class _MorniAppState extends State<MorniApp> {
   late final AuthController _authController;
   late final GoRouter _router;
 
+  bool _assetsLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -151,8 +153,7 @@ class _MorniAppState extends State<MorniApp> {
     _nestService = NestService();
     _assetService = AssetService();
 
-    // Fetch dynamic assets from Firebase
-    _assetService.fetchDynamicAssets();
+    // 동적 에셋은 로그인 완료 후에 로드 (인증 없이 호출하면 permission-denied 발생)
 
     // 2. AuthController 초기화 (서비스 의존성 주입)
     _authController = AuthController(
@@ -237,6 +238,11 @@ class _MorniAppState extends State<MorniApp> {
               Future.microtask(
                 () => controller.initialize(auth.currentUser!.uid),
               );
+              // 동적 에셋을 로그인 직후 최초 1회만 로드 (permission-denied 방지)
+              if (!_assetsLoaded) {
+                _assetsLoaded = true;
+                _assetService.fetchDynamicAssets();
+              }
             }
             return controller;
           },

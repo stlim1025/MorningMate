@@ -163,6 +163,8 @@ class SocialController extends ChangeNotifier {
           .listen((requests) {
         _friendRequests = requests;
         notifyListeners();
+      }, onError: (e) {
+        debugPrint('친구 요청 스트림 에러 (무시됨): $e');
       });
 
       // 3. 일기 작성 여부는 UserModel에 포함되어 있으므로 별도 확인 불필요

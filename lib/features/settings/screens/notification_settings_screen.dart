@@ -716,6 +716,42 @@ class NotificationSettingsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle(
+                      AppLocalizations.of(context)?.get('nestNotification') ??
+                          'Nest Notifications',
+                      colorScheme),
+                  const SizedBox(height: 12),
+                  _buildOptionArea(
+                    context,
+                    children: [
+                      _buildNotiTile(
+                        context,
+                        AppLocalizations.of(context)?.get('nestInviteNoti') ??
+                            'Nest Invite Alert',
+                        AppLocalizations.of(context)
+                                ?.get('nestInviteNotiDesc') ??
+                            'Get notified when you receive a nest invite',
+                        user.nestInviteNoti,
+                        (val) => _updateNoti(
+                            context, authController, {'nestInviteNoti': val}),
+                        colorScheme,
+                      ),
+                      _buildDivider(colorScheme),
+                      _buildNotiTile(
+                        context,
+                        AppLocalizations.of(context)?.get('nestDonationNoti') ??
+                            'Nest Donation Alert',
+                        AppLocalizations.of(context)
+                                ?.get('nestDonationNotiDesc') ??
+                            'Get notified when a nest member donates branches',
+                        user.nestDonationNoti,
+                        (val) => _updateNoti(
+                            context, authController, {'nestDonationNoti': val}),
+                        colorScheme,
+                      ),
+                    ],
+                  ),
                 ],
               );
             },
@@ -917,6 +953,9 @@ class NotificationSettingsScreen extends StatelessWidget {
               data['friendAcceptNoti'] ?? currentModel.friendAcceptNoti,
           friendRejectNoti:
               data['friendRejectNoti'] ?? currentModel.friendRejectNoti,
+          nestInviteNoti: data['nestInviteNoti'] ?? currentModel.nestInviteNoti,
+          nestDonationNoti:
+              data['nestDonationNoti'] ?? currentModel.nestDonationNoti,
         ),
       );
     } catch (e) {

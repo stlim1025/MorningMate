@@ -56,6 +56,7 @@ class _DecorationScreenState extends State<DecorationScreen>
         content: PopupTextField(
           autofocus: true,
           controller: controller,
+          fontFamily: 'KyoboHandwriting2024psw',
           hintText: AppLocalizations.of(context)?.get('stickyNoteHint') ??
               'Leave a short message',
           maxLength: 50,
@@ -67,8 +68,31 @@ class _DecorationScreenState extends State<DecorationScreen>
             onPressed: (context) => Navigator.pop(context),
           ),
           AppDialogAction(
-            label: AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
+            label: '30',
+            labelWidget: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/branch.png',
+                  width: 20,
+                  height: 20,
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  '30',
+                  style: TextStyle(
+                    fontFamily: 'BMJUA',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
             isPrimary: true,
+            isEnabled: ValueNotifier<bool>(
+                (context.read<CharacterController>().currentUser?.points ??
+                        0) >=
+                    30),
             onPressed: (context) => Navigator.pop(context, controller.text),
           ),
         ],
@@ -460,9 +484,119 @@ class _DecorationScreenState extends State<DecorationScreen>
               ),
             ),
           ),
+
+          // 5. Sticky Note Button (Fixed Position)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) + 10,
+            right: 20,
+            child: GestureDetector(
+              onTap: _handleStickyNoteButton,
+              child: Container(
+                width: 80,
+                height: 35,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/Message_Button.png'),
+                    fit: BoxFit.fill,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/items/StickyNote.png',
+                      width: 18,
+                      height: 18,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      AppLocalizations.of(context)?.get('memo') ?? 'Memo',
+                      style: const TextStyle(
+                        fontFamily: 'BMJUA',
+                        fontSize: 14,
+                        color: Color(0xFF5D4037),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _handleStickyNoteButton() async {
+    final characterController = context.read<CharacterController>();
+    final user = characterController.currentUser;
+    if (user == null) return;
+
+    // 1. 오늘 이미 작성했는지 체크
+    final now = DateTime.now();
+    final isUsedToday = user.lastStickyNoteDate != null &&
+        user.lastStickyNoteDate!.year == now.year &&
+        user.lastStickyNoteDate!.month == now.month &&
+        user.lastStickyNoteDate!.day == now.day;
+
+    if (isUsedToday) {
+      MemoNotification.show(
+          context,
+          AppLocalizations.of(context)?.get('stickyNoteLimit') ??
+              'You can only write a note once a day. ✍️');
+      return;
+    }
+
+    // 2. 포인트 체크 (30가지)
+    if (user.points < 30) {
+      MemoNotification.show(
+        context,
+        AppLocalizations.of(context)?.get('notEnoughPoints') ??
+            'Not enough points! (30 required)',
+      );
+      return;
+    }
+
+    // 3. 입력창 띄우기
+    final text = await _showStickyNoteInput(context);
+    if (text == null || text.trim().isEmpty) return;
+
+    // 4. 포인트 차감 및 작성 처리
+    try {
+      await characterController.useStickyNote(user.uid);
+
+      // 5. 소품 배치
+      final newProp = RoomPropModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        type: 'sticky_note',
+        x: 0.5,
+        y: 0.6,
+        metadata: {
+          'content': text,
+          'heartCount': 0,
+          'createdAt': DateTime.now().toIso8601String(),
+        },
+      );
+
+      _decorationNotifier.value = _decorationNotifier.value.copyWith(
+        props: [..._decorationNotifier.value.props, newProp],
+      );
+
+      if (mounted) {
+        MemoNotification.show(
+            context,
+            AppLocalizations.of(context)?.get('stickyNoteAdded') ??
+                'Memo added! (30 points deducted) 📝');
+      }
+    } catch (e) {
+      if (mounted) {
+        MemoNotification.show(context, e.toString());
+      }
+    }
   }
 
   Widget _buildCategoryTabs(AppColorScheme colorScheme) {
@@ -710,11 +844,12 @@ class _DecorationScreenState extends State<DecorationScreen>
     return ValueListenableBuilder<RoomDecorationModel>(
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
-        // 이미 배치된 소품이거나 소유 중인 소품을 목록에 표시
+        // 이미 배치된 소품이거나 소유 중인 소품을 목록에 표시 (스티커 메모 제외)
         final availableProps = RoomAssets.props
             .where((p) =>
-                user.purchasedPropIds.contains(p.id) ||
-                decoration.props.any((prop) => prop.type == p.id))
+                (user.purchasedPropIds.contains(p.id) ||
+                    decoration.props.any((prop) => prop.type == p.id)) &&
+                p.id != 'sticky_note')
             .toList();
 
         if (availableProps.isEmpty) {
@@ -722,12 +857,6 @@ class _DecorationScreenState extends State<DecorationScreen>
               child: Text(AppLocalizations.of(context)?.get('noProps') ??
                   'You don\'t have any props. Buy some in the shop!'));
         }
-
-        final now = DateTime.now();
-        final isUsedToday = user.lastStickyNoteDate != null &&
-            user.lastStickyNoteDate!.year == now.year &&
-            user.lastStickyNoteDate!.month == now.month &&
-            user.lastStickyNoteDate!.day == now.day;
 
         return GridView.builder(
           padding: const EdgeInsets.fromLTRB(24, 4, 24, 100),
@@ -748,20 +877,9 @@ class _DecorationScreenState extends State<DecorationScreen>
               imagePath: p.imagePath,
               icon: p.icon,
               isSelected: exists,
-              onTap: () async {
+              onTap: () {
                 if (exists) {
                   // 이미 배치된 경우: 제거
-                  if (p.id == 'sticky_note') {
-                    final confirm = await AppDialog.show<bool>(
-                      context: context,
-                      key: AppDialogKey.deleteStickyNote,
-                      content: Text(AppLocalizations.of(context)
-                              ?.get('deleteStickyNote') ??
-                          'Do you want to delete this memo? 🗑️'),
-                    );
-                    if (confirm != true) return;
-                  }
-
                   final newProps = decoration.props
                       .where((prop) => prop.type != p.id)
                       .toList();
@@ -770,62 +888,23 @@ class _DecorationScreenState extends State<DecorationScreen>
                   return;
                 }
 
-                // 새로 배치하는 경우
-                if (p.id == 'sticky_note') {
-                  // 오늘 이미 작성했는지 체크
-                  if (isUsedToday) {
-                    MemoNotification.show(
-                        context,
-                        AppLocalizations.of(context)?.get('stickyNoteLimit') ??
-                            'You can only write a note once a day. ✍️');
-                    return;
+                // 일반 소품 배치
+                final newProp = RoomPropModel(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  type: p.id,
+                  x: 0.5,
+                  y: 0.6, // Place lower to avoid overlapping with character
+                );
+
+                // 상태 업데이트를 다음 마이크로태스크로 지연하여
+                // 빌드/네비게이션 충돌(!_debugLocked) 방지
+                Future.microtask(() {
+                  if (context.mounted) {
+                    _decorationNotifier.value = decoration.copyWith(
+                      props: [...decoration.props, newProp],
+                    );
                   }
-
-                  // 인벤토리에 있는지 체크 (이미 배치된 걸 제거했다가 다시 넣는 경우 대비)
-                  if (!user.purchasedPropIds.contains('sticky_note')) {
-                    MemoNotification.show(
-                        context,
-                        AppLocalizations.of(context)?.get('noStickyNote') ??
-                            'You don\'t have a sticky note. Please buy one from the shop. 📦');
-                    return;
-                  }
-
-                  final text = await _showStickyNoteInput(context);
-                  if (text == null || text.trim().isEmpty) return;
-
-                  final newProp = RoomPropModel(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    type: p.id,
-                    x: 0.5,
-                    y: 0.6, // Place lower to avoid overlapping with character
-                    metadata: {
-                      'content': text,
-                      'heartCount': 0,
-                      'createdAt': DateTime.now().toIso8601String(),
-                    },
-                  );
-                  _decorationNotifier.value = decoration.copyWith(
-                    props: [...decoration.props, newProp],
-                  );
-                } else {
-                  // 일반 소품 배치
-                  final newProp = RoomPropModel(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    type: p.id,
-                    x: 0.5,
-                    y: 0.6, // Place lower to avoid overlapping with character
-                  );
-
-                  // 상태 업데이트를 다음 마이크로태스크로 지연하여
-                  // 빌드/네비게이션 충돌(!_debugLocked) 방지
-                  Future.microtask(() {
-                    if (context.mounted) {
-                      _decorationNotifier.value = decoration.copyWith(
-                        props: [...decoration.props, newProp],
-                      );
-                    }
-                  });
-                }
+                });
               },
               colorScheme: colorScheme,
             );

@@ -29,6 +29,16 @@ class NestService {
     return docRef.id;
   }
 
+  // 둥지 정보 업데이트 (이름, 설명)
+  Future<void> updateNest(
+      String nestId, String name, String description) async {
+    await _nestsCollection.doc(nestId).update({
+      'name': name,
+      'description': description,
+      'lastActivityAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   // 둥지 목록 가져오기 (사용자가 속한 둥지)
   Stream<List<NestModel>> getUserNestsStream(String userId) {
     return _nestsCollection
@@ -75,6 +85,8 @@ class NestService {
       final data = nestDoc.data() as Map<String, dynamic>?;
       final memberIds = List<String>.from(data?['memberIds'] ?? []);
       for (final memberId in memberIds) {
+        if (memberId == userId) continue; // 본인에게는 알림을 보내지 않음
+
         // 이미 10개 이상이면 batch commit 후 새 batch?
         // 둥지 정원이 20명이므로 20개 알림 + 2개 업데이트 = 22개. 500개 제한이므로 한 배치에 가능.
 
@@ -92,6 +104,46 @@ class NestService {
             'nestId': nestId,
             'nestName': nestName,
             'amount': amount,
+          },
+        });
+      }
+    }
+
+    await batch.commit();
+  }
+
+  // 오늘의 한마디 작성하기
+  Future<void> postNestMessage(String nestId, String userId,
+      String senderNickname, String nestName, String message) async {
+    final batch = _db.batch();
+
+    // 둥지 마지막 활동 시간 업데이트
+    final nestRef = _nestsCollection.doc(nestId);
+    batch.update(nestRef, {
+      'lastActivityAt': FieldValue.serverTimestamp(),
+    });
+
+    // 둥지 멤버들에게 알림 보내기
+    final nestDoc = await nestRef.get();
+    if (nestDoc.exists) {
+      final data = nestDoc.data() as Map<String, dynamic>?;
+      final memberIds = List<String>.from(data?['memberIds'] ?? []);
+      for (final memberId in memberIds) {
+        if (memberId == userId) continue;
+
+        final notificationRef = _db.collection('notifications').doc();
+        batch.set(notificationRef, {
+          'userId': memberId,
+          'senderId': userId,
+          'senderNickname': senderNickname,
+          'type': 'cheerMessage',
+          'message': '[$nestName] $senderNickname님이 한마디를 남겼습니다: $message',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'data': {
+            'nestId': nestId,
+            'nestName': nestName,
+            'message': message,
           },
         });
       }
@@ -206,12 +258,55 @@ class NestService {
       'nestIds': FieldValue.arrayUnion([nestId]),
     });
 
+    // 4. 알림 업데이트
+    final notificationsSnapshot = await _db
+        .collection('notifications')
+        .where('type', isEqualTo: 'nestInvite')
+        .where('data.inviteId', isEqualTo: inviteId)
+        .get();
+
+    for (var doc in notificationsSnapshot.docs) {
+      final data = doc.data();
+      final nestName = data['data']?['nestName'] ?? '둥지';
+      batch.update(doc.reference, {
+        'message': '\'$nestName\' 둥지 초대를 수락했습니다.',
+        'type': 'system',
+        'isRead': true,
+      });
+    }
+
     await batch.commit();
   }
 
   // 둥지 초대 거절
   Future<void> rejectNestInvite(String inviteId) async {
-    await _invitesCollection.doc(inviteId).delete();
+    final batch = _db.batch();
+
+    // 1. 초대 상태 업데이트
+    final inviteRef = _invitesCollection.doc(inviteId);
+    batch.update(inviteRef, {
+      'status': 'rejected',
+      'rejectedAt': FieldValue.serverTimestamp(),
+    });
+
+    // 2. 알림 업데이트
+    final notificationsSnapshot = await _db
+        .collection('notifications')
+        .where('type', isEqualTo: 'nestInvite')
+        .where('data.inviteId', isEqualTo: inviteId)
+        .get();
+
+    for (var doc in notificationsSnapshot.docs) {
+      final data = doc.data();
+      final nestName = data['data']?['nestName'] ?? '둥지';
+      batch.update(doc.reference, {
+        'message': '\'$nestName\' 둥지 초대를 거절했습니다.',
+        'type': 'system',
+        'isRead': true,
+      });
+    }
+
+    await batch.commit();
   }
 
   // 받은 둥지 초대 스트림

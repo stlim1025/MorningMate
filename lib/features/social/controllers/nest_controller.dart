@@ -31,6 +31,9 @@ class NestController extends ChangeNotifier {
       _myNests = nests;
       _isLoading = false;
       notifyListeners();
+    }, onError: (e) {
+      debugPrint('둥지 스트림 에러 (무시됨): $e');
+      _isLoading = false;
     });
 
     _requestsSubscription?.cancel();
@@ -38,6 +41,8 @@ class NestController extends ChangeNotifier {
         _nestService.getReceivedNestInvitesStream(userId).listen((requests) {
       _nestRequests = requests;
       notifyListeners();
+    }, onError: (e) {
+      debugPrint('둥지 초대 스트림 에러 (무시됨): $e');
     });
   }
 
@@ -94,5 +99,22 @@ class NestController extends ChangeNotifier {
     }
     await _nestService.donateGaji(
         nestId, userId, senderNickname, nestName, amount);
+  }
+
+  Future<void> postNestMessage(String nestId, String userId,
+      String senderNickname, String nestName, String message) async {
+    if (message.trim().isEmpty) {
+      throw Exception('한마디를 입력해주세요.');
+    }
+    await _nestService.postNestMessage(
+        nestId, userId, senderNickname, nestName, message);
+  }
+
+  Future<void> updateNest(
+      String nestId, String name, String description) async {
+    if (name.trim().isEmpty) {
+      throw Exception('둥지 이름을 입력해주세요.');
+    }
+    await _nestService.updateNest(nestId, name, description);
   }
 }

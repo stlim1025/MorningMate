@@ -79,6 +79,9 @@ class AuthController extends ChangeNotifier {
           _userModel = model;
           notifyListeners();
         }
+      }, onError: (e) {
+        // 로그아웃 타이밍에 발생하는 permission-denied는 무시
+        debugPrint('사용자 스트림 에러 (무시됨): $e');
       });
 
       // UI 블로킹 방지를 위해 await 제거

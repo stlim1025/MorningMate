@@ -142,36 +142,9 @@ class CharacterController extends ChangeNotifier {
   ) async {
     if (_currentUser == null) return;
 
-    final oldProps = _currentUser!.roomDecoration.props;
-    final newProps = decoration.props;
-
-    // 새롭게 추가된 스티커 메모가 있는지 확인
-    // 기존 소품에 스티커 메모가 없었고, 새로운 소품에 스티커 메모가 있다면 새로 추가된 것으로 간주
-    bool newlyAddedStickyNote = !oldProps.any((p) => p.type == 'sticky_note') &&
-        newProps.any((p) => p.type == 'sticky_note');
-
-    Map<String, dynamic> updates = {'roomDecoration': decoration.toMap()};
-
-    if (newlyAddedStickyNote) {
-      // 1. 일회용 소품 소비 (인벤토리에서 제거)
-      final updatedPurchasedProps = List<String>.from(
-        _currentUser!.purchasedPropIds,
-      );
-      updatedPurchasedProps.remove('sticky_note');
-
-      updates['purchasedPropIds'] = updatedPurchasedProps;
-      updates['lastStickyNoteDate'] = FieldValue.serverTimestamp();
-      updates['memoCount'] = FieldValue.increment(1);
-
-      // 로컬 모델 미리 업데이트 (UI 반영용)
-      _currentUser = _currentUser!.copyWith(
-        purchasedPropIds: updatedPurchasedProps,
-        lastStickyNoteDate: DateTime.now(),
-        memoCount: _currentUser!.memoCount + 1,
-      );
-    }
-
-    await _userService.updateUser(userId, updates);
+    // 둥지 꾸미기 업데이트 (메모 개별 소비 로직은 useStickyNote로 분리됨)
+    await _userService
+        .updateUser(userId, {'roomDecoration': decoration.toMap()});
 
     // Sticky Note Sync (Archive)
     final firestore = FirebaseFirestore.instance;
@@ -208,30 +181,48 @@ class CharacterController extends ChangeNotifier {
 
     _currentUser = _currentUser!.copyWith(roomDecoration: decoration);
     notifyListeners();
-
-    // 메모 작성 등으로 인한 도전과제 달성 체크
-    if (newlyAddedStickyNote) {
-      await checkAchievements();
-    }
   }
 
-  /// 만료된(오늘 날짜가 아닌) 메모를 확인하고 제거합니다.
+  /// 메모 작성 시 30가지를 차감하고 마지막 작성 시간을 기록합니다.
+  Future<void> useStickyNote(String userId) async {
+    if (_currentUser == null) return;
+    if (_currentUser!.points < 30) throw Exception('가지가 부족합니다 (30가지 필요)');
+
+    final now = DateTime.now();
+    final updates = {
+      'points': FieldValue.increment(-30),
+      'lastStickyNoteDate': FieldValue.serverTimestamp(),
+      'memoCount': FieldValue.increment(1),
+    };
+
+    await _userService.updateUser(userId, updates);
+
+    _currentUser = _currentUser!.copyWith(
+      points: _currentUser!.points - 30,
+      lastStickyNoteDate: now,
+      memoCount: _currentUser!.memoCount + 1,
+    );
+    notifyListeners();
+
+    // 도전과제 달성 체크
+    await checkAchievements();
+  }
+
+  /// 만료된(72시간이 지난) 메모를 확인하고 제거합니다.
   Future<void> checkAndClearExpiredMemos(String userId) async {
     if (_currentUser == null) return;
 
     final decoration = _currentUser!.roomDecoration;
     final now = DateTime.now();
 
-    // 오늘 날짜가 아닌 스티커 메모 필터링
+    // 72시간(3일)이 지나지 않은 메모만 유지
     final activeProps = decoration.props.where((p) {
       if (p.type != 'sticky_note') return true;
       if (p.metadata == null || p.metadata!['createdAt'] == null) return false;
 
       try {
         final createdAt = DateTime.parse(p.metadata!['createdAt']);
-        return createdAt.year == now.year &&
-            createdAt.month == now.month &&
-            createdAt.day == now.day;
+        return now.difference(createdAt).inHours < 72;
       } catch (e) {
         return false;
       }
@@ -488,15 +479,9 @@ class CharacterController extends ChangeNotifier {
       throw Exception('이미 구매한 소품입니다');
     }
 
-    // 스티커 메모는 하루에 한 번만 작성 가능
-    if (propId == 'sticky_note' && _currentUser!.lastStickyNoteDate != null) {
-      final now = DateTime.now();
-      final lastDate = _currentUser!.lastStickyNoteDate!;
-      if (lastDate.year == now.year &&
-          lastDate.month == now.month &&
-          lastDate.day == now.day) {
-        throw Exception('메모는 하루에 한 번만 작성할 수 있습니다.');
-      }
+    // 스티커 메모는 이제 useStickyNote에서 처리하므로 여기서는 일반 구매 불가
+    if (propId == 'sticky_note') {
+      throw Exception('메모는 꾸미기 화면에서 직접 작성할 수 있습니다.');
     }
 
     final newPurchasedProps = List<String>.from(_currentUser!.purchasedPropIds)

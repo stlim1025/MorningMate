@@ -481,7 +481,7 @@ class _SocialScreenState extends State<SocialScreen> {
         AppDialogAction(
           label: AppLocalizations.of(context)?.get('request') ?? 'Request',
           isPrimary: true,
-          onPressed: (BuildContext context) async {
+          onPressed: (BuildContext ctx) async {
             final nickname = controller.text.trim();
             if (nickname.isEmpty) return;
 
@@ -489,26 +489,24 @@ class _SocialScreenState extends State<SocialScreen> {
             final myNickname = authController.userModel?.nickname;
             if (myId == null || myNickname == null) return;
 
-            final userService = context.read<UserService>();
+            final userService = ctx.read<UserService>();
             try {
               final user = await userService.getUserByNickname(nickname);
+              if (!ctx.mounted) return;
+
               if (user == null) {
-                if (context.mounted) {
-                  AppDialog.showError(
-                      context,
-                      AppLocalizations.of(context)?.get('userNotFound') ??
-                          'User not found.');
-                }
+                AppDialog.showError(
+                    ctx,
+                    AppLocalizations.of(ctx)?.get('userNotFound') ??
+                        'User not found.');
                 return;
               }
 
               if (user.uid == myId) {
-                if (context.mounted) {
-                  AppDialog.showError(
-                      context,
-                      AppLocalizations.of(context)?.get('selfRequestError') ??
-                          'You cannot send a request to yourself.');
-                }
+                AppDialog.showError(
+                    ctx,
+                    AppLocalizations.of(ctx)?.get('selfRequestError') ??
+                        'You cannot send a request to yourself.');
                 return;
               }
 
@@ -518,20 +516,21 @@ class _SocialScreenState extends State<SocialScreen> {
                 user.uid,
               );
 
-              if (context.mounted) {
-                Navigator.pop(context); // Close input dialog
-                MemoNotification.show(
-                  context,
-                  AppLocalizations.of(context)?.getFormat(
-                        'friendRequestSent',
-                        {'nickname': user.nickname},
-                      ) ??
-                      'Friend request sent to ${user.nickname}!',
-                );
-              }
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx); // Close input dialog
+
+              if (!mounted) return;
+              MemoNotification.show(
+                context,
+                AppLocalizations.of(context)?.getFormat(
+                      'friendRequestSent',
+                      {'nickname': user.nickname},
+                    ) ??
+                    'Friend request sent to ${user.nickname}!',
+              );
             } catch (e) {
-              if (context.mounted) {
-                AppDialog.showError(context, e.toString());
+              if (ctx.mounted) {
+                AppDialog.showError(ctx, e.toString());
               }
             }
           },

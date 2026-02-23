@@ -131,6 +131,12 @@ class NotificationService {
         case 'cheer_message':
           print('친구가 응원 메시지를 보냈습니다!');
           break;
+        case 'nestInvite':
+        case 'nest_invite':
+        case 'nestDonation':
+        case 'nest_donation':
+          AppRouter.navigatorKey.currentContext?.go('/notification');
+          break;
       }
     }
   }
@@ -266,6 +272,7 @@ class NotificationService {
           title: title ?? '알림',
           body: body,
           type: type,
+          data: data,
           onTap: () {
             _handleNotificationTapFromData(data);
           },
@@ -311,7 +318,9 @@ class NotificationService {
       }
     } else if (type == 'friend_reject' ||
         type == 'morning_diary' ||
-        type == 'morning_reminder') {
+        type == 'morning_reminder' ||
+        type == 'nestInvite' ||
+        type == 'nestDonation') {
       AppRouter.navigatorKey.currentContext?.push('/notification');
     }
   }

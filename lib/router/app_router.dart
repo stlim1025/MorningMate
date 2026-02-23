@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 
 import '../features/auth/screens/auth_wrapper.dart';
@@ -25,6 +26,7 @@ import '../features/settings/screens/notification_settings_screen.dart';
 import '../features/settings/screens/terms_of_service_screen.dart';
 import '../features/settings/screens/privacy_policy_screen.dart';
 import '../features/auth/controllers/auth_controller.dart';
+import '../features/social/controllers/nest_controller.dart';
 import '../models/nest_model.dart';
 import '../data/models/diary_model.dart';
 import '../data/models/question_model.dart';
@@ -190,8 +192,8 @@ class AppRouter {
           path: '/writing',
           name: 'writing',
           builder: (context, state) {
-            if (state.extra is Map<String, dynamic>) {
-              final extra = state.extra as Map<String, dynamic>;
+            final extra = state.extra;
+            if (extra is Map<String, dynamic>) {
               return WritingScreen(
                 initialQuestion: extra['initialQuestion'] as QuestionModel?,
                 isEditing: extra['isEditing'] ?? false,
@@ -199,8 +201,10 @@ class AppRouter {
                 existingContent: extra['existingContent'] as String?,
               );
             }
-            final question = state.extra as QuestionModel?;
-            return WritingScreen(initialQuestion: question);
+            if (extra is QuestionModel?) {
+              return WritingScreen(initialQuestion: extra);
+            }
+            return const MorningScreen();
           },
         ),
         GoRoute(
@@ -208,11 +212,15 @@ class AppRouter {
           path: '/diary-detail',
           name: 'diaryDetail',
           builder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>;
-            final diaries = extra['diaries'] as List<DiaryModel>;
-            final initialDate = extra['initialDate'] as DateTime;
-            return DiaryDetailScreen(
-                diaries: diaries, initialDate: initialDate);
+            final extra = state.extra;
+            if (extra is Map<String, dynamic>) {
+              final diaries = extra['diaries'] as List<DiaryModel>? ?? [];
+              final initialDate =
+                  extra['initialDate'] as DateTime? ?? DateTime.now();
+              return DiaryDetailScreen(
+                  diaries: diaries, initialDate: initialDate);
+            }
+            return const ArchiveScreen();
           },
         ),
 
@@ -251,11 +259,28 @@ class AppRouter {
         ),
         GoRoute(
           parentNavigatorKey: navigatorKey,
-          path: '/nest_room',
+          path: '/nest_room/:id',
           name: 'nestRoom',
           builder: (context, state) {
-            final nest = state.extra as NestModel;
-            return NestRoomScreen(nest: nest);
+            final id = state.pathParameters['id'];
+            final extra = state.extra;
+
+            if (extra is NestModel) {
+              return NestRoomScreen(nest: extra);
+            }
+
+            // extra가 유효하지 않으면 (새로고침 등) ID로 NestController에서 찾기 시도
+            if (id != null) {
+              final nestController = context.read<NestController>();
+              try {
+                final nest =
+                    nestController.myNests.firstWhere((n) => n.id == id);
+                return NestRoomScreen(nest: nest);
+              } catch (_) {
+                // 찾지 못한 경우에만 목록으로 이동
+              }
+            }
+            return const NestListScreen();
           },
         ),
         GoRoute(

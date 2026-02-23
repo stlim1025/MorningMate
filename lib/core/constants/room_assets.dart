@@ -236,7 +236,7 @@ class RoomAssets {
     RoomAsset(
       id: 'sticky_note',
       name: '메모 노트',
-      price: 50,
+      price: 30,
       icon: Icons.note_alt_outlined,
       imagePath: 'assets/items/StickyNote.png',
       sizeMultiplier: 0.6,

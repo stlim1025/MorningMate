@@ -217,7 +217,7 @@ class NotificationScreen extends StatelessWidget {
                                 Opacity(
                                   opacity: notification.isRead ? 0.7 : 1.0,
                                   child: _buildNotificationIcon(
-                                      notification.type, colorScheme),
+                                      notification, colorScheme),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
@@ -553,26 +553,32 @@ class NotificationScreen extends StatelessWidget {
   }
 
   Widget _buildNotificationIcon(
-      NotificationType type, AppColorScheme colorScheme) {
+      NotificationModel notification, AppColorScheme colorScheme) {
     String iconPath;
 
-    switch (type) {
-      case NotificationType.wakeUp:
-        iconPath = 'assets/icons/Clock_Icon.png';
-        break;
-      case NotificationType.cheerMessage:
-        iconPath = 'assets/icons/Heart_Icon.png';
-        break;
-      case NotificationType.friendRequest:
-        iconPath = 'assets/icons/Friend_NotiIcon.png';
-        break;
-      case NotificationType.nestInvite:
-      case NotificationType.nestDonation:
-        iconPath = 'assets/icons/Bell_Icon.png';
-        break;
-      default:
-        iconPath = 'assets/icons/Bell_Icon.png';
-        break;
+    // 둥지 관련 알림인지 확인 (type이 둥지 타입이거나 data에 nestId가 있는 경우)
+    final isNestNotification =
+        notification.type == NotificationType.nestInvite ||
+            notification.type == NotificationType.nestDonation ||
+            (notification.data != null && notification.data!['nestId'] != null);
+
+    if (isNestNotification) {
+      iconPath = 'assets/icons/Nest_Notification_Icon.png';
+    } else {
+      switch (notification.type) {
+        case NotificationType.wakeUp:
+          iconPath = 'assets/icons/Clock_Icon.png';
+          break;
+        case NotificationType.cheerMessage:
+          iconPath = 'assets/icons/Heart_Icon.png';
+          break;
+        case NotificationType.friendRequest:
+          iconPath = 'assets/icons/Friend_NotiIcon.png';
+          break;
+        default:
+          iconPath = 'assets/icons/Bell_Icon.png';
+          break;
+      }
     }
 
     return Image.asset(

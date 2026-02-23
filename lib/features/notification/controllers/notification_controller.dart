@@ -76,6 +76,27 @@ class NotificationController extends ChangeNotifier {
     await batch.commit();
   }
 
+  Future<void> updateNestInviteNotification(
+      String inviteId, String newMessage) async {
+    final snapshot = await _db
+        .collection('notifications')
+        .where('type', isEqualTo: 'nestInvite')
+        .where('data.inviteId', isEqualTo: inviteId)
+        .get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = _db.batch();
+    for (var doc in snapshot.docs) {
+      batch.update(doc.reference, {
+        'message': newMessage,
+        'isRead': true,
+        'type': 'system',
+      });
+    }
+    await batch.commit();
+  }
+
   Future<void> markAllAsRead(String userId) async {
     final unreadSnapshot = await _db
         .collection('notifications')

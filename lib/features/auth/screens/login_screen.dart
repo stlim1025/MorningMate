@@ -220,114 +220,133 @@ class _LoginScreenState extends State<LoginScreen> {
 
           const SizedBox(height: 32),
 
-          // 이메일 필드
-          _buildTextField(
-            controller: _emailController,
-            label: l10n?.get('emailPlaceholder') ?? 'Email',
-            icon: Icons.email,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            colorScheme: colorScheme,
-            onSubmitted: (_) {
-              FocusScope.of(context).requestFocus(_passwordFocusNode);
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return l10n?.get('emailRequired') ?? 'Please enter email';
-              }
-              if (!value.contains('@')) {
-                return l10n?.get('emailInvalid') ?? 'Invalid email format';
-              }
-              return null;
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          // 비밀번호 필드
-          _buildTextField(
-            controller: _passwordController,
-            label: l10n?.get('passwordPlaceholder') ?? 'Password',
-            icon: Icons.lock,
-            focusNode: _passwordFocusNode,
-            obscureText: _obscurePassword,
-            textInputAction: TextInputAction.done,
-            colorScheme: colorScheme,
-            onSubmitted: (_) => _handleLogin(),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                color: colorScheme.textSecondary,
-              ),
-              onPressed: () =>
-                  setState(() => _obscurePassword = !_obscurePassword),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return l10n?.get('passwordRequired') ?? 'Please enter password';
-              }
-              if (value.length < 6) {
-                return l10n?.get('passwordLengthError') ??
-                    'Password must be at least 6 characters';
-              }
-              return null;
-            },
-          ),
-
-          const SizedBox(height: 24),
-
-          // 로그인 버튼
-          SizedBox(
+          // 텍스트박스 + 버튼 영역을 Option_Area.png로 감싸기
+          Container(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _handleLogin,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                backgroundColor: colorScheme.primaryButton,
-                foregroundColor: colorScheme.primaryButtonForeground,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
+            padding: const EdgeInsets.fromLTRB(20, 28, 20, 16),
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Popup_Background.png'),
+                fit: BoxFit.fill,
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Text(
-                      l10n?.get('login') ?? 'Login',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
             ),
-          ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 이메일 필드
+                _buildTextField(
+                  controller: _emailController,
+                  label: l10n?.get('emailPlaceholder') ?? 'Email',
+                  icon: Icons.email,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  colorScheme: colorScheme,
+                  onSubmitted: (_) {
+                    FocusScope.of(context).requestFocus(_passwordFocusNode);
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n?.get('emailRequired') ?? 'Please enter email';
+                    }
+                    if (!value.contains('@')) {
+                      return l10n?.get('emailInvalid') ??
+                          'Invalid email format';
+                    }
+                    return null;
+                  },
+                ),
 
-          const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-          // 회원가입 버튼
-          TextButton(
-            onPressed: () => context.push('/signup'),
-            child: Text(
-              l10n?.get('noAccountSignup') ?? "Don't have an account? Sign Up",
-              style: const TextStyle(
-                fontFamily: 'BMJUA',
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                shadows: [
-                  Shadow(
-                    color: Colors.black54,
-                    offset: Offset(0, 1),
-                    blurRadius: 3,
+                // 비밀번호 필드
+                _buildTextField(
+                  controller: _passwordController,
+                  label: l10n?.get('passwordPlaceholder') ?? 'Password',
+                  icon: Icons.lock,
+                  focusNode: _passwordFocusNode,
+                  obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.done,
+                  colorScheme: colorScheme,
+                  onSubmitted: (_) => _handleLogin(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: colorScheme.textSecondary,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
-                ],
-              ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n?.get('passwordRequired') ??
+                          'Please enter password';
+                    }
+                    if (value.length < 6) {
+                      return l10n?.get('passwordLengthError') ??
+                          'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // 로그인 버튼
+                GestureDetector(
+                  onTap: _isLoading ? null : _handleLogin,
+                  child: Opacity(
+                    opacity: _isLoading ? 0.6 : 1.0,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/Confirm_Button.png',
+                          width: double.infinity,
+                          height: 60,
+                          fit: BoxFit.fill,
+                        ),
+                        _isLoading
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(0xFF4E342E)),
+                                ),
+                              )
+                            : Text(
+                                l10n?.get('login') ?? 'Login',
+                                style: const TextStyle(
+                                  fontFamily: 'BMJUA',
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF4E342E),
+                                ),
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // 회원가입 버튼
+                TextButton(
+                  onPressed: () => context.push('/signup'),
+                  child: Text(
+                    l10n?.get('noAccountSignup') ??
+                        "Don't have an account? Sign Up",
+                    style: const TextStyle(
+                      fontFamily: 'BMJUA',
+                      color: Color(0xFF4E342E),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -348,40 +367,30 @@ class _LoginScreenState extends State<LoginScreen> {
     void Function(String)? onSubmitted,
     String? Function(String?)? validator,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        textInputAction: textInputAction,
-        onFieldSubmitted: onSubmitted,
-        style: TextStyle(color: colorScheme.textPrimary),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: colorScheme.textSecondary),
-          prefixIcon: Icon(icon, color: colorScheme.primaryButton),
-          suffixIcon: suffixIcon,
-          filled: true,
-          fillColor: Colors.transparent,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'BMJUA',
+              fontSize: 16,
+              color: Color(0xFF4E342E),
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        validator: validator,
-      ),
+        PopupTextField(
+          controller: controller,
+          hintText: label,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          validator: validator,
+          // PopupTextField는 인프라적으로 TextField를 래핑하므로 커스터마이징이 필요할 수 있음
+        ),
+      ],
     );
   }
 
@@ -601,22 +610,19 @@ class _LoginScreenState extends State<LoginScreen> {
     if (suspendedUntil.year >= 2090) {
       remainingTime = l10n?.get('permanentSuspension') ?? '영구 정지';
     } else if (diff.inDays > 0) {
-      remainingTime =
-          l10n?.getFormat('daysRemaining', {
+      remainingTime = l10n?.getFormat('daysRemaining', {
             'days': diff.inDays.toString(),
             'hours': (diff.inHours % 24).toString(),
           }) ??
           '${diff.inDays}일 ${diff.inHours % 24}시간 남음';
     } else if (diff.inHours > 0) {
-      remainingTime =
-          l10n?.getFormat('hoursRemaining', {
+      remainingTime = l10n?.getFormat('hoursRemaining', {
             'hours': diff.inHours.toString(),
             'minutes': (diff.inMinutes % 60).toString(),
           }) ??
           '${diff.inHours}시간 ${diff.inMinutes % 60}분 남음';
     } else {
-      remainingTime =
-          l10n?.getFormat('minutesRemaining', {
+      remainingTime = l10n?.getFormat('minutesRemaining', {
             'minutes': diff.inMinutes.toString(),
           }) ??
           '${diff.inMinutes}분 남음';

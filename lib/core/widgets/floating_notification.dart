@@ -6,6 +6,7 @@ class FloatingNotification extends StatefulWidget {
   final String title;
   final String? body;
   final String? type;
+  final Map<String, dynamic>? data;
   final VoidCallback onDismiss;
   final VoidCallback? onTap;
   final Duration duration;
@@ -15,6 +16,7 @@ class FloatingNotification extends StatefulWidget {
     required this.title,
     this.body,
     this.type,
+    this.data,
     required this.onDismiss,
     this.onTap,
     this.duration = const Duration(seconds: 2),
@@ -78,6 +80,30 @@ class _FloatingNotificationState extends State<FloatingNotification>
     super.dispose();
   }
 
+  Widget _buildIcon(AppColorScheme colors) {
+    // 둥지 관련 알림인지 확인
+    final isNestNotification = widget.type == 'nestInvite' ||
+        widget.type == 'nest_invite' ||
+        widget.type == 'nestDonation' ||
+        widget.type == 'nest_donation' ||
+        (widget.data != null && widget.data!['nestId'] != null);
+
+    if (isNestNotification) {
+      return Image.asset(
+        'assets/icons/Nest_Notification_Icon.png',
+        width: 36,
+        height: 36,
+        fit: BoxFit.contain,
+      );
+    }
+
+    return Icon(
+      _getIconData(),
+      color: _getIconColor(colors),
+      size: 26,
+    );
+  }
+
   IconData _getIconData() {
     switch (widget.type) {
       case 'wake_up':
@@ -92,11 +118,6 @@ class _FloatingNotificationState extends State<FloatingNotification>
         return Icons.person_remove_rounded;
       case 'character_evolved':
         return Icons.auto_awesome_rounded;
-      case 'nest_invite':
-      case 'nestInvite':
-      case 'nest_donation':
-      case 'nestDonation':
-        return Icons.house_rounded;
       default:
         return Icons.notifications_active_rounded;
     }
@@ -112,10 +133,6 @@ class _FloatingNotificationState extends State<FloatingNotification>
       case 'friend_accept':
         return colors.success;
       case 'character_evolved':
-      case 'nest_invite':
-      case 'nestInvite':
-      case 'nest_donation':
-      case 'nestDonation':
         return colors.accent;
       default:
         return colors.primaryButton;
@@ -179,11 +196,7 @@ class _FloatingNotificationState extends State<FloatingNotification>
                             ),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Icon(
-                            _getIconData(),
-                            color: _getIconColor(colorScheme),
-                            size: 26,
-                          ),
+                          child: _buildIcon(colorScheme),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
