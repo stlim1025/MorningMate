@@ -51,6 +51,9 @@ class CharacterController extends ChangeNotifier {
         _shopDiscounts = {};
         notifyListeners();
       }
+    }, onError: (e) {
+      // 로그아웃 시 permission-denied 에러 무시
+      debugPrint('상점 할인 스트림 에러 (무시됨): $e');
     });
   }
 
@@ -802,6 +805,8 @@ class CharacterController extends ChangeNotifier {
 
   // 모든 상태 초기화 (로그아웃용)
   void clear() {
+    _shopDiscountSubscription?.cancel();
+    _shopDiscountSubscription = null;
     _currentUser = null;
     _isAwake = false;
     _currentAnimation = 'idle';

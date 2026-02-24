@@ -163,13 +163,12 @@ class _DecorationScreenState extends State<DecorationScreen>
     final isAwakePreview = _previewIsAwake!;
 
     final screenSize = MediaQuery.of(context).size;
-    final paddingBottom = MediaQuery.of(context).padding.bottom;
 
     // Panel Configuration
     final double panelHeight =
         screenSize.height * 0.35; // Take up about 1/3 of screen height
     final double visibleHeaderHeight =
-        80.0 + paddingBottom; // Reduced from 90 to match tighter header layout
+        EnhancedCharacterRoomWidget.roomStandardBottomPadding;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -257,10 +256,6 @@ class _DecorationScreenState extends State<DecorationScreen>
             child: ValueListenableBuilder<RoomDecorationModel>(
               valueListenable: _decorationNotifier,
               builder: (context, decoration, child) {
-                // Determine bottom padding for the room based on panel state
-                // When collapsed, the visible header matches the main screen bottom bar area.
-                final roomBottomPadding = visibleHeaderHeight;
-
                 return EnhancedCharacterRoomWidget(
                   isAwake: isAwakePreview,
                   characterLevel:
@@ -271,7 +266,8 @@ class _DecorationScreenState extends State<DecorationScreen>
                   roomDecoration: decoration,
                   hideProps: false,
                   showBorder: false,
-                  bottomPadding: roomBottomPadding,
+                  bottomPadding:
+                      EnhancedCharacterRoomWidget.roomStandardBottomPadding,
                   equippedCharacterItems:
                       characterController.currentUser?.equippedCharacterItems,
                   currentAnimation: characterController.currentAnimation,
@@ -391,7 +387,13 @@ class _DecorationScreenState extends State<DecorationScreen>
                     _buildCategoryTabs(colorScheme),
                     Expanded(
                       child: Padding(
-                        padding: EdgeInsets.only(bottom: 15.0 + paddingBottom),
+                        padding: EdgeInsets.only(
+                          bottom:
+                              (Theme.of(context).platform == TargetPlatform.iOS
+                                      ? 5.0
+                                      : 15.0) +
+                                  MediaQuery.of(context).padding.bottom,
+                        ),
                         child: PageView.builder(
                           controller: _pageController,
                           itemCount: _categories.length,

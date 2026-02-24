@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/custom_bottom_navigation_bar.dart';
+import '../../../router/app_router.dart';
 
 class MainShell extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -43,6 +44,14 @@ class _MainShellState extends State<MainShell>
         widget.navigationShell.currentIndex) {
       final oldIndex = oldWidget.navigationShell.currentIndex;
       final newIndex = widget.navigationShell.currentIndex;
+
+      // 마이페이지(index 4)에서 다른 탭으로 이동할 때 열려있는 바텀시트(내 메모 등) 닫기
+      if (oldIndex == 4) {
+        if (AppRouter.archiveNavigatorKey.currentState?.canPop() ?? false) {
+          AppRouter.archiveNavigatorKey.currentState?.pop();
+        }
+      }
+
       final isRight = newIndex > oldIndex;
 
       _controller.reset();

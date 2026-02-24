@@ -1,10 +1,24 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/models/question_model.dart';
 
 class QuestionService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (e) {
+      debugPrint('QuestionService: FirebaseFirestore 인스턴스 획득 실패');
+      rethrow;
+    }
+  }
 
-  CollectionReference get _questionsCollection => _db.collection('questions');
+  CollectionReference get _questionsCollection {
+    try {
+      return _db.collection('questions');
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   // 랜덤 질문 가져오기
   Future<QuestionModel?> getRandomQuestion() async {

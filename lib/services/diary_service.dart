@@ -1,10 +1,24 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/models/diary_model.dart';
 
 class DiaryService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (e) {
+      debugPrint('DiaryService: FirebaseFirestore 인스턴스 획득 실패');
+      rethrow;
+    }
+  }
 
-  CollectionReference get _diariesCollection => _db.collection('diaries');
+  CollectionReference get _diariesCollection {
+    try {
+      return _db.collection('diaries');
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   // 일기 생성
   Future<String> createDiary(DiaryModel diary) async {

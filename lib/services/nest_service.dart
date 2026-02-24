@@ -1,12 +1,34 @@
+import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/nest_model.dart';
 import '../data/models/user_model.dart';
 
 class NestService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (e) {
+      debugPrint('NestService: FirebaseFirestore 인스턴스 획득 실패 (Firebase 미초기화)');
+      rethrow;
+    }
+  }
 
-  CollectionReference get _nestsCollection => _db.collection('nests');
-  CollectionReference get _invitesCollection => _db.collection('nest_invites');
+  CollectionReference get _nestsCollection {
+    try {
+      return _db.collection('nests');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  CollectionReference get _invitesCollection {
+    try {
+      return _db.collection('nest_invites');
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   // 둥지 생성 (사용자당 최대 2개 제한 등은 Controller에서 처리)
   Future<String> createNest(String name, String creatorId) async {
@@ -154,40 +176,70 @@ class NestService {
 
   // 특정 둥지의 멤버 정보 스트림
   Stream<List<UserModel>> getNestMembersStream(String nestId) {
-    return _nestsCollection.doc(nestId).snapshots().asyncMap((doc) async {
-      if (!doc.exists) return [];
-      final data = doc.data() as Map<String, dynamic>;
-      final memberIds = List<String>.from(data['memberIds'] ?? []);
+    // ignore: close_sinks
+    StreamController<List<UserModel>>? controller;
+    StreamSubscription? nestSub;
+    StreamSubscription? usersSub;
 
-      if (memberIds.isEmpty) return [];
+    controller = StreamController<List<UserModel>>(
+      onListen: () {
+        nestSub = _nestsCollection.doc(nestId).snapshots().listen((nestDoc) {
+          if (!nestDoc.exists) {
+            controller?.add([]);
+            return;
+          }
+          final data = nestDoc.data() as Map<String, dynamic>;
+          final memberIds = List<String>.from(data['memberIds'] ?? []);
 
-      final membersQuery = await _db
-          .collection('users')
-          .where(FieldPath.documentId, whereIn: memberIds.take(10).toList())
-          .get();
+          if (memberIds.isEmpty) {
+            controller?.add([]);
+            return;
+          }
 
-      final users =
-          membersQuery.docs.map((d) => UserModel.fromFirestore(d)).toList();
+          // memberIds가 변경될 때만 users 구독을 새로 시작
+          usersSub?.cancel();
+          usersSub = _db
+              .collection('users')
+              .where(FieldPath.documentId, whereIn: memberIds)
+              .snapshots()
+              .listen((snapshot) {
+            final users =
+                snapshot.docs.map((d) => UserModel.fromFirestore(d)).toList();
 
-      // memberIds 순서대로 정렬하여 UI에서 위치가 고정되도록 함
-      users.sort((a, b) {
-        return memberIds.indexOf(a.uid).compareTo(memberIds.indexOf(b.uid));
-      });
+            users.sort((a, b) {
+              return memberIds
+                  .indexOf(a.uid)
+                  .compareTo(memberIds.indexOf(b.uid));
+            });
 
-      return users;
-    });
+            if (controller?.isClosed == false) {
+              controller?.add(users);
+            }
+          });
+        });
+      },
+      onCancel: () {
+        nestSub?.cancel();
+        usersSub?.cancel();
+      },
+    );
+
+    return controller.stream;
   }
 
   // 둥지 초대 보내기
   Future<void> inviteToNest(String nestId, String nestName, String senderId,
       String receiverId) async {
-    // 중복 초대 및 이미 멤버인지 확인해야 함.
-    final existingMemberQuery = await _nestsCollection.doc(nestId).get();
-    if (existingMemberQuery.exists) {
-      final nest = NestModel.fromMap(
-          nestId, existingMemberQuery.data() as Map<String, dynamic>);
+    final nestDoc = await _nestsCollection.doc(nestId).get();
+    if (nestDoc.exists) {
+      final nest =
+          NestModel.fromMap(nestId, nestDoc.data() as Map<String, dynamic>);
       if (nest.memberIds.contains(receiverId)) {
         throw Exception('이미 둥지에 가입된 멤버입니다.');
+      }
+      // 레벨 1 가입 제한 (10명)
+      if (nest.level == 1 && nest.memberIds.length >= 10) {
+        throw Exception('nestFullError');
       }
     }
 
@@ -236,6 +288,19 @@ class NestService {
   // 둥지 초대 수락
   Future<void> acceptNestInvite(
       String inviteId, String nestId, String userId) async {
+    // 둥지 정원 확인
+    final nestDoc = await _nestsCollection.doc(nestId).get();
+    if (nestDoc.exists) {
+      final data = nestDoc.data() as Map<String, dynamic>;
+      final level = (data['level'] as num?)?.toInt() ?? 1;
+      final memberIds = List<String>.from(data['memberIds'] ?? []);
+
+      // 레벨 1 가입 제한 (10명)
+      if (level == 1 && memberIds.length >= 10) {
+        throw Exception('nestFullError');
+      }
+    }
+
     final batch = _db.batch();
 
     // 1. 초대 상태 업데이트
@@ -336,5 +401,92 @@ class NestService {
       }
       return invites;
     });
+  }
+
+  // 둥지 삭제 (방장 권한)
+  Future<void> deleteNest(String nestId) async {
+    final nestDoc = await _nestsCollection.doc(nestId).get();
+    if (!nestDoc.exists) return;
+
+    final memberIds = List<String>.from(nestDoc['memberIds'] ?? []);
+    final batch = _db.batch();
+
+    // 모든 멤버의 nestIds에서 이 둥지 ID 제거
+    for (final memberId in memberIds) {
+      batch.update(_db.collection('users').doc(memberId), {
+        'nestIds': FieldValue.arrayRemove([nestId])
+      });
+    }
+
+    // 둥지 문서 삭제
+    batch.delete(_nestsCollection.doc(nestId));
+
+    // 이 둥지와 관련된 모든 펜딩 초대 삭제 (선택적이지만 깔끔함을 위해)
+    final invites =
+        await _invitesCollection.where('nestId', isEqualTo: nestId).get();
+    for (var doc in invites.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
+
+  // 둥지 나가기 (멤버 권한)
+  Future<void> leaveNest(String nestId, String userId) async {
+    final batch = _db.batch();
+
+    // 사용자의 nestIds에서 둥지 ID 제거
+    batch.update(_db.collection('users').doc(userId), {
+      'nestIds': FieldValue.arrayRemove([nestId])
+    });
+
+    // 둥지의 memberIds에서 사용자 ID 제거
+    batch.update(_nestsCollection.doc(nestId), {
+      'memberIds': FieldValue.arrayRemove([userId])
+    });
+
+    await batch.commit();
+  }
+
+  // 둥지 업그레이드 (방장 권한)
+  Future<void> upgradeNest(String nestId) async {
+    final nestDoc = await _nestsCollection.doc(nestId).get();
+    if (!nestDoc.exists) return;
+
+    final data = nestDoc.data() as Map<String, dynamic>;
+    final memberIds = List<String>.from(data['memberIds'] ?? []);
+    final creatorId = data['creatorId'] ?? '';
+    final nestName = data['name'] ?? '둥지';
+
+    final batch = _db.batch();
+
+    // 둥지 정보 업데이트
+    batch.update(_nestsCollection.doc(nestId), {
+      'level': 2,
+      'totalGaji': FieldValue.increment(-1000), // 업그레이드 시 가지 1000개 사용
+      'lastActivityAt': FieldValue.serverTimestamp(),
+    });
+
+    // 멤버들에게 알림 생성 (방장 제외)
+    for (final memberId in memberIds) {
+      if (memberId == creatorId) continue;
+
+      final notificationRef = _db.collection('notifications').doc();
+      batch.set(notificationRef, {
+        'userId': memberId,
+        'senderId': creatorId,
+        'type': 'nestUpgrade',
+        'message': '[$nestName] 둥지가 레벨 2로 업그레이드 되었습니다! 🎉',
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'data': {
+          'nestId': nestId,
+          'nestName': nestName,
+          'level': 2,
+        },
+      });
+    }
+
+    await batch.commit();
   }
 }

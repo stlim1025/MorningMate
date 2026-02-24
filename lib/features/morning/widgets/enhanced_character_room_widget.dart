@@ -22,6 +22,8 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
   final bool isDarkMode;
   final AppColorScheme? colorScheme;
 
+  static const double roomStandardBottomPadding = 90.0;
+
   const EnhancedCharacterRoomWidget({
     super.key,
     required this.isAwake,
@@ -39,7 +41,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
     this.selectedPropIndex,
     this.onPropDelete,
     this.todaysMood,
-    this.bottomPadding = 0,
+    this.bottomPadding = roomStandardBottomPadding,
     this.equippedCharacterItems,
     this.visitorCharacterLevel,
     this.visitorEquippedItems,
@@ -180,13 +182,15 @@ class _EnhancedCharacterRoomWidgetState
     if (decoration == null) return;
 
     // Helper to handle both asset and network paths for precaching
+    // 네트워크 이미지(Firebase Storage403 등) 실패 시 조용히 무시
     void precacheHelper(String? path) {
       if (path == null || path.isEmpty) return;
-      if (path.startsWith('http')) {
-        precacheImage(CachedNetworkImageProvider(path), context);
-      } else {
-        precacheImage(AssetImage(path), context);
-      }
+      final provider = path.startsWith('http')
+          ? CachedNetworkImageProvider(path) as ImageProvider
+          : AssetImage(path);
+      precacheImage(provider, context).catchError((_) {
+        // 프리캐싱 실패는 무시 - 실제 이미지 표시는 CachedNetworkImage/Image.asset이 처리
+      });
     }
 
     // Precache Wallpaper
@@ -207,12 +211,10 @@ class _EnhancedCharacterRoomWidgetState
     }
 
     // Precache Floor
-    if (decoration.floorId != 'default') {
-      final floor = RoomAssets.floors.firstWhere(
-          (f) => f.id == decoration.floorId,
-          orElse: () => RoomAssets.floors.first);
-      precacheHelper(floor.imagePath);
-    }
+    final floor = RoomAssets.floors.firstWhere(
+        (f) => f.id == decoration.floorId,
+        orElse: () => RoomAssets.floors.first);
+    precacheHelper(floor.imagePath);
 
     // Precache Props
     for (var prop in decoration.props) {

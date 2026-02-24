@@ -131,7 +131,8 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                     colorScheme: colorScheme,
                     isDarkMode: isDarkMode,
                     todaysMood: todaysMood,
-                    bottomPadding: 45 + MediaQuery.of(context).padding.bottom,
+                    bottomPadding:
+                        EnhancedCharacterRoomWidget.roomStandardBottomPadding,
                     equippedCharacterItems: _friend!.equippedCharacterItems,
                     visitorCharacterLevel: currentUser?.characterLevel,
                     visitorEquippedItems: currentUser?.equippedCharacterItems,

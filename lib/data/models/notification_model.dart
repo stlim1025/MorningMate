@@ -8,6 +8,7 @@ enum NotificationType {
   challenge,
   nestInvite,
   nestDonation,
+  nestPoke,
 }
 
 class NotificationModel {

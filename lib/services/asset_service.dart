@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -6,8 +7,23 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../core/constants/room_assets.dart';
 
 class AssetService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  FirebaseFirestore get _db {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (e) {
+      debugPrint('AssetService: FirebaseFirestore 인스턴스 획득 실패');
+      rethrow;
+    }
+  }
+
+  FirebaseStorage get _storage {
+    try {
+      return FirebaseStorage.instance;
+    } catch (e) {
+      debugPrint('AssetService: FirebaseStorage 인스턴스 획득 실패');
+      rethrow;
+    }
+  }
 
   Future<void> fetchDynamicAssets() async {
     try {
@@ -80,7 +96,18 @@ class AssetService {
   // 기존 로컬 에셋들을 Firestore로 일괄 업로드하기 위한 마이그레이션 함수 (관리자용 1회성)
   Future<void> migrateLocalAssetsToFirestore() async {
     try {
+      // 1. Firestore에서 이미 존재하는 에셋 정보 가져오기 (ID + imageUrl 포함)
+      final existingSnapshot = await _db.collection('assets').get();
+      // doc ID → imageUrl 맵
+      final existingAssets = <String, String?>{
+        for (var doc in existingSnapshot.docs)
+          doc.id: doc.data()['imageUrl'] as String?,
+      };
+      debugPrint('Firestore 기등록 에셋 수: ${existingAssets.length}');
+
       final batch = _db.batch();
+      // fetchDynamicAssets()로 인해 RoomAssets가 덮어써졌을 수 있으므로
+      // 카테고리 원본 이름만 사용하여 처리
       final allAssetsMap = {
         'prop': RoomAssets.props,
         'wallpaper': RoomAssets.wallpapers,
@@ -89,13 +116,35 @@ class AssetService {
         'emoticon': RoomAssets.emoticons,
       };
 
+      int uploadCount = 0;
+
       for (var entry in allAssetsMap.entries) {
         final category = entry.key;
         final assetList = entry.value;
 
         for (var prop in assetList) {
-          if (prop.imagePath != null && prop.imagePath!.startsWith('http'))
+          final existingImageUrl = existingAssets[prop.id];
+
+          // 스킵 조건:
+          // 1) 이미 Firestore에 유효한 원격 URL이 저장된 경우
+          // 2) 로컬 목록에서도 이미 원격 URL인 경우 (fetchDynamicAssets로 덮어써진 경우)
+          final hasValidRemoteUrl = existingImageUrl != null &&
+              existingImageUrl.isNotEmpty &&
+              existingImageUrl.startsWith('http');
+          final isAlreadyRemote =
+              prop.imagePath != null && prop.imagePath!.startsWith('http');
+
+          if (hasValidRemoteUrl || isAlreadyRemote) {
             continue;
+          }
+
+          // 로컬 imagePath가 없으면 스킵
+          if (prop.imagePath == null || prop.imagePath!.isEmpty) {
+            continue;
+          }
+
+          debugPrint(
+              '신규/재업로드 대상: ${prop.id} (Firestore imageUrl: $existingImageUrl)');
 
           String? downloadUrl;
           if (prop.imagePath != null && prop.imagePath!.isNotEmpty) {
@@ -109,6 +158,7 @@ class AssetService {
                   uint8List, SettableMetadata(contentType: 'image/png'));
               downloadUrl = await storageRef.getDownloadURL();
               debugPrint('${prop.id} 스토리지 업로드 성공');
+              uploadCount++;
             } catch (e) {
               debugPrint('${prop.id} 스토리지 업로드 실패: $e');
               downloadUrl = prop.imagePath;
@@ -135,8 +185,12 @@ class AssetService {
         }
       }
 
-      await batch.commit();
-      debugPrint('로컬 소품 마이그레이션 완료!');
+      if (uploadCount > 0) {
+        await batch.commit();
+        debugPrint('총 $uploadCount개의 신규/재업로드 에셋 마이그레이션 완료!');
+      } else {
+        debugPrint('업로드할 신규 에셋이 없습니다. (모든 에셋이 이미 Firebase Storage에 존재함)');
+      }
     } catch (e) {
       debugPrint('마이그레이션 오류: $e');
     }

@@ -596,7 +596,7 @@ class _MorningScreenState extends State<MorningScreen>
         Provider.of<ThemeController>(context, listen: false).isDarkMode;
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
-    final bottomPadding = 30 + MediaQuery.of(context).padding.bottom;
+    final bottomPadding = EnhancedCharacterRoomWidget.roomStandardBottomPadding;
 
     return EnhancedCharacterRoomWidget(
       key: const ValueKey('main_character_room'),

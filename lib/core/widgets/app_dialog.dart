@@ -33,6 +33,11 @@ enum AppDialogKey {
   inviteToNest,
   collectGaji,
   nestCollectSuccess,
+  editNest,
+  leaveNest,
+  deleteNest,
+  nestUpgrade,
+  nestUpgradeSuccess,
 }
 
 class AppDialogAction {
@@ -59,6 +64,7 @@ class AppDialogConfig {
   const AppDialogConfig({
     required this.title,
     this.leading,
+    this.trailing,
     this.content,
     this.actions = const [],
     this.actionsAlignment,
@@ -68,6 +74,7 @@ class AppDialogConfig {
 
   final String title;
   final Widget? leading;
+  final Widget? trailing;
   final Widget? content;
   final List<AppDialogAction> actions;
   final MainAxisAlignment? actionsAlignment;
@@ -88,6 +95,7 @@ class AppDialog {
     required BuildContext context,
     Widget? content,
     Widget? leading,
+    Widget? trailing,
     List<AppDialogAction>? actions,
   }) {
     // ... (rest of buildConfig stays same)
@@ -435,6 +443,51 @@ class AppDialog {
           actionsAlignment: MainAxisAlignment.center,
           showConfetti: true,
         );
+      case AppDialogKey.editNest:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('nestEditTitle') ?? '둥지 수정',
+          trailing: trailing,
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.leaveNest:
+        return AppDialogConfig(
+          title:
+              AppLocalizations.of(context)?.get('nestLeaveTitle') ?? '둥지 나가기',
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.deleteNest:
+        return AppDialogConfig(
+          title:
+              AppLocalizations.of(context)?.get('nestDeleteTitle') ?? '둥지 삭제',
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.nestUpgrade:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('nestUpgradeTitle') ??
+              '둥지 업그레이드',
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.nestUpgradeSuccess:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('nestUpgradeSuccess') ??
+              '업그레이드 완료!',
+          content: content,
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context),
+                ),
+              ],
+          actionsAlignment: MainAxisAlignment.center,
+          showConfetti: true,
+        );
     }
   }
 
@@ -443,6 +496,7 @@ class AppDialog {
     required AppDialogKey key,
     Widget? content,
     Widget? leading,
+    Widget? trailing,
     List<AppDialogAction>? actions,
     bool barrierDismissible = true,
   }) {
@@ -451,6 +505,7 @@ class AppDialog {
       context: context,
       content: content,
       leading: leading,
+      trailing: trailing,
       actions: actions,
     );
     // final colors = Theme.of(context).extension<AppColorScheme>(); // Removed unused variable
@@ -757,24 +812,38 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
                             children: [
                               // Title
                               if (config.title.isNotEmpty) ...[
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    if (config.leading != null) ...[
-                                      config.leading!,
-                                      const SizedBox(width: 10),
-                                    ],
-                                    Text(
-                                      config.title,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontFamily: 'BMJUA',
-                                        fontSize: 23,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF4E342E), // Dark Brown
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      if (config.leading != null)
+                                        Positioned(
+                                          left: 0,
+                                          child: config.leading!,
+                                        ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 40),
+                                        child: Text(
+                                          config.title,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontFamily: 'BMJUA',
+                                            fontSize: 23,
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                Color(0xFF4E342E), // Dark Brown
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      if (config.trailing != null)
+                                        Positioned(
+                                          right: 0,
+                                          child: config.trailing!,
+                                        ),
+                                    ],
+                                  ),
                                 ),
                                 const SizedBox(height: 20),
                               ],

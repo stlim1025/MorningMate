@@ -1,14 +1,29 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/models/user_model.dart';
 import 'user_service.dart';
 
 class FriendService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (e) {
+      debugPrint('FriendService: FirebaseFirestore 인스턴스 획득 실패');
+      rethrow;
+    }
+  }
+
   final UserService _userService;
 
   FriendService(this._userService);
 
-  CollectionReference get _friendsCollection => _db.collection('friends');
+  CollectionReference get _friendsCollection {
+    try {
+      return _db.collection('friends');
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   // 친구 요청 보내기
   Future<String> sendFriendRequest(String userId, String friendId) async {

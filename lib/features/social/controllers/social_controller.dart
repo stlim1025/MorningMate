@@ -390,8 +390,13 @@ class SocialController extends ChangeNotifier {
   }
 
   // 둥지에서 찌르기 (특수 메시지)
-  Future<void> pokeNestMember(String userId, String userNickname,
-      String friendId, String friendName, String nestName) async {
+  Future<void> pokeNestMember(
+      String userId,
+      String userNickname,
+      String friendId,
+      String friendName,
+      String nestName,
+      String nestId) async {
     try {
       final callable = FirebaseFunctions.instance.httpsCallable('wakeUpFriend');
       final notificationRef =
@@ -402,11 +407,15 @@ class SocialController extends ChangeNotifier {
         'userId': friendId, // 받는 사람
         'senderId': userId, // 보낸 사람
         'senderNickname': userNickname,
-        'type': 'wakeUp',
+        'type': 'nestPoke',
         'message': message,
         'isRead': false,
         'fcmSent': false,
         'createdAt': Timestamp.fromDate(DateTime.now()),
+        'data': {
+          'nestId': nestId,
+          'nestName': nestName,
+        },
       });
 
       unawaited(() async {

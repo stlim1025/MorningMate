@@ -329,7 +329,12 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                   // Items PageView
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.only(bottom: paddingBottom + 15),
+                      padding: EdgeInsets.only(
+                          bottom:
+                              (Theme.of(context).platform == TargetPlatform.iOS
+                                      ? 5.0
+                                      : 15.0) +
+                                  paddingBottom),
                       child: PageView.builder(
                         controller: _pageController,
                         onPageChanged: (index) {

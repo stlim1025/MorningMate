@@ -10,6 +10,7 @@ import '../controllers/notification_controller.dart';
 import '../../../data/models/notification_model.dart';
 import '../../social/widgets/reply_dialog.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
@@ -233,24 +234,24 @@ class NotificationScreen extends StatelessWidget {
                                                   ? (AppLocalizations.of(context)?.getFormat('replyFrom', {'username': notification.senderNickname}) ??
                                                       '${notification.senderNickname}\'s reply')
                                                   : (AppLocalizations.of(context)
-                                                          ?.getFormat('cheerFrom', {
-                                                        'username': notification
-                                                            .senderNickname
-                                                      }) ??
+                                                          ?.getFormat('cheerFrom',
+                                                              {'username': notification.senderNickname}) ??
                                                       '${notification.senderNickname}\'s cheer'))
-                                              : (notification.type ==
-                                                      NotificationType.wakeUp
+                                              : (notification.type == NotificationType.wakeUp
                                                   ? (AppLocalizations.of(context)?.get('wakeUpAlert') ??
                                                       'Wake up alert')
                                                   : (notification.type == NotificationType.friendRequest
                                                       ? (AppLocalizations.of(context)?.get('friendRequest') ??
                                                           'Friend Request')
                                                       : (notification.type == NotificationType.nestInvite
-                                                          ? '둥지 초대'
-                                                          : (notification.type == NotificationType.nestDonation
-                                                              ? '둥지 기부'
-                                                              : (AppLocalizations.of(context)?.get('notifications') ??
-                                                                  'Notifications'))))),
+                                                          ? (AppLocalizations.of(context)?.get('nestInvite') ??
+                                                              '둥지 초대')
+                                                          : (notification.type == NotificationType.nestPoke
+                                                              ? (AppLocalizations.of(context)?.get('nestPokeAlert') ??
+                                                                  '찌르기 알림')
+                                                              : (notification.type == NotificationType.nestDonation
+                                                                  ? (AppLocalizations.of(context)?.get('nestDonation') ?? '둥지 기부')
+                                                                  : (AppLocalizations.of(context)?.get('notifications') ?? 'Notifications')))))),
                                           style: TextStyle(
                                             fontFamily: 'BMJUA',
                                             color: colorScheme.textSecondary,
@@ -386,14 +387,46 @@ class NotificationScreen extends StatelessWidget {
                                           final nestId = notification
                                               .data!['nestId']
                                               .toString();
-                                          await nestController.acceptNestInvite(
-                                            inviteId,
-                                            nestId,
-                                            userId,
-                                          );
-                                          // 알림 업데이트 (읽음 처리)
-                                          await notificationController
-                                              .markAsRead(notification.id);
+                                          try {
+                                            await nestController
+                                                .acceptNestInvite(
+                                              inviteId,
+                                              nestId,
+                                              userId,
+                                            );
+                                            // 알림 업데이트 (읽음 처리)
+                                            await notificationController
+                                                .markAsRead(notification.id);
+                                          } catch (e) {
+                                            if (context.mounted &&
+                                                e.toString().contains(
+                                                    'nestFullError')) {
+                                              AppDialog.show(
+                                                context: context,
+                                                key: AppDialogKey.inviteToNest,
+                                                content: Text(
+                                                  AppLocalizations.of(context)
+                                                          ?.get(
+                                                              'nestFullError') ??
+                                                      '10명이 꽉차서 더 이상 입장할 수 없습니다.',
+                                                  style: const TextStyle(
+                                                      fontFamily: 'BMJUA',
+                                                      fontSize: 16),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                                actions: [
+                                                  AppDialogAction(
+                                                    label: AppLocalizations.of(
+                                                                context)
+                                                            ?.get('confirm') ??
+                                                        '확인',
+                                                    onPressed: (c) =>
+                                                        Navigator.pop(c),
+                                                  ),
+                                                ],
+                                              );
+                                            }
+                                          }
                                         },
                                         child: Container(
                                           width: 70,
@@ -560,6 +593,7 @@ class NotificationScreen extends StatelessWidget {
     final isNestNotification =
         notification.type == NotificationType.nestInvite ||
             notification.type == NotificationType.nestDonation ||
+            notification.type == NotificationType.nestPoke ||
             (notification.data != null && notification.data!['nestId'] != null);
 
     if (isNestNotification) {

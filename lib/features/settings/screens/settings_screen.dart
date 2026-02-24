@@ -6,6 +6,10 @@ import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../social/controllers/social_controller.dart';
+import '../../social/controllers/nest_controller.dart';
+import '../../character/controllers/character_controller.dart';
+import '../../morning/controllers/morning_controller.dart';
 import '../../../services/user_service.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/localization/language_provider.dart';
@@ -1061,7 +1065,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           isPrimary: true,
           onPressed: () async {
             await authController.signOut();
+
+            // 모든 컨트롤러 상태 초기화 (signOut 이후 실행해야 Firestore 스트림의
+            // onError 핸들러가 permission-denied를 정상 처리함)
             if (context.mounted) {
+              context.read<SocialController>().clear();
+              context.read<NestController>().clear();
+              context.read<CharacterController>().clear();
+              context.read<MorningController>().clear();
               context.go('/login');
             }
           },

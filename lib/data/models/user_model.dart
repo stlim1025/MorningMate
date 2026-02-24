@@ -82,7 +82,7 @@ class UserModel {
     this.purchasedThemeIds = const ['light'],
     this.purchasedBackgroundIds = const ['default'],
     this.purchasedPropIds = const [],
-    this.purchasedFloorIds = const ['default'],
+    this.purchasedFloorIds = const ['wood'],
     this.purchasedEmoticonIds = const [
       'happy',
       'normal',
@@ -154,7 +154,10 @@ class UserModel {
           List<String>.from(data['purchasedBackgroundIds'] ?? ['default']),
       purchasedPropIds: List<String>.from(data['purchasedPropIds'] ?? []),
       purchasedFloorIds:
-          List<String>.from(data['purchasedFloorIds'] ?? ['default']),
+          (List<String>.from(data['purchasedFloorIds'] ?? ['wood']))
+              .map((id) => id == 'default' ? 'wood' : id)
+              .toSet()
+              .toList(),
       purchasedEmoticonIds: List<String>.from(
           data['purchasedEmoticonIds'] ?? ['happy', 'normal', 'sad', 'love']),
       activeEmoticonIds: List<String>.from(

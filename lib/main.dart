@@ -57,9 +57,18 @@ void main() async {
   await initializeDateFormatting('ko_KR', null);
 
   // Firebase 초기화
+  bool isFirebaseInitialized = false;
   try {
-    await Firebase.initializeApp();
-    debugPrint('Firebase 초기화 성공');
+    if (kIsWeb) {
+      debugPrint('웹 환경 감지됨. FirebaseOptions 확인 중...');
+      // 실제 프로젝트 키 (다른 설정 파일에서 추출)
+      // web 앱 ID를 모르므로, 일단 호출을 건너뛰어 크래시를 방지합니다.
+      debugPrint('ℹ️ 웹용 firebase_options.dart가 없어 Firebase 초기화를 건너뜁니다.');
+    } else {
+      await Firebase.initializeApp();
+      isFirebaseInitialized = true;
+      debugPrint('Firebase 초기화 성공');
+    }
   } catch (e) {
     debugPrint('Firebase 초기화 실패: $e');
   }
@@ -76,15 +85,27 @@ void main() async {
     debugPrint('카카오 SDK 초기화 실패: $e');
   }
 
-  // Firebase App Check 초기화 (개발 환경용 디버그 모드)
-  try {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.debug,
-      appleProvider: AppleProvider.debug,
-    );
-    debugPrint('Firebase App Check 초기화 성공 (디버그 모드)');
-  } catch (e) {
-    debugPrint('Firebase App Check 초기화 실패: $e');
+  if (isFirebaseInitialized) {
+    // Firebase App Check 초기화 (개발 환경용 디버그 모드)
+    try {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.debug,
+        appleProvider: AppleProvider.debug,
+      );
+      debugPrint('Firebase App Check 초기화 성공 (디버그 모드)');
+    } catch (e) {
+      debugPrint('Firebase App Check 초기화 실패: $e');
+    }
+
+    // 로그인 상태 유지 설정 (모든 플랫폼에서 명시적으로 LOCAL 설정 시도)
+    try {
+      await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+    } catch (e) {
+      debugPrint('Persistence Error: $e');
+    }
+
+    // FCM 백그라운드 핸들러 등록
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
   // 광고 SDK 초기화
@@ -95,22 +116,18 @@ void main() async {
     debugPrint('광고 SDK 초기화 실패: $e');
   }
 
-  // 로그인 상태 유지 설정 (모든 플랫폼에서 명시적으로 LOCAL 설정 시도)
-  try {
-    await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
-  } catch (e) {
-    debugPrint('Persistence Error: $e');
-  }
-
-  // FCM 백그라운드 핸들러 등록
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  runApp(MorniApp(initialRoute: '/splash'));
+  runApp(MorniApp(
+      initialRoute: '/splash', isFirebaseInitialized: isFirebaseInitialized));
 }
 
 class MorniApp extends StatefulWidget {
   final String initialRoute;
-  const MorniApp({super.key, required this.initialRoute});
+  final bool isFirebaseInitialized;
+  const MorniApp({
+    super.key,
+    required this.initialRoute,
+    this.isFirebaseInitialized = true,
+  });
 
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();

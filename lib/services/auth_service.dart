@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
@@ -6,14 +7,34 @@ import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseAuth get _auth {
+    try {
+      return FirebaseAuth.instance;
+    } catch (e) {
+      debugPrint('AuthService: FirebaseAuth 인스턴스 획득 실패 (Firebase 미초기화)');
+      rethrow;
+    }
+  }
+
   final LocalAuthentication _localAuth = LocalAuthentication();
 
   // 현재 사용자
-  User? get currentUser => _auth.currentUser;
+  User? get currentUser {
+    try {
+      return _auth.currentUser;
+    } catch (e) {
+      return null;
+    }
+  }
 
   // 인증 상태 스트림
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  Stream<User?> get authStateChanges {
+    try {
+      return _auth.authStateChanges();
+    } catch (e) {
+      return const Stream.empty();
+    }
+  }
 
   // 이메일/비밀번호 회원가입
   Future<UserCredential> signUpWithEmail(String email, String password) async {

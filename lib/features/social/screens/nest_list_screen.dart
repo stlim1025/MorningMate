@@ -29,6 +29,23 @@ class _NestListScreenState extends State<NestListScreen> {
   }
 
   void _showCreateNestDialog() {
+    final nestController = Provider.of<NestController>(context, listen: false);
+    final authController = Provider.of<AuthController>(context, listen: false);
+    final userId = authController.currentUser?.uid;
+
+    if (userId != null) {
+      final createdNestsCount = nestController.myNests
+          .where((nest) => nest.creatorId == userId)
+          .length;
+      if (createdNestsCount >= 2) {
+        MemoNotification.show(
+            context,
+            AppLocalizations.of(context)?.get('nestMaxCountError') ??
+                '둥지는 최대 2개까지만 생성할 수 있습니다.');
+        return;
+      }
+    }
+
     final TextEditingController nameController = TextEditingController();
 
     AppDialog.show(
@@ -288,10 +305,41 @@ class _NestListScreenState extends State<NestListScreen> {
                                       context,
                                       listen: false);
                                   if (authCtrl.currentUser != null) {
-                                    await nestController.acceptNestInvite(
-                                        inviteId,
-                                        nestId,
-                                        authCtrl.currentUser!.uid);
+                                    try {
+                                      await nestController.acceptNestInvite(
+                                          inviteId,
+                                          nestId,
+                                          authCtrl.currentUser!.uid);
+                                    } catch (e) {
+                                      if (context.mounted &&
+                                          e
+                                              .toString()
+                                              .contains('nestFullError')) {
+                                        AppDialog.show(
+                                          context: context,
+                                          key: AppDialogKey.inviteToNest,
+                                          content: Text(
+                                            AppLocalizations.of(context)
+                                                    ?.get('nestFullError') ??
+                                                '10명이 꽉차서 더 이상 입장할 수 없습니다.',
+                                            style: const TextStyle(
+                                                fontFamily: 'BMJUA',
+                                                fontSize: 16),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          actions: [
+                                            AppDialogAction(
+                                              label:
+                                                  AppLocalizations.of(context)
+                                                          ?.get('confirm') ??
+                                                      '확인',
+                                              onPressed: (c) =>
+                                                  Navigator.pop(c),
+                                            ),
+                                          ],
+                                        );
+                                      }
+                                    }
                                   }
                                 },
                                 child: Container(
@@ -394,9 +442,6 @@ class _NestListScreenState extends State<NestListScreen> {
               SizedBox(height: Platform.isIOS ? 8 : 12),
 
               Container(
-                constraints: const BoxConstraints(
-                  maxHeight: 260,
-                ),
                 alignment: Alignment.topCenter,
                 child: Consumer<NestController>(
                     builder: (context, nestController, child) {
@@ -611,7 +656,8 @@ class _NestListScreenState extends State<NestListScreen> {
     final String name = nest.name;
     final int level = nest.level;
     final int currentPeople = nest.memberIds.length;
-    final int maxPeople = 20; // Default or configured per level
+    final int maxPeople =
+        nest.level == 1 ? 10 : 15; // Level 1 is 10, others are 15
     final String desc = nest.description.isNotEmpty
         ? nest.description
         : (AppLocalizations.of(context)?.get('nestPlaceholderDesc') ??
@@ -647,7 +693,7 @@ class _NestListScreenState extends State<NestListScreen> {
         ),
         Positioned(
           top: -8,
-          left: -8,
+          left: 0,
           child: Container(
             width: 40,
             height: 20,
@@ -657,9 +703,8 @@ class _NestListScreenState extends State<NestListScreen> {
                       ?.getFormat('nestLevel', {'level': level.toString()}) ??
                   'Lv.$level',
               style: const TextStyle(
-                color: Color(
-                    0xFF4E342E), // Changed to dark brown because white would be invisible
-                fontFamily: 'BMJUA',
+                color: Color(0xFF4E342E),
+                fontFamily: 'KyoboHandwriting2024psw',
                 fontSize: 12,
                 height: 1.0,
                 fontWeight: FontWeight.bold,
@@ -704,19 +749,30 @@ class _NestListScreenState extends State<NestListScreen> {
           ),
         ),
         Positioned(
-          top: -10,
-          left: -6,
+          top: -26,
+          left: 2,
           child: Container(
-            width: 32,
-            height: 16,
+            width: 46,
+            height: 46,
             alignment: Alignment.center,
-            child: Text(
-              'Lv.$level',
-              style: const TextStyle(
-                color: Color(0xFF4E342E),
-                fontFamily: 'BMJUA',
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Circle_Area.png'),
+                fit: BoxFit.contain,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                AppLocalizations.of(context)
+                        ?.getFormat('nestLevel', {'level': level.toString()}) ??
+                    'Lv.$level',
+                style: const TextStyle(
+                  color: Color(0xFF4E342E),
+                  fontFamily: 'KyoboHandwriting2024psw',
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

@@ -27,18 +27,37 @@ class NestRoomScreen extends StatefulWidget {
 }
 
 class _NestRoomScreenState extends State<NestRoomScreen> {
-  // 미리 정해진 둥지 내 캐릭터 배치 위치 (상대적 좌표: dx, dy (0.0 ~ 1.0))
-  final List<Offset> _fixedPositions = const [
-    Offset(0.2, 0.4), // 1
-    Offset(0.8, 0.4), // 2
-    Offset(0.5, 0.5), // 3 (Center)
-    Offset(0.3, 0.65), // 4
-    Offset(0.7, 0.65), // 5
-    Offset(0.2, 0.8), // 6
-    Offset(0.8, 0.8), // 7
-    Offset(0.5, 0.3), // 8
-    Offset(0.5, 0.85), // 9
-    Offset(0.2, 0.2), // 10
+  // 레벨 1 둥지 내 캐릭터 배치 위치
+  final List<Offset> _level1Positions = const [
+    Offset(0.85, 0.38), // 침대 위
+    Offset(0.50, 0.48), // 러그 중앙 상단
+    Offset(0.32, 0.55), // 러그 왼쪽
+    Offset(0.68, 0.55), // 러그 오른쪽
+    Offset(0.16, 0.45), // 왼쪽 장식장 부근
+    Offset(0.20, 0.68), // 테이블 위
+    Offset(0.40, 0.78), // 테이블 근처 아래 바닥
+    Offset(0.78, 0.70), // 바닥 오른쪽 (Y축 위로 조정)
+    Offset(0.88, 0.50), // 중앙 오른쪽 끝 (Y축 위로 조정)
+    Offset(0.55, 0.88), // 바닥 하단
+  ];
+
+  // 레벨 2 둥지 내 캐릭터 배치 위치 (15명용)
+  final List<Offset> _level2Positions = const [
+    Offset(0.38, 0.44), // 중앙 소파 1
+    Offset(0.50, 0.42), // 중앙 소파 2
+    Offset(0.60, 0.42), // 중앙 소파 3
+    Offset(0.72, 0.44), // 중앙 소파 4
+    Offset(0.15, 0.35), // 왼쪽 위 소파/침대
+    Offset(0.85, 0.35), // 오른쪽 위 소파/침대
+    Offset(0.15, 0.76), // 왼쪽 아래 소파/침대
+    Offset(0.85, 0.76), // 오른쪽 아래 소파/침대
+    Offset(0.50, 0.64), // 책상 아래 (러그 위)
+    Offset(0.20, 0.65), // 러그 왼쪽
+    Offset(0.80, 0.65), // 러그 오른쪽
+    Offset(0.18, 0.32), // 계단 부근
+    Offset(0.35, 0.82), // 하단 왼쪽 바닥
+    Offset(0.65, 0.82), // 하단 오른쪽 바닥
+    Offset(0.50, 0.15), // 발코니 중앙 (한 명 추가하여 15명 유지)
   ];
 
   late Stream<List<UserModel>> _membersStream;
@@ -54,6 +73,26 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
   }
 
   void _showInviteDialog() {
+    if (widget.nest.level == 1 && widget.nest.memberIds.length >= 10) {
+      AppDialog.show(
+        context: context,
+        key: AppDialogKey.inviteToNest,
+        content: Text(
+          AppLocalizations.of(context)?.get('nestFullError') ??
+              '10명이 꽉차서 더 이상 입장할 수 없습니다.',
+          style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          AppDialogAction(
+            label: AppLocalizations.of(context)?.get('confirm') ?? '확인',
+            onPressed: (c) => Navigator.pop(c),
+          ),
+        ],
+      );
+      return;
+    }
+
     final TextEditingController nicknameController = TextEditingController();
 
     AppDialog.show(
@@ -174,7 +213,31 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                       '$nickname님에게 초대 요청을 보냈습니다.');
             } catch (e) {
               if (ctx.mounted) {
-                MemoNotification.show(ctx, '초대 실패: ${e.toString()}');
+                if (e.toString().contains('nestFullError')) {
+                  AppDialog.show(
+                    context: ctx,
+                    key: AppDialogKey.inviteToNest,
+                    content: Text(
+                      AppLocalizations.of(context)?.get('nestFullError') ??
+                          '10명이 꽉차서 더 이상 입장할 수 없습니다.',
+                      style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    actions: [
+                      AppDialogAction(
+                        label: AppLocalizations.of(context)?.get('confirm') ??
+                            '확인',
+                        onPressed: (c) => Navigator.pop(c),
+                      ),
+                    ],
+                  );
+                } else {
+                  MemoNotification.show(
+                      ctx,
+                      AppLocalizations.of(context)?.getFormat(
+                              'nestInviteFailed', {'error': e.toString()}) ??
+                          '초대 실패: ${e.toString()}');
+                }
               }
             }
           },
@@ -319,20 +382,21 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
 
     AppDialog.show(
       context: context,
-      key: AppDialogKey.createNest,
+      key: AppDialogKey.editNest,
+      trailing: GestureDetector(
+        onTap: () {
+          _showDeleteNestConfirmDialog(nest);
+        },
+        child: Image.asset(
+          'assets/icons/Delete_Button.png',
+          width: 26,
+          height: 26,
+          fit: BoxFit.contain,
+        ),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            AppLocalizations.of(context)?.get('nestEditTitle') ?? '둥지 수정',
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF4E342E),
-            ),
-          ),
-          const SizedBox(height: 16),
           PopupTextField(
             controller: nameController,
             hintText: AppLocalizations.of(context)?.get('nestNameHint') ??
@@ -371,6 +435,97 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                   context,
                   AppLocalizations.of(context)?.get('nestUpdateSuccess') ??
                       '둥지 정보를 수정했습니다!');
+            } catch (e) {
+              if (ctx.mounted) {
+                MemoNotification.show(ctx, e.toString());
+              }
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showDeleteNestConfirmDialog(NestModel nest) {
+    AppDialog.show(
+      context: context,
+      key: AppDialogKey.deleteNest,
+      content: Text(
+        AppLocalizations.of(context)
+                ?.getFormat('nestDeleteConfirm', {'name': nest.name}) ??
+            '\'${nest.name}\' 둥지를 정말 삭제하시겠습니까?\n모든 멤버가 탈퇴 처리되며 복구할 수 없습니다.',
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+      ),
+      actions: [
+        AppDialogAction(
+          label: AppLocalizations.of(context)?.get('cancel') ?? '취소',
+          onPressed: (ctx) => Navigator.pop(ctx),
+        ),
+        AppDialogAction(
+          label: AppLocalizations.of(context)?.get('delete') ?? '삭제',
+          isPrimary: true,
+          onPressed: (ctx) async {
+            final nestController =
+                Provider.of<NestController>(context, listen: false);
+            try {
+              await nestController.deleteNest(nest.id);
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx); // 다이얼로그 닫기
+              if (!mounted) return;
+              context.pop(); // 둥지 방 나가기 (리스트로 이동)
+              MemoNotification.show(
+                  context,
+                  AppLocalizations.of(context)?.get('nestDeleteSuccess') ??
+                      '둥지가 삭제되었습니다.');
+            } catch (e) {
+              if (ctx.mounted) {
+                MemoNotification.show(ctx, e.toString());
+              }
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showLeaveNestConfirmDialog(NestModel nest) {
+    AppDialog.show(
+      context: context,
+      key: AppDialogKey.leaveNest,
+      content: Text(
+        AppLocalizations.of(context)
+                ?.getFormat('nestLeaveConfirm', {'name': nest.name}) ??
+            '\'${nest.name}\' 둥지에서 정말 나가시겠습니까?',
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+      ),
+      actions: [
+        AppDialogAction(
+          label: AppLocalizations.of(context)?.get('cancel') ?? '취소',
+          onPressed: (ctx) => Navigator.pop(ctx),
+        ),
+        AppDialogAction(
+          label: AppLocalizations.of(context)?.get('nestWithdraw') ?? '나가기',
+          isPrimary: true,
+          onPressed: (ctx) async {
+            final authController =
+                Provider.of<AuthController>(context, listen: false);
+            final userId = authController.currentUser?.uid;
+            if (userId == null) return;
+
+            final nestController =
+                Provider.of<NestController>(context, listen: false);
+            try {
+              await nestController.leaveNest(nest.id, userId);
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              if (!mounted) return;
+              context.pop();
+              MemoNotification.show(
+                  context,
+                  AppLocalizations.of(context)?.get('nestLeaveSuccess') ??
+                      '둥지에서 퇴장했습니다.');
             } catch (e) {
               if (ctx.mounted) {
                 MemoNotification.show(ctx, e.toString());
@@ -437,8 +592,107 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
         member.uid,
         member.nickname,
         widget.nest.name,
+        widget.nest.id,
       );
     }
+  }
+
+  void _showUpgradeDialog() {
+    AppDialog.show(
+      context: context,
+      key: AppDialogKey.nestUpgrade,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 16),
+          Image.asset(
+            'assets/images/Nest_Level2.png',
+            width: 150,
+            height: 150,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('assets/images/branch.png', width: 24, height: 24),
+              const SizedBox(width: 8),
+              const Text(
+                '1000',
+                style: TextStyle(
+                  fontFamily: 'BMJUA',
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF4E342E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            AppLocalizations.of(context)?.get('nestUpgradeConfirm') ??
+                '둥지를 레벨 2로 업그레이드 하시겠습니까?\n배경이 바뀌고 정원이 15명으로 늘어납니다.',
+            style: const TextStyle(
+              fontFamily: 'BMJUA',
+              fontSize: 16,
+              color: Color(0xFF4E342E),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+      actions: [
+        AppDialogAction(
+          label: AppLocalizations.of(context)?.get('cancel') ?? '취소',
+          onPressed: (ctx) => Navigator.pop(ctx),
+        ),
+        AppDialogAction(
+          label: AppLocalizations.of(context)?.get('upgrade') ?? '업그레이드',
+          isPrimary: true,
+          onPressed: (ctx) async {
+            final nestController =
+                Provider.of<NestController>(context, listen: false);
+            try {
+              await nestController.upgradeNest(widget.nest.id);
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              if (!mounted) return;
+              AppDialog.show(
+                context: context,
+                key: AppDialogKey.nestUpgradeSuccess,
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 16),
+                    Image.asset(
+                      'assets/images/Nest_Level2.png',
+                      width: 150,
+                      height: 150,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      AppLocalizations.of(context)?.get('nestUpgradeSuccess') ??
+                          '둥지가 레벨 2로 업그레이드 되었습니다!',
+                      style: const TextStyle(
+                        fontFamily: 'BMJUA',
+                        fontSize: 16,
+                        color: Color(0xFF4E342E),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            } catch (e) {
+              if (ctx.mounted) {
+                MemoNotification.show(ctx, e.toString());
+              }
+            }
+          },
+        ),
+      ],
+    );
   }
 
   @override
@@ -467,6 +721,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 ),
               ),
               child: Stack(
+                clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
                   Padding(
@@ -484,13 +739,61 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                   ),
                   if (isCreator)
                     Positioned(
-                      right: 25,
+                      right: 20,
                       child: IconButton(
-                        icon: const Icon(Icons.edit,
-                            color: Color(0xFF4E342E), size: 20),
+                        icon: Image.asset(
+                          'assets/icons/Edit_Button.png',
+                          width: 18,
+                          height: 18,
+                          fit: BoxFit.contain,
+                        ),
                         onPressed: () => _showEditNestDialog(nestData),
                       ),
+                    )
+                  else
+                    Positioned(
+                      right: 15,
+                      child: IconButton(
+                        icon: const Icon(Icons.logout,
+                            color: Color(0xFF4E342E), size: 18),
+                        onPressed: () => _showLeaveNestConfirmDialog(nestData),
+                      ),
                     ),
+                  // 인원 수 표시 (컨테이너 바깥 오른쪽)
+                  Positioned(
+                    right: -45, // Container 오른쪽 바깥으로 이동
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4E342E).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.person,
+                              size: 12, color: Color(0xFF4E342E)),
+                          const SizedBox(width: 2),
+                          Text(
+                            AppLocalizations.of(context)
+                                    ?.getFormat('nestPeopleCount', {
+                                  'current':
+                                      nestData.memberIds.length.toString(),
+                                  'max': nestData.level == 1 ? '10' : '15'
+                                }) ??
+                                '${nestData.memberIds.length}/${nestData.level == 1 ? 10 : 15}',
+                            style: const TextStyle(
+                              color: Color(0xFF4E342E),
+                              fontFamily: 'BMJUA',
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -539,67 +842,103 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
         currentIndex: 3,
         onTap: (_) {},
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: ResizeImage(
-                AssetImage(widget.nest.level == 1
-                    ? 'assets/images/Nest_Level1.png'
-                    : 'assets/images/Nest_Background.png'),
-                width: 1080),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // 둥지 상단: 공통 가지 수량 및 기부 버튼
-              StreamBuilder<NestModel?>(
-                  stream: _nestStream,
-                  builder: (context, snapshot) {
-                    final nestData = snapshot.data ?? widget.nest;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 100,
-                            height: 44,
+      body: StreamBuilder<NestModel?>(
+        stream: _nestStream,
+        builder: (context, nestSnapshot) {
+          final nestData = nestSnapshot.data ?? widget.nest;
+
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: ResizeImage(
+                    AssetImage(nestData.level == 1
+                        ? 'assets/images/Nest_Level1.png'
+                        : 'assets/images/Nest_Level2.png'),
+                    width: 1080),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // 둥지 상단: 공통 가지 수량 및 기부 버튼
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 44,
+                          decoration: const BoxDecoration(
+                            image: DecorationImage(
+                              image:
+                                  AssetImage('assets/images/Circle_Area.png'),
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset('assets/images/branch.png',
+                                  width: 24, height: 24),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${nestData.totalGaji}',
+                                style: const TextStyle(
+                                  color: Color(0xFF4E342E),
+                                  fontFamily: 'BMJUA',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // 가지 모으기 버튼
+                        _ScaleTapButton(
+                          onTap: () => _showCollectDialog(nestData.totalGaji),
+                          child: Container(
+                            width: 75,
+                            height: 32,
                             decoration: const BoxDecoration(
                               image: DecorationImage(
                                 image:
-                                    AssetImage('assets/images/Circle_Area.png'),
+                                    AssetImage('assets/images/Add_Button.png'),
                                 fit: BoxFit.fill,
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Image.asset('assets/images/branch.png',
-                                    width: 24, height: 24),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '${nestData.totalGaji}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF4E342E),
-                                    fontFamily: 'BMJUA',
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            alignment: Alignment.center,
+                            child: Text(
+                              AppLocalizations.of(context)
+                                      ?.get('nestCollectButton') ??
+                                  '+ 모으기',
+                              style: const TextStyle(
+                                color: Color(0xFF4E342E),
+                                fontFamily: 'BMJUA',
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          // 가지 모으기 버튼
+                        ),
+                        // 업그레이드 버튼 (방장 && 레벨1 && 가지 1000개 이상)
+                        if (Provider.of<AuthController>(context, listen: false)
+                                    .currentUser
+                                    ?.uid ==
+                                nestData.creatorId &&
+                            nestData.level == 1 &&
+                            nestData.totalGaji >= 1000)
                           _ScaleTapButton(
-                            onTap: () => _showCollectDialog(nestData.totalGaji),
+                            onTap: _showUpgradeDialog,
                             child: Container(
-                              width: 75,
+                              width: 90,
                               height: 32,
                               decoration: const BoxDecoration(
                                 image: DecorationImage(
@@ -611,8 +950,8 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                               alignment: Alignment.center,
                               child: Text(
                                 AppLocalizations.of(context)
-                                        ?.get('nestCollectButton') ??
-                                    '+ 모으기',
+                                        ?.get('nestUpgrade') ??
+                                    '업그레이드',
                                 style: const TextStyle(
                                   color: Color(0xFF4E342E),
                                   fontFamily: 'BMJUA',
@@ -622,264 +961,286 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  }),
-              Expanded(
-                child: StreamBuilder<List<UserModel>>(
-                  stream: _membersStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                          child: Text(AppLocalizations.of(context)
-                                  ?.get('errorOccurred') ??
-                              '오류가 발생했습니다.'));
-                    }
-                    final members = snapshot.data ?? [];
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: StreamBuilder<List<UserModel>>(
+                      stream: _membersStream,
+                      builder: (context, memberSnapshot) {
+                        if (memberSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        if (memberSnapshot.hasError) {
+                          return Center(
+                              child: Text(AppLocalizations.of(context)
+                                      ?.get('errorOccurred') ??
+                                  '오류가 발생했습니다.'));
+                        }
+                        final members = memberSnapshot.data ?? [];
 
-                    if (members.isEmpty) {
-                      return Center(
-                          child: Text(
-                              AppLocalizations.of(context)
-                                      ?.get('nestNoMembers') ??
-                                  '아직 멤버가 없습니다.',
-                              style: const TextStyle(fontFamily: 'BMJUA')));
-                    }
+                        if (members.isEmpty) {
+                          return Center(
+                              child: Text(
+                                  AppLocalizations.of(context)
+                                          ?.get('nestNoMembers') ??
+                                      '아직 멤버가 없습니다.',
+                                  style: const TextStyle(fontFamily: 'BMJUA')));
+                        }
 
-                    return LayoutBuilder(builder: (context, constraints) {
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: members.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final member = entry.value;
-                          // 위치 초과시 랜덤? 혹은 안전한 위치로
-                          final posOffset = index < _fixedPositions.length
-                              ? _fixedPositions[index]
-                              : Offset(0.5, 0.5);
+                        return LayoutBuilder(builder: (context, constraints) {
+                          final positions = nestData.level == 1
+                              ? _level1Positions
+                              : _level2Positions;
 
-                          final left = constraints.maxWidth * posOffset.dx -
-                              50; // 캐릭터 절반 사이즈 보정
-                          final top = constraints.maxHeight * posOffset.dy - 50;
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            children: members.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final member = entry.value;
 
-                          return Positioned(
-                            left: left,
-                            top: top,
-                            child: GestureDetector(
-                              onDoubleTap: () => _handlePoke(member),
-                              onTap: () {
-                                MemoNotification.show(
-                                    context,
-                                    AppLocalizations.of(context)?.getFormat(
-                                            'nestPokeDescription', {
-                                          'nickname': member.nickname,
-                                          'days': member.displayConsecutiveDays
-                                              .toString()
-                                        }) ??
-                                        '${member.nickname}: 연속 ${member.displayConsecutiveDays}일! (더블탭해서 찌르기)');
-                              },
-                              child: Builder(
-                                builder: (context) {
-                                  final socialController =
-                                      Provider.of<SocialController>(context,
-                                          listen: false);
-                                  final isAwake =
-                                      socialController.isFriendAwake(member);
-                                  final friendMood =
-                                      socialController.getFriendMood(member);
+                              final posOffset = index < positions.length
+                                  ? positions[index]
+                                  : const Offset(0.5, 0.5);
 
-                                  String? moodAsset;
-                                  if (isAwake && friendMood != null) {
-                                    final asset = RoomAssets.emoticons
-                                        .cast<RoomAsset?>()
-                                        .firstWhere(
-                                          (e) => e?.id == friendMood,
-                                          orElse: () => null,
-                                        );
-                                    if (asset?.imagePath != null) {
-                                      moodAsset = asset!.imagePath;
-                                    } else {
-                                      switch (friendMood) {
-                                        case 'happy':
-                                          moodAsset =
-                                              'assets/imoticon/Imoticon_Happy.png';
-                                          break;
-                                        case 'normal':
-                                          moodAsset =
-                                              'assets/imoticon/Imoticon_Normal.png';
-                                          break;
-                                        case 'sad':
-                                          moodAsset =
-                                              'assets/imoticon/Imoticon_Sad.png';
-                                          break;
-                                        case 'angry':
-                                          moodAsset =
-                                              'assets/imoticon/Imoticon_Angry.png';
-                                          break;
+                              final left =
+                                  constraints.maxWidth * posOffset.dx - 50;
+                              final top =
+                                  constraints.maxHeight * posOffset.dy - 50;
+
+                              return Positioned(
+                                left: left,
+                                top: top,
+                                child: GestureDetector(
+                                  onDoubleTap: () => _handlePoke(member),
+                                  onTap: () {
+                                    MemoNotification.show(
+                                        context,
+                                        AppLocalizations.of(context)?.getFormat(
+                                                'nestPokeDescription', {
+                                              'nickname': member.nickname,
+                                              'days': member
+                                                  .displayConsecutiveDays
+                                                  .toString()
+                                            }) ??
+                                            '${member.nickname}: 연속 ${member.displayConsecutiveDays}일! (더블탭해서 찌르기)');
+                                  },
+                                  child: Builder(
+                                    builder: (context) {
+                                      final socialController =
+                                          Provider.of<SocialController>(context,
+                                              listen: false);
+                                      final isAwake = socialController
+                                          .isFriendAwake(member);
+                                      final friendMood = socialController
+                                          .getFriendMood(member);
+
+                                      String? moodAsset;
+                                      if (isAwake && friendMood != null) {
+                                        final asset = RoomAssets.emoticons
+                                            .cast<RoomAsset?>()
+                                            .firstWhere(
+                                              (e) => e?.id == friendMood,
+                                              orElse: () => null,
+                                            );
+                                        if (asset?.imagePath != null) {
+                                          moodAsset = asset!.imagePath;
+                                        } else {
+                                          switch (friendMood) {
+                                            case 'happy':
+                                              moodAsset =
+                                                  'assets/imoticon/Imoticon_Happy.png';
+                                              break;
+                                            case 'normal':
+                                              moodAsset =
+                                                  'assets/imoticon/Imoticon_Normal.png';
+                                              break;
+                                            case 'sad':
+                                              moodAsset =
+                                                  'assets/imoticon/Imoticon_Sad.png';
+                                              break;
+                                            case 'angry':
+                                              moodAsset =
+                                                  'assets/imoticon/Imoticon_Angry.png';
+                                              break;
+                                          }
+                                        }
                                       }
-                                    }
-                                  }
 
-                                  return Stack(
-                                    alignment: Alignment.center,
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      Column(
-                                        mainAxisSize: MainAxisSize.min,
+                                      return Stack(
+                                        alignment: Alignment.center,
+                                        clipBehavior: Clip.none,
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 6, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  Colors.white.withOpacity(0.4),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                const Text('🔥',
-                                                    style: TextStyle(
-                                                        fontSize: 12)),
-                                                const SizedBox(width: 2),
-                                                Text(
-                                                  '${member.displayConsecutiveDays}${AppLocalizations.of(context)?.get('dayUnit') ?? '일'}',
-                                                  style: const TextStyle(
-                                                    fontFamily: 'BMJUA',
-                                                    color: Color(0xFF4E342E),
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          SizedBox(
-                                            width: 60,
-                                            height: 60,
-                                            child: Stack(
-                                              alignment: Alignment.center,
-                                              clipBehavior: Clip.none,
-                                              children: [
-                                                // 캐릭터 그림자 (바닥에 고정)
-                                                Positioned(
-                                                  bottom: -3,
-                                                  child: AnimatedOpacity(
-                                                    duration: const Duration(
-                                                        milliseconds: 200),
-                                                    opacity: _jumpingMemberIds
-                                                            .contains(
-                                                                member.uid)
-                                                        ? 0.15
-                                                        : 0.25,
-                                                    child: Container(
-                                                      width: 44,
-                                                      height: 12,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.black,
-                                                        borderRadius:
-                                                            const BorderRadius
-                                                                .all(Radius
-                                                                    .elliptical(
-                                                                        44,
-                                                                        12)),
+                                          Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              SizedBox(
+                                                width: 60,
+                                                height: 60,
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  clipBehavior: Clip.none,
+                                                  children: [
+                                                    // 캐릭터 그림자
+                                                    Positioned(
+                                                      bottom: -3,
+                                                      child: AnimatedOpacity(
+                                                        duration:
+                                                            const Duration(
+                                                                milliseconds:
+                                                                    200),
+                                                        opacity:
+                                                            _jumpingMemberIds
+                                                                    .contains(
+                                                                        member
+                                                                            .uid)
+                                                                ? 0.15
+                                                                : 0.25,
+                                                        child: Container(
+                                                          width: 44,
+                                                          height: 12,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: Colors.black,
+                                                            borderRadius:
+                                                                const BorderRadius
+                                                                    .all(Radius
+                                                                        .elliptical(
+                                                                            44,
+                                                                            12)),
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
+                                                    // 점프하는 캐릭터
+                                                    AnimatedContainer(
+                                                      duration: const Duration(
+                                                          milliseconds: 200),
+                                                      curve: Curves.easeInOut,
+                                                      transform: Matrix4
+                                                          .translationValues(
+                                                              0,
+                                                              _jumpingMemberIds
+                                                                      .contains(
+                                                                          member
+                                                                              .uid)
+                                                                  ? -25
+                                                                  : 0,
+                                                              0),
+                                                      child: CharacterDisplay(
+                                                        isAwake: isAwake,
+                                                        characterLevel: member
+                                                            .characterLevel,
+                                                        size: 60.0,
+                                                        equippedItems: member
+                                                            .equippedCharacterItems,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white
+                                                      .withOpacity(0.4),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  member.nickname,
+                                                  style: const TextStyle(
+                                                    fontFamily: 'BMJUA',
+                                                    fontSize: 12,
+                                                    color: Color(0xFF4E342E),
                                                   ),
                                                 ),
-                                                // 점프하는 캐릭터만 AnimatedContainer로 감쌈
-                                                AnimatedContainer(
-                                                  duration: const Duration(
-                                                      milliseconds: 200),
-                                                  curve: Curves.easeInOut,
-                                                  transform:
-                                                      Matrix4.translationValues(
-                                                          0,
-                                                          _jumpingMemberIds
-                                                                  .contains(
-                                                                      member
-                                                                          .uid)
-                                                              ? -25
-                                                              : 0,
-                                                          0),
-                                                  child: CharacterDisplay(
-                                                    isAwake: isAwake,
-                                                    characterLevel:
-                                                        member.characterLevel,
-                                                    size: 60.0,
-                                                    equippedItems: member
-                                                        .equippedCharacterItems,
-                                                  ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white
+                                                      .withOpacity(0.4),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  Colors.white.withOpacity(0.4),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              member.nickname,
-                                              style: const TextStyle(
-                                                fontFamily: 'BMJUA',
-                                                fontSize: 12,
-                                                color: Color(0xFF4E342E),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (moodAsset != null)
-                                        Positioned(
-                                          top: 0,
-                                          right: -34,
-                                          child: Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              Image.asset(
-                                                'assets/icons/Bubble_Icon.png',
-                                                width: 44,
-                                                height: 44,
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 6),
-                                                child: NetworkOrAssetImage(
-                                                  imagePath: moodAsset,
-                                                  width: 26,
-                                                  height: 26,
-                                                  fit: BoxFit.contain,
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    const Text('🔥',
+                                                        style: TextStyle(
+                                                            fontSize: 10)),
+                                                    const SizedBox(width: 2),
+                                                    Text(
+                                                      '${member.displayConsecutiveDays}${AppLocalizations.of(context)?.get('dayUnit') ?? '일'}',
+                                                      style: const TextStyle(
+                                                        fontFamily: 'BMJUA',
+                                                        color:
+                                                            Color(0xFF4E342E),
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
+                                          if (moodAsset != null)
+                                            Positioned(
+                                              top: 0,
+                                              right: -34,
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Image.asset(
+                                                    'assets/icons/Bubble_Icon.png',
+                                                    width: 44,
+                                                    height: 44,
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            bottom: 6),
+                                                    child: NetworkOrAssetImage(
+                                                      imagePath: moodAsset,
+                                                      width: 26,
+                                                      height: 26,
+                                                      fit: BoxFit.contain,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           );
-                        }).toList(),
-                      );
-                    });
-                  },
-                ),
+                        });
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

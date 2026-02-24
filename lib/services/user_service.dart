@@ -1,10 +1,24 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/models/user_model.dart';
 
 class UserService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (e) {
+      debugPrint('UserService: FirebaseFirestore 인스턴스 획득 실패 (Firebase 미초기화)');
+      rethrow;
+    }
+  }
 
-  CollectionReference get _usersCollection => _db.collection('users');
+  CollectionReference get _usersCollection {
+    try {
+      return _db.collection('users');
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   // 사용자 생성
   Future<void> createUser(UserModel user) async {
@@ -30,6 +44,17 @@ class UserService {
     await _usersCollection.doc(uid).update({
       'fcmToken': token,
     });
+  }
+
+  // FCM 토큰 제거 (로그아웃 시)
+  Future<void> removeFcmToken(String uid) async {
+    try {
+      await _usersCollection.doc(uid).update({
+        'fcmToken': FieldValue.delete(),
+      });
+    } catch (e) {
+      print('FCM 토큰 제거 실패: $e');
+    }
   }
 
   // 사용자 실시간 스트림

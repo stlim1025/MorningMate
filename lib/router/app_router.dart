@@ -38,6 +38,8 @@ import '../features/admin/screens/admin_screen.dart';
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> archiveNavigatorKey =
+      GlobalKey<NavigatorState>();
 
   static GoRouter createRouter(
       AuthController authController, String initialRoute) {
@@ -176,6 +178,7 @@ class AppRouter {
               ],
             ),
             StatefulShellBranch(
+              navigatorKey: archiveNavigatorKey,
               routes: [
                 GoRoute(
                   path: '/archive',

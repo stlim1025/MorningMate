@@ -7,7 +7,7 @@ class RoomDecorationModel {
   RoomDecorationModel({
     this.wallpaperId = 'default',
     this.backgroundId = 'default',
-    this.floorId = 'default',
+    this.floorId = 'wood',
     this.props = const [],
   });
 
@@ -21,10 +21,13 @@ class RoomDecorationModel {
   }
 
   factory RoomDecorationModel.fromMap(Map<String, dynamic> map) {
+    String mappedFloorId = map['floorId'] ?? 'wood';
+    if (mappedFloorId == 'default') mappedFloorId = 'wood';
+
     return RoomDecorationModel(
       wallpaperId: map['wallpaperId'] ?? 'default',
       backgroundId: map['backgroundId'] ?? 'default',
-      floorId: map['floorId'] ?? 'default',
+      floorId: mappedFloorId,
       props: (map['props'] as List<dynamic>?)
               ?.map((p) => RoomPropModel.fromMap(p as Map<String, dynamic>))
               .toList() ??

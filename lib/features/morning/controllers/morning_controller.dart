@@ -367,6 +367,11 @@ class MorningController extends ChangeNotifier {
             'lastDiaryDate': Timestamp.fromDate(now),
             'lastDiaryMood': moods?.isNotEmpty == true ? moods!.first : null,
           });
+        } else if (_dateKey(diaryDate) == _dateKey(now)) {
+          // 이미 완료된 오늘 일기를 수정하는 경우에도 기분(이모티콘)은 업데이트해줌
+          await _userService.updateUser(userId, {
+            'lastDiaryMood': moods?.isNotEmpty == true ? moods!.first : null,
+          });
         }
 
         _isWriting = false;

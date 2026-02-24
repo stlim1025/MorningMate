@@ -197,6 +197,18 @@ class RoomAssets {
         price: 100,
         icon: Icons.scatter_plot, // Dots
         imagePath: 'assets/images/wallpapers/Lego_WallPaper.png'),
+    RoomAsset(
+        id: 'IvoryClassic',
+        name: '아이보리 클래식',
+        price: 100,
+        icon: Icons.scatter_plot, // Dots
+        imagePath: 'assets/images/wallpapers/IvoryClassic.png'),
+    RoomAsset(
+        id: 'DarkPanel',
+        name: '다크패널',
+        price: 100,
+        icon: Icons.scatter_plot, // Dots
+        imagePath: 'assets/images/wallpapers/DarkPanel.png'),
   ];
 
   static List<RoomAsset> backgrounds = [
@@ -616,19 +628,34 @@ class RoomAssets {
       sizeMultiplier: 1.4,
       aspectRatio: 0.8,
     ),
+    RoomAsset(
+      id: 'wall_lamp',
+      name: '벽조명',
+      price: 150,
+      icon: Icons.light,
+      imagePath: 'assets/items/Wall_Lamp.png',
+      sizeMultiplier: 0.8,
+      isWallMounted: true,
+      isLight: true,
+      lightIntensity: 0.9,
+    ),
+    RoomAsset(
+      id: 'warm_lamp',
+      name: '따뜻한 램프',
+      price: 150,
+      icon: Icons.light,
+      imagePath: 'assets/items/Warm_Lamp.png',
+      sizeMultiplier: 0.7,
+      isLight: true,
+      lightIntensity: 1.0,
+    ),
   ];
 
   static List<RoomAsset> floors = [
     RoomAsset(
-        id: 'default',
-        name: '기본 바닥',
-        price: 0,
-        icon: Icons.grid_view,
-        color: Color(0xFFD2B48C)),
-    RoomAsset(
         id: 'wood',
         name: '나무 바닥',
-        price: 150,
+        price: 0,
         icon: Icons.view_quilt,
         imagePath: 'assets/images/floors/Wood_tile1.png'),
     RoomAsset(
@@ -679,5 +706,11 @@ class RoomAssets {
         price: 300,
         icon: Icons.star,
         imagePath: 'assets/images/floors/lego_Floor.png'),
+    RoomAsset(
+        id: 'DarkWood_Floor',
+        name: '어두운 나무 바닥',
+        price: 300,
+        icon: Icons.star,
+        imagePath: 'assets/images/floors/DarkWood_Floor.png'),
   ];
 }

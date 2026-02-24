@@ -22,6 +22,19 @@ class AssetPrecacheService {
     return AssetImage(path);
   }
 
+  /// 개별 이미지 프리캐싱 - 실패해도 다른 이미지에 영향 없음
+  Future<void> _safePrecache(String path, BuildContext context) async {
+    try {
+      await precacheImage(_getProvider(path), context);
+    } catch (e) {
+      // Firebase Storage URL(403 등) 또는 로컬 에셋 로드 실패 시 조용히 무시.
+      // 실제 화면 표시는 CachedNetworkImage/Image.asset이 직접 처리함.
+      if (path.startsWith('http')) {
+        debugPrint('[Precache] 네트워크 이미지 프리캐싱 실패 (무시됨): $path');
+      }
+    }
+  }
+
   /// Pre-caches all essential room assets.
   /// This should be called early in the app lifecycle (e.g., in MorningScreen).
   Future<void> precacheAllRoomAssets(BuildContext context) async {
@@ -34,46 +47,39 @@ class AssetPrecacheService {
       // 1. Wallpapers
       for (var asset in RoomAssets.wallpapers) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
 
       // 2. Backgrounds
       for (var asset in RoomAssets.backgrounds) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
 
       // 3. Floors
       for (var asset in RoomAssets.floors) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
 
-      // 4. Essential Props (Icons and common items)
+      // 4. Essential Props
       for (var asset in RoomAssets.props) {
         if (asset.imagePath != null) {
-          // Pre-cache with a smaller size for performance if needed,
-          // but precacheImage uses the default cache.
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
 
       // 5. Emoticons
       for (var asset in RoomAssets.emoticons) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
 
-      // Wait for all to complete
+      // 개별 실패가 있어도 나머지는 정상 완료됨
       await Future.wait(precacheTasks);
       _isDone = true;
     } catch (e) {
@@ -90,43 +96,37 @@ class AssetPrecacheService {
     if (category == 'wallpaper') {
       for (var asset in RoomAssets.wallpapers) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
     } else if (category == 'background') {
       for (var asset in RoomAssets.backgrounds) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
     } else if (category == 'floor') {
       for (var asset in RoomAssets.floors) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
     } else if (category == 'props' || category == 'prop') {
       for (var asset in RoomAssets.props) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
     } else if (category == 'emoticon') {
       for (var asset in RoomAssets.emoticons) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
     } else if (category == 'character') {
       for (var asset in CharacterAssets.items) {
         if (asset.imagePath != null) {
-          precacheTasks
-              .add(precacheImage(_getProvider(asset.imagePath!), context));
+          precacheTasks.add(_safePrecache(asset.imagePath!, context));
         }
       }
     }

@@ -10,12 +10,29 @@ import '../../../utils/encryption.dart';
 
 class AdminController extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AssetService _assetService = AssetService();
   final QuestionService _questionService = QuestionService();
   final String? _currentUserEmail;
 
   String? get currentUserEmail => _currentUserEmail;
 
   AdminController(this._currentUserEmail);
+
+  Future<void> syncShopAssets() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _assetService.migrateLocalAssetsToFirestore();
+      await _assetService.fetchDynamicAssets(); // 동기화 후 최신 데이터 다시 불러오기
+      debugPrint('Shop assets synchronized successfully.');
+    } catch (e) {
+      debugPrint('Error syncing shop assets: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   static const List<String> _adminEmails = [
     'admin@morningmate.com',
@@ -803,17 +820,7 @@ class AdminController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> migrateAssetsToFirestore() async {
-    _isLoading = true;
-    notifyListeners();
-    try {
-      await AssetService().migrateLocalAssetsToFirestore();
-    } catch (e) {
-      debugPrint('마이그레이션 실패: $e');
-    }
-    _isLoading = false;
-    notifyListeners();
-  }
+  // migrateAssetsToFirestore was replaced by syncShopAssets for better consistency
 
   Future<List<String>> scanLocalDiaries(String targetUserId) async {
     List<String> foundDates = [];

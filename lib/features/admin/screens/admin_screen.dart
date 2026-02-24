@@ -171,7 +171,7 @@ class AdminHomeTab extends StatelessWidget {
                       onPressed: controller.isLoading
                           ? null
                           : () async {
-                              await controller.migrateAssetsToFirestore();
+                              await controller.syncShopAssets();
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(

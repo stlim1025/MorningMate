@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -7,7 +8,15 @@ import '../core/widgets/floating_notification.dart';
 import '../router/app_router.dart';
 
 class NotificationService {
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  FirebaseMessaging get _fcm {
+    try {
+      return FirebaseMessaging.instance;
+    } catch (e) {
+      debugPrint('NotificationService: FirebaseMessaging 인스턴스 획득 실패');
+      rethrow;
+    }
+  }
+
   Future<void> Function(String token)? _onTokenRefresh;
   StreamSubscription<String>? _tokenRefreshSubscription;
   GlobalKey<ScaffoldMessengerState>? _scaffoldMessengerKey;
@@ -398,5 +407,38 @@ class NotificationService {
   Future<void> clearBadge() async {
     // iOS에서 배지 카운트를 0으로 설정
     // Android에서는 별도의 플러그인 필요
+  }
+
+  // 로그아웃 시 모든 알림 관련 리소스 정리
+  Future<void> cleanup() async {
+    // 1. 토큰 갱신 핸들러 제거
+    _onTokenRefresh = null;
+
+    // 2. 토큰 갱신 구독 해제
+    await _tokenRefreshSubscription?.cancel();
+    _tokenRefreshSubscription = null;
+
+    // 3. FCM 토큰 삭제 (이 디바이스에서 이전 유저의 알림 수신 방지)
+    try {
+      await _fcm.deleteToken();
+      _fcmToken = null;
+      print('FCM 토큰 삭제 완료');
+    } catch (e) {
+      print('FCM 토큰 삭제 실패: $e');
+    }
+
+    // 4. 포그라운드 배너 타이머 정리
+    _foregroundBannerTimer?.cancel();
+    _foregroundBannerTimer = null;
+
+    // 5. 현재 표시 중인 오버레이 알림 제거
+    try {
+      if (_currentOverlayEntry != null && _currentOverlayEntry!.mounted) {
+        _currentOverlayEntry!.remove();
+      }
+    } catch (e) {
+      print('오버레이 알림 제거 중 오류: $e');
+    }
+    _currentOverlayEntry = null;
   }
 }

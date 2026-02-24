@@ -22,6 +22,7 @@ class AuthController extends ChangeNotifier {
   UserModel? _userModel;
   bool _isLoading = false;
   bool _isDeletingAccount = false;
+  bool _isSigningOut = false;
   StreamSubscription<User?>? _authSubscription;
   StreamSubscription<UserModel?>? _userStreamSubscription;
 
@@ -51,6 +52,9 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> _handleAuthStateChange(User? user) async {
+    // 로그아웃 중에는 signOut()에서 직접 정리하므로 여기서는 무시
+    if (_isSigningOut) return;
+
     _currentUser = user;
     _userStreamSubscription?.cancel();
 
@@ -314,11 +318,39 @@ class AuthController extends ChangeNotifier {
 
   // 로그아웃
   Future<void> signOut() async {
+    _isSigningOut = true;
+    final uid = _currentUser?.uid;
+
+    // 1. Firestore에서 FCM 토큰 제거 (아직 인증된 상태에서 실행)
+    if (uid != null) {
+      try {
+        await _userService.removeFcmToken(uid);
+      } catch (e) {
+        debugPrint('FCM 토큰 제거 중 오류 (무시): $e');
+      }
+    }
+
+    // 2. 알림 서비스 정리 (FCM 토큰 삭제, 구독 해제, 오버레이 알림 정리)
+    await _notificationService.cleanup();
+
+    // 3. Firebase Auth 로그아웃
+    //    → Firestore 스트림은 아직 살아있어 onError 핸들러가 permission-denied를 잡아줌
+    //    → _handleAuthStateChange는 _isSigningOut 플래그로 무시됨
     await _authService.signOut();
+
+    // 4. Auth 로그아웃 후 Firestore 스트림 해제
+    //    (네이티브 에러 이벤트가 onError에서 이미 처리된 후 안전하게 취소)
+    _userStreamSubscription?.cancel();
+    _userStreamSubscription = null;
+
+    // 5. 로컬 상태 초기화
     _userModel = null;
-    Future.microtask(() {
-      notifyListeners();
-    });
+    _currentUser = null;
+    _isBiometricVerified = false;
+    _isAuthCheckDone = false;
+    _isSigningOut = false;
+
+    notifyListeners();
   }
 
   // 생체 인증으로 로그인/인증

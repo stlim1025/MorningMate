@@ -117,4 +117,17 @@ class NestController extends ChangeNotifier {
     }
     await _nestService.updateNest(nestId, name, description);
   }
+
+  Future<void> deleteNest(String nestId) async {
+    await _nestService.deleteNest(nestId);
+  }
+
+  Future<void> leaveNest(String nestId, String userId) async {
+    await _nestService.leaveNest(nestId, userId);
+  }
+
+  Future<void> upgradeNest(String nestId) async {
+    await _nestService.upgradeNest(nestId);
+    notifyListeners();
+  }
 }
