@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 
+import 'firebase_options.dart';
 import 'router/app_router.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
@@ -35,7 +36,9 @@ import 'core/localization/app_localizations.dart';
 // FCM 백그라운드 핸들러 (최상위 함수)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   print('백그라운드 메시지 수신: ${message.messageId}');
 }
 
@@ -59,16 +62,11 @@ void main() async {
   // Firebase 초기화
   bool isFirebaseInitialized = false;
   try {
-    if (kIsWeb) {
-      debugPrint('웹 환경 감지됨. FirebaseOptions 확인 중...');
-      // 실제 프로젝트 키 (다른 설정 파일에서 추출)
-      // web 앱 ID를 모르므로, 일단 호출을 건너뛰어 크래시를 방지합니다.
-      debugPrint('ℹ️ 웹용 firebase_options.dart가 없어 Firebase 초기화를 건너뜁니다.');
-    } else {
-      await Firebase.initializeApp();
-      isFirebaseInitialized = true;
-      debugPrint('Firebase 초기화 성공');
-    }
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    isFirebaseInitialized = true;
+    debugPrint('Firebase 초기화 성공');
   } catch (e) {
     debugPrint('Firebase 초기화 실패: $e');
   }

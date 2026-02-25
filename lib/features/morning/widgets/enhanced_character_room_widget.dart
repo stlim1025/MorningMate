@@ -1587,7 +1587,7 @@ class Room3DBackground extends StatelessWidget {
                           ),
                           repeat: ImageRepeat.repeat,
                           alignment: Alignment.topCenter,
-                          scale: 5.0,
+                          scale: 2.5,
                         )
                       : null,
                 ),

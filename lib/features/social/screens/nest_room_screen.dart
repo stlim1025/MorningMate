@@ -468,16 +468,27 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           onPressed: (ctx) async {
             final nestController =
                 Provider.of<NestController>(context, listen: false);
+            // 둥지 삭제 시 현재 화면 캐시가 날아가 unmount 예외가 발생할 수 있으므로,
+            // 팝업 닫기와 페이지 이동에 필요한 NavigatorState와 GoRouter를 미리 저장합니다.
+            final rootNav = Navigator.of(context, rootNavigator: true);
+            final router = GoRouter.of(context);
+
             try {
               await nestController.deleteNest(nest.id);
-              if (!ctx.mounted) return;
-              Navigator.pop(ctx); // 다이얼로그 닫기
-              if (!mounted) return;
-              context.pop(); // 둥지 방 나가기 (리스트로 이동)
-              MemoNotification.show(
-                  context,
-                  AppLocalizations.of(context)?.get('nestDeleteSuccess') ??
-                      '둥지가 삭제되었습니다.');
+
+              // 1. 확인 팝업과 수정 팝업을 rootNav를 사용하여 동기적으로 바로 닫기
+              rootNav.pop(); // '정말 삭제하시겠습니까?' 다이얼로그 닫기
+              rootNav.pop(); // '둥지 수정' 다이얼로그 닫기
+
+              // 2. 탭바가 포함된 둥지 목록(ShellRoute)으로 안전하게 전체 이동
+              router.go('/nest_list');
+
+              if (ctx.mounted) {
+                MemoNotification.show(
+                    ctx,
+                    AppLocalizations.of(ctx)?.get('nestDeleteSuccess') ??
+                        '둥지가 삭제되었습니다.');
+              }
             } catch (e) {
               if (ctx.mounted) {
                 MemoNotification.show(ctx, e.toString());
@@ -845,6 +856,9 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
       body: StreamBuilder<NestModel?>(
         stream: _nestStream,
         builder: (context, nestSnapshot) {
+          if (nestSnapshot.hasError) {
+            return const SizedBox.shrink(); // 삭제 후 에러 발생 시 공백 처리 (이미 화면 이동 중)
+          }
           final nestData = nestSnapshot.data ?? widget.nest;
 
           return Container(

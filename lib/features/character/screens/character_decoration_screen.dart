@@ -626,8 +626,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
               left: 4,
               right: 4,
               child: Text(
-                AppLocalizations.of(context)?.get('item_name_${item.id}') ??
-                    item.name,
+                item.getLocalizedName(context),
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -723,7 +722,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
     final canAfford = user.points >= item.price;
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final l10n = AppLocalizations.of(context);
-    final localizedName = l10n?.get('item_name_${item.id}') ?? item.name;
+    final localizedName = item.getLocalizedName(context);
 
     final shouldPurchase = await AppDialog.show<bool>(
       context: context,
@@ -963,9 +962,7 @@ class _BulkPurchaseContentState extends State<_BulkPurchaseContent> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        AppLocalizations.of(context)
-                                ?.get('item_name_${item.id}') ??
-                            item.name,
+                        item.getLocalizedName(context),
                         style: const TextStyle(
                           fontFamily: 'BMJUA',
                           fontSize: 14,

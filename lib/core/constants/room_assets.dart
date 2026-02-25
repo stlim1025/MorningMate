@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme_type.dart';
+import '../localization/app_localizations.dart';
 
 class RoomAsset {
   final String id;
   final String name;
+  final String? nameKo;
+  final String? nameEn;
   final int price;
   final IconData icon;
   final Color? color;
@@ -20,6 +23,8 @@ class RoomAsset {
   const RoomAsset({
     required this.id,
     required this.name,
+    this.nameKo,
+    this.nameEn,
     required this.price,
     required this.icon,
     this.color,
@@ -48,6 +53,18 @@ class RoomAsset {
   final double? charBottomPct;
   final double? charScaleAwake;
   final double? charScaleSleep;
+
+  String getLocalizedName(BuildContext context) {
+    final lang = AppLocalizations.of(context)?.locale.languageCode ?? 'en';
+    if (lang == 'ko' && nameKo != null && nameKo!.isNotEmpty) return nameKo!;
+    if (lang == 'en' && nameEn != null && nameEn!.isNotEmpty) return nameEn!;
+
+    final l10nName = AppLocalizations.of(context)?.get('item_name_$id');
+    if (l10nName != null && l10nName != 'item_name_$id') {
+      return l10nName;
+    }
+    return name;
+  }
 }
 
 class RoomAssets {

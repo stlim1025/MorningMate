@@ -22,6 +22,8 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
   // Controllers
   late TextEditingController _idController;
   late TextEditingController _nameController;
+  late TextEditingController _nameKoController;
+  late TextEditingController _nameEnController;
   late TextEditingController _priceController;
 
   bool _isLoading = false;
@@ -51,12 +53,16 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
     super.initState();
     _idController = TextEditingController();
     _nameController = TextEditingController();
+    _nameKoController = TextEditingController();
+    _nameEnController = TextEditingController();
     _priceController = TextEditingController(text: '100');
 
     if (widget.itemToEdit != null) {
       final item = widget.itemToEdit;
       _idController.text = item.id;
       _nameController.text = item.name;
+      _nameKoController.text = item.nameKo ?? '';
+      _nameEnController.text = item.nameEn ?? '';
       _priceController.text = item.price.toString();
       _category = item.category ?? 'prop';
       _sizeMultiplier = item.sizeMultiplier;
@@ -73,6 +79,8 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
   void dispose() {
     _idController.dispose();
     _nameController.dispose();
+    _nameKoController.dispose();
+    _nameEnController.dispose();
     _priceController.dispose();
     super.dispose();
   }
@@ -119,6 +127,8 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
         await _assetService.addNewAsset(
           id: _idController.text.trim(),
           name: _nameController.text.trim(),
+          nameKo: _nameKoController.text.trim(),
+          nameEn: _nameEnController.text.trim(),
           price: int.parse(_priceController.text.trim()),
           category: _category,
           imageFile: _selectedImage!,
@@ -134,6 +144,8 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
         await _assetService.updateAsset(
           id: widget.itemToEdit!.id,
           name: _nameController.text.trim(),
+          nameKo: _nameKoController.text.trim(),
+          nameEn: _nameEnController.text.trim(),
           price: int.parse(_priceController.text.trim()),
           category: _category,
           imageFile: _selectedImage,
@@ -317,6 +329,29 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
                           border: OutlineInputBorder()),
                       validator: (value) =>
                           value == null || value.isEmpty ? '이름을 입력하세요' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _nameKoController,
+                            decoration: const InputDecoration(
+                                labelText: '🇰🇷 한국어 이름 (선택)',
+                                border: OutlineInputBorder()),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _nameEnController,
+                            decoration: const InputDecoration(
+                                labelText: '🇺🇸 영어 이름 (선택)',
+                                border: OutlineInputBorder()),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
 

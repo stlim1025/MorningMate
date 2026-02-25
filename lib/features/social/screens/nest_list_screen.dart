@@ -78,16 +78,20 @@ class _NestListScreenState extends State<NestListScreen> {
 
             if (userId != null) {
               try {
-                await nestController.createNest(name, userId);
+                final nestId = await nestController.createNest(name, userId);
 
                 if (!ctx.mounted) return;
                 Navigator.of(ctx).pop();
 
                 if (!mounted) return;
+
+                // 생성된 둥지로 바로 이동
+                context.push('/nest_room/$nestId');
+
                 MemoNotification.show(
                     context,
-                    AppLocalizations.of(context)?.get('nestUpdateSuccess') ??
-                        '둥지가 생성되었습니다!');
+                    AppLocalizations.of(context)?.get('nestCreateSuccess') ??
+                        '둥지가 생성되었습니다! ✨');
               } catch (e) {
                 if (ctx.mounted) {
                   MemoNotification.show(ctx, e.toString());

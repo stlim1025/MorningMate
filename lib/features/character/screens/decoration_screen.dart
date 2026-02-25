@@ -743,8 +743,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             final b = purchased[index];
             final isSelected = decoration.backgroundId == b.id;
             return _buildSelectionCard(
-              label: AppLocalizations.of(context)?.get('item_name_${b.id}') ??
-                  b.name,
+              label: b.getLocalizedName(context),
               icon: b.icon,
               imagePath: b.imagePath,
               color: b.color ??
@@ -784,8 +783,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             final w = purchased[index];
             final isSelected = decoration.wallpaperId == w.id;
             return _buildSelectionCard(
-              label: AppLocalizations.of(context)?.get('item_name_${w.id}') ??
-                  w.name,
+              label: w.getLocalizedName(context),
               color: w.color ?? colorScheme.backgroundLight,
               imagePath: w.imagePath,
               isSelected: isSelected,
@@ -823,8 +821,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             final isSelected = decoration.floorId == f.id;
 
             return _buildSelectionCard(
-              label: AppLocalizations.of(context)?.get('item_name_${f.id}') ??
-                  f.name,
+              label: f.getLocalizedName(context),
               color: f.color ?? colorScheme.backgroundLight,
               imagePath: f.imagePath,
               icon: f.icon,
@@ -874,8 +871,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             final exists = decoration.props.any((prop) => prop.type == p.id);
 
             return _buildSelectionCard(
-              label: AppLocalizations.of(context)?.get('item_name_${p.id}') ??
-                  p.name,
+              label: p.getLocalizedName(context),
               imagePath: p.imagePath,
               icon: p.icon,
               isSelected: exists,
@@ -936,9 +932,7 @@ class _DecorationScreenState extends State<DecorationScreen>
         final isSelected = selIndex != -1;
 
         return _buildSelectionCard(
-          label:
-              AppLocalizations.of(context)?.get('item_name_${emoticon.id}') ??
-                  emoticon.name,
+          label: emoticon.getLocalizedName(context),
           imagePath: emoticon.imagePath,
           icon: emoticon.icon,
           isSelected: isSelected,

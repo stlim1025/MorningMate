@@ -679,8 +679,7 @@ class _ShopScreenState extends State<ShopScreen> {
                 const SizedBox(height: 8),
                 // 아이템 이름
                 Text(
-                  AppLocalizations.of(context)?.get('item_name_${item.id}') ??
-                      item.name,
+                  item.getLocalizedName(context),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -700,7 +699,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       : () async {
                           final l10n = AppLocalizations.of(itemContext);
                           final localizedName =
-                              l10n?.get('item_name_${item.id}') ?? item.name;
+                              item.getLocalizedName(itemContext);
 
                           final shouldPurchase = await AppDialog.show<bool>(
                             context: itemContext,

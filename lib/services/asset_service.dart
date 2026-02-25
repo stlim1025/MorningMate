@@ -37,6 +37,8 @@ class AssetService {
         final newAsset = RoomAsset(
           id: doc.id,
           name: data['name'] ?? '',
+          nameKo: data['nameKo'],
+          nameEn: data['nameEn'],
           price: (data['price'] ?? 0).toInt(),
           icon: Icons.star, // 기본 아이콘 설정
           imagePath: data['imageUrl'], // 원격 URL
@@ -199,6 +201,8 @@ class AssetService {
   Future<void> addNewAsset({
     required String id,
     required String name,
+    String? nameKo,
+    String? nameEn,
     required int price,
     required String category,
     required File imageFile,
@@ -221,6 +225,8 @@ class AssetService {
       final docRef = _db.collection('assets').doc(id);
       await docRef.set({
         'name': name,
+        'nameKo': nameKo,
+        'nameEn': nameEn,
         'category': category,
         'price': price,
         'imageUrl': downloadUrl,
@@ -246,6 +252,8 @@ class AssetService {
   Future<void> updateAsset({
     required String id,
     required String name,
+    String? nameKo,
+    String? nameEn,
     required int price,
     required String category,
     File? imageFile,
@@ -270,6 +278,8 @@ class AssetService {
       final docRef = _db.collection('assets').doc(id);
       await docRef.update({
         'name': name,
+        'nameKo': nameKo,
+        'nameEn': nameEn,
         'category': category,
         'price': price,
         'imageUrl': downloadUrl,
