@@ -16,6 +16,7 @@ class UserModel {
   final String? lastDiaryMood; // 마지막 일기 감정 (최적화용)
   final DateTime? lastStickyNoteDate; // 오늘 메모 작성 여부 체크용
   final DateTime? lastAdRewardDate; // 마지막 광고 보상 받은 시간
+  final DateTime? lastTodaySpeakDate; // 오늘 오늘의 한마디 작성 여부 체크용
   final int adRewardCount; // 오늘 광고 보상 받은 횟수
   final DateTime createdAt;
   final Map<String, dynamic>? characterCustomization;
@@ -64,6 +65,7 @@ class UserModel {
     this.lastDiaryMood,
     this.lastStickyNoteDate,
     this.lastAdRewardDate,
+    this.lastTodaySpeakDate,
     this.adRewardCount = 0,
     required this.createdAt,
     this.characterCustomization,
@@ -132,6 +134,9 @@ class UserModel {
           : null,
       lastAdRewardDate: data['lastAdRewardDate'] != null
           ? (data['lastAdRewardDate'] as Timestamp).toDate()
+          : null,
+      lastTodaySpeakDate: data['lastTodaySpeakDate'] != null
+          ? (data['lastTodaySpeakDate'] as Timestamp).toDate()
           : null,
       adRewardCount: (data['adRewardCount'] as num?)?.toInt() ?? 0,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
@@ -205,6 +210,9 @@ class UserModel {
       'lastAdRewardDate': lastAdRewardDate != null
           ? Timestamp.fromDate(lastAdRewardDate!)
           : null,
+      'lastTodaySpeakDate': lastTodaySpeakDate != null
+          ? Timestamp.fromDate(lastTodaySpeakDate!)
+          : null,
       'adRewardCount': adRewardCount,
       'createdAt': Timestamp.fromDate(createdAt),
       'characterCustomization': characterCustomization ?? {},
@@ -256,6 +264,7 @@ class UserModel {
     String? lastDiaryMood,
     DateTime? lastStickyNoteDate,
     DateTime? lastAdRewardDate,
+    DateTime? lastTodaySpeakDate,
     int? adRewardCount,
     DateTime? createdAt,
     Map<String, dynamic>? characterCustomization,
@@ -303,6 +312,7 @@ class UserModel {
       lastDiaryMood: lastDiaryMood ?? this.lastDiaryMood,
       lastStickyNoteDate: lastStickyNoteDate ?? this.lastStickyNoteDate,
       lastAdRewardDate: lastAdRewardDate ?? this.lastAdRewardDate,
+      lastTodaySpeakDate: lastTodaySpeakDate ?? this.lastTodaySpeakDate,
       adRewardCount: adRewardCount ?? this.adRewardCount,
       createdAt: createdAt ?? this.createdAt,
       characterCustomization:

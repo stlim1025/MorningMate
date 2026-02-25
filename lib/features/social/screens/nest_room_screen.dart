@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/localization/app_localizations.dart';
 
 import '../../../models/nest_model.dart';
@@ -16,6 +17,7 @@ import '../../character/widgets/character_display.dart';
 import '../../common/widgets/custom_bottom_navigation_bar.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
+import '../widgets/today_speak_dialog.dart';
 
 class NestRoomScreen extends StatefulWidget {
   final NestModel nest;
@@ -43,12 +45,12 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
 
   // 레벨 2 둥지 내 캐릭터 배치 위치 (15명용)
   final List<Offset> _level2Positions = const [
-    Offset(0.38, 0.44), // 중앙 소파 1
-    Offset(0.50, 0.42), // 중앙 소파 2
-    Offset(0.60, 0.42), // 중앙 소파 3
-    Offset(0.72, 0.44), // 중앙 소파 4
+    Offset(0.30, 0.42), // 중앙 소파 1
+    Offset(0.45, 0.40), // 중앙 소파 2
+    Offset(0.60, 0.40), // 중앙 소파 3
+    Offset(0.72, 0.42), // 중앙 소파 4
     Offset(0.15, 0.35), // 왼쪽 위 소파/침대
-    Offset(0.85, 0.35), // 오른쪽 위 소파/침대
+    Offset(0.85, 0.3), // 오른쪽 위 소파/침대
     Offset(0.15, 0.76), // 왼쪽 아래 소파/침대
     Offset(0.85, 0.76), // 오른쪽 아래 소파/침대
     Offset(0.50, 0.64), // 책상 아래 (러그 위)
@@ -63,6 +65,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
   late Stream<List<UserModel>> _membersStream;
   late Stream<NestModel?> _nestStream;
   final Set<String> _jumpingMemberIds = {};
+  DateTime? _lastViewedTodaySpeak;
 
   @override
   void initState() {
@@ -70,6 +73,39 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
     final nestService = Provider.of<NestService>(context, listen: false);
     _membersStream = nestService.getNestMembersStream(widget.nest.id);
     _nestStream = nestService.getNestStream(widget.nest.id);
+    _loadLastViewed();
+  }
+
+  Future<void> _loadLastViewed() async {
+    final authController = Provider.of<AuthController>(context, listen: false);
+    final userId = authController.currentUser?.uid;
+    if (userId == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final ts = prefs.getInt('lastViewedTodaySpeak_${userId}_${widget.nest.id}');
+    if (ts != null) {
+      if (mounted) {
+        setState(() {
+          _lastViewedTodaySpeak = DateTime.fromMillisecondsSinceEpoch(ts);
+        });
+      }
+    }
+  }
+
+  Future<void> _saveLastViewed() async {
+    final authController = Provider.of<AuthController>(context, listen: false);
+    final userId = authController.currentUser?.uid;
+    if (userId == null) return;
+
+    final now = DateTime.now();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('lastViewedTodaySpeak_${userId}_${widget.nest.id}',
+        now.millisecondsSinceEpoch);
+    if (mounted) {
+      setState(() {
+        _lastViewedTodaySpeak = now;
+      });
+    }
   }
 
   void _showInviteDialog() {
@@ -608,7 +644,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
     }
   }
 
-  void _showUpgradeDialog() {
+  void _showUpgradeDialog(int totalGaji) {
     AppDialog.show(
       context: context,
       key: AppDialogKey.nestUpgrade,
@@ -628,13 +664,15 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
             children: [
               Image.asset('assets/images/branch.png', width: 24, height: 24),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 '1000',
                 style: TextStyle(
                   fontFamily: 'BMJUA',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF4E342E),
+                  color: totalGaji >= 1000
+                      ? const Color(0xFF4E342E)
+                      : Colors.red.withOpacity(0.7),
                 ),
               ),
             ],
@@ -642,7 +680,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           const SizedBox(height: 12),
           Text(
             AppLocalizations.of(context)?.get('nestUpgradeConfirm') ??
-                '둥지를 레벨 2로 업그레이드 하시겠습니까?\n배경이 바뀌고 정원이 15명으로 늘어납니다.',
+                '둥지를 레벨 2로 업그레이드 하시겠습니까?\n배경이 바뀌고 정원이 15명으로 늘어납니다.\n(일기 작성 시 가지 +5% 버프 획득)',
             style: const TextStyle(
               fontFamily: 'BMJUA',
               fontSize: 16,
@@ -660,6 +698,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
         AppDialogAction(
           label: AppLocalizations.of(context)?.get('upgrade') ?? '업그레이드',
           isPrimary: true,
+          isEnabled: AlwaysStoppedAnimation(totalGaji >= 1000),
           onPressed: (ctx) async {
             final nestController =
                 Provider.of<NestController>(context, listen: false);
@@ -770,15 +809,17 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                         onPressed: () => _showLeaveNestConfirmDialog(nestData),
                       ),
                     ),
-                  // 인원 수 표시 (컨테이너 바깥 오른쪽)
                   Positioned(
-                    right: -45, // Container 오른쪽 바깥으로 이동
+                    right: -55, // Container 오른쪽 바깥으로 조금 더 이동
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4E342E).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/images/Circle_Area.png'),
+                          fit: BoxFit.fill,
+                          opacity: 0.7,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -819,34 +860,105 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           onPressed: () => context.pop(),
         ),
       ),
-      floatingActionButton: Transform.translate(
-        offset: const Offset(0, -10),
-        child: _ScaleTapButton(
-          onTap: _showInviteDialog,
-          child: Container(
-            width: 140,
-            height: 48,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/icons/AddFriend_Button.png'),
-                fit: BoxFit.contain,
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 5), // 시각적 중앙 보정 (텍스트 아래로)
-              child: Text(
-                AppLocalizations.of(context)?.get('nestInviteButton') ??
-                    '+  둥지 초대',
-                style: const TextStyle(
-                  color: Color(0xFF4E342E),
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'BMJUA',
-                  fontSize: 15,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(left: 32.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Transform.translate(
+              offset: const Offset(0, 0), // -10 -> 0 (조금 아래로)
+              child: _ScaleTapButton(
+                onTap: () {
+                  _saveLastViewed(); // 보았으므로 시간 저장
+                  showDialog(
+                    context: context,
+                    builder: (context) => TodaySpeakDialog(
+                      nestId: widget.nest.id,
+                      nestName: widget.nest.name,
+                    ),
+                  );
+                },
+                child: Consumer<NestController>(
+                  builder: (context, nestController, child) {
+                    return StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: nestController.getNestMessagesStream(
+                          widget.nest.id, DateTime.now()),
+                      builder: (context, snapshot) {
+                        final messages = snapshot.data ?? [];
+                        final hasNew = messages.any((m) =>
+                            (_lastViewedTodaySpeak == null ||
+                                (m['createdAt'] as DateTime)
+                                    .isAfter(_lastViewedTodaySpeak!)) &&
+                            m['userId'] !=
+                                Provider.of<AuthController>(context,
+                                        listen: false)
+                                    .currentUser
+                                    ?.uid);
+
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Image.asset(
+                              'assets/icons/TodaySpeak_Button.png',
+                              width: 75,
+                              height: 75,
+                            ),
+                            if (hasNew)
+                              Positioned(
+                                top: 5,
+                                right: 5,
+                                child: Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.white, width: 2),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ),
-          ),
+            Transform.translate(
+              offset: const Offset(0, -10),
+              child: _ScaleTapButton(
+                onTap: _showInviteDialog,
+                child: Container(
+                  width: 140,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/icons/AddFriend_Button.png'),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.only(top: 5), // 시각적 중앙 보정 (텍스트 아래로)
+                    child: Text(
+                      AppLocalizations.of(context)?.get('nestInviteButton') ??
+                          '+  둥지 초대',
+                      style: const TextStyle(
+                        color: Color(0xFF4E342E),
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'BMJUA',
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
@@ -878,6 +990,42 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
               child: Column(
                 children: [
                   // 둥지 상단: 공통 가지 수량 및 기부 버튼
+                  if (nestData.level >= 2)
+                    Transform.translate(
+                      offset: const Offset(0, -10),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image:
+                                AssetImage('assets/images/Buff_Background.png'),
+                            fit: BoxFit.fill,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('✨', style: TextStyle(fontSize: 12)),
+                            const SizedBox(width: 4),
+                            Text(
+                              AppLocalizations.of(context)?.getFormat(
+                                      'nestBuffActive', {
+                                    'bonus': nestData.level == 2 ? '5' : '10'
+                                  }) ??
+                                  '일기 작성 가지 +${nestData.level == 2 ? 5 : 10}% 버프 적용중!',
+                              style: const TextStyle(
+                                color: Color(0xFF4E342E),
+                                fontFamily: 'BMJUA',
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 8.0),
@@ -942,35 +1090,38 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                             ),
                           ),
                         ),
-                        // 업그레이드 버튼 (방장 && 레벨1 && 가지 1000개 이상)
+                        // 업그레이드 버튼 (방장 && 레벨1)
                         if (Provider.of<AuthController>(context, listen: false)
                                     .currentUser
                                     ?.uid ==
                                 nestData.creatorId &&
-                            nestData.level == 1 &&
-                            nestData.totalGaji >= 1000)
-                          _ScaleTapButton(
-                            onTap: _showUpgradeDialog,
-                            child: Container(
-                              width: 90,
-                              height: 32,
-                              decoration: const BoxDecoration(
-                                image: DecorationImage(
-                                  image: AssetImage(
-                                      'assets/images/Add_Button.png'),
-                                  fit: BoxFit.fill,
+                            nestData.level == 1)
+                          Opacity(
+                            opacity: 1.0, // 항상 클릭 가능하므로 불투명도 제거 (또는 1.0 유지)
+                            child: _ScaleTapButton(
+                              onTap: () =>
+                                  _showUpgradeDialog(nestData.totalGaji),
+                              child: Container(
+                                width: 90,
+                                height: 32,
+                                decoration: const BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                        'assets/images/Add_Button.png'),
+                                    fit: BoxFit.fill,
+                                  ),
                                 ),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                AppLocalizations.of(context)
-                                        ?.get('nestUpgrade') ??
-                                    '업그레이드',
-                                style: const TextStyle(
-                                  color: Color(0xFF4E342E),
-                                  fontFamily: 'BMJUA',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  AppLocalizations.of(context)
+                                          ?.get('nestUpgrade') ??
+                                      '업그레이드',
+                                  style: const TextStyle(
+                                    color: Color(0xFF4E342E),
+                                    fontFamily: 'BMJUA',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1159,13 +1310,15 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                               Container(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                        horizontal: 8,
+                                                        horizontal: 10,
                                                         vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white
-                                                      .withOpacity(0.4),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
+                                                decoration: const BoxDecoration(
+                                                  image: DecorationImage(
+                                                    image: AssetImage(
+                                                        'assets/images/Circle_Area.png'),
+                                                    fit: BoxFit.fill,
+                                                    opacity: 0.4,
+                                                  ),
                                                 ),
                                                 child: Text(
                                                   member.nickname,
@@ -1180,13 +1333,15 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                               Container(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                        horizontal: 6,
+                                                        horizontal: 8,
                                                         vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white
-                                                      .withOpacity(0.4),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
+                                                decoration: const BoxDecoration(
+                                                  image: DecorationImage(
+                                                    image: AssetImage(
+                                                        'assets/images/Circle_Area.png'),
+                                                    fit: BoxFit.fill,
+                                                    opacity: 0.4,
+                                                  ),
                                                 ),
                                                 child: Row(
                                                   mainAxisSize:

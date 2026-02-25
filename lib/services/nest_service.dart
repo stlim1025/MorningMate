@@ -135,43 +135,104 @@ class NestService {
   }
 
   // 오늘의 한마디 작성하기
-  Future<void> postNestMessage(String nestId, String userId,
+  Future<bool> postNestMessage(String nestId, String userId,
       String senderNickname, String nestName, String message) async {
-    final batch = _db.batch();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dateString =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-    // 둥지 마지막 활동 시간 업데이트
-    final nestRef = _nestsCollection.doc(nestId);
-    batch.update(nestRef, {
-      'lastActivityAt': FieldValue.serverTimestamp(),
-    });
+    return await _db.runTransaction((transaction) async {
+      final nestRef = _nestsCollection.doc(nestId);
+      final userRef = _db.collection('users').doc(userId);
 
-    // 둥지 멤버들에게 알림 보내기
-    final nestDoc = await nestRef.get();
-    if (nestDoc.exists) {
-      final data = nestDoc.data() as Map<String, dynamic>?;
-      final memberIds = List<String>.from(data?['memberIds'] ?? []);
-      for (final memberId in memberIds) {
-        if (memberId == userId) continue;
+      // 보상 지급 여부 결정 (하루에 한 번)
+      final userDoc = await transaction.get(userRef);
+      bool giveReward = false;
+      if (userDoc.exists) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        final lastDateTs = userData['lastTodaySpeakDate'] as Timestamp?;
+        if (lastDateTs == null) {
+          giveReward = true;
+        } else {
+          final lastDate = lastDateTs.toDate().toLocal();
+          final lastDateOnly =
+              DateTime(lastDate.year, lastDate.month, lastDate.day);
+          if (lastDateOnly.isBefore(today)) {
+            giveReward = true;
+          }
+        }
+      }
 
-        final notificationRef = _db.collection('notifications').doc();
-        batch.set(notificationRef, {
-          'userId': memberId,
-          'senderId': userId,
-          'senderNickname': senderNickname,
-          'type': 'cheerMessage',
-          'message': '[$nestName] $senderNickname님이 한마디를 남겼습니다: $message',
-          'isRead': false,
-          'createdAt': FieldValue.serverTimestamp(),
-          'data': {
-            'nestId': nestId,
-            'nestName': nestName,
-            'message': message,
-          },
+      // 둥지 마지막 활동 시간 업데이트
+      transaction.update(nestRef, {
+        'lastActivityAt': FieldValue.serverTimestamp(),
+      });
+
+      // 보상 지급 및 마지막 작성 시간 업데이트
+      if (giveReward) {
+        transaction.update(userRef, {
+          'points': FieldValue.increment(10),
+          'lastTodaySpeakDate': FieldValue.serverTimestamp(),
         });
       }
-    }
 
-    await batch.commit();
+      // 오늘의 한마디 저장할 경로: nests/{nestId}/daily_messages/{date}/messages/{messageId}
+      final messageRef = nestRef
+          .collection('daily_messages')
+          .doc(dateString)
+          .collection('messages')
+          .doc();
+
+      transaction.set(messageRef, {
+        'userId': userId,
+        'nickname': senderNickname,
+        'message': message,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return giveReward;
+    });
+  }
+
+  // 특정 일자의 둥지 한마디 가져오기
+  Stream<List<Map<String, dynamic>>> getNestMessagesStream(
+      String nestId, DateTime date) {
+    final dateString =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return _nestsCollection
+        .doc(nestId)
+        .collection('daily_messages')
+        .doc(dateString)
+        .collection('messages')
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'userId': data['userId'] ?? '',
+          'nickname': data['nickname'] ?? '',
+          'message': data['message'] ?? '',
+          'createdAt':
+              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        };
+      }).toList();
+    });
+  }
+
+  // 오늘의 한마디 삭제하기
+  Future<void> deleteNestMessage(
+      String nestId, DateTime date, String messageId) async {
+    final dateString =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    await _nestsCollection
+        .doc(nestId)
+        .collection('daily_messages')
+        .doc(dateString)
+        .collection('messages')
+        .doc(messageId)
+        .delete();
   }
 
   // 특정 둥지의 멤버 정보 스트림

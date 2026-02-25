@@ -38,6 +38,8 @@ enum AppDialogKey {
   deleteNest,
   nestUpgrade,
   nestUpgradeSuccess,
+  deleteTodaySpeak,
+  todaySpeakReward,
 }
 
 class AppDialogAction {
@@ -488,6 +490,48 @@ class AppDialog {
           actionsAlignment: MainAxisAlignment.center,
           showConfetti: true,
         );
+      case AppDialogKey.deleteTodaySpeak:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('deleteTodaySpeakTitle') ??
+              '삭제하시겠습니까?',
+          content: content,
+          actions: actions ?? const [],
+        );
+      case AppDialogKey.todaySpeakReward:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('todaySpeakRewardTitle') ??
+              '보상 획득!',
+          content: content ??
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/images/branch.png',
+                      width: 60, height: 60),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppLocalizations.of(context)?.get('todaySpeakRewardDesc') ??
+                        '오늘의 한마디 보상으로 10가지를 획득했습니다!',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'BMJUA',
+                      fontSize: 16,
+                      color: Color(0xFF4E342E),
+                    ),
+                  ),
+                ],
+              ),
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context),
+                ),
+              ],
+          actionsAlignment: MainAxisAlignment.center,
+          showConfetti: true,
+        );
     }
   }
 
@@ -730,10 +774,10 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
                 confettiController: _confettiController,
                 blastDirectionality: BlastDirectionality.explosive,
                 shouldLoop: false,
-                numberOfParticles: 50,
-                emissionFrequency: 0.2,
-                maxBlastForce: 40,
-                minBlastForce: 20,
+                numberOfParticles: 70,
+                emissionFrequency: 0.5,
+                maxBlastForce: 60,
+                minBlastForce: 30,
                 colors: const [
                   Color(0xFFFFD700), // Gold
                   Color(0xFFFFDF00), // Bright Gold

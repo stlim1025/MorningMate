@@ -101,13 +101,23 @@ class NestController extends ChangeNotifier {
         nestId, userId, senderNickname, nestName, amount);
   }
 
-  Future<void> postNestMessage(String nestId, String userId,
+  Future<bool> postNestMessage(String nestId, String userId,
       String senderNickname, String nestName, String message) async {
     if (message.trim().isEmpty) {
       throw Exception('한마디를 입력해주세요.');
     }
-    await _nestService.postNestMessage(
+    return await _nestService.postNestMessage(
         nestId, userId, senderNickname, nestName, message);
+  }
+
+  Stream<List<Map<String, dynamic>>> getNestMessagesStream(
+      String nestId, DateTime date) {
+    return _nestService.getNestMessagesStream(nestId, date);
+  }
+
+  Future<void> deleteNestMessage(
+      String nestId, DateTime date, String messageId) async {
+    await _nestService.deleteNestMessage(nestId, date, messageId);
   }
 
   Future<void> updateNest(

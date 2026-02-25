@@ -66,6 +66,7 @@ class MorningController extends ChangeNotifier {
   Timer? _writingTimer;
   int _writingDuration = 0;
   int _charCount = 0;
+  int _lastEarnedPoints = 0;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -75,6 +76,7 @@ class MorningController extends ChangeNotifier {
   DiaryModel? get todayDiary => _todayDiary;
   int get writingDuration => _writingDuration;
   int get charCount => _charCount;
+  int get lastEarnedPoints => _lastEarnedPoints;
   bool get hasDiaryToday {
     if (_todayDiary == null || !_todayDiary!.isCompleted) return false;
     return _todayDiary!.dateKey == DiaryModel.buildDateKey(DateTime.now());
@@ -360,9 +362,42 @@ class MorningController extends ChangeNotifier {
         }
 
         if (shouldReward) {
+          int calculatedPoints = 10;
+          try {
+            final user = await _userService.getUser(userId);
+            if (user != null) {
+              calculatedPoints = 10 + (user.consecutiveDays * 2);
+            }
+
+            final nestQuery = await FirebaseFirestore.instance
+                .collection('nests')
+                .where('memberIds', arrayContains: userId)
+                .get();
+
+            int totalBonusPercent = 0;
+            for (var doc in nestQuery.docs) {
+              final data = doc.data();
+              final level = data['level'] as int? ?? 1;
+              if (level == 2)
+                totalBonusPercent += 5;
+              else if (level >= 3) totalBonusPercent += 10;
+            }
+
+            if (totalBonusPercent > 0) {
+              calculatedPoints =
+                  (calculatedPoints * (1.0 + totalBonusPercent / 100.0))
+                      .round();
+            }
+          } catch (e) {
+            debugPrint('둥지 버프 점수 계산 오류: $e');
+            calculatedPoints = 10;
+          }
+
+          _lastEarnedPoints = calculatedPoints;
+
           await _userService.updateConsecutiveDays(userId);
           await _userService.updateUser(userId, {
-            'points': FieldValue.increment(10),
+            'points': FieldValue.increment(_lastEarnedPoints),
             'diaryCount': FieldValue.increment(1),
             'lastDiaryDate': Timestamp.fromDate(now),
             'lastDiaryMood': moods?.isNotEmpty == true ? moods!.first : null,

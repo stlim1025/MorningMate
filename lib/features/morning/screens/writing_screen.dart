@@ -857,16 +857,23 @@ class _WritingScreenState extends State<WritingScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        AppLocalizations.of(context)?.getFormat(
-                                'branchEarned', {
-                              'amount': (10 +
-                                      (controller.currentUser
-                                                  ?.consecutiveDays ??
-                                              0) *
-                                          2)
+                        AppLocalizations.of(context)
+                                ?.getFormat('branchEarned', {
+                              'amount': (context
+                                              .read<MorningController>()
+                                              .lastEarnedPoints >
+                                          0
+                                      ? context
+                                          .read<MorningController>()
+                                          .lastEarnedPoints
+                                      : (10 +
+                                          (controller.currentUser
+                                                      ?.consecutiveDays ??
+                                                  0) *
+                                              2))
                                   .toString()
                             }) ??
-                            '+${10 + (controller.currentUser?.consecutiveDays ?? 0) * 2} Branch Earned',
+                            '+${context.read<MorningController>().lastEarnedPoints > 0 ? context.read<MorningController>().lastEarnedPoints : (10 + (controller.currentUser?.consecutiveDays ?? 0) * 2)} Branch Earned',
                         style: TextStyle(
                           fontFamily: 'BMJUA',
                           color: colorScheme.twig,
