@@ -922,7 +922,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Navigator.pop(context);
                 },
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20 + MediaQuery.of(context).viewPadding.bottom),
             ],
           ),
         );

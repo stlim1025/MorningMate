@@ -962,7 +962,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                             final memos = snapshot.data!.docs;
 
                             return SliverPadding(
-                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                              padding: EdgeInsets.fromLTRB(
+                                  20,
+                                  0,
+                                  20,
+                                  20 +
+                                      MediaQuery.of(context)
+                                          .viewPadding
+                                          .bottom),
                               sliver: SliverList(
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {

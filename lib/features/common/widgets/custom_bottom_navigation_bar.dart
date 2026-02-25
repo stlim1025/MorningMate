@@ -18,9 +18,12 @@ class CustomBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double navBarHeight = Platform.isIOS ? 75 : 90;
+    // viewPadding은 SafeArea에 의해 소비되지 않으므로
+    // Edge-to-Edge 환경에서도 항상 올바른 시스템 UI inset을 반환합니다.
+    final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return SizedBox(
-      height: navBarHeight + MediaQuery.of(context).padding.bottom,
+      height: navBarHeight + bottomInset,
       child: Stack(
         alignment: Alignment.bottomCenter,
         clipBehavior: Clip.none,
@@ -28,8 +31,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
           // 1. Background Image (Down_Tab.png)
           Container(
             width: double.infinity,
-            height: (Platform.isIOS ? 50 : 60) +
-                MediaQuery.of(context).padding.bottom,
+            height: (Platform.isIOS ? 50 : 60) + bottomInset,
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/images/Down_Tab.png'),
@@ -38,8 +40,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
             ),
           ),
           // 2. Tab Items (Protruding icons)
-          SafeArea(
-            top: false,
+          Padding(
+            padding: EdgeInsets.only(bottom: bottomInset),
             child: SizedBox(
               height: navBarHeight,
               child: Row(
@@ -94,7 +96,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 ],
               ),
             ),
-          ),
+          ), // Padding (탭 아이템 영역)
         ],
       ),
     );
