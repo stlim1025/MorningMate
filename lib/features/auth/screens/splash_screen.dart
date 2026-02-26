@@ -5,6 +5,7 @@ import '../controllers/auth_controller.dart';
 import '../../../data/models/user_model.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/bouncing_character_loader.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -247,23 +248,6 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/icons/Charactor_Icon.png',
-              width: 120,
-              height: 120,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              "Morni",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'BMJUA',
-                color: Color(0xFF4E342E),
-              ),
-            ),
-            const SizedBox(height: 40),
             if (_hasError)
               Column(
                 children: [
@@ -307,7 +291,17 @@ class _SplashScreenState extends State<SplashScreen> {
                 ],
               )
             else
-              const CircularProgressIndicator(color: Color(0xFF4E342E)),
+              const BouncingCharacterLoader(),
+            const SizedBox(height: 24),
+            const Text(
+              "Morni",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'BMJUA',
+                color: Color(0xFF4E342E),
+              ),
+            ),
           ],
         ),
       ),

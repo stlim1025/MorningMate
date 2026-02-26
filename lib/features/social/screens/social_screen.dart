@@ -14,6 +14,7 @@ import '../../../core/widgets/app_dialog.dart';
 import '../widgets/friend_card.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/bouncing_character_loader.dart';
 import '../../character/widgets/character_display.dart';
 
 class SocialScreen extends StatefulWidget {
@@ -150,11 +151,7 @@ class _SocialScreenState extends State<SocialScreen> {
                                 (snapshot.connectionState ==
                                         ConnectionState.waiting &&
                                     !snapshot.hasData)) {
-                              return const Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.brown,
-                                ),
-                              );
+                              return const BouncingCharacterLoader();
                             }
 
                             return Stack(

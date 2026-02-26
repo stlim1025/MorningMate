@@ -163,12 +163,13 @@ class _DecorationScreenState extends State<DecorationScreen>
     final isAwakePreview = _previewIsAwake!;
 
     final screenSize = MediaQuery.of(context).size;
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     // Panel Configuration
     final double panelHeight =
         screenSize.height * 0.35; // Take up about 1/3 of screen height
     final double visibleHeaderHeight =
-        EnhancedCharacterRoomWidget.roomStandardBottomPadding;
+        EnhancedCharacterRoomWidget.roomStandardBottomPadding + bottomInset;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -349,7 +350,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             left: 0,
             right: 0,
             bottom: _isPanelExpanded ? 0 : -(panelHeight - visibleHeaderHeight),
-            height: panelHeight,
+            height: panelHeight + bottomInset,
             child: GestureDetector(
               onVerticalDragUpdate: (details) {
                 if (details.primaryDelta! < -5) {
@@ -392,7 +393,7 @@ class _DecorationScreenState extends State<DecorationScreen>
                               (Theme.of(context).platform == TargetPlatform.iOS
                                       ? 5.0
                                       : 15.0) +
-                                  MediaQuery.of(context).padding.bottom,
+                                  bottomInset,
                         ),
                         child: PageView.builder(
                           controller: _pageController,
@@ -443,7 +444,7 @@ class _DecorationScreenState extends State<DecorationScreen>
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) + 10,
+            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) + 30,
             left: 20,
             child: GestureDetector(
               onTapDown: (_) => _removeAllButtonController.forward(),
@@ -491,7 +492,7 @@ class _DecorationScreenState extends State<DecorationScreen>
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) + 10,
+            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) + 30,
             right: 20,
             child: GestureDetector(
               onTap: _handleStickyNoteButton,
@@ -607,7 +608,7 @@ class _DecorationScreenState extends State<DecorationScreen>
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(
-            top: 2, bottom: 10), // Reduced top padding to move tabs up
+            top: 5, bottom: 10), // Reduced top padding to move tabs up
         clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
