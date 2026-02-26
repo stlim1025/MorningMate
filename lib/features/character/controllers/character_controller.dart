@@ -186,14 +186,14 @@ class CharacterController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 메모 작성 시 30가지를 차감하고 마지막 작성 시간을 기록합니다.
+  /// 메모 작성 시 5가지를 차감하고 마지막 작성 시간을 기록합니다.
   Future<void> useStickyNote(String userId) async {
     if (_currentUser == null) return;
-    if (_currentUser!.points < 30) throw Exception('가지가 부족합니다 (30가지 필요)');
+    if (_currentUser!.points < 5) throw Exception('가지가 부족합니다 (5가지 필요)');
 
     final now = DateTime.now();
     final updates = {
-      'points': FieldValue.increment(-30),
+      'points': FieldValue.increment(-5),
       'lastStickyNoteDate': FieldValue.serverTimestamp(),
       'memoCount': FieldValue.increment(1),
     };
@@ -201,7 +201,7 @@ class CharacterController extends ChangeNotifier {
     await _userService.updateUser(userId, updates);
 
     _currentUser = _currentUser!.copyWith(
-      points: _currentUser!.points - 30,
+      points: _currentUser!.points - 5,
       lastStickyNoteDate: now,
       memoCount: _currentUser!.memoCount + 1,
     );
@@ -781,12 +781,12 @@ class CharacterController extends ChangeNotifier {
       }
     }
 
-    // 하루 최대 10번 제한
-    if (currentCount >= 10) {
-      throw Exception('오늘은 더 이상 광고를 통해\n가지를 획득할 수 없습니다.\n(일일 최대 10회)');
+    // 하루 최대 5번 제한
+    if (currentCount >= 5) {
+      throw Exception('오늘은 더 이상 광고를 통해\n가지를 획득할 수 없습니다.\n(일일 최대 5회)');
     }
 
-    final newPoints = _currentUser!.points + 10;
+    final newPoints = _currentUser!.points + 20;
     final newCount = currentCount + 1;
 
     await _userService.updateUser(userId, {

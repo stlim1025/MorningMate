@@ -559,7 +559,7 @@ class _DecorationScreenState extends State<DecorationScreen>
       MemoNotification.show(
         context,
         AppLocalizations.of(context)?.get('notEnoughPoints') ??
-            'Not enough points! (30 required)',
+            'Not enough branches! (5 required)',
       );
       return;
     }

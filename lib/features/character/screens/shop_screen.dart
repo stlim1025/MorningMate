@@ -369,7 +369,7 @@ class _ShopScreenState extends State<ShopScreen> {
       currentCount = 0;
     }
 
-    final bool isLimitReached = currentCount >= 10;
+    final bool isLimitReached = currentCount >= 5;
 
     return Container(
       width: double.infinity,
@@ -413,7 +413,7 @@ class _ShopScreenState extends State<ShopScreen> {
                         width: 14, height: 14, cacheWidth: 56), // 16 -> 14 축소
                     const SizedBox(width: 4),
                     Text(
-                      '+10 ${AppLocalizations.of(context)?.get('branch') ?? 'Branches'}',
+                      '+20 ${AppLocalizations.of(context)?.get('branch') ?? 'Branches'}',
                       style: const TextStyle(
                         color: Color(0xFF8D6E63),
                         fontSize: 14, // 16 -> 14 축소
@@ -423,7 +423,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '($currentCount/10)',
+                      '($currentCount/5)',
                       style: const TextStyle(
                         color: Color(0xFF8D6E63),
                         fontSize: 12, // 14 -> 12 축소
