@@ -453,7 +453,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             curve: Curves.easeInOut,
             bottom: (_isPanelExpanded
                     ? panelHeight + bottomInset
-                    : visibleHeaderHeight) +
+                    : visibleHeaderHeight + 30) +
                 10,
             left: 20,
             child: GestureDetector(
@@ -504,7 +504,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             curve: Curves.easeInOut,
             bottom: (_isPanelExpanded
                     ? panelHeight + bottomInset
-                    : visibleHeaderHeight) +
+                    : visibleHeaderHeight + 30) +
                 10,
             right: 20,
             child: GestureDetector(

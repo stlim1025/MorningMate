@@ -695,8 +695,13 @@ class _EnhancedCharacterRoomWidgetState
 
       // 단순 2D 매핑 (바닥 영역)
       currentLeft = (px * width - charSize / 2).clamp(0.0, width - charSize);
+
+      // 캐릭터가 자고 있을 때 일기 작성 버튼에 가려지지 않도록 최대 하단 높이 제한 (95만큼 위로)
+      final double maxTop =
+          isAwake ? height - charSize : height - charSize - 95;
+
       currentTop = (py * height - charSize + (isAwake ? 0 : charSize * 0.3))
-          .clamp(height * 0.42 - charSize * 0.5, height - charSize);
+          .clamp(height * 0.42 - charSize * 0.5, maxTop);
     }
 
     return Stack(
