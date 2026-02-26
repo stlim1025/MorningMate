@@ -27,31 +27,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // Web 환경에서는 관리자 계정으로 자동 로그인
-    if (kIsWeb) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _autoLoginForWeb();
-      });
-    }
-  }
-
-  Future<void> _autoLoginForWeb() async {
-    if (!mounted) return;
-    setState(() => _isLoading = true);
-
-    try {
-      final authController = context.read<AuthController>();
-      await authController.signIn('admin@morningmate.com', 'Tmdxor12!');
-      if (mounted) {
-        context.go('/morning');
-      }
-    } catch (e) {
-      // 자동 로그인 실패 시 일반 로그인 화면 표시
-      debugPrint('Web 자동 로그인 실패: $e');
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 
   @override
@@ -196,8 +171,58 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+
+        if (kIsWeb) ...[
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: _isLoading ? null : _handleAdminWebLogin,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              backgroundColor: Colors.redAccent.withOpacity(0.8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              '관리자로 바로 로그인 (Web Test)',
+              style: TextStyle(
+                fontFamily: 'BMJUA',
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  Future<void> _handleAdminWebLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authController = context.read<AuthController>();
+      await authController.signIn('admin@morningmate.com', 'Tmdxor12!');
+
+      if (mounted) {
+        context.go('/morning');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   // 이메일 로그인 폼

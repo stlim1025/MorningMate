@@ -1408,6 +1408,106 @@ class Room3DBackground extends StatelessWidget {
           ),
         ),
 
+        // 4. 바닥 (Floor) - Physical full height까지 확장 (정면, 왼쪽 벽 뒤에 랜더링되어 틈새가 완벽히 덮이게 함)
+        Positioned(
+          left: 0,
+          top: 0,
+          right: 0,
+          bottom: 0, // Fill the full height SizedBox
+          child: ClipPath(
+            clipper: _FloorClipper(
+              vLineX: vLineX,
+              hLineYBottom: hLineYBottom - 15, // 여백 방지를 위해 위로 확장
+              floorLeftY: floorLeftY - 50, // 왼쪽 벽의 회전부를 완벽히 덮도록 위로 충분히 확장
+            ),
+            child: Transform(
+              alignment: Alignment.topCenter,
+              transform: Matrix4.identity()
+                ..setEntry(
+                    3,
+                    2,
+                    0.8 /
+                        fullHeight) // 화면 높이에 반비례하게 원근감을 주어 큰 화면에서도 바닥이 찢어지는 현상 방지
+                ..rotateX(-0.6), // 대각선 시야처럼 보이게 기울기 조정
+              child: Container(
+                decoration: BoxDecoration(
+                  color: floorAsset.color ??
+                      (isAwake
+                          ? const Color(0xFFE8DCCF)
+                          : const Color(0xFFDDD1C5)), // 더 밝은 바닥색
+                  image: (floorAsset.imagePath != null &&
+                          !floorAsset.imagePath!.endsWith('.svg'))
+                      ? DecorationImage(
+                          image: ResizeImage(
+                            floorAsset.imagePath!.startsWith('http')
+                                ? CachedNetworkImageProvider(
+                                    floorAsset.imagePath!) as ImageProvider
+                                : AssetImage(floorAsset.imagePath!)
+                                    as ImageProvider,
+                            width: 540,
+                          ),
+                          repeat: ImageRepeat.repeat,
+                          alignment: Alignment.topCenter,
+                          scale: 2.5,
+                        )
+                      : null,
+                ),
+                child: Stack(
+                  children: [
+                    if (floorAsset.imagePath != null &&
+                        floorAsset.imagePath!.endsWith('.svg'))
+                      Positioned.fill(
+                        child: SvgPicture.asset(
+                          floorAsset.imagePath!,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
+                        ),
+                      ),
+                    // Top Shadow (Back wall shadow)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: height * 0.3, // 원근감 고려하여 그림자 길이 조정
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.5), // 투명도 증가
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Left Shadow (Left wall shadow)
+                    Positioned(
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      width: width * 0.3, // 그림자 너비 조정
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              Colors.black.withOpacity(0.5), // 투명도 증가
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
         // 2. 정면 벽 (Front Wall) - 텍스처의 오른쪽 부분 사용
         Positioned(
           left: vLineX,
@@ -1466,7 +1566,8 @@ class Room3DBackground extends StatelessWidget {
           child: Transform(
             alignment: Alignment.centerRight, // 오른쪽(코너)를 축으로 회전
             transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001)
+              ..setEntry(3, 2,
+                  0.39 / width) // 화면 너비에 반비례하게 원근감을 주어 큰 화면에서도 벽이 찢어지는 현상 방지
               ..rotateY(-1.475) // 더 많이 기울임
               ..scale(5.0, 1.0), // 기울기만큼만 확대
             child: Stack(
@@ -1547,102 +1648,6 @@ class Room3DBackground extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
-
-        // 4. 바닥 (Floor) - Physical full height까지 확장
-        Positioned(
-          left: 0,
-          top: 0,
-          right: 0,
-          bottom: 0, // Fill the full height SizedBox
-          child: ClipPath(
-            clipper: _FloorClipper(
-              vLineX: vLineX,
-              hLineYBottom: hLineYBottom,
-              floorLeftY: floorLeftY,
-            ),
-            child: Transform(
-              alignment: Alignment.topCenter,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001) // 원근감 최적화
-                ..rotateX(-0.6), // 대각선 시야처럼 보이게 기울기 조정
-              child: Container(
-                decoration: BoxDecoration(
-                  color: floorAsset.color ??
-                      (isAwake
-                          ? const Color(0xFFE8DCCF)
-                          : const Color(0xFFDDD1C5)), // 더 밝은 바닥색
-                  image: (floorAsset.imagePath != null &&
-                          !floorAsset.imagePath!.endsWith('.svg'))
-                      ? DecorationImage(
-                          image: ResizeImage(
-                            floorAsset.imagePath!.startsWith('http')
-                                ? CachedNetworkImageProvider(
-                                    floorAsset.imagePath!) as ImageProvider
-                                : AssetImage(floorAsset.imagePath!)
-                                    as ImageProvider,
-                            width: 540,
-                          ),
-                          repeat: ImageRepeat.repeat,
-                          alignment: Alignment.topCenter,
-                          scale: 2.5,
-                        )
-                      : null,
-                ),
-                child: Stack(
-                  children: [
-                    if (floorAsset.imagePath != null &&
-                        floorAsset.imagePath!.endsWith('.svg'))
-                      Positioned.fill(
-                        child: SvgPicture.asset(
-                          floorAsset.imagePath!,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
-                        ),
-                      ),
-                    // Top Shadow (Back wall shadow)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: height * 0.3, // 원근감 고려하여 그림자 길이 조정
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.5), // 투명도 증가
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Left Shadow (Left wall shadow)
-                    Positioned(
-                      top: 0,
-                      bottom: 0,
-                      left: 0,
-                      width: width * 0.3, // 그림자 너비 조정
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              Colors.black.withOpacity(0.5), // 투명도 증가
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
         ),
