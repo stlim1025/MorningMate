@@ -65,6 +65,35 @@ class RoomAsset {
     }
     return name;
   }
+
+  /// imagePath만 교체한 새 RoomAsset 인스턴스를 반환합니다.
+  RoomAsset copyWithImagePath(String? newImagePath) {
+    return RoomAsset(
+      id: id,
+      name: name,
+      nameKo: nameKo,
+      nameEn: nameEn,
+      price: price,
+      icon: icon,
+      color: color,
+      themeType: themeType,
+      imagePath: newImagePath,
+      sizeMultiplier: sizeMultiplier,
+      aspectRatio: aspectRatio,
+      isWallMounted: isWallMounted,
+      noShadow: noShadow,
+      shadowDyCorrection: shadowDyCorrection,
+      isLight: isLight,
+      lightIntensity: lightIntensity,
+      category: category,
+      charWidthPct: charWidthPct,
+      charTopPctAwake: charTopPctAwake,
+      charTopPctSleep: charTopPctSleep,
+      charBottomPct: charBottomPct,
+      charScaleAwake: charScaleAwake,
+      charScaleSleep: charScaleSleep,
+    );
+  }
 }
 
 class RoomAssets {

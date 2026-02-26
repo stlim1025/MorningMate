@@ -15,6 +15,7 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../services/asset_service.dart';
 
 class DecorationScreen extends StatefulWidget {
   const DecorationScreen({super.key});
@@ -114,6 +115,12 @@ class _DecorationScreenState extends State<DecorationScreen>
       vsync: this,
       duration: const Duration(milliseconds: 100),
     );
+
+    // 방꾸미기 화면 진입 시 최신 에셋 로드 (원격 이미지 등)
+    AssetService().fetchDynamicAssets().then((_) {
+      if (mounted) setState(() {});
+    });
+
     _removeAllScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(
           parent: _removeAllButtonController, curve: Curves.easeInOut),
@@ -444,7 +451,10 @@ class _DecorationScreenState extends State<DecorationScreen>
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) + 30,
+            bottom: (_isPanelExpanded
+                    ? panelHeight + bottomInset
+                    : visibleHeaderHeight) +
+                10,
             left: 20,
             child: GestureDetector(
               onTapDown: (_) => _removeAllButtonController.forward(),
@@ -492,7 +502,10 @@ class _DecorationScreenState extends State<DecorationScreen>
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) + 30,
+            bottom: (_isPanelExpanded
+                    ? panelHeight + bottomInset
+                    : visibleHeaderHeight) +
+                10,
             right: 20,
             child: GestureDetector(
               onTap: _handleStickyNoteButton,
@@ -554,8 +567,8 @@ class _DecorationScreenState extends State<DecorationScreen>
       return;
     }
 
-    // 2. 포인트 체크 (30가지)
-    if (user.points < 30) {
+    // 2. 포인트 체크 (5가지)
+    if (user.points < 5) {
       MemoNotification.show(
         context,
         AppLocalizations.of(context)?.get('notEnoughPoints') ??
@@ -693,7 +706,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             const SizedBox(width: 4),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontFamily: 'BMJUA',
                 fontSize: 12,
               ),

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../services/asset_service.dart';
@@ -27,7 +27,8 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
   late TextEditingController _priceController;
 
   bool _isLoading = false;
-  File? _selectedImage;
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageName;
 
   // Form Fields
   String _category = 'prop';
@@ -88,8 +89,10 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _selectedImageBytes = bytes;
+        _selectedImageName = pickedFile.name;
 
         // 이미지 선택 시 이름과 ID 자동 제안
         final filename = pickedFile.name.split('.').first;
@@ -113,7 +116,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (widget.itemToEdit == null && _selectedImage == null) {
+    if (widget.itemToEdit == null && _selectedImageBytes == null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('이미지를 선택해주세요.')));
       return;
@@ -131,7 +134,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           nameEn: _nameEnController.text.trim(),
           price: int.parse(_priceController.text.trim()),
           category: _category,
-          imageFile: _selectedImage!,
+          imageBytes: _selectedImageBytes!,
           sizeMultiplier: _sizeMultiplier,
           aspectRatio: _aspectRatio,
           isWallMounted: _isWallMounted,
@@ -148,7 +151,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           nameEn: _nameEnController.text.trim(),
           price: int.parse(_priceController.text.trim()),
           category: _category,
-          imageFile: _selectedImage,
+          imageBytes: _selectedImageBytes,
           existingImageUrl: widget.itemToEdit!.imagePath ?? '',
           sizeMultiplier: _sizeMultiplier,
           aspectRatio: _aspectRatio,
@@ -220,26 +223,26 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
                         height: 200,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: _selectedImage == null &&
+                          color: _selectedImageBytes == null &&
                                   widget.itemToEdit?.imagePath == null
                               ? Colors.blue.withOpacity(0.05)
                               : Colors.grey[50],
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: _selectedImage == null &&
+                            color: _selectedImageBytes == null &&
                                     widget.itemToEdit?.imagePath == null
                                 ? Colors.blue
                                 : Colors.grey[300]!,
                             width: 2,
-                            style: _selectedImage == null
+                            style: _selectedImageBytes == null
                                 ? BorderStyle.solid
                                 : BorderStyle.solid,
                           ),
                         ),
-                        child: _selectedImage != null
+                        child: _selectedImageBytes != null
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(14),
-                                child: Image.file(_selectedImage!,
+                                child: Image.memory(_selectedImageBytes!,
                                     fit: BoxFit.contain),
                               )
                             : (widget.itemToEdit?.imagePath != null
@@ -267,11 +270,10 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
                                   )),
                       ),
                     ),
-                    if (_selectedImage != null)
+                    if (_selectedImageName != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                            '파일명: ${_selectedImage!.path.split('\\').last.split('/').last}',
+                        child: Text('파일명: $_selectedImageName',
                             style: const TextStyle(
                                 fontSize: 12, color: Colors.grey)),
                       ),

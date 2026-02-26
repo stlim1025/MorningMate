@@ -136,7 +136,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
                           // 일기 작성 정보 (캘린더)
                           _buildCalendarSection(context, colorScheme),
-                          const SizedBox(height: 100), // Adjusted for PageView
+                          SizedBox(
+                              height: 100 +
+                                  MediaQuery.of(context)
+                                      .viewPadding
+                                      .bottom), // Adjusted for PageView + edge-to-edge
                         ],
                       ),
                     ),

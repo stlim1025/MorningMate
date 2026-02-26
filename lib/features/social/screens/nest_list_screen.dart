@@ -118,6 +118,7 @@ class _NestListScreenState extends State<NestListScreen> {
           ),
         ),
         child: SafeArea(
+          bottom: false, // Let content handle bottom padding for edge-to-edge
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
@@ -645,7 +646,10 @@ class _NestListScreenState extends State<NestListScreen> {
                   ),
                 );
               }),
-              SizedBox(height: Platform.isIOS ? 12 : 20),
+              SizedBox(
+                  height: (Platform.isIOS ? 12 : 20) +
+                      90 +
+                      MediaQuery.of(context).viewPadding.bottom),
             ],
           ),
         ),

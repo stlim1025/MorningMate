@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -22,6 +23,36 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordFocusNode = FocusNode();
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Web 환경에서는 관리자 계정으로 자동 로그인
+    if (kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _autoLoginForWeb();
+      });
+    }
+  }
+
+  Future<void> _autoLoginForWeb() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final authController = context.read<AuthController>();
+      await authController.signIn('admin@morningmate.com', 'Tmdxor12!');
+      if (mounted) {
+        context.go('/morning');
+      }
+    } catch (e) {
+      // 자동 로그인 실패 시 일반 로그인 화면 표시
+      debugPrint('Web 자동 로그인 실패: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   void dispose() {

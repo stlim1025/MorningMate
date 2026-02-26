@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/room_assets.dart';
 import '../../../../core/constants/character_assets.dart';
@@ -36,6 +35,13 @@ class _ShopManagementTabState extends State<ShopManagementTab>
   void initState() {
     super.initState();
     _tabController = TabController(length: 8, vsync: this);
+    // 관리자 페이지 열릴 때 Firestore에서 최신 에셋 목록을 가져와서 반영
+    _refreshAssets();
+  }
+
+  Future<void> _refreshAssets() async {
+    await AssetService().fetchDynamicAssets();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -136,7 +142,7 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                                         content:
                                             Text('로컬 에셋이 Firebase와 동기화되었습니다.')),
                                   );
-                                  setState(() {});
+                                  _refreshAssets();
                                 }
                               } catch (e) {
                                 if (context.mounted) {
@@ -161,7 +167,7 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                       showDialog(
                         context: context,
                         builder: (context) => const AssetUploadDialog(),
-                      ).then((_) => setState(() {}));
+                      ).then((_) => _refreshAssets());
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade50,
@@ -212,104 +218,139 @@ class _ShopManagementTabState extends State<ShopManagementTab>
             builder: (context) {
               final filteredItems = _getFilteredItems(discounts);
 
-              if (filteredItems.isEmpty) {
-                return const Center(child: Text('검색 결과가 없습니다.'));
-              }
-
-              return ListView.builder(
-                itemCount: filteredItems.length,
-                itemBuilder: (context, index) {
-                  final item = filteredItems[index];
-                  final itemId = item.id;
-                  final isDiscounted = discounts.containsKey(itemId);
-                  final discountPrice = discounts[itemId];
-                  final originalPrice = item.price;
-
-                  return Card(
-                    margin:
+              return Column(
+                children: [
+                  // 아이템 수 표시
+                  Container(
+                    padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      leading: GestureDetector(
-                        onTap: () =>
-                            _quickChangeImage(context, item, controller),
-                        child: Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey[300]!),
+                    color: Colors.grey[100],
+                    width: double.infinity,
+                    child: Text(
+                      '📦 표시 중: ${filteredItems.length}개  |  '
+                      'props: ${RoomAssets.props.where((p) => p.price > 0).length}  '
+                      'wallpapers: ${RoomAssets.wallpapers.where((p) => p.price > 0).length}  '
+                      'floors: ${RoomAssets.floors.where((p) => p.price > 0).length}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ),
+                  if (filteredItems.isEmpty)
+                    const Expanded(child: Center(child: Text('검색 결과가 없습니다.')))
+                  else
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredItems.length,
+                        itemBuilder: (context, index) {
+                          final item = filteredItems[index];
+                          final itemId = item.id;
+                          final isDiscounted = discounts.containsKey(itemId);
+                          final discountPrice = discounts[itemId];
+                          final originalPrice = item.price;
+
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              leading: GestureDetector(
+                                onTap: () => _quickChangeImage(
+                                    context, item, controller),
+                                child: Stack(
+                                  alignment: Alignment.bottomRight,
+                                  children: [
+                                    Container(
+                                      width: 60,
+                                      height: 60,
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: Colors.grey[300]!),
+                                      ),
+                                      child: _buildItemImage(item, size: 50),
+                                    ),
+                                    Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.blue,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(2),
+                                      child: const Icon(Icons.edit,
+                                          size: 12, color: Colors.white),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              child: _buildItemImage(item, size: 50),
-                            ),
-                            Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.blue,
-                                shape: BoxShape.circle,
+                              title: Text(item.name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('ID: ${item.id}',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600])),
+                                  Text(
+                                    isDiscounted
+                                        ? '원가: $originalPrice 가지 → 할인가: $discountPrice 가지'
+                                        : '가격: $originalPrice 가지',
+                                    style: TextStyle(
+                                      color: isDiscounted
+                                          ? Colors.red
+                                          : Colors.black87,
+                                      fontWeight: isDiscounted
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  Text(
+                                    item.imagePath != null
+                                        ? (item.imagePath!.startsWith('http')
+                                            ? '🌐 원격 이미지'
+                                            : '🖼️ 로컬: ${item.imagePath}')
+                                        : '❌ 이미지 없음',
+                                    style: TextStyle(
+                                        fontSize: 10, color: Colors.grey[500]),
+                                  ),
+                                ],
                               ),
-                              padding: const EdgeInsets.all(2),
-                              child: const Icon(Icons.edit,
-                                  size: 12, color: Colors.white),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.local_offer,
+                                      color: isDiscounted
+                                          ? Colors.red
+                                          : Colors.grey,
+                                    ),
+                                    tooltip: '할인 설정',
+                                    onPressed: () => _showDiscountDialog(
+                                        context, item, discounts, controller),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.settings,
+                                        color: Colors.blueGrey),
+                                    tooltip: '상세 설정/삭제',
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            AssetUploadDialog(itemToEdit: item),
+                                      ).then((_) => _refreshAssets());
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                      title: Text(item.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('ID: ${item.id}',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey[600])),
-                          Text(
-                            isDiscounted
-                                ? '원가: $originalPrice 가지 → 할인가: $discountPrice 가지'
-                                : '가격: $originalPrice 가지',
-                            style: TextStyle(
-                              color: isDiscounted ? Colors.red : Colors.black87,
-                              fontWeight: isDiscounted
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.local_offer,
-                              color: isDiscounted ? Colors.red : Colors.grey,
-                            ),
-                            tooltip: '할인 설정',
-                            onPressed: () => _showDiscountDialog(
-                                context, item, discounts, controller),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.settings,
-                                color: Colors.blueGrey),
-                            tooltip: '상세 설정/삭제',
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) =>
-                                    AssetUploadDialog(itemToEdit: item),
-                              ).then((_) => setState(() {}));
-                            },
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
-                  );
-                },
+                ],
               );
             },
           ),
@@ -324,7 +365,7 @@ class _ShopManagementTabState extends State<ShopManagementTab>
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      final file = File(pickedFile.path);
+      final imageBytes = await pickedFile.readAsBytes();
 
       // 이미지 업로드 확인 다이얼로그
       if (!context.mounted) return;
@@ -339,7 +380,7 @@ class _ShopManagementTabState extends State<ShopManagementTab>
               const SizedBox(height: 16),
               SizedBox(
                 height: 150,
-                child: Image.file(file, fit: BoxFit.contain),
+                child: Image.memory(imageBytes, fit: BoxFit.contain),
               ),
             ],
           ),
@@ -364,7 +405,7 @@ class _ShopManagementTabState extends State<ShopManagementTab>
             name: item.name,
             price: item.price,
             category: item.category ?? 'prop',
-            imageFile: file,
+            imageBytes: imageBytes,
             existingImageUrl: item.imagePath ?? '',
             sizeMultiplier: item.sizeMultiplier,
             aspectRatio: item.aspectRatio,
@@ -378,7 +419,7 @@ class _ShopManagementTabState extends State<ShopManagementTab>
           if (context.mounted) {
             ScaffoldMessenger.of(context)
                 .showSnackBar(const SnackBar(content: Text('이미지가 업데이트되었습니다.')));
-            setState(() {});
+            _refreshAssets();
           }
         } catch (e) {
           if (context.mounted) {

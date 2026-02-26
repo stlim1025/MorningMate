@@ -822,187 +822,188 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper> {
           setError: (msg) => setState(() => _errorMessage = msg),
           child: Builder(
             builder: (dialogContext) {
-              final bottom = MediaQuery.of(dialogContext).viewInsets.bottom;
-              return AnimatedPadding(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-                padding: EdgeInsets.only(bottom: bottom),
-                child: Dialog(
-                  backgroundColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Background Container with rounded corners
-                      Container(
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Background Image
-                            Positioned.fill(
-                              child: Image.asset(
-                                'assets/images/Popup_Background.png',
-                                fit: BoxFit.fill,
-                                filterQuality: FilterQuality.medium,
-                                cacheWidth: 800, // Optimized
+              return Center(
+                child: SingleChildScrollView(
+                  child: Dialog(
+                    insetPadding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 24),
+                    backgroundColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Background Container with rounded corners
+                        Container(
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Stack(
+                            children: [
+                              // Background Image
+                              Positioned.fill(
+                                child: Image.asset(
+                                  'assets/images/Popup_Background.png',
+                                  fit: BoxFit.fill,
+                                  filterQuality: FilterQuality.medium,
+                                  cacheWidth: 800,
+                                ),
                               ),
-                            ),
-                            // Content
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                  24, 40, 24, 28), // 상단 패딩을 늘려 전체적으로 내림
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Title
-                                  if (config.title.isNotEmpty) ...[
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          if (config.leading != null)
-                                            Positioned(
-                                              left: 0,
-                                              child: config.leading!,
-                                            ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 40),
-                                            child: Text(
-                                              config.title,
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(
-                                                fontFamily: 'BMJUA',
-                                                fontSize: 23,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(
-                                                    0xFF4E342E), // Dark Brown
+                              // Content
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(24, 40, 24, 28),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Title
+                                    if (config.title.isNotEmpty) ...[
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            if (config.leading != null)
+                                              Positioned(
+                                                left: 0,
+                                                child: config.leading!,
+                                              ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 40),
+                                              child: Text(
+                                                config.title,
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                  fontFamily: 'BMJUA',
+                                                  fontSize: 23,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF4E342E),
+                                                ),
                                               ),
                                             ),
+                                            if (config.trailing != null)
+                                              Positioned(
+                                                right: 0,
+                                                child: config.trailing!,
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                    ],
+                                    // Content
+                                    if (config.content != null)
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: DefaultTextStyle.merge(
+                                          style: TextStyle(
+                                            color: colors?.dialogBody ??
+                                                Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.color,
+                                            fontFamily: 'BMJUA',
+                                            fontSize: 18,
                                           ),
-                                          if (config.trailing != null)
-                                            Positioned(
-                                              right: 0,
-                                              child: config.trailing!,
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                  ],
-                                  // Content
-                                  if (config.content != null)
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: DefaultTextStyle.merge(
-                                        style: TextStyle(
-                                          color: colors?.dialogBody ??
-                                              Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.color,
-                                          fontFamily: 'BMJUA', // 팝업 내용에도 폰트 적용
-                                          fontSize: 18,
-                                        ),
-                                        child: config.content!,
-                                      ),
-                                    ),
-                                  if (_errorMessage != null)
-                                    Container(
-                                      width: double.infinity,
-                                      margin: const EdgeInsets.fromLTRB(
-                                          16, 12, 16, 0),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8, horizontal: 12),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFDD8D8),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                            color: const Color(0xFFD32F2F)
-                                                .withOpacity(0.5)),
-                                      ),
-                                      child: Text(
-                                        _errorMessage!,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: Color(0xFFD32F2F),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'BMJUA',
+                                          child: config.content!,
                                         ),
                                       ),
-                                    ),
-                                  // Actions
-                                  if (config.actions.isNotEmpty) ...[
-                                    const SizedBox(height: 24),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            config.actionsAlignment ??
-                                                MainAxisAlignment.end,
-                                        children: config.actions
-                                            .map((action) => Expanded(
-                                                  child: Padding(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 4),
-                                                    child: AppDialog
-                                                        ._buildActionButton(
-                                                            dialogContext,
-                                                            action,
-                                                            colors),
-                                                  ),
-                                                ))
-                                            .toList(),
+                                    if (_errorMessage != null)
+                                      Container(
+                                        width: double.infinity,
+                                        margin: const EdgeInsets.fromLTRB(
+                                            16, 12, 16, 0),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8, horizontal: 12),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFDD8D8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: const Color(0xFFD32F2F)
+                                                  .withOpacity(0.5)),
+                                        ),
+                                        child: Text(
+                                          _errorMessage!,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: Color(0xFFD32F2F),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'BMJUA',
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                    // Actions
+                                    if (config.actions.isNotEmpty) ...[
+                                      const SizedBox(height: 24),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              config.actionsAlignment ??
+                                                  MainAxisAlignment.end,
+                                          children: config.actions
+                                              .map((action) => Expanded(
+                                                    child: Padding(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 4),
+                                                      child: AppDialog
+                                                          ._buildActionButton(
+                                                              dialogContext,
+                                                              action,
+                                                              colors),
+                                                    ),
+                                                  ))
+                                              .toList(),
+                                        ),
+                                      ),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Sticker Image (왼쪽 위) - 배경 Container 밖에 배치
-                      Positioned(
-                        top: -25,
-                        left: -10,
-                        child: Image.asset(
-                          'assets/images/Popup_Sticker.png',
-                          width: 120,
-                          height: 120,
-                          fit: BoxFit.contain,
-                          filterQuality: FilterQuality.medium,
-                          cacheWidth: 300, // Optimized
-                        ),
-                      ),
-                      // Close Button (오른쪽 위)
-                      if (config.showCloseButton)
-                        Positioned(
-                          top: -10,
-                          right: -10,
-                          child: GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Image.asset(
-                              'assets/icons/X_Button.png',
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.medium,
-                              cacheWidth: 150,
-                            ),
+                            ],
                           ),
                         ),
-                    ],
+                        // Sticker Image (왼쪽 위)
+                        Positioned(
+                          top: -25,
+                          left: -10,
+                          child: Image.asset(
+                            'assets/images/Popup_Sticker.png',
+                            width: 120,
+                            height: 120,
+                            fit: BoxFit.contain,
+                            filterQuality: FilterQuality.medium,
+                            cacheWidth: 300,
+                          ),
+                        ),
+                        // Close Button (오른쪽 위)
+                        if (config.showCloseButton)
+                          Positioned(
+                            top: -10,
+                            right: -10,
+                            child: GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Image.asset(
+                                'assets/icons/X_Button.png',
+                                width: 48,
+                                height: 48,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.medium,
+                                cacheWidth: 150,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               );

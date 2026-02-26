@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_storage/firebase_storage.dart';
 import '../constants/room_assets.dart';
 import '../constants/character_assets.dart';
 
@@ -25,6 +27,14 @@ class AssetPrecacheService {
   /// 개별 이미지 프리캐싱 - 실패해도 다른 이미지에 영향 없음
   Future<void> _safePrecache(String path, BuildContext context) async {
     try {
+      if (kIsWeb &&
+          path.startsWith('http') &&
+          path.contains('firebasestorage.googleapis.com')) {
+        // Web에서 Firebase Storage의 경우 browser 캐싱을 유도하기 위해 getData 호출
+        final ref = FirebaseStorage.instance.refFromURL(path);
+        await ref.getData(5 * 1024 * 1024); // 브라우저 캐시에 담김 (빠른 로딩)
+        return;
+      }
       await precacheImage(_getProvider(path), context);
     } catch (e) {
       // Firebase Storage URL(403 등) 또는 로컬 에셋 로드 실패 시 조용히 무시.

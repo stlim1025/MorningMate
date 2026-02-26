@@ -359,6 +359,8 @@ class ChallengeScreen extends StatelessWidget {
 
     final completedCount = challenges.where((c) => c['isCompleted']).length;
 
+    final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
+
     return Container(
       decoration: const BoxDecoration(
         image: DecorationImage(
@@ -422,7 +424,7 @@ class ChallengeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 90),
+            SizedBox(height: 90 + bottomInset),
           ],
         ),
       ),

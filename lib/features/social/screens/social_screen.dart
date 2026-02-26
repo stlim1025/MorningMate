@@ -60,6 +60,7 @@ class _SocialScreenState extends State<SocialScreen> {
     final userId = authController.currentUser?.uid;
     final friendsStream =
         userId == null ? null : socialController.getFriendsStream(userId);
+    final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Container(
       decoration: const BoxDecoration(
@@ -70,7 +71,7 @@ class _SocialScreenState extends State<SocialScreen> {
         ),
       ),
       child: SafeArea(
-        bottom: true, // Handle system bottom padding
+        bottom: false, // Let content handle bottom padding for edge-to-edge
         child: Stack(
           children: [
             Positioned.fill(
@@ -261,8 +262,8 @@ class _SocialScreenState extends State<SocialScreen> {
                                     if (hasFriends)
                                       Expanded(
                                         child: GridView.builder(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              16, 16, 16, 100),
+                                          padding: EdgeInsets.fromLTRB(
+                                              16, 16, 16, 100 + bottomInset),
                                           gridDelegate:
                                               const SliverGridDelegateWithFixedCrossAxisCount(
                                             crossAxisCount: 3,
@@ -278,7 +279,8 @@ class _SocialScreenState extends State<SocialScreen> {
                                           },
                                         ),
                                       ),
-                                    if (!hasFriends) const SizedBox(height: 80),
+                                    if (!hasFriends)
+                                      SizedBox(height: 80 + bottomInset),
                                   ],
                                 ),
                               ],
@@ -293,7 +295,8 @@ class _SocialScreenState extends State<SocialScreen> {
             ),
             Positioned(
               right: 16,
-              bottom: 30, // Increased to avoid bottom nav bar
+              bottom: 30 +
+                  bottomInset, // Increased to avoid bottom nav bar + edge-to-edge inset
               child: _AnimatedAddFriendButton(
                 onPressed: () => _showAddFriendDialog(context, colorScheme),
               ),

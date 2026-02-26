@@ -15,6 +15,7 @@ import '../../../core/widgets/app_dialog.dart';
 import '../../../data/models/room_decoration_model.dart';
 import '../../../core/services/asset_precache_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../services/asset_service.dart';
 import '../widgets/store_button.dart';
 import '../widgets/diary_button.dart';
 import '../widgets/decoration_button.dart';
@@ -35,6 +36,10 @@ class _MorningScreenState extends State<MorningScreen>
   void initState() {
     super.initState();
     _initializeScreen();
+    // 메인 화면 진입 시 동적 에셋 로드 (원격 이미지 반영)
+    AssetService().fetchDynamicAssets().then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   void _showMemoDialog(RoomPropModel prop) {

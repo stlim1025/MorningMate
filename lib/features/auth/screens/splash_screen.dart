@@ -6,6 +6,8 @@ import '../../../data/models/user_model.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/bouncing_character_loader.dart';
+import '../../../services/asset_service.dart';
+import '../../../core/services/asset_precache_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -65,8 +67,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
       if (authenticated) {
         authController.setBiometricVerified(true);
-        // 여기서 context.go('/morning')을 호출하지 않아도
-        // notifyListeners() -> Router redirect에서 자동으로 이동함
+        await _loadAndPrecacheAssets();
         if (mounted) context.go('/morning');
       } else {
         if (mounted) {
@@ -84,7 +85,19 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     } else {
       // 생체 인증이 필요 없거나 이미 완료된 경우
+      await _loadAndPrecacheAssets();
       if (mounted) context.go('/morning');
+    }
+  }
+
+  Future<void> _loadAndPrecacheAssets() async {
+    try {
+      await AssetService().fetchDynamicAssets();
+      if (mounted) {
+        await AssetPrecacheService().precacheAllRoomAssets(context);
+      }
+    } catch (e) {
+      debugPrint('스플래시 화면 에셋 프리캐싱 에러: $e');
     }
   }
 

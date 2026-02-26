@@ -10,6 +10,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
 import '../controllers/character_controller.dart';
 import '../../../core/services/asset_precache_service.dart';
+import '../../../services/asset_service.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -42,6 +43,10 @@ class _ShopScreenState extends State<ShopScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CharacterController>().loadRewardedAd();
       AssetPrecacheService().precacheCategory(context, _selectedCategory);
+    });
+    // Firestore에서 최신 에셋 데이터를 가져와서 동적 추가 아이템 반영
+    AssetService().fetchDynamicAssets().then((_) {
+      if (mounted) setState(() {});
     });
   }
 
@@ -608,8 +613,9 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Widget _buildGrid(
       List<RoomAsset> items, Widget Function(RoomAsset) itemBuilder) {
+    final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+      padding: EdgeInsets.fromLTRB(20, 10, 20, 80 + bottomInset),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 12,

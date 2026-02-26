@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -30,9 +29,13 @@ class AssetService {
       final snapshot = await _db.collection('assets').get();
 
       final docs = snapshot.docs;
+      int addedCount = 0;
+      int updatedCount = 0;
+
       for (var doc in docs) {
         final data = doc.data();
         final String category = data['category'] ?? 'prop';
+        final String? firestoreImageUrl = data['imageUrl'];
 
         final newAsset = RoomAsset(
           id: doc.id,
@@ -40,8 +43,8 @@ class AssetService {
           nameKo: data['nameKo'],
           nameEn: data['nameEn'],
           price: (data['price'] ?? 0).toInt(),
-          icon: Icons.star, // 기본 아이콘 설정
-          imagePath: data['imageUrl'], // 원격 URL
+          icon: Icons.star,
+          imagePath: firestoreImageUrl,
           sizeMultiplier: (data['sizeMultiplier'] ?? 1.0).toDouble(),
           aspectRatio: (data['aspectRatio'] ?? 1.0).toDouble(),
           isWallMounted: data['isWallMounted'] ?? false,
@@ -52,46 +55,60 @@ class AssetService {
           category: category,
         );
 
-        if (category == 'prop') {
-          final index = RoomAssets.props.indexWhere((p) => p.id == newAsset.id);
-          if (index != -1) {
-            RoomAssets.props[index] = newAsset;
-          } else {
-            RoomAssets.props.add(newAsset);
-          }
-        } else if (category == 'wallpaper') {
-          final index =
-              RoomAssets.wallpapers.indexWhere((p) => p.id == newAsset.id);
-          if (index != -1)
-            RoomAssets.wallpapers[index] = newAsset;
-          else
-            RoomAssets.wallpapers.add(newAsset);
-        } else if (category == 'background') {
-          final index =
-              RoomAssets.backgrounds.indexWhere((p) => p.id == newAsset.id);
-          if (index != -1)
-            RoomAssets.backgrounds[index] = newAsset;
-          else
-            RoomAssets.backgrounds.add(newAsset);
-        } else if (category == 'floor') {
-          final index =
-              RoomAssets.floors.indexWhere((p) => p.id == newAsset.id);
-          if (index != -1)
-            RoomAssets.floors[index] = newAsset;
-          else
-            RoomAssets.floors.add(newAsset);
-        } else if (category == 'emoticon') {
-          final index =
-              RoomAssets.emoticons.indexWhere((p) => p.id == newAsset.id);
-          if (index != -1)
-            RoomAssets.emoticons[index] = newAsset;
-          else
-            RoomAssets.emoticons.add(newAsset);
-        }
+        _upsertAsset(
+            category, newAsset, () => addedCount++, () => updatedCount++);
       }
-      debugPrint('동적 에셋 로드 완료: ${docs.length}개 처리됨');
+      debugPrint(
+          '동적 에셋 로드 완료: ${docs.length}개 처리됨 (신규: $addedCount, 업데이트: $updatedCount)');
+      debugPrint(
+          '현재 에셋 수 - props: ${RoomAssets.props.length}, wallpapers: ${RoomAssets.wallpapers.length}, backgrounds: ${RoomAssets.backgrounds.length}, floors: ${RoomAssets.floors.length}, emoticons: ${RoomAssets.emoticons.length}');
     } catch (e) {
       debugPrint('동적 에셋 로드 실패: $e');
+    }
+  }
+
+  /// 카테고리별 리스트에 에셋을 추가하거나 업데이트합니다.
+  /// 기존 아이템에 로컬 에셋 경로가 있으면 보존합니다.
+  void _upsertAsset(String category, RoomAsset newAsset, VoidCallback onAdded,
+      VoidCallback onUpdated) {
+    final List<RoomAsset>? targetList;
+    switch (category) {
+      case 'prop':
+        targetList = RoomAssets.props;
+        break;
+      case 'wallpaper':
+        targetList = RoomAssets.wallpapers;
+        break;
+      case 'background':
+        targetList = RoomAssets.backgrounds;
+        break;
+      case 'floor':
+        targetList = RoomAssets.floors;
+        break;
+      case 'emoticon':
+        targetList = RoomAssets.emoticons;
+        break;
+      default:
+        targetList = null;
+    }
+
+    if (targetList == null) return;
+
+    final index = targetList.indexWhere((p) => p.id == newAsset.id);
+    if (index != -1) {
+      final existingImagePath = targetList[index].imagePath;
+      // 기존 아이템에 로컬 에셋 경로가 있으면 보존 (로컬 에셋이 더 안정적)
+      final existingIsLocal = existingImagePath != null &&
+          existingImagePath.isNotEmpty &&
+          !existingImagePath.startsWith('http');
+
+      targetList[index] = existingIsLocal
+          ? newAsset.copyWithImagePath(existingImagePath)
+          : newAsset;
+      onUpdated();
+    } else {
+      targetList.add(newAsset);
+      onAdded();
     }
   }
 
@@ -205,7 +222,7 @@ class AssetService {
     String? nameEn,
     required int price,
     required String category,
-    required File imageFile,
+    required Uint8List imageBytes,
     double sizeMultiplier = 1.0,
     double aspectRatio = 1.0,
     bool isWallMounted = false,
@@ -217,8 +234,8 @@ class AssetService {
     try {
       // 이미지 화질 및 크기 유지한 채로 Storage 업로드
       final storageRef = _storage.ref().child('assets/$category/$id.png');
-      await storageRef.putFile(
-          imageFile, SettableMetadata(contentType: 'image/png'));
+      await storageRef.putData(
+          imageBytes, SettableMetadata(contentType: 'image/png'));
       final downloadUrl = await storageRef.getDownloadURL();
 
       // DB 텍스트 정보 저장
@@ -256,7 +273,7 @@ class AssetService {
     String? nameEn,
     required int price,
     required String category,
-    File? imageFile,
+    Uint8List? imageBytes,
     required String existingImageUrl,
     double sizeMultiplier = 1.0,
     double aspectRatio = 1.0,
@@ -268,10 +285,10 @@ class AssetService {
   }) async {
     try {
       String downloadUrl = existingImageUrl;
-      if (imageFile != null) {
+      if (imageBytes != null) {
         final storageRef = _storage.ref().child('assets/$category/$id.png');
-        await storageRef.putFile(
-            imageFile, SettableMetadata(contentType: 'image/png'));
+        await storageRef.putData(
+            imageBytes, SettableMetadata(contentType: 'image/png'));
         downloadUrl = await storageRef.getDownloadURL();
       }
 
