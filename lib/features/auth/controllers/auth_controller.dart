@@ -127,7 +127,7 @@ class AuthController extends ChangeNotifier {
   }
 
   // 회원가입
-  Future<void> signUp(String email, String password, String nickname) async {
+  Future<void> signUp(String email, String password, [String? nickname]) async {
     _isLoading = true;
     Future.microtask(() {
       notifyListeners();
@@ -139,13 +139,17 @@ class AuthController extends ChangeNotifier {
       final user = userCredential.user;
 
       if (user != null) {
-        // Firestore에 사용자 데이터 생성
+        final finalNickname = (nickname == null || nickname.isEmpty)
+            ? 'User_${user.uid.substring(0, 5)}'
+            : nickname;
+
         final userModel = UserModel(
           uid: user.uid,
           email: email,
-          nickname: nickname,
+          nickname: finalNickname,
           createdAt: DateTime.now(),
           provider: 'email',
+          isSetupComplete: false,
         );
 
         await _userService.createUser(userModel);
@@ -205,11 +209,18 @@ class AuthController extends ChangeNotifier {
             email: user.email ?? '',
             nickname: user.displayName ?? '사용자',
             createdAt: DateTime.now(),
+            provider: 'google',
+            isSetupComplete: false,
           );
           await _userService.createUser(userModel);
           _userModel = userModel;
         } else {
           _userModel = existingUser;
+          // 기존 유저인데 provider가 없는 경우 업데이트
+          if (existingUser.provider == null) {
+            await _userService.updateUser(user.uid, {'provider': 'google'});
+            _userModel = existingUser.copyWith(provider: 'google');
+          }
         }
 
         // FCM 토큰 업데이트 - 비동기로 처리하여 UI 블로킹 방지
@@ -262,11 +273,17 @@ class AuthController extends ChangeNotifier {
             nickname: initialNickname,
             createdAt: DateTime.now(),
             provider: 'kakao',
+            isSetupComplete: false,
           );
           await _userService.createUser(userModel);
           _userModel = userModel;
         } else {
           _userModel = existingUser;
+          // 기존 유저인데 provider가 없는 경우 업데이트
+          if (existingUser.provider == null) {
+            await _userService.updateUser(user.uid, {'provider': 'kakao'});
+            _userModel = existingUser.copyWith(provider: 'kakao');
+          }
         }
 
         // FCM 토큰 업데이트 - 비동기로 처리하여 UI 블로킹 방지
@@ -300,11 +317,18 @@ class AuthController extends ChangeNotifier {
             email: user.email ?? '',
             nickname: user.displayName ?? '사용자',
             createdAt: DateTime.now(),
+            provider: 'apple',
+            isSetupComplete: false,
           );
           await _userService.createUser(userModel);
           _userModel = userModel;
         } else {
           _userModel = existingUser;
+          // 기존 유저인데 provider가 없는 경우 업데이트
+          if (existingUser.provider == null) {
+            await _userService.updateUser(user.uid, {'provider': 'apple'});
+            _userModel = existingUser.copyWith(provider: 'apple');
+          }
         }
 
         // FCM 토큰 업데이트 - 비동기로 처리하여 UI 블로킹 방지
@@ -385,22 +409,54 @@ class AuthController extends ChangeNotifier {
   }
 
   // 회원 탈퇴
-  Future<void> deleteAccount(String password) async {
+  Future<void> deleteAccount(String? password) async {
     final user = _currentUser;
     final email = _userModel?.email;
+    final provider = _userModel?.provider;
 
     if (user != null && email != null) {
       _isDeletingAccount = true;
       try {
-        // 0. 재인증 (최근 로그인 확인)
-        await _authService.reauthenticate(email, password);
+        // 1. 재인증 시도 (로그인 만료 대비)
+        if (password != null && password.isNotEmpty) {
+          await _authService.reauthenticate(email, password);
+        } else if (provider == 'email') {
+          throw '비밀번호를 입력해야 합니다.';
+        } else if (provider == 'google') {
+          await _authService.reauthenticateWithGoogle();
+        } else if (provider == 'apple') {
+          await _authService.reauthenticateWithApple();
+        } else if (provider == 'kakao' && email.contains('kakao_')) {
+          // 카카오 계정은 고유 규칙으로 비밀번호 재구성이 가능할 수도 있음
+          // 데이터 구조상 'kakao_{id}@morningmate.app' 형태인 경우
+          try {
+            final kakaoId = email.split('@')[0].split('_')[1];
+            final kakaoPassword = 'kakao_${kakaoId}_morningmate';
+            await _authService.reauthenticate(email, kakaoPassword);
+          } catch (e) {
+            debugPrint('카카오 자동 재인증 실패 (무시하고 진행): $e');
+          }
+        }
 
         final uid = user.uid;
-        // 1. Firestore 데이터 삭제
+
+        // 2. 소셜 계정 연동 해제 (Google disconnect, Kakao unlink 등)
+        await _authService.disconnectSocial();
+
+        // 3. Auth 유저 삭제 (가장 민감한 작업)
+        try {
+          await user.delete();
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'requires-recent-login') {
+            throw '보안을 위해 다시 로그인이 필요합니다. 로그아웃 후 다시 로그인하여 시도해주세요.';
+          }
+          rethrow;
+        }
+
+        // 4. Auth 유저 삭제 성공 후 Firestore 데이터 전체 삭제
         await _userService.deleteUserData(uid);
-        // 2. Auth 유저 삭제
-        await user.delete();
-        // 3. 로그아웃 상태 처리
+
+        // 5. 로그아웃 상태 처리
         _currentUser = null;
         _userModel = null;
         notifyListeners();

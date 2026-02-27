@@ -158,4 +158,28 @@ class NotificationController extends ChangeNotifier {
 
     await notificationRef.set(notification.toFirestore());
   }
+
+  // 추천인 보상 알림 보내기
+  Future<void> sendReferralNotification({
+    required String receiverId,
+    required String senderId,
+    required String senderNickname,
+    required int pointAmount,
+  }) async {
+    final notificationRef = _db.collection('notifications').doc();
+    final notification = NotificationModel(
+      id: notificationRef.id,
+      userId: receiverId,
+      senderId: senderId,
+      senderNickname: senderNickname,
+      type: NotificationType.referralReward,
+      message:
+          '$senderNickname님이 추천인 코드를 입력했습니다! ${pointAmount}가지가 지급되었습니다. 🎁',
+      createdAt: DateTime.now(),
+      isRead: false,
+      fcmSent: false,
+    );
+
+    await notificationRef.set(notification.toFirestore());
+  }
 }

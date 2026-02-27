@@ -49,6 +49,9 @@ class UserModel {
   final List<String> completedChallengeIds; // 완료된 도전과제 ID 목록
   final int memoCount; // 작성한 메모 개수
   final int diaryCount; // 작성한 총 일기 개수
+  final bool isSetupComplete;
+  final String? referralCode;
+  final String? referredBy;
 
   UserModel({
     required this.uid,
@@ -107,6 +110,9 @@ class UserModel {
     this.completedChallengeIds = const [],
     this.memoCount = 0,
     this.diaryCount = 0,
+    this.isSetupComplete = false,
+    this.referralCode,
+    this.referredBy,
   }) : roomDecoration = roomDecoration ?? RoomDecorationModel();
 
   // Firestore에서 가져오기
@@ -185,6 +191,9 @@ class UserModel {
           List<String>.from(data['completedChallengeIds'] ?? []),
       memoCount: (data['memoCount'] as num?)?.toInt() ?? 0,
       diaryCount: (data['diaryCount'] as num?)?.toInt() ?? 0,
+      isSetupComplete: data['isSetupComplete'] ?? false, // 기존 유저는 true로 간주
+      referralCode: data['referralCode'],
+      referredBy: data['referredBy'],
     );
   }
 
@@ -245,6 +254,9 @@ class UserModel {
       'completedChallengeIds': completedChallengeIds,
       'memoCount': memoCount,
       'diaryCount': diaryCount,
+      'isSetupComplete': isSetupComplete,
+      'referralCode': referralCode,
+      'referredBy': referredBy,
     };
   }
 
@@ -296,6 +308,9 @@ class UserModel {
     List<String>? completedChallengeIds,
     int? memoCount,
     int? diaryCount,
+    bool? isSetupComplete,
+    String? referralCode,
+    String? referredBy,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -349,6 +364,9 @@ class UserModel {
           completedChallengeIds ?? this.completedChallengeIds,
       memoCount: memoCount ?? this.memoCount,
       diaryCount: diaryCount ?? this.diaryCount,
+      isSetupComplete: isSetupComplete ?? this.isSetupComplete,
+      referralCode: referralCode ?? this.referralCode,
+      referredBy: referredBy ?? this.referredBy,
     );
   }
 

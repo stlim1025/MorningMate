@@ -117,6 +117,61 @@ class UserService {
     }
   }
 
+  // 추천인 코드로 사용자 찾기
+  Future<UserModel?> getUserByReferralCode(String referralCode) async {
+    try {
+      final query = await _usersCollection
+          .where('referralCode', isEqualTo: referralCode)
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        return UserModel.fromFirestore(query.docs.first);
+      }
+      return null;
+    } catch (e) {
+      print('추천인 코드로 사용자 찾기 오류: $e');
+      return null;
+    }
+  }
+
+  // 특정 추천인을 통해 가입한 유저 수 가져오기
+  Future<int> getReferralCount(String referredByUid) async {
+    try {
+      final query = await _usersCollection
+          .where('referredBy', isEqualTo: referredByUid)
+          .count()
+          .get();
+      return query.count ?? 0;
+    } catch (e) {
+      print('추천인 수 조회 오류: $e');
+      return 0;
+    }
+  }
+
+  // 기기가 예전에 추천인 보상을 받았는지 확인
+  Future<bool> hasDeviceBeenUsedForReferral(String deviceId) async {
+    try {
+      final doc = await _db.collection('used_devices').doc(deviceId).get();
+      return doc.exists;
+    } catch (e) {
+      print('기기 확인 오류: $e');
+      return false;
+    }
+  }
+
+  // 추천인 보상을 받은 기기 등록
+  Future<void> registerDeviceForReferral(String deviceId, String uid) async {
+    try {
+      await _db.collection('used_devices').doc(deviceId).set({
+        'usedAt': FieldValue.serverTimestamp(),
+        'uid': uid,
+      });
+    } catch (e) {
+      print('기기 등록 오류: $e');
+    }
+  }
+
   // 연속 기록 업데이트 (일기 작성 시 호출)
   Future<void> updateConsecutiveDays(String uid) async {
     final user = await getUser(uid);
@@ -178,17 +233,26 @@ class UserService {
 
   // 사용자 데이터 전체 삭제 (회원탈퇴)
   Future<void> deleteUserData(String uid) async {
+    // 1. 사용자 문서 먼저 정보 백업
+    final userDoc = await _usersCollection.doc(uid).get();
+    final nestIds = userDoc.exists
+        ? List<String>.from(
+            (userDoc.data() as Map<String, dynamic>)['nestIds'] ?? [])
+        : <String>[];
+
     final batch = _db.batch();
 
-    // 1. 사용자 문서 삭제
+    // 2. 사용자 문서 삭제
     batch.delete(_usersCollection.doc(uid));
 
-    // 2. 일기 데이터 삭제 (컬렉션 그룹 혹은 하위 컬렉션이라면 방식 확인 필요)
-    // 현재는 diaries 컬렉션이 uid를 문서 ID로 하거나 하위 컬렉션일 가능성이 높음
-    // 여기서는 간단히 diaries/{uid} 혹은 diaries/{uid}/entries 등을 고려
-    // 프로젝트 구조에 따라 diary_service에서 처리하는 것이 좋을 수 있음
+    // 3. 일기 데이터 삭제
+    final diaries =
+        await _db.collection('diaries').where('userId', isEqualTo: uid).get();
+    for (var doc in diaries.docs) {
+      batch.delete(doc.reference);
+    }
 
-    // 3. 알림 데이터 삭제
+    // 4. 알림 데이터 삭제 (수신/발신)
     final notifications = await _db
         .collection('notifications')
         .where('userId', isEqualTo: uid)
@@ -196,8 +260,6 @@ class UserService {
     for (var doc in notifications.docs) {
       batch.delete(doc.reference);
     }
-
-    // 보낸 알림도 삭제할지 여부 결정 (보통 같이 삭제)
     final sentNotifications = await _db
         .collection('notifications')
         .where('senderId', isEqualTo: uid)
@@ -206,7 +268,18 @@ class UserService {
       batch.delete(doc.reference);
     }
 
-    // 4. 친구 요청 삭제
+    // 5. 친구 데이터 삭제 (친구 목록 + 요청)
+    final friends =
+        await _db.collection('friends').where('userId', isEqualTo: uid).get();
+    for (var doc in friends.docs) {
+      batch.delete(doc.reference);
+    }
+    final targetFriends =
+        await _db.collection('friends').where('friendId', isEqualTo: uid).get();
+    for (var doc in targetFriends.docs) {
+      batch.delete(doc.reference);
+    }
+
     final sentRequests = await _db
         .collection('friend_requests')
         .where('senderId', isEqualTo: uid)
@@ -219,6 +292,36 @@ class UserService {
         .where('receiverId', isEqualTo: uid)
         .get();
     for (var doc in receivedRequests.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 6. 둥지 초대 삭제
+    final sentInvites = await _db
+        .collection('nest_invites')
+        .where('senderId', isEqualTo: uid)
+        .get();
+    for (var doc in sentInvites.docs) {
+      batch.delete(doc.reference);
+    }
+    final receivedInvites = await _db
+        .collection('nest_invites')
+        .where('receiverId', isEqualTo: uid)
+        .get();
+    for (var doc in receivedInvites.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 7. 둥지에서 멤버 제거
+    for (final nestId in nestIds) {
+      batch.update(_db.collection('nests').doc(nestId), {
+        'memberIds': FieldValue.arrayRemove([uid])
+      });
+    }
+
+    // 8. 사용된 기기 데이터 삭제
+    final usedDevices =
+        await _db.collection('used_devices').where('uid', isEqualTo: uid).get();
+    for (var doc in usedDevices.docs) {
       batch.delete(doc.reference);
     }
 

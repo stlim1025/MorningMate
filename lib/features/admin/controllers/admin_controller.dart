@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:nanoid/nanoid.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/question_service.dart';
 import '../../../services/asset_service.dart';
@@ -17,6 +18,55 @@ class AdminController extends ChangeNotifier {
   String? get currentUserEmail => _currentUserEmail;
 
   AdminController(this._currentUserEmail);
+
+  Future<void> assignReferralCodesToOldUsers() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final snapshot = await _firestore.collection('users').get();
+      int updatedCount = 0;
+      WriteBatch batch = _firestore.batch();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        Map<String, dynamic> updates = {};
+
+        // 1. 추천인 코드가 없는 경우 생성
+        if (data['referralCode'] == null ||
+            (data['referralCode'] as String).isEmpty) {
+          updates['referralCode'] =
+              customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 8);
+        }
+
+        // 2. 기존 유저들의 경우 닉네임 설정 화면이 뜨지 않도록 설정 완료 상태로 변경
+        if (data['isSetupComplete'] != true) {
+          updates['isSetupComplete'] = true;
+        }
+
+        if (updates.isNotEmpty) {
+          batch.update(doc.reference, updates);
+          updatedCount++;
+
+          if (updatedCount % 400 == 0) {
+            await batch.commit();
+            batch = _firestore.batch();
+          }
+        }
+      }
+
+      if (updatedCount > 0 && updatedCount % 400 != 0) {
+        await batch.commit();
+      }
+
+      debugPrint('Assigned referral codes to $updatedCount users.');
+    } catch (e) {
+      debugPrint('Error assigning referral codes: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> syncShopAssets() async {
     _isLoading = true;

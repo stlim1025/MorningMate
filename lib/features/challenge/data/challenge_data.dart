@@ -216,13 +216,15 @@ final List<Challenge> challenges = [
     titleKey: 'challenge_bg_1_title',
     descKey: 'challenge_bg_1_desc',
     reward: 100,
-    isCompleted: (user) =>
-        user.purchasedBackgroundIds.where((e) => e != 'none').isNotEmpty,
+    isCompleted: (user) => user.purchasedBackgroundIds
+        .where((e) => e != 'none' && e != 'default')
+        .isNotEmpty,
     category: 'background',
     group: 'background',
     targetValue: 1,
-    getCurrentValue: (user) =>
-        user.purchasedBackgroundIds.where((e) => e != 'none').length,
+    getCurrentValue: (user) => user.purchasedBackgroundIds
+        .where((e) => e != 'none' && e != 'default')
+        .length,
   ),
   Challenge(
     id: 'bg_3',
@@ -230,12 +232,16 @@ final List<Challenge> challenges = [
     descKey: 'challenge_bg_3_desc',
     reward: 300,
     isCompleted: (user) =>
-        user.purchasedBackgroundIds.where((e) => e != 'none').length >= 3,
+        user.purchasedBackgroundIds
+            .where((e) => e != 'none' && e != 'default')
+            .length >=
+        3,
     category: 'background',
     group: 'background',
     targetValue: 3,
-    getCurrentValue: (user) =>
-        user.purchasedBackgroundIds.where((e) => e != 'none').length,
+    getCurrentValue: (user) => user.purchasedBackgroundIds
+        .where((e) => e != 'none' && e != 'default')
+        .length,
   ),
 
   // 6. Growth

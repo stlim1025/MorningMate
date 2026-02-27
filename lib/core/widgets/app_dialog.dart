@@ -304,7 +304,7 @@ class AppDialog {
                     const SizedBox(height: 16),
                     Text(
                       AppLocalizations.of(context)?.get('adRewardDesc') ??
-                          'You earned 10 branches for watching the ad!',
+                          'You earned 20 branches for watching the ad!',
                       textAlign: TextAlign.center,
                     ),
                   ],

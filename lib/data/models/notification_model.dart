@@ -9,6 +9,7 @@ enum NotificationType {
   nestInvite,
   nestDonation,
   nestPoke,
+  referralReward,
 }
 
 class NotificationModel {

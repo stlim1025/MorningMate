@@ -15,6 +15,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/localization/language_provider.dart';
 
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter/services.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -119,6 +120,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   : user?.email ?? '',
                           onTap: null,
                         ),
+                        if (user?.referralCode != null) ...[
+                          _buildDivider(colorScheme),
+                          _buildSettingsTile(
+                            context,
+                            colorScheme,
+                            icon: Icons.card_giftcard,
+                            title: '내 추천인 코드',
+                            subtitle: '${user?.referralCode ?? ''}',
+                            trailingIcon: Icons.copy,
+                            onTap: () async {
+                              await Clipboard.setData(
+                                  ClipboardData(text: user!.referralCode!));
+                              if (context.mounted) {
+                                MemoNotification.show(
+                                    context, '추천인 코드가 복사되었습니다.');
+                              }
+                            },
+                          ),
+                        ],
                       ],
                     ),
 
@@ -262,125 +282,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildProfileSection(
-      BuildContext context, user, AppColorScheme colorScheme) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadowColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.cardAccent.withOpacity(0.8),
-                  colorScheme.secondaryButton.withOpacity(0.8),
-                ],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.cardAccent.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                user?.nickname?.substring(0, 1).toUpperCase() ?? 'U',
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user?.nickname ?? '사용자',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: colorScheme.textPrimary,
-                      ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.cardAccent.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Lv. ${user?.characterLevel ?? 1}',
-                        style: TextStyle(
-                          color: colorScheme.cardAccent,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.twig.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Image.asset(
-                            'assets/images/branch.png',
-                            width: 14,
-                            height: 14,
-                            cacheWidth: 56,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${user?.points ?? 0}',
-                            style: TextStyle(
-                              color: colorScheme.textPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSectionTitle(String title, AppColorScheme colorScheme) {
     return Align(
       alignment: Alignment.centerLeft,
@@ -419,6 +320,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required String title,
     String? subtitle,
+    IconData? trailingIcon,
     VoidCallback? onTap,
   }) {
     return ListTile(
@@ -454,8 +356,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : null,
       trailing: onTap != null
           ? Icon(
-              Icons.chevron_right,
+              trailingIcon ?? Icons.chevron_right,
               color: colorScheme.textSecondary.withOpacity(0.5),
+              size: trailingIcon != null ? 20 : 24,
             )
           : null,
       onTap: onTap,
@@ -1099,14 +1002,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          PopupTextField(
-            controller: passwordController,
-            obscureText: true,
-            hintText:
-                AppLocalizations.of(context)?.get('passwordConfirmHint') ??
-                    '비밀번호 확인',
-          ),
-          const SizedBox(height: 16),
+          if (authController.userModel?.provider != 'kakao' &&
+              authController.userModel?.provider != 'google' &&
+              authController.userModel?.provider != 'apple' &&
+              !(authController.currentUser?.providerData
+                      .any((p) => p.providerId != 'password') ??
+                  false)) ...[
+            PopupTextField(
+              controller: passwordController,
+              obscureText: true,
+              hintText:
+                  AppLocalizations.of(context)?.get('passwordConfirmHint') ??
+                      '비밀번호 확인',
+            ),
+            const SizedBox(height: 16),
+          ],
           ValueListenableBuilder<bool>(
             valueListenable: isCheckedNotifier,
             builder: (context, isChecked, child) {
@@ -1169,10 +1079,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Delete Account',
           isEnabled: isCheckedNotifier,
           onPressed: (BuildContext context) async {
+            final provider = authController.userModel?.provider;
+            final isSocialUser = provider == 'kakao' ||
+                provider == 'google' ||
+                provider == 'apple' ||
+                (authController.currentUser?.providerData
+                        .any((p) => p.providerId != 'password') ??
+                    false);
+            final isEmailUser = !isSocialUser;
             final password = passwordController.text.trim();
             AppDialog.showError(context, null);
 
-            if (password.isEmpty) {
+            if (isEmailUser && password.isEmpty) {
               AppDialog.showError(
                   context,
                   AppLocalizations.of(context)?.get('passwordRequired') ??
@@ -1181,7 +1099,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             }
 
             try {
-              await authController.deleteAccount(password);
+              await authController.deleteAccount(isEmailUser ? password : null);
               if (context.mounted) {
                 context.go('/login');
               }

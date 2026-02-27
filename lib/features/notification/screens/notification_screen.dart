@@ -233,11 +233,10 @@ class NotificationScreen extends StatelessWidget {
                                               ? (notification.data?['isReply'] == true
                                                   ? (AppLocalizations.of(context)?.getFormat('replyFrom', {'username': notification.senderNickname}) ??
                                                       '${notification.senderNickname}\'s reply')
-                                                  : (AppLocalizations.of(context)
-                                                          ?.getFormat('cheerFrom',
-                                                              {'username': notification.senderNickname}) ??
+                                                  : (AppLocalizations.of(context)?.getFormat('cheerFrom', {'username': notification.senderNickname}) ??
                                                       '${notification.senderNickname}\'s cheer'))
-                                              : (notification.type == NotificationType.wakeUp
+                                              : (notification.type ==
+                                                      NotificationType.wakeUp
                                                   ? (AppLocalizations.of(context)?.get('wakeUpAlert') ??
                                                       'Wake up alert')
                                                   : (notification.type == NotificationType.friendRequest
@@ -250,8 +249,11 @@ class NotificationScreen extends StatelessWidget {
                                                               ? (AppLocalizations.of(context)?.get('nestPokeAlert') ??
                                                                   '찌르기 알림')
                                                               : (notification.type == NotificationType.nestDonation
-                                                                  ? (AppLocalizations.of(context)?.get('nestDonation') ?? '둥지 기부')
-                                                                  : (AppLocalizations.of(context)?.get('notifications') ?? 'Notifications')))))),
+                                                                  ? (AppLocalizations.of(context)?.get('nestDonation') ??
+                                                                      '둥지 기부')
+                                                                  : (notification.type == NotificationType.referralReward
+                                                                      ? (AppLocalizations.of(context)?.get('referralReward') ?? '추천인 보상')
+                                                                      : (AppLocalizations.of(context)?.get('notifications') ?? 'Notifications'))))))),
                                           style: TextStyle(
                                             fontFamily: 'BMJUA',
                                             color: colorScheme.textSecondary,
@@ -608,6 +610,9 @@ class NotificationScreen extends StatelessWidget {
           break;
         case NotificationType.friendRequest:
           iconPath = 'assets/icons/Friend_NotiIcon.png';
+          break;
+        case NotificationType.referralReward:
+          iconPath = 'assets/icons/Gift_Icon.png';
           break;
         default:
           iconPath = 'assets/icons/Bell_Icon.png';

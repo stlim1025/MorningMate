@@ -64,7 +64,7 @@ class AppLocalizations {
       'floor': 'Floor',
       'character': 'Character',
       'emoticon': 'Emoticon',
-      'watchAdGetBranch': 'Watch Ad Get 10 Branches',
+      'watchAdGetBranch': 'Watch Ad Get 20 Branches',
       'completed': 'Completed',
       'watch': 'Watch',
       'unowned': 'Unowned',

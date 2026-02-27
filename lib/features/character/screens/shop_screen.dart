@@ -403,7 +403,7 @@ class _ShopScreenState extends State<ShopScreen> {
               children: [
                 Text(
                   AppLocalizations.of(context)?.get('watchAdGetBranch') ??
-                      'Watch Ad Get 10 Branches',
+                      'Watch Ad Get 20 Branches',
                   style: const TextStyle(
                     color: Color(0xFF5D4037), // 갈색 계열 (메모지에 어울리는)
                     fontSize: 14, // 16 -> 14 축소 (영어 텍스트 길어질 수 있음)

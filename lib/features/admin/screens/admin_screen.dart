@@ -187,6 +187,28 @@ class AdminHomeTab extends StatelessWidget {
                             horizontal: 24, vertical: 12),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: controller.isLoading
+                          ? null
+                          : () async {
+                              await controller.assignReferralCodesToOldUsers();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('기존 유저 추천인 코드 부여 및 설정 체크 완료!')),
+                                );
+                              }
+                            },
+                      icon: const Icon(Icons.code),
+                      label: const Text('기존 모든 유저 추천인 코드 부여 + 설정완료 처리'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                      ),
+                    ),
                   ],
                 ),
               ),

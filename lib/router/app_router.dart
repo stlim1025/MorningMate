@@ -92,6 +92,13 @@ class AppRouter {
             return null;
           }
 
+          if (user != null && !user.isSetupComplete) {
+            if (location != '/') {
+              return '/';
+            }
+            return null; // 이미 AuthWrapper 경로(/)에 있으면 유지
+          }
+
           if (location == '/splash' ||
               location == '/login' ||
               location == '/signup' ||

@@ -204,7 +204,48 @@ class AuthService {
 
   // 로그아웃
   Future<void> signOut() async {
+    try {
+      // 구글 로그아웃
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.signOut();
+      }
+    } catch (e) {
+      print('구글 로그아웃 중 오류 (무시): $e');
+    }
+
+    try {
+      // 카카오 로그아웃
+      if (await kakao.AuthApi.instance.hasToken()) {
+        await kakao.UserApi.instance.logout();
+      }
+    } catch (e) {
+      print('카카오 로그아웃 중 오류 (무시): $e');
+    }
+
     await _auth.signOut();
+  }
+
+  // 소셜 계정 연동 해제 (회원탈퇴 시)
+  Future<void> disconnectSocial() async {
+    try {
+      // 구글 연동 해제
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.disconnect();
+      }
+    } catch (e) {
+      print('구글 연동 해제 중 오류: $e');
+    }
+
+    try {
+      // 카카오 연동 해제 (Unlink)
+      if (await kakao.AuthApi.instance.hasToken()) {
+        await kakao.UserApi.instance.unlink();
+      }
+    } catch (e) {
+      print('카카오 연동 해제 중 오류: $e');
+    }
   }
 
   // 재인증 (회원탈퇴 등 민감한 작업 전 필요)
@@ -219,9 +260,55 @@ class AuthService {
         await user.reauthenticateWithCredential(credential);
       }
     } on FirebaseAuthException catch (_) {
-      // 한글 메시지로 변환하지 않고 원본 예외를 그대로 던져서
-      // 호출하는 쪽에서 e.code를 직접 확인할 수 있게 합니다.
       rethrow;
+    }
+  }
+
+  // 구글 재인증
+  Future<void> reauthenticateWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        throw '구글 인증이 취소되었습니다.';
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await _auth.currentUser?.reauthenticateWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw '구글 인증 중 오류가 발생했습니다: $e';
+    }
+  }
+
+  // 애플 재인증
+  Future<void> reauthenticateWithApple() async {
+    try {
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      await _auth.currentUser?.reauthenticateWithCredential(oauthCredential);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw '애플 인증 중 오류가 발생했습니다: $e';
     }
   }
 

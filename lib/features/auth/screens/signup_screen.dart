@@ -4,8 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../controllers/auth_controller.dart';
-import '../../../services/user_service.dart';
-import '../../../core/widgets/memo_notification.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -19,18 +17,15 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
-  final _nicknameController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscurePasswordConfirm = true;
-  String? _nicknameError;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
-    _nicknameController.dispose();
     super.dispose();
   }
 
@@ -115,37 +110,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                         const SizedBox(height: 40),
 
-                        // 닉네임 필드
-                        _buildTextField(
-                          controller: _nicknameController,
-                          label: l10n?.get('changeNickname') ?? 'Nickname',
-                          hint: l10n?.get('nicknamePlaceholder') ??
-                              'Enter nickname (2-10 chars)',
-                          icon: Icons.person,
-                          colorScheme: colorScheme,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n?.get('nameRequired') ??
-                                  'Please enter name';
-                            }
-                            if (value.length < 2) {
-                              return l10n?.get('nicknameLengthError') ??
-                                  'Nickname must be at least 2 characters';
-                            }
-                            if (value.length > 10) {
-                              return l10n?.get('nicknameTakenError') ??
-                                  'Nickname must be 10 characters or less';
-                            }
-                            return _nicknameError;
-                          },
-                          onChanged: (_) {
-                            if (_nicknameError != null) {
-                              setState(() => _nicknameError = null);
-                            }
-                          },
-                        ),
-
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
                         // 이메일 필드
                         _buildTextField(
@@ -360,40 +325,16 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     final authController = context.read<AuthController>();
-    final userService = context.read<UserService>();
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    final l10n = AppLocalizations.of(context);
 
     try {
-      // 닉네임 중복 확인
-      final nickname = _nicknameController.text.trim();
-      final isAvailable = await userService.isNicknameAvailable(nickname);
-
-      if (!isAvailable) {
-        if (mounted) {
-          setState(() {
-            _nicknameError =
-                l10n?.get('nicknameTakenError') ?? 'Nickname is already taken';
-            _isLoading = false;
-          });
-          _formKey.currentState!.validate();
-        }
-        return;
-      }
-
       await authController.signUp(
         _emailController.text.trim(),
         _passwordController.text,
-        nickname,
       );
 
       if (mounted) {
         context.go('/morning');
-
-        MemoNotification.show(
-            context,
-            l10n?.getFormat('nicknameIntro', {'nickname': nickname}) ??
-                'Welcome, $nickname! 🎉');
       }
     } catch (e) {
       if (mounted) {
