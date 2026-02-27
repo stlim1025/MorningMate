@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -137,14 +138,15 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                           // 일기 작성 정보 (캘린더)
                           _buildCalendarSection(context, colorScheme),
                           SizedBox(
-                              height: 100 +
-                                  MediaQuery.of(context)
-                                      .viewPadding
-                                      .bottom), // Adjusted for PageView + edge-to-edge
+                              height:
+                                  150), // Adjusted for PageView + edge-to-edge
                         ],
                       ),
                     ),
                   ),
+                SizedBox(
+                    height: (Platform.isIOS ? 50.0 : 60.0) +
+                        MediaQuery.of(context).viewPadding.bottom),
               ],
             ),
           ),

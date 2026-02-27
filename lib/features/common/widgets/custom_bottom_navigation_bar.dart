@@ -29,13 +29,16 @@ class CustomBottomNavigationBar extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           // 1. Background Image (Down_Tab.png)
-          Container(
-            width: double.infinity,
-            height: (Platform.isIOS ? 50 : 60) + bottomInset,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/Down_Tab.png'),
-                fit: BoxFit.fill,
+          Padding(
+            padding: EdgeInsets.only(bottom: bottomInset),
+            child: Container(
+              width: double.infinity,
+              height: (Platform.isIOS ? 50 : 60),
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/Down_Tab.png'),
+                  fit: BoxFit.fill,
+                ),
               ),
             ),
           ),

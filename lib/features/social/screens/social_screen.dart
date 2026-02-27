@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -263,7 +264,11 @@ class _SocialScreenState extends State<SocialScreen> {
                                       Expanded(
                                         child: GridView.builder(
                                           padding: EdgeInsets.fromLTRB(
-                                              16, 16, 16, 100 + bottomInset),
+                                              16,
+                                              16,
+                                              16,
+                                              (Platform.isIOS ? 180 : 200) +
+                                                  bottomInset),
                                           gridDelegate:
                                               const SliverGridDelegateWithFixedCrossAxisCount(
                                             crossAxisCount: 3,
@@ -280,7 +285,14 @@ class _SocialScreenState extends State<SocialScreen> {
                                         ),
                                       ),
                                     if (!hasFriends)
-                                      SizedBox(height: 80 + bottomInset),
+                                      SizedBox(
+                                          height: (Platform.isIOS ? 180 : 200) +
+                                              bottomInset),
+                                    if (hasFriends)
+                                      SizedBox(
+                                          height:
+                                              (Platform.isIOS ? 50.0 : 60.0) +
+                                                  bottomInset),
                                   ],
                                 ),
                               ],
@@ -295,7 +307,7 @@ class _SocialScreenState extends State<SocialScreen> {
             ),
             Positioned(
               right: 16,
-              bottom: 30 +
+              bottom: (Platform.isIOS ? 115 : 130) +
                   bottomInset, // Increased to avoid bottom nav bar + edge-to-edge inset
               child: _AnimatedAddFriendButton(
                 onPressed: () => _showAddFriendDialog(context, colorScheme),

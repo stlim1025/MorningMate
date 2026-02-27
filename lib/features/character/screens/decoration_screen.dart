@@ -176,7 +176,7 @@ class _DecorationScreenState extends State<DecorationScreen>
     final double panelHeight =
         screenSize.height * 0.35; // Take up about 1/3 of screen height
     final double visibleHeaderHeight =
-        EnhancedCharacterRoomWidget.roomStandardBottomPadding + bottomInset;
+        EnhancedCharacterRoomWidget.roomStandardBottomPadding;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -451,9 +451,8 @@ class _DecorationScreenState extends State<DecorationScreen>
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            bottom: (_isPanelExpanded
-                    ? panelHeight + bottomInset
-                    : visibleHeaderHeight + 30) +
+            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) +
+                bottomInset +
                 10,
             left: 20,
             child: GestureDetector(
@@ -502,9 +501,8 @@ class _DecorationScreenState extends State<DecorationScreen>
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            bottom: (_isPanelExpanded
-                    ? panelHeight + bottomInset
-                    : visibleHeaderHeight + 30) +
+            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) +
+                bottomInset +
                 10,
             right: 20,
             child: GestureDetector(
