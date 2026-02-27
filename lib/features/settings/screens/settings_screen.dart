@@ -597,7 +597,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               controller: controller,
               hintText: AppLocalizations.of(context)?.get('enterNewNickname') ??
                   'Enter new nickname',
-              maxLength: 10,
+              maxLength: 15,
             ),
           ),
           ValueListenableBuilder<bool>(

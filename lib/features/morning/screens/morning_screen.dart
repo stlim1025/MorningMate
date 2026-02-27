@@ -229,8 +229,8 @@ class _MorningScreenState extends State<MorningScreen>
               controller: controller,
               hintText:
                   AppLocalizations.of(context)?.get('nicknamePlaceholder') ??
-                      'Enter nickname (2-10 chars)',
-              maxLength: 10,
+                      'Enter nickname (2-15 chars)',
+              maxLength: 15,
             ),
           ),
           ValueListenableBuilder<bool>(

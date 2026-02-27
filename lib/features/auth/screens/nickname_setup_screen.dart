@@ -351,7 +351,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                     const SizedBox(height: 8),
                     PopupTextField(
                       controller: _nicknameController,
-                      maxLength: 10,
+                      maxLength: 15,
                       hintText: '닉네임을 입력하세요',
                       fontFamily: 'KyoboHandwriting2024psw',
                     ),

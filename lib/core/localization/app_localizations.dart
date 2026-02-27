@@ -37,7 +37,7 @@ class AppLocalizations {
       'privacyPolicy': 'Privacy Policy',
       'logout': 'Logout',
       'deleteAccount': 'Delete Account',
-      'nicknamePlaceholder': 'Enter nickname (2-10 chars)',
+      'nicknamePlaceholder': 'Enter nickname (2-15 chars)',
       'cancel': 'Cancel',
       'change': 'Change',
       'confirm': 'Confirm',

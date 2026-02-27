@@ -54,8 +54,8 @@ class _NestListScreenState extends State<NestListScreen> {
       content: PopupTextField(
         controller: nameController,
         hintText: AppLocalizations.of(context)?.get('nestNameHint') ??
-            '둥지 이름을 입력하세요 (최대 10자)',
-        maxLength: 10,
+            '둥지 이름을 입력하세요 (최대 15자)',
+        maxLength: 15,
         fontFamily: 'KyoboHandwriting2024psw',
       ),
       actions: [

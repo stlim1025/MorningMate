@@ -483,6 +483,7 @@ class _SocialScreenState extends State<SocialScreen> {
           controller: controller,
           hintText: AppLocalizations.of(context)?.get('enterFriendNickname') ??
               'Enter friend nickname',
+          maxLength: 15,
         ),
       ),
       actions: [

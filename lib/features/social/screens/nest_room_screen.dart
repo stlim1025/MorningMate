@@ -138,7 +138,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
         controller: nicknameController,
         hintText: AppLocalizations.of(context)?.get('nestInvitePlaceholder') ??
             '초대할 친구의 닉네임을 입력하세요',
-        maxLength: 10,
+        maxLength: 15,
       ),
       actions: [
         AppDialogAction(
@@ -437,7 +437,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
             controller: nameController,
             hintText: AppLocalizations.of(context)?.get('nestNameHint') ??
                 '둥지 이름을 입력하세요',
-            maxLength: 10,
+            maxLength: 15,
           ),
           const SizedBox(height: 12),
           PopupTextField(
