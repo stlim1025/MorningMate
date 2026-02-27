@@ -388,8 +388,8 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                   bottom: 0,
                   child: SafeArea(
                     child: Padding(
-                      padding: EdgeInsets.only(
-                          bottom: (Platform.isIOS ? 75 : 90) + 10),
+                      padding:
+                          EdgeInsets.only(bottom: Platform.isIOS ? 20 : 10),
                       child: Consumer<SocialController>(
                         builder: (context, socialController, child) {
                           final remaining = socialController

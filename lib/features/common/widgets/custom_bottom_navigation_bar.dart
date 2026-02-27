@@ -22,6 +22,11 @@ class CustomBottomNavigationBar extends StatelessWidget {
     // Edge-to-Edge 환경에서도 항상 올바른 시스템 UI inset을 반환합니다.
     final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
+    // 안드로이드에서 제스처 탐색 모드의 시스템 여백은 보통 30보다 작음(ex. 홈 인디케이터 높이)
+    // 반면 하단에 버튼이 있는 경우 40~50 이상의 높이를 가짐.
+    final bool isGestureNav =
+        Platform.isIOS || (bottomInset > 0 && bottomInset < 30);
+
     return SizedBox(
       height: navBarHeight + bottomInset,
       child: Stack(
@@ -29,13 +34,18 @@ class CustomBottomNavigationBar extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           // 1. Background Image (Down_Tab.png)
-          Container(
-            width: double.infinity,
-            height: (Platform.isIOS ? 50 : 60) + bottomInset,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/Down_Tab.png'),
-                fit: BoxFit.fill,
+          Padding(
+            padding: EdgeInsets.only(bottom: isGestureNav ? 0 : bottomInset),
+            child: Container(
+              width: double.infinity,
+              height: Platform.isIOS
+                  ? (50 + bottomInset)
+                  : (isGestureNav ? 60 + bottomInset : 60),
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/Down_Tab.png'),
+                  fit: BoxFit.fill,
+                ),
               ),
             ),
           ),
