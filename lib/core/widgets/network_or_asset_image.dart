@@ -13,6 +13,9 @@ class NetworkOrAssetImage extends StatelessWidget {
   final Color? color;
   final BlendMode? colorBlendMode;
 
+  // 인메모리 캐시 추가: 스플래시에서 미리 로드한 바이트를 재사용하여 즉시 표시
+  static final Map<String, Uint8List> firebaseWebCache = {};
+
   const NetworkOrAssetImage({
     super.key,
     required this.imagePath,
@@ -29,6 +32,21 @@ class NetworkOrAssetImage extends StatelessWidget {
       if (kIsWeb) {
         // Firebase Storage URL인 경우, SDK를 통해 바이트 다운로드 (CORS 우회)
         if (imagePath.contains('firebasestorage.googleapis.com')) {
+          if (firebaseWebCache.containsKey(imagePath)) {
+            return Image.memory(
+              firebaseWebCache[imagePath]!,
+              fit: fit,
+              width: width,
+              height: height,
+              color: color,
+              colorBlendMode: colorBlendMode,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.broken_image_outlined,
+                size: width ?? height ?? 24,
+                color: Colors.grey[400],
+              ),
+            );
+          }
           return _FirebaseStorageImage(
             url: imagePath,
             fit: fit,
@@ -119,11 +137,22 @@ class _FirebaseStorageImageState extends State<_FirebaseStorageImage> {
   }
 
   Future<void> _loadImage() async {
+    // 이미 캐시에 있다면 즉시 렌더링
+    if (NetworkOrAssetImage.firebaseWebCache.containsKey(widget.url)) {
+      if (mounted) {
+        setState(() {
+          _imageBytes = NetworkOrAssetImage.firebaseWebCache[widget.url];
+        });
+      }
+      return;
+    }
+
     // 방법 1: Firebase SDK getData()로 직접 바이트 다운로드
     try {
       final ref = FirebaseStorage.instance.refFromURL(widget.url);
       final data = await ref.getData(10 * 1024 * 1024); // 최대 10MB
       if (mounted && data != null) {
+        NetworkOrAssetImage.firebaseWebCache[widget.url] = data; // 캐시에 저장
         setState(() => _imageBytes = data);
         return; // 성공하면 바로 리턴
       }

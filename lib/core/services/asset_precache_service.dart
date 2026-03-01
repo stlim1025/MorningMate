@@ -5,6 +5,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../constants/room_assets.dart';
 import '../constants/character_assets.dart';
 
+import '../widgets/network_or_asset_image.dart';
+
 class AssetPrecacheService {
   static final AssetPrecacheService _instance =
       AssetPrecacheService._internal();
@@ -30,9 +32,16 @@ class AssetPrecacheService {
       if (kIsWeb &&
           path.startsWith('http') &&
           path.contains('firebasestorage.googleapis.com')) {
+        // 이미 캐시되어 있다면 스킵
+        if (NetworkOrAssetImage.firebaseWebCache.containsKey(path)) return;
+
         // Web에서 Firebase Storage의 경우 browser 캐싱을 유도하기 위해 getData 호출
         final ref = FirebaseStorage.instance.refFromURL(path);
-        await ref.getData(5 * 1024 * 1024); // 브라우저 캐시에 담김 (빠른 로딩)
+        final data = await ref.getData(5 * 1024 * 1024); // 브라우저 캐시에 담김 (빠른 로딩)
+        if (data != null) {
+          NetworkOrAssetImage.firebaseWebCache[path] =
+              data; // 인메모리에 저장하여 즉시 로딩 지원
+        }
         return;
       }
       await precacheImage(_getProvider(path), context);
@@ -51,46 +60,59 @@ class AssetPrecacheService {
     if (_isPrecaching || _isDone) return;
     _isPrecaching = true;
 
+    // 모바일/웹 환경에서 많은 에셋이 동시에 로드될 때 캐시가 꽉 차서 먼저 로드된 항목이 밀려나는 현상(화면 진입 시 순차적 로딩 깜빡임) 방지
+    // 최대 항목 2000개, 300MB까지 무손실 유지
+    PaintingBinding.instance.imageCache.maximumSize = 2000;
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 300 * 1024 * 1024;
+
     try {
-      final List<Future<void>> precacheTasks = [];
+      final List<Future<void> Function()> precacheTasks = [];
 
       // 1. Wallpapers
       for (var asset in RoomAssets.wallpapers) {
         if (asset.imagePath != null) {
-          precacheTasks.add(_safePrecache(asset.imagePath!, context));
+          precacheTasks.add(() => _safePrecache(asset.imagePath!, context));
         }
       }
 
       // 2. Backgrounds
       for (var asset in RoomAssets.backgrounds) {
         if (asset.imagePath != null) {
-          precacheTasks.add(_safePrecache(asset.imagePath!, context));
+          precacheTasks.add(() => _safePrecache(asset.imagePath!, context));
         }
       }
 
       // 3. Floors
       for (var asset in RoomAssets.floors) {
         if (asset.imagePath != null) {
-          precacheTasks.add(_safePrecache(asset.imagePath!, context));
+          precacheTasks.add(() => _safePrecache(asset.imagePath!, context));
         }
       }
 
       // 4. Essential Props
       for (var asset in RoomAssets.props) {
         if (asset.imagePath != null) {
-          precacheTasks.add(_safePrecache(asset.imagePath!, context));
+          precacheTasks.add(() => _safePrecache(asset.imagePath!, context));
         }
       }
 
       // 5. Emoticons
       for (var asset in RoomAssets.emoticons) {
         if (asset.imagePath != null) {
-          precacheTasks.add(_safePrecache(asset.imagePath!, context));
+          precacheTasks.add(() => _safePrecache(asset.imagePath!, context));
         }
       }
 
-      // 개별 실패가 있어도 나머지는 정상 완료됨
-      await Future.wait(precacheTasks);
+      // 개별 실패가 있어도 나머지는 정상 완료되도록 하며, 네트워크 부하를 줄이기 위해 5개씩 배치 단위로 처리 (App 타임아웃 방지)
+      const int batchSize = 5;
+      for (int i = 0; i < precacheTasks.length; i += batchSize) {
+        final end = (i + batchSize < precacheTasks.length)
+            ? i + batchSize
+            : precacheTasks.length;
+        final batch = precacheTasks.sublist(i, end).map((task) => task());
+        await Future.wait(batch);
+      }
+
       _isDone = true;
     } catch (e) {
       debugPrint('Error during asset precaching: $e');

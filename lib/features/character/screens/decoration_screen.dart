@@ -69,7 +69,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             onPressed: (context) => Navigator.pop(context),
           ),
           AppDialogAction(
-            label: '30',
+            label: '5',
             labelWidget: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -80,7 +80,7 @@ class _DecorationScreenState extends State<DecorationScreen>
                 ),
                 const SizedBox(width: 6),
                 const Text(
-                  '30',
+                  '5',
                   style: TextStyle(
                     fontFamily: 'BMJUA',
                     fontWeight: FontWeight.bold,
@@ -93,7 +93,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             isEnabled: ValueNotifier<bool>(
                 (context.read<CharacterController>().currentUser?.points ??
                         0) >=
-                    30),
+                    5),
             onPressed: (context) => Navigator.pop(context, controller.text),
           ),
         ],
@@ -604,7 +604,7 @@ class _DecorationScreenState extends State<DecorationScreen>
         MemoNotification.show(
             context,
             AppLocalizations.of(context)?.get('stickyNoteAdded') ??
-                'Memo added! (30 points deducted) 📝');
+                'Memo added! (5 points deducted) 📝');
       }
     } catch (e) {
       if (mounted) {

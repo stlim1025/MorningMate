@@ -579,8 +579,10 @@ class AppLocalizations {
       'nestWithdraw': 'Leave',
       'nestUpgradeTitle': 'Nest Upgrade',
       'nestUpgradeConfirm':
-          'Would you like to upgrade your nest to Level 2?\nThe background will change, member limit will increase to 15,\nand you will get a +5% branch bonus on diaries.',
-      'nestUpgradeSuccess': 'The nest has been upgraded to Level 2!',
+          'Would you like to upgrade your nest to Level {level}?\nThe background will change, member limit will increase to {maxCapacity},\nand you will get a +{bonusPercent}% branch bonus on diaries.',
+      'nestUpgradeConfirmMaxLevel':
+          'Would you like to upgrade your nest to Level {level}?\nThe background will change and you will get a +{bonusPercent}% branch bonus on diaries.',
+      'nestUpgradeSuccess': 'The nest has been upgraded to Level {level}!',
       'nestUpgrade': 'Upgrade',
       'upgrade': 'Upgrade',
       'nestBuffActive': 'Diary branch +{bonus}% buff active!',
@@ -1148,8 +1150,10 @@ class AppLocalizations {
       'nestWithdraw': '나가기',
       'nestUpgradeTitle': '둥지 업그레이드',
       'nestUpgradeConfirm':
-          '둥지를 레벨 2로 업그레이드 하시겠습니까?\n배경이 바뀌고 정원이 15명으로 늘어납니다.\n(일기 작성 시 가지 +5% 버프 획득)',
-      'nestUpgradeSuccess': '둥지가 레벨 2로 업그레이드 되었습니다!',
+          '둥지를 레벨 {level}로 업그레이드 하시겠습니까?\n배경이 바뀌고 정원이 {maxCapacity}명으로 늘어납니다.\n(일기 작성 시 가지 +{bonusPercent}% 버프 획득)',
+      'nestUpgradeConfirmMaxLevel':
+          '둥지를 레벨 {level}로 업그레이드 하시겠습니까?\n배경이 바뀌며 일기 작성 시 가지 +{bonusPercent}% 버프를 획득합니다.',
+      'nestUpgradeSuccess': '둥지가 레벨 {level}로 업그레이드 되었습니다!',
       'nestUpgrade': '업그레이드',
       'upgrade': '업그레이드',
       'nestBuffActive': '일기 작성 가지 +{bonus}% 버프 적용중!',

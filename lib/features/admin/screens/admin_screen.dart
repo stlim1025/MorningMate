@@ -656,6 +656,8 @@ class ReportListTab extends StatelessWidget {
             const SizedBox(height: 8),
             Text('신고자: ${report['reporterName']}'),
             Text('작성자: ${report['targetUserName']}'),
+            Text(
+                '신고 대상 종류: ${report['targetType'] == 'sticky_note' ? '포스트잇 메모' : (report['targetType'] ?? '기타')}'),
             const SizedBox(height: 8),
             Text('신고 사유: ${report['reason']}'),
             const SizedBox(height: 8),

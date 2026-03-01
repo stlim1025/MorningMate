@@ -893,20 +893,20 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                     // 5. 신고 버튼 (오른쪽 아래)
                     Positioned(
                       bottom: 30,
-                      right: 35,
+                      right: 15,
                       child: GestureDetector(
                         onTap: () {
                           Navigator.pop(context); // Close memo dialog first
                           _showReportDialog(prop.id, content, 'sticky_note');
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(1),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.white.withOpacity(0.5),
                           ),
-                          child: const Icon(Icons.report_problem_outlined,
-                              color: Colors.redAccent, size: 20),
+                          child: Image.asset('assets/icons/Warning_Icon.png',
+                              width: 24, height: 24),
                         ),
                       ),
                     ),
@@ -1016,6 +1016,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                 targetContent: content,
                 targetId: targetId,
                 reason: selectedReason!,
+                targetType: type,
               );
 
               if (mounted) {

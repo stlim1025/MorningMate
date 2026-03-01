@@ -672,8 +672,7 @@ class _NestListScreenState extends State<NestListScreen> {
     final String name = nest.name;
     final int level = nest.level;
     final int currentPeople = nest.memberIds.length;
-    final int maxPeople =
-        nest.level == 1 ? 10 : 15; // Level 1 is 10, others are 15
+    final int maxPeople = nest.level >= 3 ? 20 : (nest.level == 2 ? 15 : 10);
     final String desc = nest.description.isNotEmpty
         ? nest.description
         : (AppLocalizations.of(context)?.get('nestPlaceholderDesc') ??
@@ -703,7 +702,7 @@ class _NestListScreenState extends State<NestListScreen> {
           width: 80,
           height: 80,
           child: Image.asset(
-            'assets/icons/Nest_Icon.png',
+            'assets/icons/Nest_Icon${level > 4 ? 4 : level}.png',
             fit: BoxFit.contain,
           ),
         ),
@@ -760,7 +759,7 @@ class _NestListScreenState extends State<NestListScreen> {
           width: 60,
           height: 60,
           child: Image.asset(
-            'assets/icons/Nest_Icon.png',
+            'assets/icons/Nest_Icon${level > 4 ? 4 : level}.png',
             fit: BoxFit.contain,
           ),
         ),

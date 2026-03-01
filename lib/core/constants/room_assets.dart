@@ -212,25 +212,12 @@ class RoomAssets {
         color: Color(0xFFFFF9C4),
         imagePath: 'assets/images/wallpapers/PinkLace.png'),
     RoomAsset(
-        id: 'red_heart',
-        name: '빨간하트',
-        price: 100,
-        icon: Icons.scatter_plot, // Dots
-        color: Color(0xFFFFF9C4),
-        imagePath: 'assets/images/wallpapers/RedHeart.png'),
-    RoomAsset(
         id: 'colorful_hexagon',
         name: '컬러풀육각형',
         price: 100,
         icon: Icons.scatter_plot, // Dots
         color: Color(0xFFFFF9C4),
         imagePath: 'assets/images/wallpapers/Colorful_hexagon.png'),
-    RoomAsset(
-        id: 'Space_Background',
-        name: '우주',
-        price: 100,
-        icon: Icons.scatter_plot, // Dots
-        imagePath: 'assets/images/wallpapers/Space_Background.png'),
     RoomAsset(
         id: 'Castle_Stone_Wall',
         name: '중세 성 벽지',
@@ -294,7 +281,7 @@ class RoomAssets {
     RoomAsset(
       id: 'sticky_note',
       name: '메모 노트',
-      price: 30,
+      price: 5,
       icon: Icons.note_alt_outlined,
       imagePath: 'assets/items/StickyNote.png',
       sizeMultiplier: 0.6,
@@ -407,15 +394,6 @@ class RoomAssets {
       imagePath: 'assets/items/Space_bed.png',
       sizeMultiplier: 2.0,
       aspectRatio: 1.0,
-    ),
-    RoomAsset(
-      id: 'pogeun_sofa',
-      name: '포근소파',
-      price: 200,
-      icon: Icons.chair,
-      imagePath: 'assets/items/PogeunSofa.png',
-      sizeMultiplier: 1.2,
-      aspectRatio: 1.5,
     ),
     RoomAsset(
       id: 'cozy_bean',

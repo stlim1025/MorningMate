@@ -547,7 +547,6 @@ class SocialController extends ChangeNotifier {
     }
   }
 
-  // 신고하기
   Future<void> submitReport({
     required String reporterId,
     required String reporterName,
@@ -556,6 +555,7 @@ class SocialController extends ChangeNotifier {
     required String targetContent,
     required String targetId,
     required String reason,
+    required String targetType,
   }) async {
     try {
       await FirebaseFirestore.instance.collection('reports').add({
@@ -566,6 +566,7 @@ class SocialController extends ChangeNotifier {
         'targetContent': targetContent,
         'targetId': targetId,
         'reason': reason,
+        'targetType': targetType,
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
       });

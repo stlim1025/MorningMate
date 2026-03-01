@@ -598,7 +598,7 @@ class AppDialog {
           'Delete Account',
           '중단',
           'Stop',
-          '30',
+          '5',
         ].contains(action.label);
 
     // 'Cancel' or 'Close' style buttons. Includes '계속 작성'

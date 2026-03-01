@@ -362,8 +362,12 @@ class MorningController extends ChangeNotifier {
         }
 
         if (shouldReward) {
+          // 먼저 오늘 날짜 기준으로 연속 기록을 업데이트함
+          await _userService.updateConsecutiveDays(userId);
+
           int calculatedPoints = 10;
           try {
+            // 연속 기록이 업데이트된 최신 유저 정보를 가져와서 점수 계산
             final user = await _userService.getUser(userId);
             if (user != null) {
               calculatedPoints = 10 + (user.consecutiveDays * 2);
@@ -380,7 +384,9 @@ class MorningController extends ChangeNotifier {
               final level = data['level'] as int? ?? 1;
               if (level == 2)
                 totalBonusPercent += 5;
-              else if (level >= 3) totalBonusPercent += 10;
+              else if (level == 3)
+                totalBonusPercent += 10;
+              else if (level >= 4) totalBonusPercent += 20;
             }
 
             if (totalBonusPercent > 0) {
@@ -395,7 +401,6 @@ class MorningController extends ChangeNotifier {
 
           _lastEarnedPoints = calculatedPoints;
 
-          await _userService.updateConsecutiveDays(userId);
           await _userService.updateUser(userId, {
             'points': FieldValue.increment(_lastEarnedPoints),
             'diaryCount': FieldValue.increment(1),

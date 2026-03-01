@@ -62,6 +62,54 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
     Offset(0.50, 0.15), // 발코니 중앙 (한 명 추가하여 15명 유지)
   ];
 
+  // 레벨 3 둥지 내 캐릭터 배치 위치 (20명용)
+  final List<Offset> _level3Positions = const [
+    Offset(0.50, 0.68), // 소파 앞 러그 중앙
+    Offset(0.35, 0.52), // 소파 왼쪽
+    Offset(0.44, 0.50), // 소파 중앙 왼쪽
+    Offset(0.56, 0.48), // 소파 중앙 오른쪽
+    Offset(0.70, 0.50), // 소파 오른쪽
+    Offset(0.15, 0.35), // 왼쪽 위 침대
+    Offset(0.15, 0.45), // 왼쪽 중간 침대
+    Offset(0.12, 0.60), // 왼쪽 아래 침대 부근
+    Offset(0.85, 0.35), // 오른쪽 위 침대
+    Offset(0.92, 0.45), // 오른쪽 중간 침대
+    Offset(0.88, 0.60), // 오른쪽 아래 침대 부근
+    Offset(0.35, 0.38), // 뒤쪽 왼쪽 계단
+    Offset(0.65, 0.38), // 뒤쪽 오른쪽 계단
+    Offset(0.25, 0.25), // 2층 왼쪽 발코니
+    Offset(0.75, 0.25), // 2층 오른쪽 발코니
+    Offset(0.12, 0.85), // 앞쪽 왼쪽 발코니
+    Offset(0.25, 0.82), // 앞쪽 왼쪽 발코니 입구
+    Offset(0.88, 0.85), // 앞쪽 오른쪽 발코니
+    Offset(0.75, 0.82), // 앞쪽 오른쪽 발코니 입구
+    Offset(0.50, 0.85), // 앞쪽 계단 중앙
+  ];
+
+  // 레벨 4 둥지 내 캐릭터 배치 위치 (20명용)
+  final List<Offset> _level4Positions = const [
+    Offset(0.25, 0.47), // 중앙 좌측 소파
+    Offset(0.35, 0.52), // 중앙 좌측 소파 옆 테이블
+    Offset(0.95, 0.53), // 중앙 우측 소파
+    Offset(0.78, 0.52), // 중앙 우측 소파 옆 테이블
+    Offset(0.42, 0.40), // 중앙 분수대 왼쪽
+    Offset(0.85, 0.40), // 중앙 분수대 오른쪽
+    Offset(0.50, 0.30), // 중앙 계단 아래
+    Offset(0.50, 0.30), // 중앙 계단 중간
+    Offset(0.50, 0.20), // 중앙 계단 상단 (문 앞)
+    Offset(0.30, 0.75), // 좌측 하단 소파 앞
+    Offset(0.85, 0.78), // 우측 하단 소파
+    Offset(0.75, 0.68), // 우측 하단 소파 앞
+    Offset(0.15, 0.20), // 좌측 2층 발코니 1
+    Offset(0.25, 0.20), // 좌측 2층 발코니 2
+    Offset(0.85, 0.20), // 우측 2층 발코니 1
+    Offset(0.95, 0.45), // 우측 조각상 부근
+    Offset(0.50, 0.80), // 하단 중앙 테이블 아래
+    Offset(0.35, 0.90), // 하단 중앙 레드 카펫 왼쪽
+    Offset(0.70, 0.85), // 하단 중앙 레드 카펫 오른쪽
+    Offset(0.15, 0.70), // 좌측 하단 소파
+  ];
+
   late Stream<List<UserModel>> _membersStream;
   late Stream<NestModel?> _nestStream;
   final Set<String> _jumpingMemberIds = {};
@@ -109,13 +157,15 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
   }
 
   void _showInviteDialog() {
-    if (widget.nest.level == 1 && widget.nest.memberIds.length >= 10) {
+    final maxMembers =
+        widget.nest.level >= 3 ? 20 : (widget.nest.level == 2 ? 15 : 10);
+    if (widget.nest.memberIds.length >= maxMembers) {
       AppDialog.show(
         context: context,
         key: AppDialogKey.inviteToNest,
         content: Text(
           AppLocalizations.of(context)?.get('nestFullError') ??
-              '10명이 꽉차서 더 이상 입장할 수 없습니다.',
+              '정원이 꽉차서 더 이상 입장할 수 없습니다.',
           style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
           textAlign: TextAlign.center,
         ),
@@ -255,7 +305,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                     key: AppDialogKey.inviteToNest,
                     content: Text(
                       AppLocalizations.of(context)?.get('nestFullError') ??
-                          '10명이 꽉차서 더 이상 입장할 수 없습니다.',
+                          '정원이 꽉차서 더 이상 입장할 수 없습니다.',
                       style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
                       textAlign: TextAlign.center,
                     ),
@@ -644,7 +694,14 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
     }
   }
 
-  void _showUpgradeDialog(int totalGaji) {
+  void _showUpgradeDialog(int totalGaji, int currentLevel) {
+    if (currentLevel >= 4) return;
+    int requiredGaji = currentLevel * 1000;
+    int nextLevel = currentLevel + 1;
+    String nestImage = 'assets/images/Nest_Level$nextLevel.png';
+    String bonusPercent = nextLevel == 4 ? '20' : (nextLevel == 3 ? '10' : '5');
+    int maxCapacity = nextLevel >= 3 ? 20 : 15;
+
     AppDialog.show(
       context: context,
       key: AppDialogKey.nestUpgrade,
@@ -653,7 +710,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
         children: [
           const SizedBox(height: 16),
           Image.asset(
-            'assets/images/Nest_Level2.png',
+            nestImage,
             width: 150,
             height: 150,
             fit: BoxFit.contain,
@@ -665,12 +722,12 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
               Image.asset('assets/images/branch.png', width: 24, height: 24),
               const SizedBox(width: 8),
               Text(
-                '1000',
+                '$requiredGaji',
                 style: TextStyle(
                   fontFamily: 'BMJUA',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: totalGaji >= 1000
+                  color: totalGaji >= requiredGaji
                       ? const Color(0xFF4E342E)
                       : Colors.red.withOpacity(0.7),
                 ),
@@ -679,8 +736,20 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            AppLocalizations.of(context)?.get('nestUpgradeConfirm') ??
-                '둥지를 레벨 2로 업그레이드 하시겠습니까?\n배경이 바뀌고 정원이 15명으로 늘어납니다.\n(일기 작성 시 가지 +5% 버프 획득)',
+            nextLevel == 4
+                ? (AppLocalizations.of(context)
+                        ?.getFormat('nestUpgradeConfirmMaxLevel', {
+                      'level': nextLevel.toString(),
+                      'bonusPercent': bonusPercent,
+                    }) ??
+                    '둥지를 레벨 $nextLevel로 업그레이드 하시겠습니까?\n배경이 바뀌며 일기 작성 시 가지 +$bonusPercent% 버프를 획득합니다.')
+                : (AppLocalizations.of(context)
+                        ?.getFormat('nestUpgradeConfirm', {
+                      'level': nextLevel.toString(),
+                      'maxCapacity': maxCapacity.toString(),
+                      'bonusPercent': bonusPercent,
+                    }) ??
+                    '둥지를 레벨 $nextLevel로 업그레이드 하시겠습니까?\n배경이 바뀌고 정원이 ${maxCapacity}명으로 늘어납니다.\n(일기 작성 시 가지 +$bonusPercent% 버프 획득)'),
             style: const TextStyle(
               fontFamily: 'BMJUA',
               fontSize: 16,
@@ -698,7 +767,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
         AppDialogAction(
           label: AppLocalizations.of(context)?.get('upgrade') ?? '업그레이드',
           isPrimary: true,
-          isEnabled: AlwaysStoppedAnimation(totalGaji >= 1000),
+          isEnabled: AlwaysStoppedAnimation(totalGaji >= requiredGaji),
           onPressed: (ctx) async {
             final nestController =
                 Provider.of<NestController>(context, listen: false);
@@ -715,15 +784,18 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                   children: [
                     const SizedBox(height: 16),
                     Image.asset(
-                      'assets/images/Nest_Level2.png',
+                      nestImage,
                       width: 150,
                       height: 150,
                       fit: BoxFit.contain,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      AppLocalizations.of(context)?.get('nestUpgradeSuccess') ??
-                          '둥지가 레벨 2로 업그레이드 되었습니다!',
+                      AppLocalizations.of(context)
+                              ?.getFormat('nestUpgradeSuccess', {
+                            'level': nextLevel.toString(),
+                          }) ??
+                          '둥지가 레벨 $nextLevel로 업그레이드 되었습니다!',
                       style: const TextStyle(
                         fontFamily: 'BMJUA',
                         fontSize: 16,
@@ -832,9 +904,12 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                     ?.getFormat('nestPeopleCount', {
                                   'current':
                                       nestData.memberIds.length.toString(),
-                                  'max': nestData.level == 1 ? '10' : '15'
+                                  'max': (nestData.level == 1
+                                          ? 10
+                                          : (nestData.level == 2 ? 15 : 20))
+                                      .toString()
                                 }) ??
-                                '${nestData.memberIds.length}/${nestData.level == 1 ? 10 : 15}',
+                                '${nestData.memberIds.length}/${nestData.level == 1 ? 10 : (nestData.level == 2 ? 15 : 20)}',
                             style: const TextStyle(
                               color: Color(0xFF4E342E),
                               fontFamily: 'BMJUA',
@@ -981,7 +1056,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 image: ResizeImage(
                     AssetImage(nestData.level == 1
                         ? 'assets/images/Nest_Level1.png'
-                        : 'assets/images/Nest_Level2.png'),
+                        : (nestData.level == 2
+                            ? 'assets/images/Nest_Level2.png'
+                            : (nestData.level == 3
+                                ? 'assets/images/Nest_Level3.png'
+                                : 'assets/images/Nest_Level4.png'))),
                     width: 1080),
                 fit: BoxFit.cover,
               ),
@@ -1012,9 +1091,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                             Text(
                               AppLocalizations.of(context)?.getFormat(
                                       'nestBuffActive', {
-                                    'bonus': nestData.level == 2 ? '5' : '10'
+                                    'bonus': nestData.level >= 4
+                                        ? '20'
+                                        : (nestData.level == 3 ? '10' : '5')
                                   }) ??
-                                  '일기 작성 가지 +${nestData.level == 2 ? 5 : 10}% 버프 적용중!',
+                                  '일기 작성 가지 +${nestData.level >= 4 ? 20 : (nestData.level == 3 ? 10 : 5)}% 버프 적용중!',
                               style: const TextStyle(
                                 color: Color(0xFF4E342E),
                                 fontFamily: 'BMJUA',
@@ -1090,17 +1171,17 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                             ),
                           ),
                         ),
-                        // 업그레이드 버튼 (방장 && 레벨1)
+                        // 업그레이드 버튼 (방장 && 최고 레벨 아님)
                         if (Provider.of<AuthController>(context, listen: false)
                                     .currentUser
                                     ?.uid ==
                                 nestData.creatorId &&
-                            nestData.level == 1)
+                            nestData.level < 4)
                           Opacity(
                             opacity: 1.0, // 항상 클릭 가능하므로 불투명도 제거 (또는 1.0 유지)
                             child: _ScaleTapButton(
-                              onTap: () =>
-                                  _showUpgradeDialog(nestData.totalGaji),
+                              onTap: () => _showUpgradeDialog(
+                                  nestData.totalGaji, nestData.level),
                               child: Container(
                                 width: 90,
                                 height: 32,
@@ -1158,7 +1239,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                         return LayoutBuilder(builder: (context, constraints) {
                           final positions = nestData.level == 1
                               ? _level1Positions
-                              : _level2Positions;
+                              : (nestData.level == 2
+                                  ? _level2Positions
+                                  : (nestData.level == 3
+                                      ? _level3Positions
+                                      : _level4Positions));
 
                           return Stack(
                             clipBehavior: Clip.none,
@@ -1242,8 +1327,12 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               SizedBox(
-                                                width: 60,
-                                                height: 60,
+                                                width: nestData.level >= 3
+                                                    ? 45
+                                                    : 60,
+                                                height: nestData.level >= 3
+                                                    ? 45
+                                                    : 60,
                                                 child: Stack(
                                                   alignment: Alignment.center,
                                                   clipBehavior: Clip.none,
@@ -1264,17 +1353,29 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                                                 ? 0.15
                                                                 : 0.25,
                                                         child: Container(
-                                                          width: 44,
-                                                          height: 12,
+                                                          width:
+                                                              nestData.level >=
+                                                                      3
+                                                                  ? 34
+                                                                  : 44,
+                                                          height:
+                                                              nestData.level >=
+                                                                      3
+                                                                  ? 10
+                                                                  : 12,
                                                           decoration:
                                                               BoxDecoration(
                                                             color: Colors.black,
-                                                            borderRadius:
-                                                                const BorderRadius
-                                                                    .all(Radius
-                                                                        .elliptical(
-                                                                            44,
-                                                                            12)),
+                                                            borderRadius: BorderRadius.all(
+                                                                Radius.elliptical(
+                                                                    nestData.level >=
+                                                                            3
+                                                                        ? 34
+                                                                        : 44,
+                                                                    nestData.level >=
+                                                                            3
+                                                                        ? 10
+                                                                        : 12)),
                                                           ),
                                                         ),
                                                       ),
@@ -1298,7 +1399,10 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                                         isAwake: isAwake,
                                                         characterLevel: member
                                                             .characterLevel,
-                                                        size: 60.0,
+                                                        size:
+                                                            nestData.level >= 3
+                                                                ? 45.0
+                                                                : 60.0,
                                                         equippedItems: member
                                                             .equippedCharacterItems,
                                                       ),

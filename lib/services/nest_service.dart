@@ -298,8 +298,9 @@ class NestService {
       if (nest.memberIds.contains(receiverId)) {
         throw Exception('이미 둥지에 가입된 멤버입니다.');
       }
-      // 레벨 1 가입 제한 (10명)
-      if (nest.level == 1 && nest.memberIds.length >= 10) {
+      // 레벨별 가입 제한 (10명, 15명, 20명)
+      final maxMembers = nest.level == 1 ? 10 : (nest.level == 2 ? 15 : 20);
+      if (nest.memberIds.length >= maxMembers) {
         throw Exception('nestFullError');
       }
     }
@@ -356,8 +357,9 @@ class NestService {
       final level = (data['level'] as num?)?.toInt() ?? 1;
       final memberIds = List<String>.from(data['memberIds'] ?? []);
 
-      // 레벨 1 가입 제한 (10명)
-      if (level == 1 && memberIds.length >= 10) {
+      // 레벨별 가입 제한 (10명, 15명, 20명)
+      final maxMembers = level == 1 ? 10 : (level == 2 ? 15 : 20);
+      if (memberIds.length >= maxMembers) {
         throw Exception('nestFullError');
       }
     }
@@ -515,6 +517,13 @@ class NestService {
     if (!nestDoc.exists) return;
 
     final data = nestDoc.data() as Map<String, dynamic>;
+    final level = (data['level'] as num?)?.toInt() ?? 1;
+    if (level >= 4) return; // 이미 최고 레벨
+
+    // 1 -> 2: 1000, 2 -> 3: 2000, 3 -> 4: 3000
+    final requiredGaji = level * 1000;
+    final nextLevel = level + 1;
+
     final memberIds = List<String>.from(data['memberIds'] ?? []);
     final creatorId = data['creatorId'] ?? '';
     final nestName = data['name'] ?? '둥지';
@@ -523,8 +532,8 @@ class NestService {
 
     // 둥지 정보 업데이트
     batch.update(_nestsCollection.doc(nestId), {
-      'level': 2,
-      'totalGaji': FieldValue.increment(-1000), // 업그레이드 시 가지 1000개 사용
+      'level': nextLevel,
+      'totalGaji': FieldValue.increment(-requiredGaji), // 업그레이드 시 가지 사용
       'lastActivityAt': FieldValue.serverTimestamp(),
     });
 
@@ -537,13 +546,13 @@ class NestService {
         'userId': memberId,
         'senderId': creatorId,
         'type': 'nestUpgrade',
-        'message': '[$nestName] 둥지가 레벨 2로 업그레이드 되었습니다! 🎉',
+        'message': '[$nestName] 둥지가 레벨 $nextLevel로 업그레이드 되었습니다! 🎉',
         'isRead': false,
         'createdAt': FieldValue.serverTimestamp(),
         'data': {
           'nestId': nestId,
           'nestName': nestName,
-          'level': 2,
+          'level': nextLevel,
         },
       });
     }
