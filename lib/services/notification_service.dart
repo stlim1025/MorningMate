@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../core/widgets/floating_notification.dart';
 import '../router/app_router.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   FirebaseMessaging get _fcm {
@@ -23,6 +25,8 @@ class NotificationService {
   GlobalKey<NavigatorState>? _navigatorKey;
   Timer? _foregroundBannerTimer;
   OverlayEntry? _currentOverlayEntry;
+  final FlutterLocalNotificationsPlugin _localPlugin =
+      FlutterLocalNotificationsPlugin();
 
   // FCM 토큰
   String? _fcmToken;
@@ -42,6 +46,19 @@ class NotificationService {
 
   // 알림 초기화
   Future<void> initialize() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+            requestAlertPermission: false,
+            requestBadgePermission: false,
+            requestSoundPermission: false);
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsDarwin);
+    await _localPlugin.initialize(settings: initializationSettings);
+
     // 알림 권한 요청
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
@@ -104,6 +121,98 @@ class NotificationService {
       // notification이 없고 data만 있는 경우
       _showInAppNotificationFromData(message.data);
       _handleDataMessage(message.data);
+    }
+  }
+
+  Future<void> scheduleNightlyReminder() async {
+    try {
+      await _localPlugin.zonedSchedule(
+        id: 1123,
+        title: '오늘의 일기를 작성해주세요!',
+        body: '아직 일기를 작성하지 않았어요. 작성하지 않으면 연속 기록이 날아가요!',
+        scheduledDate: _nextInstanceOfElevenPM(),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'nightly_reminder_channel',
+            '야간 일기 알림',
+            channelDescription: '밤 11시 일기 미작성 시 알림',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      print('밤 11시 푸시 알림 스케줄링 완료');
+    } catch (e) {
+      print('밤 11시 알림 스케줄링 실패: $e');
+    }
+  }
+
+  tz.TZDateTime _nextInstanceOfElevenPM() {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, 23, 0);
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
+  }
+
+  Future<void> cancelNightlyReminder() async {
+    try {
+      await _localPlugin.cancel(id: 1123);
+      print('밤 11시 푸시 알림 스케줄링 취소 완료');
+    } catch (e) {
+      print('밤 11시 푸시 알림 스케줄링 취소 실패: $e');
+    }
+  }
+
+  Future<void> scheduleMorningReminder(String time) async {
+    try {
+      final parts = time.split(':');
+      if (parts.length != 2) return;
+      final hour = int.tryParse(parts[0]) ?? 8;
+      final minute = int.tryParse(parts[1]) ?? 0;
+
+      final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+      tz.TZDateTime scheduledDate =
+          tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      await _localPlugin.zonedSchedule(
+        id: 1124, // 아침 알림 고유 ID
+        title: '굿모닝! 아침 일기를 작성할 시간이에요 ☀️',
+        body: '상쾌한 하루를 시작하며 일기를 남겨보세요!',
+        scheduledDate: scheduledDate,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'morning_reminder_channel',
+            '아침 일기 알림',
+            channelDescription: '설정한 시간에 아침 일기 작성 알림',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      print('아침 알림 설정 완료: $time');
+    } catch (e) {
+      print('아침 알림 설정 실패: $e');
+    }
+  }
+
+  Future<void> cancelMorningReminder() async {
+    try {
+      await _localPlugin.cancel(id: 1124);
+      print('아침 알림 스케줄링 취소 완료');
+    } catch (e) {
+      print('아침 알림 취소 실패: $e');
     }
   }
 
@@ -411,6 +520,9 @@ class NotificationService {
 
   // 로그아웃 시 모든 알림 관련 리소스 정리
   Future<void> cleanup() async {
+    // 야간 알림 취소
+    await cancelNightlyReminder();
+
     // 1. 토큰 갱신 핸들러 제거
     _onTokenRefresh = null;
 

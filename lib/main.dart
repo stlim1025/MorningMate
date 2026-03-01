@@ -32,6 +32,9 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; // import flutter_localizations
 import 'core/localization/language_provider.dart';
 import 'core/localization/app_localizations.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 // FCM 백그라운드 핸들러 (최상위 함수)
 @pragma('vm:entry-point')
@@ -58,6 +61,18 @@ void main() async {
 
   // 날짜 형식 초기화 (한국어)
   await initializeDateFormatting('ko_KR', null);
+
+  // Timezone 초기화
+  tz.initializeTimeZones();
+  try {
+    final tzValue = await FlutterTimezone.getLocalTimezone();
+    final String timeZoneName =
+        tzValue is String ? tzValue : (tzValue as dynamic).identifier;
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
+  } catch (e) {
+    debugPrint('타임존 초기화 실패: $e');
+    tz.setLocalLocation(tz.getLocation('Asia/Seoul')); // 기본값 폴백
+  }
 
   // Firebase 초기화
   bool isFirebaseInitialized = false;
@@ -215,14 +230,15 @@ class _MorniAppState extends State<MorniApp> {
 
         // ProxyManagers (의존성 있는 컨트롤러들은 기존대로 Proxy 사용)
         ChangeNotifierProxyProvider<AuthController, MorningController>(
-          create: (context) =>
-              MorningController(_diaryService, _questionService, _userService),
+          create: (context) => MorningController(_diaryService,
+              _questionService, _userService, _notificationService),
           update: (context, auth, previous) {
             final controller = previous ??
                 MorningController(
                   _diaryService,
                   _questionService,
                   _userService,
+                  _notificationService,
                 );
             if (auth.userModel == null) {
               controller.clear();

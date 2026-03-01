@@ -5,6 +5,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../../services/user_service.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
+import 'package:flutter/services.dart';
 
 // ─────────────────────────────────────────────
 // 커스텀 시간 선택 팝업 (종이 카드 스타일)
@@ -207,7 +208,12 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _TimeBox(value: hourStr),
+              _TimeBox(
+                value: hourStr,
+                min: 1,
+                max: 12,
+                onChanged: (v) => setState(() => _hour12 = v),
+              ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
                 child: Text(
@@ -220,7 +226,12 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
                   ),
                 ),
               ),
-              _TimeBox(value: minStr),
+              _TimeBox(
+                value: minStr,
+                min: 0,
+                max: 59,
+                onChanged: (v) => setState(() => _minute = v),
+              ),
               const SizedBox(width: 12),
               Text(
                 _isAm ? 'AM' : 'PM',
@@ -401,20 +412,121 @@ class _NumberSwiperState extends State<_NumberSwiper> {
 }
 
 // ── 시간 숫자 박스 ──
-class _TimeBox extends StatelessWidget {
+class _TimeBox extends StatefulWidget {
   final String value;
-  const _TimeBox({required this.value});
+  final int min;
+  final int max;
+  final ValueChanged<int> onChanged;
+
+  const _TimeBox({
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+  });
+
+  @override
+  State<_TimeBox> createState() => _TimeBoxState();
+}
+
+class _TimeBoxState extends State<_TimeBox> {
+  bool _isEditing = false;
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value);
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus && _isEditing) {
+        _submit();
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _TimeBox oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_isEditing && oldWidget.value != widget.value) {
+      _controller.text = widget.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final val = int.tryParse(_controller.text);
+    if (val != null && val >= widget.min && val <= widget.max) {
+      widget.onChanged(val);
+    } else {
+      _controller.text = widget.value;
+    }
+    setState(() => _isEditing = false);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      value,
-      style: const TextStyle(
-        fontFamily: 'BMJUA',
-        fontSize: 42,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF4E342E),
-        letterSpacing: 2,
+    if (_isEditing) {
+      return SizedBox(
+        width: 60,
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(2),
+          ],
+          cursorColor: const Color(0xFF4E342E),
+          style: const TextStyle(
+            fontFamily: 'BMJUA',
+            fontSize: 42,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF4E342E),
+            letterSpacing: 2,
+          ),
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            filled: false,
+          ),
+          onSubmitted: (_) => _submit(),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _isEditing = true;
+          _controller.text = widget.value;
+        });
+        _focusNode.requestFocus();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        color: Colors.transparent, // 터치 영역 확대
+        child: Text(
+          widget.value,
+          style: const TextStyle(
+            fontFamily: 'BMJUA',
+            fontSize: 42,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF4E342E),
+            letterSpacing: 2,
+          ),
+        ),
       ),
     );
   }

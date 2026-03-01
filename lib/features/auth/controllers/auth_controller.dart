@@ -69,6 +69,12 @@ class AuthController extends ChangeNotifier {
         final initialUserData = await _userService.getUser(user.uid);
         if (initialUserData != null) {
           _userModel = initialUserData;
+          if (_userModel?.morningDiaryNoti == true) {
+            _notificationService.scheduleMorningReminder(
+                _userModel?.morningDiaryNotiTime ?? '08:00');
+          } else {
+            _notificationService.cancelMorningReminder();
+          }
         }
       } catch (e) {
         debugPrint("초기 유저 정보 로드 실패: $e");
@@ -81,6 +87,12 @@ class AuthController extends ChangeNotifier {
           debugPrint('User document missing...');
         } else {
           _userModel = model;
+          if (_userModel?.morningDiaryNoti == true) {
+            _notificationService.scheduleMorningReminder(
+                _userModel?.morningDiaryNotiTime ?? '08:00');
+          } else {
+            _notificationService.cancelMorningReminder();
+          }
           notifyListeners();
         }
       }, onError: (e) {
@@ -107,6 +119,12 @@ class AuthController extends ChangeNotifier {
 
   void updateUserModel(UserModel? userModel) {
     _userModel = userModel;
+    if (_userModel?.morningDiaryNoti == true) {
+      _notificationService
+          .scheduleMorningReminder(_userModel?.morningDiaryNotiTime ?? '08:00');
+    } else {
+      _notificationService.cancelMorningReminder();
+    }
     notifyListeners();
   }
 

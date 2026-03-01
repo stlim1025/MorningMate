@@ -19,6 +19,7 @@ class RoomAsset {
   final double shadowDyCorrection;
   final bool isLight;
   final double lightIntensity;
+  final DateTime? releasedAt;
 
   const RoomAsset({
     required this.id,
@@ -37,6 +38,7 @@ class RoomAsset {
     this.shadowDyCorrection = 0.0,
     this.isLight = false,
     this.lightIntensity = 1.0,
+    this.releasedAt,
     this.category,
     this.charWidthPct,
     this.charTopPctAwake,
@@ -85,6 +87,7 @@ class RoomAsset {
       shadowDyCorrection: shadowDyCorrection,
       isLight: isLight,
       lightIntensity: lightIntensity,
+      releasedAt: releasedAt,
       category: category,
       charWidthPct: charWidthPct,
       charTopPctAwake: charTopPctAwake,

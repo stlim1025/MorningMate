@@ -31,6 +31,7 @@ class _DecorationScreenState extends State<DecorationScreen>
   int? _selectedPropIndex; // Track selected prop for editing
 
   bool _isPanelExpanded = false; // Track panel state
+  bool _isOwnedOnly = false; // 구매한 상품만 보기 필터
   bool? _previewIsAwake;
   late List<String> _selectedEmoticonIds;
 
@@ -206,32 +207,7 @@ class _DecorationScreenState extends State<DecorationScreen>
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
             child: GestureDetector(
-              onTap: () async {
-                try {
-                  await characterController.updateActiveEmoticons(
-                      user.uid, _selectedEmoticonIds);
-                  await characterController.updateRoomDecoration(
-                      user.uid, _decorationNotifier.value);
-                  if (context.mounted) {
-                    MemoNotification.show(
-                        context,
-                        AppLocalizations.of(context)?.get('decorationSaved') ??
-                            'Settings saved! ✨');
-                    Navigator.of(context).pop();
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    MemoNotification.show(
-                      context,
-                      AppLocalizations.of(context)?.getFormat('saveFailed', {
-                            'error':
-                                e.toString().replaceFirst('Exception: ', '')
-                          }) ??
-                          'Save failed: ${e.toString().replaceFirst('Exception: ', '')}',
-                    );
-                  }
-                }
-              },
+              onTap: _handleSave,
               child: Container(
                 width: 70,
                 height: 35,
@@ -447,6 +423,82 @@ class _DecorationScreenState extends State<DecorationScreen>
             ),
           ),
 
+          // 4a. Show Owned Only Checkbox (between Remove All and Memo)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) +
+                bottomInset +
+                15,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isOwnedOnly = !_isOwnedOnly;
+                  });
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: _isOwnedOnly
+                          ? Image.asset(
+                              'assets/images/Check_Icon.png',
+                              width: 22,
+                              height: 22,
+                              fit: BoxFit.contain,
+                            )
+                          : Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.transparent,
+                                border: Border.all(
+                                  color: isAwakePreview
+                                      ? const Color(0xFF5D4037)
+                                      : Colors.white70,
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      AppLocalizations.of(context)?.get('showOwnedOnly') ??
+                          'Show Owned Only',
+                      style: TextStyle(
+                        fontFamily: 'BMJUA',
+                        fontSize: 12,
+                        color: isAwakePreview
+                            ? const Color(0xFF5D4037)
+                            : Colors.white,
+                        shadows: isAwakePreview
+                            ? [
+                                const Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.white,
+                                ),
+                              ]
+                            : [
+                                Shadow(
+                                  offset: const Offset(1, 1),
+                                  blurRadius: 4,
+                                  color: Colors.black.withOpacity(0.5),
+                                ),
+                              ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
           // 4. Remove All Props Button (follows panel animation)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
@@ -543,6 +595,166 @@ class _DecorationScreenState extends State<DecorationScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _handleSave() async {
+    final characterController = context.read<CharacterController>();
+    final user = characterController.currentUser;
+    if (user == null) return;
+
+    final decoration = _decorationNotifier.value;
+
+    // 1. 미구매 상품 수집
+    final List<RoomAsset> unownedItems = [];
+
+    // 배경
+    if (decoration.backgroundId != 'default' &&
+        !user.purchasedBackgroundIds.contains(decoration.backgroundId)) {
+      final item = RoomAssets.backgrounds
+          .where((b) => b.id == decoration.backgroundId)
+          .firstOrNull;
+      if (item != null) unownedItems.add(item);
+    }
+
+    // 벽지
+    if (decoration.wallpaperId != 'default' &&
+        !user.purchasedThemeIds.contains(decoration.wallpaperId)) {
+      final item = RoomAssets.wallpapers
+          .where((w) => w.id == decoration.wallpaperId)
+          .firstOrNull;
+      if (item != null) unownedItems.add(item);
+    }
+
+    // 바닥
+    if (!user.purchasedFloorIds.contains(decoration.floorId)) {
+      final item = RoomAssets.floors
+          .where((f) => f.id == decoration.floorId)
+          .firstOrNull;
+      if (item != null) unownedItems.add(item);
+    }
+
+    // 소품
+    for (final prop in decoration.props) {
+      if (prop.type == 'sticky_note') continue;
+      if (!user.purchasedPropIds.contains(prop.type)) {
+        final item =
+            RoomAssets.props.where((p) => p.id == prop.type).firstOrNull;
+        if (item != null && !unownedItems.any((u) => u.id == item.id)) {
+          unownedItems.add(item);
+        }
+      }
+    }
+
+    // 이모티콘
+    for (final emoticonId in _selectedEmoticonIds) {
+      if (!user.purchasedEmoticonIds.contains(emoticonId)) {
+        final item =
+            RoomAssets.emoticons.where((e) => e.id == emoticonId).firstOrNull;
+        if (item != null && !unownedItems.any((u) => u.id == item.id)) {
+          unownedItems.add(item);
+        }
+      }
+    }
+
+    // 2. 미구매 상품이 없으면 바로 저장
+    if (unownedItems.isEmpty) {
+      try {
+        await characterController.updateActiveEmoticons(
+            user.uid, _selectedEmoticonIds);
+        await characterController.updateRoomDecoration(user.uid, decoration);
+        if (mounted) {
+          MemoNotification.show(
+              context,
+              AppLocalizations.of(context)?.get('decorationSaved') ??
+                  'Settings saved! ✨');
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          MemoNotification.show(
+            context,
+            AppLocalizations.of(context)?.getFormat('saveFailed',
+                    {'error': e.toString().replaceFirst('Exception: ', '')}) ??
+                'Save failed: ${e.toString().replaceFirst('Exception: ', '')}',
+          );
+        }
+      }
+      return;
+    }
+
+    // 3. 미보유 아이템 제외 저장 확인 팝업
+    if (!mounted) return;
+
+    final shouldSave = await AppDialog.show<bool>(
+      context: context,
+      key: AppDialogKey.purchase,
+      content: Text(
+        AppLocalizations.of(context)?.get('unownedItemsWarning') ??
+            '배치된 항목 중 아직 보유하지 않은 아이템이 있어요!\n미보유 아이템은 상점에서 획득할 수 있습니다.\n뺀 상태로 저장할까요?',
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontFamily: 'BMJUA', fontSize: 14),
+      ),
+      actions: [
+        AppDialogAction(
+          label: AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
+          onPressed: (context) => Navigator.pop(context, false),
+        ),
+        AppDialogAction(
+          label: AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
+          isPrimary: true,
+          onPressed: (context) => Navigator.pop(context, true),
+        ),
+      ],
+    );
+
+    if (shouldSave == true) {
+      try {
+        final unownedIds = unownedItems.map((e) => e.id).toSet();
+
+        var finalDecoration = _decorationNotifier.value;
+
+        // 배경: 미보유 시 기본으로
+        if (unownedIds.contains(finalDecoration.backgroundId)) {
+          finalDecoration = finalDecoration.copyWith(backgroundId: 'default');
+        }
+        // 벽지
+        if (unownedIds.contains(finalDecoration.wallpaperId)) {
+          finalDecoration = finalDecoration.copyWith(wallpaperId: 'default');
+        }
+        // 바닥
+        if (unownedIds.contains(finalDecoration.floorId)) {
+          finalDecoration = finalDecoration.copyWith(floorId: 'wood');
+        }
+        // 소품
+        final cleanedProps = finalDecoration.props
+            .where((p) => !unownedIds.contains(p.type))
+            .toList();
+        finalDecoration = finalDecoration.copyWith(props: cleanedProps);
+
+        // 이모티콘
+        final cleanedEmoticons = _selectedEmoticonIds
+            .where((id) => !unownedIds.contains(id))
+            .toList();
+
+        await characterController.updateActiveEmoticons(
+            user.uid, cleanedEmoticons);
+        await characterController.updateRoomDecoration(
+            user.uid, finalDecoration);
+
+        if (mounted) {
+          MemoNotification.show(
+              context,
+              AppLocalizations.of(context)?.get('decorationSaved') ??
+                  'Settings saved! ✨');
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          MemoNotification.show(context,
+              '${AppLocalizations.of(context)?.get('error') ?? 'Error'}: $e');
+        }
+      }
+    }
   }
 
   Future<void> _handleStickyNoteButton() async {
@@ -734,10 +946,13 @@ class _DecorationScreenState extends State<DecorationScreen>
   }
 
   Widget _buildBackgroundList(user, AppColorScheme colorScheme) {
-    final purchased = RoomAssets.backgrounds
-        .where((b) =>
-            b.id == 'default' || user.purchasedBackgroundIds.contains(b.id))
-        .toList();
+    final allItems = RoomAssets.backgrounds;
+    final filtered = _isOwnedOnly
+        ? allItems
+            .where((b) =>
+                b.id == 'default' || user.purchasedBackgroundIds.contains(b.id))
+            .toList()
+        : allItems;
 
     return ValueListenableBuilder<RoomDecorationModel>(
       valueListenable: _decorationNotifier,
@@ -750,9 +965,11 @@ class _DecorationScreenState extends State<DecorationScreen>
             mainAxisSpacing: 12,
             childAspectRatio: 0.75,
           ),
-          itemCount: purchased.length,
+          itemCount: filtered.length,
           itemBuilder: (context, index) {
-            final b = purchased[index];
+            final b = filtered[index];
+            final isOwned =
+                b.id == 'default' || user.purchasedBackgroundIds.contains(b.id);
             final isSelected = decoration.backgroundId == b.id;
             return _buildSelectionCard(
               label: b.getLocalizedName(context),
@@ -761,6 +978,8 @@ class _DecorationScreenState extends State<DecorationScreen>
               color: b.color ??
                   (isSelected ? colorScheme.success : Colors.blueGrey),
               isSelected: isSelected,
+              isOwned: isOwned,
+              price: b.price,
               onTap: () {
                 _decorationNotifier.value =
                     decoration.copyWith(backgroundId: b.id);
@@ -774,10 +993,13 @@ class _DecorationScreenState extends State<DecorationScreen>
   }
 
   Widget _buildWallpaperList(user, AppColorScheme colorScheme) {
-    final purchased = RoomAssets.wallpapers
-        .where(
-            (w) => w.id == 'default' || user.purchasedThemeIds.contains(w.id))
-        .toList();
+    final allItems = RoomAssets.wallpapers;
+    final filtered = _isOwnedOnly
+        ? allItems
+            .where((w) =>
+                w.id == 'default' || user.purchasedThemeIds.contains(w.id))
+            .toList()
+        : allItems;
 
     return ValueListenableBuilder<RoomDecorationModel>(
       valueListenable: _decorationNotifier,
@@ -790,15 +1012,19 @@ class _DecorationScreenState extends State<DecorationScreen>
             mainAxisSpacing: 12,
             childAspectRatio: 0.75,
           ),
-          itemCount: purchased.length,
+          itemCount: filtered.length,
           itemBuilder: (context, index) {
-            final w = purchased[index];
+            final w = filtered[index];
+            final isOwned =
+                w.id == 'default' || user.purchasedThemeIds.contains(w.id);
             final isSelected = decoration.wallpaperId == w.id;
             return _buildSelectionCard(
               label: w.getLocalizedName(context),
               color: w.color ?? colorScheme.backgroundLight,
               imagePath: w.imagePath,
               isSelected: isSelected,
+              isOwned: isOwned,
+              price: w.price,
               onTap: () {
                 _decorationNotifier.value =
                     decoration.copyWith(wallpaperId: w.id);
@@ -812,9 +1038,10 @@ class _DecorationScreenState extends State<DecorationScreen>
   }
 
   Widget _buildFloorList(user, AppColorScheme colorScheme) {
-    final purchased = RoomAssets.floors
-        .where((f) => user.purchasedFloorIds.contains(f.id))
-        .toList();
+    final allItems = RoomAssets.floors;
+    final filtered = _isOwnedOnly
+        ? allItems.where((f) => user.purchasedFloorIds.contains(f.id)).toList()
+        : allItems;
 
     return ValueListenableBuilder<RoomDecorationModel>(
       valueListenable: _decorationNotifier,
@@ -827,9 +1054,10 @@ class _DecorationScreenState extends State<DecorationScreen>
             mainAxisSpacing: 16,
             childAspectRatio: 0.75,
           ),
-          itemCount: purchased.length,
+          itemCount: filtered.length,
           itemBuilder: (context, index) {
-            final f = purchased[index];
+            final f = filtered[index];
+            final isOwned = user.purchasedFloorIds.contains(f.id);
             final isSelected = decoration.floorId == f.id;
 
             return _buildSelectionCard(
@@ -838,6 +1066,8 @@ class _DecorationScreenState extends State<DecorationScreen>
               imagePath: f.imagePath,
               icon: f.icon,
               isSelected: isSelected,
+              isOwned: isOwned,
+              price: f.price,
               onTap: () {
                 _decorationNotifier.value = decoration.copyWith(floorId: f.id);
               },
@@ -855,13 +1085,16 @@ class _DecorationScreenState extends State<DecorationScreen>
     return ValueListenableBuilder<RoomDecorationModel>(
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
-        // 이미 배치된 소품이거나 소유 중인 소품을 목록에 표시 (스티커 메모 제외)
-        final availableProps = RoomAssets.props
-            .where((p) =>
-                (user.purchasedPropIds.contains(p.id) ||
-                    decoration.props.any((prop) => prop.type == p.id)) &&
-                p.id != 'sticky_note')
-            .toList();
+        // 스티커 메모 제외, 전체 또는 구매한 상품만 표시
+        final allProps =
+            RoomAssets.props.where((p) => p.id != 'sticky_note').toList();
+        final availableProps = _isOwnedOnly
+            ? allProps
+                .where((p) =>
+                    user.purchasedPropIds.contains(p.id) ||
+                    decoration.props.any((prop) => prop.type == p.id))
+                .toList()
+            : allProps;
 
         if (availableProps.isEmpty) {
           return Center(
@@ -880,6 +1113,7 @@ class _DecorationScreenState extends State<DecorationScreen>
           itemCount: availableProps.length,
           itemBuilder: (context, index) {
             final p = availableProps[index];
+            final isOwned = user.purchasedPropIds.contains(p.id);
             final exists = decoration.props.any((prop) => prop.type == p.id);
 
             return _buildSelectionCard(
@@ -887,6 +1121,8 @@ class _DecorationScreenState extends State<DecorationScreen>
               imagePath: p.imagePath,
               icon: p.icon,
               isSelected: exists,
+              isOwned: isOwned,
+              price: p.price,
               onTap: () {
                 if (exists) {
                   // 이미 배치된 경우: 제거
@@ -903,11 +1139,9 @@ class _DecorationScreenState extends State<DecorationScreen>
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   type: p.id,
                   x: 0.5,
-                  y: 0.6, // Place lower to avoid overlapping with character
+                  y: 0.6,
                 );
 
-                // 상태 업데이트를 다음 마이크로태스크로 지연하여
-                // 빌드/네비게이션 충돌(!_debugLocked) 방지
                 Future.microtask(() {
                   if (context.mounted) {
                     _decorationNotifier.value = decoration.copyWith(
@@ -925,9 +1159,12 @@ class _DecorationScreenState extends State<DecorationScreen>
   }
 
   Widget _buildEmoticonList(user, AppColorScheme colorScheme) {
-    final availableEmoticons = RoomAssets.emoticons
-        .where((e) => user.purchasedEmoticonIds.contains(e.id))
-        .toList();
+    final allItems = RoomAssets.emoticons;
+    final availableEmoticons = _isOwnedOnly
+        ? allItems
+            .where((e) => user.purchasedEmoticonIds.contains(e.id))
+            .toList()
+        : allItems;
 
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 100),
@@ -940,6 +1177,7 @@ class _DecorationScreenState extends State<DecorationScreen>
       itemCount: availableEmoticons.length,
       itemBuilder: (context, index) {
         final emoticon = availableEmoticons[index];
+        final isOwned = user.purchasedEmoticonIds.contains(emoticon.id);
         final selIndex = _selectedEmoticonIds.indexOf(emoticon.id);
         final isSelected = selIndex != -1;
 
@@ -948,6 +1186,8 @@ class _DecorationScreenState extends State<DecorationScreen>
           imagePath: emoticon.imagePath,
           icon: emoticon.icon,
           isSelected: isSelected,
+          isOwned: isOwned,
+          price: emoticon.price,
           badgeText: isSelected ? (selIndex + 1).toString() : null,
           onTap: () {
             setState(() {
@@ -980,7 +1220,10 @@ class _DecorationScreenState extends State<DecorationScreen>
     double stampSize = 80,
     bool showStamp = true,
     bool showDashedBorder = false,
+    bool isOwned = true,
+    int price = 0,
   }) {
+    final effectiveBottom = isOwned ? bottom : bottom + 20;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1013,8 +1256,11 @@ class _DecorationScreenState extends State<DecorationScreen>
               if (imagePath != null)
                 Positioned.fill(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18.0, vertical: 26.0),
+                    padding: EdgeInsets.only(
+                        left: 18.0,
+                        right: 18.0,
+                        top: 26.0,
+                        bottom: isOwned ? 26.0 : 44.0),
                     child: NetworkOrAssetImage(
                       imagePath: imagePath,
                       fit: BoxFit.contain,
@@ -1048,7 +1294,7 @@ class _DecorationScreenState extends State<DecorationScreen>
                   ),
                 ),
               Positioned(
-                bottom: bottom,
+                bottom: effectiveBottom,
                 left: 4,
                 right: 4,
                 child: Text(
@@ -1064,6 +1310,21 @@ class _DecorationScreenState extends State<DecorationScreen>
                   ),
                 ),
               ),
+              // Lock icon for unowned items
+              if (!isOwned)
+                Positioned(
+                  bottom: 8,
+                  left: 8,
+                  right: 8,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/icons/Lock_Icon.png',
+                      width: 18,
+                      height: 18,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
               if (isSelected && showStamp)
                 Stack(
                   alignment: Alignment.center,

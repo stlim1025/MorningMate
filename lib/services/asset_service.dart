@@ -37,6 +37,17 @@ class AssetService {
         final String category = data['category'] ?? 'prop';
         final String? firestoreImageUrl = data['imageUrl'];
 
+        // createdAt 타임스탬프를 DateTime으로 변환
+        DateTime? releasedAt;
+        if (data['createdAt'] != null) {
+          try {
+            final ts = data['createdAt'];
+            if (ts is Timestamp) {
+              releasedAt = ts.toDate();
+            }
+          } catch (_) {}
+        }
+
         final newAsset = RoomAsset(
           id: doc.id,
           name: data['name'] ?? '',
@@ -52,6 +63,7 @@ class AssetService {
           shadowDyCorrection: (data['shadowDyCorrection'] ?? 0.0).toDouble(),
           isLight: data['isLight'] ?? false,
           lightIntensity: (data['lightIntensity'] ?? 1.0).toDouble(),
+          releasedAt: releasedAt,
           category: category,
         );
 

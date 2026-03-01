@@ -12,14 +12,16 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
 import '../../../services/user_service.dart';
+import '../../../services/notification_service.dart';
 
 class MorningController extends ChangeNotifier {
   final DiaryService _diaryService;
   final QuestionService _questionService;
   final UserService _userService;
+  final NotificationService _notificationService;
 
-  MorningController(
-      this._diaryService, this._questionService, this._userService) {
+  MorningController(this._diaryService, this._questionService,
+      this._userService, this._notificationService) {
     _loadCachedQuestion();
   }
 
@@ -157,18 +159,21 @@ class MorningController extends ChangeNotifier {
         );
         _isLoading = false;
         _hasInitialized = true;
+        _notificationService.scheduleNightlyReminder();
         notifyListeners();
-      }
-
-      final diary = await _diaryService.getDiaryByDate(userId, DateTime.now());
-      if (diary != null) {
-        _todayDiary = diary;
       } else {
-        if (_todayDiary != null) {
-          _todayDiary = null;
-          if (await file.exists()) {
-            await file.delete();
+        final diary =
+            await _diaryService.getDiaryByDate(userId, DateTime.now());
+        if (diary != null) {
+          _todayDiary = diary;
+          if (diary.isCompleted) {
+            _notificationService.cancelNightlyReminder();
+          } else {
+            _notificationService.scheduleNightlyReminder();
           }
+        } else {
+          _todayDiary = null;
+          _notificationService.scheduleNightlyReminder();
         }
       }
     } catch (e) {
@@ -346,6 +351,10 @@ class MorningController extends ChangeNotifier {
         if (_dateKey(diaryDate) == _dateKey(now)) {
           _todayDiary = diary.copyWith(id: newId);
         }
+      }
+
+      if (!isDraft) {
+        _notificationService.cancelNightlyReminder();
       }
 
       // 새로 완료된 경우에만 보상 (임시저장 아님 AND (새 일기거나 기존에 미완료였던 경우))

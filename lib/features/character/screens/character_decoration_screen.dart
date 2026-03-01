@@ -388,9 +388,6 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                                   String slot = _getCategory(item.id);
                                   _toggleItem(item.id, slot);
                                 },
-                                onPriceClick: () {
-                                  _showSinglePurchaseDialog(item, user);
-                                },
                                 colorScheme: colorScheme,
                               );
                             },
@@ -444,27 +441,21 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
       return;
     }
 
-    // 2. Prepare items for bulk purchase
-    final unownedItems = CharacterAssets.items
-        .where((item) => unownedItemIds.contains(item.id))
-        .toList();
-
-    final selectedIds = unownedItems.map((e) => e.id).toSet();
-    final isEnabledNotifier = ValueNotifier<bool>(true);
-
-    // 3. Show Bulk Purchase Dialog
+    // 2. 미보유 상품 팝업 보여주기
     if (!mounted) return;
 
-    final shouldPurchase = await AppDialog.show<bool>(
+    final shouldSaveWithoutUnowned = await AppDialog.show<bool>(
       context: context,
       key: AppDialogKey.purchase,
-      content: _BulkPurchaseContent(
-        items: unownedItems,
-        onSelectionChanged: (ids) {
-          selectedIds.clear();
-          selectedIds.addAll(ids);
-          isEnabledNotifier.value = ids.isNotEmpty;
-        },
+      content: Text(
+        AppLocalizations.of(context)?.get('unownedItemsWarning') ??
+            '배치된 항목 중 아직 보유하지 않은 아이템이 있어요!\n미보유 아이템은 상점에서 획득할 수 있습니다.\n뺀 상태로 저장할까요?',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontFamily: 'BMJUA',
+          fontSize: 16,
+          height: 1.5,
+        ),
       ),
       actions: [
         AppDialogAction(
@@ -472,71 +463,31 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
           onPressed: (context) => Navigator.pop(context, false),
         ),
         AppDialogAction(
-          label: AppLocalizations.of(context)?.get('bulkPurchase') ??
-              'Bulk Purchase',
+          label: AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
           isPrimary: true,
-          isEnabled: isEnabledNotifier,
           onPressed: (context) => Navigator.pop(context, true),
         ),
       ],
     );
 
-    if (shouldPurchase == true) {
-      final itemsToBuy =
-          unownedItems.where((i) => selectedIds.contains(i.id)).toList();
-      int finalPrice = itemsToBuy.fold(0, (sum, i) => sum + i.price);
+    if (shouldSaveWithoutUnowned == true && mounted) {
+      // 미보유 상품 제외하고 저장
+      final finalEquippedItems = Map<String, String>.from(_previewEquippedItems)
+        ..removeWhere((slot, id) => unownedItemIds.contains(id));
 
-      if (user.points < finalPrice) {
-        if (mounted) {
-          MemoNotification.show(
-              context,
-              AppLocalizations.of(context)?.get('notEnoughBranch') ??
-                  'Not enough branches.');
-        }
-        return;
-      }
+      setState(() {
+        _previewEquippedItems = Map.from(finalEquippedItems);
+      });
 
-      try {
-        // Bulk purchase
-        for (var item in itemsToBuy) {
-          await characterController.purchaseCharacterItem(
-              user.uid, item.id, item.price);
-        }
+      await characterController.updateEquippedCharacterItems(
+          user.uid, finalEquippedItems);
 
-        // Save (Only if all unowned items in preview were purchased, or we just save what we have)
-        // If the user deselected something, they won't own it, so it shouldn't be equipped?
-        // Actually, if they deselect it, they don't buy it, so they don't own it.
-        // We should probably only save the items they own (including the newly purchased ones).
-
-        // Remove unpurchased items from preview before saving
-        final newPreviewEquipped =
-            Map<String, String>.from(_previewEquippedItems);
-        final unpurchasedIds =
-            unownedItemIds.where((id) => !selectedIds.contains(id));
-
-        newPreviewEquipped
-            .removeWhere((key, value) => unpurchasedIds.contains(value));
-
-        // Also update local state to reflect removal
-        setState(() {
-          _previewEquippedItems = newPreviewEquipped;
-        });
-
-        await characterController.updateEquippedCharacterItems(
-            user.uid, newPreviewEquipped);
-
-        if (mounted) {
-          MemoNotification.show(
-              context,
-              AppLocalizations.of(context)?.get('purchaseAndSaveSuccess') ??
-                  'Purchase and Save Complete! ✨');
-          context.pop();
-        }
-      } catch (e) {
-        if (mounted) {
-          MemoNotification.show(context,
-              '${AppLocalizations.of(context)?.get('error') ?? 'Error'}: $e');
-        }
+      if (mounted) {
+        MemoNotification.show(
+            context,
+            AppLocalizations.of(context)?.get('decorationSaved') ??
+                'Settings saved! ✨');
+        context.pop();
       }
     }
   }
@@ -573,7 +524,6 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
     required bool isSelected,
     required bool isOwned,
     required VoidCallback onTap,
-    VoidCallback? onPriceClick,
     required AppColorScheme colorScheme,
   }) {
     final cardIndex = (item.name.hashCode.abs() % 6) + 1;
@@ -639,48 +589,18 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
               ),
             ),
 
-            // Price Button (Only if not owned)
+            // Lock icon for unowned items
             if (!isOwned)
               Positioned(
-                bottom: 4,
-                left: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: onPriceClick, // Trigger purchase dialog
-                  child: SizedBox(
-                    height: 24,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/icons/WakeUp_Button.png',
-                          width: double.infinity,
-                          height: 24,
-                          fit: BoxFit.fill,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/images/branch.png',
-                              width: 12,
-                              height: 12,
-                              cacheWidth: 48,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${item.price}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF5D4037),
-                                fontFamily: 'BMJUA',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                bottom: 8,
+                left: 8,
+                right: 8,
+                child: Center(
+                  child: Image.asset(
+                    'assets/icons/Lock_Icon.png',
+                    width: 18,
+                    height: 18,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
@@ -714,303 +634,6 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _showSinglePurchaseDialog(RoomAsset item, dynamic user) async {
-    final characterController = context.read<CharacterController>();
-    final canAfford = user.points >= item.price;
-    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    final l10n = AppLocalizations.of(context);
-    final localizedName = item.getLocalizedName(context);
-
-    final shouldPurchase = await AppDialog.show<bool>(
-      context: context,
-      key: AppDialogKey.purchase,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Center(
-            child: item.imagePath != null
-                ? SizedBox(
-                    width: 100,
-                    height: 100,
-                    child: item.imagePath!.endsWith('.svg')
-                        ? SvgPicture.asset(
-                            item.imagePath!,
-                            fit: BoxFit.contain,
-                          )
-                        : Image.asset(
-                            item.imagePath!,
-                            fit: BoxFit.contain,
-                          ),
-                  )
-                : Icon(
-                    item.icon,
-                    size: 60,
-                    color: item.color ?? colorScheme.primaryButton,
-                  ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            l10n?.getFormat('purchaseConfirm', {'item': localizedName}) ??
-                'Do you want to purchase $localizedName?',
-            style: const TextStyle(fontFamily: 'BMJUA'),
-          ),
-          const SizedBox(height: 12),
-          if (!canAfford) ...[
-            const SizedBox(height: 12),
-            Text(
-              l10n?.get('notEnoughBranch') ?? 'Not enough branches.',
-              style: TextStyle(
-                color: colorScheme.error,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'BMJUA',
-              ),
-            ),
-          ],
-        ],
-      ),
-      actions: [
-        AppDialogAction(
-          label: '${item.price}',
-          labelWidget: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/branch.png',
-                width: 18,
-                height: 18,
-                cacheWidth: 72,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${item.price}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  height: 1.1,
-                  fontFamily: 'BMJUA',
-                ),
-              ),
-            ],
-          ),
-          isPrimary: true,
-          isFullWidth: true,
-          isEnabled: AlwaysStoppedAnimation<bool>(canAfford),
-          onPressed: (context) => Navigator.pop(context, true),
-        ),
-      ],
-    );
-
-    if (shouldPurchase == true) {
-      try {
-        await characterController.purchaseCharacterItem(
-            user.uid, item.id, item.price);
-
-        if (!mounted) return;
-
-        // Show success
-        await AppDialog.show<String>(
-          context: context,
-          key: AppDialogKey.purchaseComplete,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 16),
-              Center(
-                child: item.imagePath != null
-                    ? SizedBox(
-                        width: 120,
-                        height: 120,
-                        child: item.imagePath!.endsWith('.svg')
-                            ? SvgPicture.asset(
-                                item.imagePath!,
-                                fit: BoxFit.contain,
-                              )
-                            : Image.asset(
-                                item.imagePath!,
-                                fit: BoxFit.contain,
-                              ),
-                      )
-                    : Icon(
-                        item.icon,
-                        size: 100,
-                        color: item.color ?? colorScheme.primaryButton,
-                      ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                l10n?.getFormat('purchaseSuccess', {'item': localizedName}) ??
-                    '$localizedName을(를) 구매했습니다.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, fontFamily: 'BMJUA'),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-          actions: [
-            AppDialogAction(
-              label: l10n?.get('confirm') ?? 'Confirm',
-              isPrimary: true,
-              onPressed: (context) => Navigator.pop(context),
-            ),
-          ],
-        );
-      } catch (e) {
-        if (!mounted) return;
-        MemoNotification.show(
-            context, e.toString().replaceFirst('Exception: ', ''));
-      }
-    }
-  }
-}
-
-class _BulkPurchaseContent extends StatefulWidget {
-  final List<RoomAsset> items;
-  final ValueChanged<Set<String>> onSelectionChanged;
-
-  const _BulkPurchaseContent({
-    required this.items,
-    required this.onSelectionChanged,
-  });
-
-  @override
-  State<_BulkPurchaseContent> createState() => _BulkPurchaseContentState();
-}
-
-class _BulkPurchaseContentState extends State<_BulkPurchaseContent> {
-  late final Set<String> _selectedIds;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedIds = widget.items.map((e) => e.id).toSet();
-  }
-
-  int get _totalPrice => widget.items
-      .where((item) => _selectedIds.contains(item.id))
-      .fold(0, (sum, item) => sum + item.price);
-
-  void _toggleSelection(String id) {
-    setState(() {
-      if (_selectedIds.contains(id)) {
-        _selectedIds.remove(id);
-      } else {
-        _selectedIds.add(id);
-      }
-      widget.onSelectionChanged(_selectedIds);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          AppLocalizations.of(context)?.get('bulkPurchaseConfirm') ??
-              'There are unowned items.\nDo you want to purchase them all?',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 120,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: widget.items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final item = widget.items[index];
-              final isSelected = _selectedIds.contains(item.id);
-
-              return GestureDetector(
-                onTap: () => _toggleSelection(item.id),
-                behavior: HitTestBehavior.opaque,
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: isSelected
-                          ? Image.asset('assets/images/Check_Icon.png')
-                          : Center(
-                              child: Container(
-                                width: 22,
-                                height: 22,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: const Color(0xFFD7CCC8), width: 2),
-                                ),
-                              ),
-                            ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      child: item.imagePath != null
-                          ? (item.imagePath!.endsWith('.svg')
-                              ? SvgPicture.asset(item.imagePath!)
-                              : Image.asset(item.imagePath!))
-                          : Icon(item.icon),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        item.getLocalizedName(context),
-                        style: const TextStyle(
-                          fontFamily: 'BMJUA',
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Image.asset('assets/images/branch.png',
-                            width: 14, height: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${item.price}',
-                          style: const TextStyle(
-                            fontFamily: 'BMJUA',
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              AppLocalizations.of(context)?.get('totalPrice') ?? 'Total: ',
-              style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
-            ),
-            Image.asset('assets/images/branch.png', width: 20, height: 20),
-            const SizedBox(width: 4),
-            Text(
-              '$_totalPrice',
-              style: const TextStyle(
-                fontFamily: 'BMJUA',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF5D4037),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

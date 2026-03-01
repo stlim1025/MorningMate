@@ -1,6 +1,9 @@
+import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../core/constants/room_assets.dart';
 import '../../../core/constants/character_assets.dart';
@@ -9,7 +12,6 @@ import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
 import '../controllers/character_controller.dart';
-import '../../../core/services/asset_precache_service.dart';
 import '../../../services/asset_service.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -20,40 +22,289 @@ class ShopScreen extends StatefulWidget {
 }
 
 class _ShopScreenState extends State<ShopScreen> {
-  String _selectedCategory = 'wallpaper';
-  late PageController _pageController;
-  int _currentIndex = 0;
-  bool _isUnownedOnly = false;
+  // 오늘의 상점 카운트다운 타이머
+  Timer? _countdownTimer;
+  Duration _timeUntilReset = Duration.zero;
 
-  final Map<String, String> _categoryNames = {
-    'wallpaper': '벽지',
-    'background': '배경',
-    'prop': '소품',
-    'floor': '바닥',
-    'character': '캐릭터',
-    'emoticon': '이모티콘',
-  };
-
-  late final List<String> _categories = _categoryNames.keys.toList();
+  List<RoomAsset>? _todayShopItems;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _currentIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CharacterController>().loadRewardedAd();
-      AssetPrecacheService().precacheCategory(context, _selectedCategory);
+      _loadTodayShopItems();
     });
-    // Firestore에서 최신 에셋 데이터를 가져와서 동적 추가 아이템 반영
     AssetService().fetchDynamicAssets().then((_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+        _loadTodayShopItems();
+      }
     });
+
+    _startCountdownTimer();
+  }
+
+  Future<void> _loadTodayShopItems() async {
+    final user = context.read<CharacterController>().currentUser;
+    if (user == null) return;
+
+    final now = DateTime.now();
+    final dateKey = '${user.uid}_${now.year}_${now.month}_${now.day}';
+    final savedKey = 'todayShopItems_$dateKey';
+
+    final prefs = await SharedPreferences.getInstance();
+    final savedIds = prefs.getStringList(savedKey);
+
+    if (savedIds != null && savedIds.isNotEmpty) {
+      final allAssets = [
+        ...RoomAssets.wallpapers,
+        ...RoomAssets.backgrounds,
+        ...RoomAssets.floors,
+        ...RoomAssets.props,
+        ...CharacterAssets.items,
+        ...RoomAssets.emoticons,
+      ];
+      final Map<String, RoomAsset> assetMap = {
+        for (var e in allAssets) e.id: e
+      };
+
+      if (mounted) {
+        setState(() {
+          _todayShopItems = savedIds
+              .map((id) => assetMap[id])
+              .whereType<RoomAsset>()
+              .toList();
+        });
+      }
+      return;
+    }
+
+    // fallback: generate deterministically from unowned items
+    final generated = _generateTodayShopItemsFallback(user);
+    await prefs.setStringList(savedKey, generated.map((e) => e.id).toList());
+
+    if (mounted) {
+      setState(() {
+        _todayShopItems = generated;
+      });
+    }
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  void _startCountdownTimer() {
+    _updateTimeUntilReset();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateTimeUntilReset();
+    });
+  }
+
+  void _updateTimeUntilReset() {
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day + 1);
+    setState(() {
+      _timeUntilReset = midnight.difference(now);
+    });
+  }
+
+  String _formatCountdown(Duration d) {
+    final hours = d.inHours.toString().padLeft(2, '0');
+    final minutes = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$hours:$minutes:$seconds';
+  }
+
+  /// 오늘의 상점 아이템 생성 (최초 실행 또는 리셋 시)
+  List<RoomAsset> _generateTodayShopItemsFallback(dynamic user) {
+    final now = DateTime.now();
+    final daySeed = now.year * 10000 + now.month * 100 + now.day;
+    final userSeed = user.uid.hashCode;
+    final random = Random(daySeed ^ userSeed);
+
+    // 각 카테고리별 미보유 상품 목록
+    final unownedWallpapers = RoomAssets.wallpapers
+        .where((w) => w.price > 0 && !user.purchasedThemeIds.contains(w.id))
+        .toList();
+    final unownedBackgrounds = RoomAssets.backgrounds
+        .where(
+            (b) => b.price > 0 && !user.purchasedBackgroundIds.contains(b.id))
+        .toList();
+    final unownedFloors = RoomAssets.floors
+        .where((f) => f.price > 0 && !user.purchasedFloorIds.contains(f.id))
+        .toList();
+    final unownedProps = RoomAssets.props
+        .where((p) =>
+            p.price > 0 &&
+            p.id != 'sticky_note' &&
+            !user.purchasedPropIds.contains(p.id))
+        .toList();
+    final unownedCharacterItems = CharacterAssets.items
+        .where((i) =>
+            i.price > 0 && !user.purchasedCharacterItemIds.contains(i.id))
+        .toList();
+    final unownedEmoticons = RoomAssets.emoticons
+        .where((e) => e.price > 0 && !user.purchasedEmoticonIds.contains(e.id))
+        .toList();
+
+    // 기본 비율: 벽지1, 배경1, 바닥1, 소품5, 캐릭터1 = 9개
+    // 유동성 적용: 각 카테고리 +-1 범위로 랜덤하게 조절
+    int wallpaperCount = _randomAdjust(1, random, unownedWallpapers.length);
+    int backgroundCount = _randomAdjust(1, random, unownedBackgrounds.length);
+    int floorCount = _randomAdjust(1, random, unownedFloors.length);
+    int characterCount = _randomAdjust(1, random, unownedCharacterItems.length);
+    int emoticonCount = _randomAdjust(0, random, unownedEmoticons.length);
+
+    // 나머지는 소품으로 채움 (총 9개)
+    int propCount = 9 -
+        wallpaperCount -
+        backgroundCount -
+        floorCount -
+        characterCount -
+        emoticonCount;
+    propCount = propCount.clamp(0, unownedProps.length);
+
+    // 총합이 9보다 적을 경우 소품에서 보충
+    int total = wallpaperCount +
+        backgroundCount +
+        floorCount +
+        propCount +
+        characterCount +
+        emoticonCount;
+    if (total < 9) {
+      final extra = min(9 - total, unownedProps.length - propCount);
+      propCount += extra;
+    }
+
+    final List<RoomAsset> result = [];
+
+    final seedForSorting = daySeed ^ userSeed;
+
+    // 각 카테고리에서 랜덤(하지만 하루 종일 고정된 순서로) 선택
+    _addDeterministicItems(
+        result, unownedWallpapers, wallpaperCount, seedForSorting);
+    _addDeterministicItems(
+        result, unownedBackgrounds, backgroundCount, seedForSorting);
+    _addDeterministicItems(result, unownedFloors, floorCount, seedForSorting);
+    _addDeterministicItems(result, unownedProps, propCount, seedForSorting);
+    _addDeterministicItems(
+        result, unownedCharacterItems, characterCount, seedForSorting);
+    _addDeterministicItems(
+        result, unownedEmoticons, emoticonCount, seedForSorting);
+
+    // 결과도 아이디와 시드 기반으로 섞어줍니다 (순서 고정)
+    result.sort((a, b) {
+      final rA = Random(a.id.hashCode ^ seedForSorting).nextInt(100000);
+      final rB = Random(b.id.hashCode ^ seedForSorting).nextInt(100000);
+      return rA.compareTo(rB);
+    });
+    return result;
+  }
+
+  int _randomAdjust(int base, Random random, int maxAvailable) {
+    final delta = random.nextInt(3) - 1; // -1, 0, +1
+    final adjusted = (base + delta).clamp(0, maxAvailable);
+    return adjusted;
+  }
+
+  void _addDeterministicItems(
+      List<RoomAsset> result, List<RoomAsset> source, int count, int seed) {
+    if (source.isEmpty || count <= 0) return;
+    final sorted = List<RoomAsset>.from(source)
+      ..sort((a, b) {
+        final rA = Random(a.id.hashCode ^ seed).nextInt(1000000);
+        final rB = Random(b.id.hashCode ^ seed).nextInt(1000000);
+        return rA.compareTo(rB);
+      });
+    result.addAll(sorted.take(count));
+  }
+
+  /// 세일 중인 상품 목록
+  List<RoomAsset> _getSaleItems(CharacterController controller) {
+    final discounts = controller.shopDiscounts;
+    if (discounts.isEmpty) return [];
+
+    final List<RoomAsset> saleItems = [];
+    for (final entry in discounts.entries) {
+      final itemId = entry.key;
+      RoomAsset? item;
+      item = RoomAssets.wallpapers.where((w) => w.id == itemId).firstOrNull;
+      item ??= RoomAssets.backgrounds.where((b) => b.id == itemId).firstOrNull;
+      item ??= RoomAssets.floors.where((f) => f.id == itemId).firstOrNull;
+      item ??= RoomAssets.props.where((p) => p.id == itemId).firstOrNull;
+      item ??= RoomAssets.emoticons.where((e) => e.id == itemId).firstOrNull;
+      item ??= CharacterAssets.items.where((i) => i.id == itemId).firstOrNull;
+      if (item != null) saleItems.add(item);
+    }
+    return saleItems;
+  }
+
+  /// 최근 2주 이내 출시된 상품 목록
+  List<RoomAsset> _getRecentItems() {
+    final now = DateTime.now();
+    final twoWeeksAgo = now.subtract(const Duration(days: 14));
+
+    final List<RoomAsset> recentItems = [];
+
+    void addRecent(List<RoomAsset> items) {
+      for (final item in items) {
+        if (item.releasedAt != null && item.releasedAt!.isAfter(twoWeeksAgo)) {
+          recentItems.add(item);
+        }
+      }
+    }
+
+    addRecent(RoomAssets.wallpapers);
+    addRecent(RoomAssets.backgrounds);
+    addRecent(RoomAssets.floors);
+    addRecent(RoomAssets.props);
+    addRecent(RoomAssets.emoticons);
+    addRecent(CharacterAssets.items);
+
+    // 최신순 정렬
+    recentItems.sort((a, b) => (b.releasedAt ?? DateTime(2000))
+        .compareTo(a.releasedAt ?? DateTime(2000)));
+
+    return recentItems;
+  }
+
+  /// 카테고리별 구매 함수 결정
+  Future<void> Function(int price) _getPurchaseFunction(
+      RoomAsset item, CharacterController controller, String uid) {
+    if (RoomAssets.wallpapers.any((w) => w.id == item.id)) {
+      return (price) => controller.purchaseWallpaper(uid, item.id, price);
+    } else if (RoomAssets.backgrounds.any((b) => b.id == item.id)) {
+      return (price) => controller.purchaseBackground(uid, item.id, price);
+    } else if (RoomAssets.floors.any((f) => f.id == item.id)) {
+      return (price) => controller.purchaseFloor(uid, item.id, price);
+    } else if (RoomAssets.props.any((p) => p.id == item.id)) {
+      return (price) => controller.purchaseProp(uid, item.id, price);
+    } else if (RoomAssets.emoticons.any((e) => e.id == item.id)) {
+      return (price) => controller.purchaseEmoticon(uid, item.id, price);
+    } else {
+      return (price) => controller.purchaseCharacterItem(uid, item.id, price);
+    }
+  }
+
+  /// 아이템이 구매되었는지 확인
+  bool _isItemPurchased(RoomAsset item, dynamic user) {
+    if (RoomAssets.wallpapers.any((w) => w.id == item.id)) {
+      return user.purchasedThemeIds.contains(item.id);
+    } else if (RoomAssets.backgrounds.any((b) => b.id == item.id)) {
+      return user.purchasedBackgroundIds.contains(item.id);
+    } else if (RoomAssets.floors.any((f) => f.id == item.id)) {
+      return user.purchasedFloorIds.contains(item.id);
+    } else if (RoomAssets.props.any((p) => p.id == item.id)) {
+      return user.purchasedPropIds.contains(item.id);
+    } else if (RoomAssets.emoticons.any((e) => e.id == item.id)) {
+      return user.purchasedEmoticonIds.contains(item.id);
+    } else {
+      return user.purchasedCharacterItemIds.contains(item.id);
+    }
   }
 
   @override
@@ -77,6 +328,10 @@ class _ShopScreenState extends State<ShopScreen> {
         ),
       );
     }
+
+    final saleItems = _getSaleItems(characterController);
+    final todayItems = _todayShopItems ?? [];
+    final recentItems = _getRecentItems();
 
     return Container(
       decoration: const BoxDecoration(
@@ -152,7 +407,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     const SizedBox(width: 4),
                     Text(
                       AppLocalizations.of(context)?.get('branch') ?? 'Branch',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black54,
                         fontWeight: FontWeight.w500,
@@ -164,205 +419,178 @@ class _ShopScreenState extends State<ShopScreen> {
               ),
             ],
           ),
-          body: Column(
-            children: [
-              // 광고 보기 버튼
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                child: _buildAdButton(
-                    user, colorScheme, context.read<CharacterController>()),
-              ),
-
-              // 카테고리 탭
-              Container(
-                width: double.infinity,
-                height: 50,
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/Tab_Background.png'),
-                    fit: BoxFit.fill,
-                  ),
+          body: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 30,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 광고 보기 버튼
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                  child: _buildAdButton(
+                      user, colorScheme, context.read<CharacterController>()),
                 ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: _categoryNames.entries.map((entry) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: _buildTabItem(
-                          context,
-                          AppLocalizations.of(context)?.get(entry.key) ??
-                              entry.value,
-                          _selectedCategory == entry.key,
-                          () {
-                            final index = _categories.indexOf(entry.key);
-                            setState(() {
-                              _currentIndex = index;
-                              _selectedCategory = entry.key;
-                            });
-                            AssetPrecacheService()
-                                .precacheCategory(context, entry.key);
-                            _pageController.animateToPage(
-                              index,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          },
+
+                // 오늘의 상점 섹션
+                if (todayItems.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildSectionHeader(
+                    titleWidget: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          AppLocalizations.of(context)?.locale.languageCode ==
+                                  'ko'
+                              ? 'assets/images/TodayShop_Kor.png'
+                              : 'assets/images/TodayShop_Eng.png',
+                          height: 48,
+                          fit: BoxFit.contain,
                         ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-
-              // 아이템 리스트 (Stack으로 필터 버튼 오버레이)
-              Expanded(
-                child: Stack(
-                  alignment: Alignment.topCenter,
-                  children: [
-                    PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (index) {
-                        final category = _categories[index];
-                        setState(() {
-                          _currentIndex = index;
-                          _selectedCategory = category;
-                        });
-                        AssetPrecacheService()
-                            .precacheCategory(context, category);
-                      },
-                      itemCount: _categories.length,
-                      itemBuilder: (context, index) {
-                        final category = _categories[index];
-                        switch (category) {
-                          case 'emoticon':
-                            return _buildEmoticonGrid(
-                                user, characterController, colorScheme);
-                          case 'wallpaper':
-                            return _buildWallpaperGrid(
-                                user, characterController, colorScheme);
-                          case 'background':
-                            return _buildBackgroundGrid(
-                                user, characterController, colorScheme);
-                          case 'prop':
-                            return _buildPropGrid(
-                                user, characterController, colorScheme);
-                          case 'floor':
-                            return _buildFloorGrid(
-                                user, characterController, colorScheme);
-                          case 'character':
-                            return _buildCharacterGrid(
-                                user, characterController, colorScheme);
-                          default:
-                            return const SizedBox.shrink();
-                        }
-                      },
-                    ),
-
-                    // 미보유 필터 버튼 (Floating)
-                    Positioned(
-                      top: 0,
-                      left: 20,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isUnownedOnly = !_isUnownedOnly;
-                          });
-                        },
-                        child: Container(
-                          width: 105, // 너비 축소 (기존 120)
-                          height: 40,
-                          alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage(
-                                  'assets/images/Message_Button.png'),
-                              fit: BoxFit.fill,
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.access_time,
+                                size: 14, color: Color(0xFF8D6E63)),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatCountdown(_timeUntilReset),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontFamily: 'BMJUA',
+                                color: Color(0xFF8D6E63),
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // 커스텀 체크박스
-                              Container(
-                                width: 20,
-                                height: 20,
-                                decoration: _isUnownedOnly
-                                    ? null
-                                    : BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.transparent,
-                                        border: Border.all(
-                                          color: const Color(0xFF5D4037),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                child: _isUnownedOnly
-                                    ? Image.asset(
-                                        'assets/images/Check_Icon.png',
-                                        fit: BoxFit.contain,
-                                      )
-                                    : null,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                AppLocalizations.of(context)?.get('unowned') ??
-                                    'Unowned',
-                                style: const TextStyle(
-                                  fontFamily: 'BMJUA',
-                                  fontSize: 14,
-                                  color: Color(0xFF5D4037),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+                  const SizedBox(height: 8),
+                  _buildItemGrid(
+                    items: todayItems,
+                    user: user,
+                    characterController: characterController,
+                    colorScheme: colorScheme,
+                  ),
+                ],
+
+                // 세일 중인 상품 섹션
+                if (saleItems.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _buildSectionHeader(
+                    title:
+                        '🔥 ${AppLocalizations.of(context)?.get('sale') ?? 'SALE'}',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildItemGrid(
+                    items: saleItems,
+                    user: user,
+                    characterController: characterController,
+                    colorScheme: colorScheme,
+                  ),
+                ],
+
+                // 최근 출시 상품 섹션
+                if (recentItems.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _buildSectionHeader(
+                    titleWidget: Image.asset(
+                      AppLocalizations.of(context)?.locale.languageCode == 'ko'
+                          ? 'assets/images/NewItem_Kor.png'
+                          : 'assets/images/NewItem_Eng.png',
+                      height: 52,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildItemGrid(
+                    items: recentItems,
+                    user: user,
+                    characterController: characterController,
+                    colorScheme: colorScheme,
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTabItem(
-      BuildContext context, String label, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(isSelected
-                ? 'assets/images/ShopTab_ButtonClick.png'
-                : 'assets/images/ShopTab_Button.png'),
-            fit: BoxFit.fill,
-          ),
+  /// 섹션 헤더 위젯
+  Widget _buildSectionHeader(
+      {String? title, Widget? titleWidget, Widget? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SizedBox(
+        width: double.infinity,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (titleWidget != null)
+              titleWidget
+            else if (title != null)
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'BMJUA',
+                  color: Color(0xFF4E342E),
+                ),
+              ),
+            if (trailing != null)
+              Positioned(
+                right: 0,
+                child: trailing,
+              ),
+          ],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'BMJUA',
-            fontSize: 14,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: const Color(0xFF5D4E37),
-          ),
+      ),
+    );
+  }
+
+  /// 아이템 3열 그리드 (shrinkWrap)
+  Widget _buildItemGrid({
+    required List<RoomAsset> items,
+    required dynamic user,
+    required CharacterController characterController,
+    required AppColorScheme colorScheme,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 16,
+          childAspectRatio: 0.8,
         ),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final isPurchased = _isItemPurchased(item, user);
+          return _buildShopItem(
+            item: item,
+            isPurchased: isPurchased,
+            onPurchase:
+                _getPurchaseFunction(item, characterController, user.uid),
+            colorScheme: colorScheme,
+          );
+        },
       ),
     );
   }
 
   Widget _buildAdButton(
       user, AppColorScheme colorScheme, CharacterController controller) {
-    // 오늘 광고 시청 횟수 제한 체크 (로컬)
     int currentCount = user.adRewardCount;
     final now = DateTime.now();
     final lastDate = user.lastAdRewardDate;
@@ -378,9 +606,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
     return Container(
       width: double.infinity,
-      // 메모 이미지의 비율과 패딩 고려 (배경 이미지에 내용이 잘 들어가도록)
-      padding: const EdgeInsets.symmetric(
-          horizontal: 32, vertical: 16), // 세로 패딩 24 -> 16 축소
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
       decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/images/Memo.png'),
@@ -389,7 +615,6 @@ class _ShopScreenState extends State<ShopScreen> {
       ),
       child: Row(
         children: [
-          // 아이콘 혹은 이미지
           Image.asset(
             'assets/icons/Megaphone_Icon.png',
             width: 40,
@@ -405,8 +630,8 @@ class _ShopScreenState extends State<ShopScreen> {
                   AppLocalizations.of(context)?.get('watchAdGetBranch') ??
                       'Watch Ad Get 20 Branches',
                   style: const TextStyle(
-                    color: Color(0xFF5D4037), // 갈색 계열 (메모지에 어울리는)
-                    fontSize: 14, // 16 -> 14 축소 (영어 텍스트 길어질 수 있음)
+                    color: Color(0xFF5D4037),
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'BMJUA',
                   ),
@@ -415,13 +640,13 @@ class _ShopScreenState extends State<ShopScreen> {
                 Row(
                   children: [
                     Image.asset('assets/images/branch.png',
-                        width: 14, height: 14, cacheWidth: 56), // 16 -> 14 축소
+                        width: 14, height: 14, cacheWidth: 56),
                     const SizedBox(width: 4),
                     Text(
                       '+20 ${AppLocalizations.of(context)?.get('branch') ?? 'Branches'}',
                       style: const TextStyle(
                         color: Color(0xFF8D6E63),
-                        fontSize: 14, // 16 -> 14 축소
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'BMJUA',
                       ),
@@ -431,7 +656,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       '($currentCount/5)',
                       style: const TextStyle(
                         color: Color(0xFF8D6E63),
-                        fontSize: 12, // 14 -> 12 축소
+                        fontSize: 12,
                         fontFamily: 'BMJUA',
                       ),
                     ),
@@ -440,7 +665,6 @@ class _ShopScreenState extends State<ShopScreen> {
               ],
             ),
           ),
-          // 보기 버튼 (Confirm_Button.png)
           GestureDetector(
             onTap: isLimitReached || controller.isAdLoading
                 ? null
@@ -452,7 +676,7 @@ class _ShopScreenState extends State<ShopScreen> {
                 children: [
                   Image.asset(
                     'assets/images/Confirm_Button.png',
-                    width: 70, // 적절한 크기 조절
+                    width: 70,
                     height: 40,
                     fit: BoxFit.fill,
                   ),
@@ -463,7 +687,7 @@ class _ShopScreenState extends State<ShopScreen> {
                         : (AppLocalizations.of(context)?.get('watch') ??
                             'Watch'),
                     style: const TextStyle(
-                      color: Color(0xFF5D4037), // 갈색으로 변경
+                      color: Color(0xFF5D4037),
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       fontFamily: 'BMJUA',
@@ -478,153 +702,19 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  Widget _buildCharacterGrid(user, characterController, colorScheme) {
-    var purchasableItems =
-        CharacterAssets.items.where((i) => i.price > 0).toList();
-
-    if (_isUnownedOnly) {
-      purchasableItems = purchasableItems
-          .where((i) => !user.purchasedCharacterItemIds.contains(i.id))
-          .toList();
-    }
-
-    return _buildGrid(purchasableItems, (item) {
-      final isPurchased = user.purchasedCharacterItemIds.contains(item.id);
-      return _buildShopItem(
-        item: item,
-        isPurchased: isPurchased,
-        onPurchase: (price) =>
-            characterController.purchaseCharacterItem(user.uid, item.id, price),
-        colorScheme: colorScheme,
-      );
-    });
-  }
-
-  Widget _buildEmoticonGrid(user, characterController, colorScheme) {
-    var purchasableEmoticons =
-        RoomAssets.emoticons.where((e) => e.price > 0).toList();
-
-    if (_isUnownedOnly) {
-      purchasableEmoticons = purchasableEmoticons
-          .where((e) => !user.purchasedEmoticonIds.contains(e.id))
-          .toList();
-    }
-
-    return _buildGrid(purchasableEmoticons, (item) {
-      final isPurchased = user.purchasedEmoticonIds.contains(item.id);
-      return _buildShopItem(
-        item: item,
-        isPurchased: isPurchased,
-        onPurchase: (price) =>
-            characterController.purchaseEmoticon(user.uid, item.id, price),
-        colorScheme: colorScheme,
-      );
-    });
-  }
-
-  Widget _buildWallpaperGrid(user, characterController, colorScheme) {
-    var purchasableWallpapers =
-        RoomAssets.wallpapers.where((w) => w.price > 0).toList();
-
-    if (_isUnownedOnly) {
-      purchasableWallpapers = purchasableWallpapers
-          .where((w) => !user.purchasedThemeIds.contains(w.id))
-          .toList();
-    }
-
-    return _buildGrid(purchasableWallpapers, (item) {
-      final isPurchased = user.purchasedThemeIds.contains(item.id);
-      return _buildShopItem(
-        item: item,
-        isPurchased: isPurchased,
-        onPurchase: (price) =>
-            characterController.purchaseWallpaper(user.uid, item.id, price),
-        colorScheme: colorScheme,
-      );
-    });
-  }
-
-  Widget _buildBackgroundGrid(user, characterController, colorScheme) {
-    var purchasableBackgrounds =
-        RoomAssets.backgrounds.where((b) => b.price > 0).toList();
-
-    if (_isUnownedOnly) {
-      purchasableBackgrounds = purchasableBackgrounds
-          .where((b) => !user.purchasedBackgroundIds.contains(b.id))
-          .toList();
-    }
-
-    return _buildGrid(purchasableBackgrounds, (item) {
-      final isPurchased = user.purchasedBackgroundIds.contains(item.id);
-      return _buildShopItem(
-        item: item,
-        isPurchased: isPurchased,
-        onPurchase: (price) =>
-            characterController.purchaseBackground(user.uid, item.id, price),
-        colorScheme: colorScheme,
-      );
-    });
-  }
-
-  Widget _buildPropGrid(user, characterController, colorScheme) {
-    var purchasableProps = RoomAssets.props
-        .where((p) => p.price > 0 && p.id != 'sticky_note')
-        .toList();
-
-    if (_isUnownedOnly) {
-      purchasableProps = purchasableProps
-          .where((p) => !user.purchasedPropIds.contains(p.id))
-          .toList();
-    }
-
-    return _buildGrid(purchasableProps, (item) {
-      final isPurchased = user.purchasedPropIds.contains(item.id);
-      return _buildShopItem(
-        item: item,
-        isPurchased: isPurchased,
-        onPurchase: (price) =>
-            characterController.purchaseProp(user.uid, item.id, price),
-        colorScheme: colorScheme,
-      );
-    });
-  }
-
-  Widget _buildFloorGrid(user, characterController, colorScheme) {
-    var purchasableFloors =
-        RoomAssets.floors.where((f) => f.price > 0).toList();
-
-    if (_isUnownedOnly) {
-      purchasableFloors = purchasableFloors
-          .where((f) => !user.purchasedFloorIds.contains(f.id))
-          .toList();
-    }
-
-    return _buildGrid(purchasableFloors, (item) {
-      final isPurchased = user.purchasedFloorIds.contains(item.id);
-      return _buildShopItem(
-        item: item,
-        isPurchased: isPurchased,
-        onPurchase: (price) =>
-            characterController.purchaseFloor(user.uid, item.id, price),
-        colorScheme: colorScheme,
-      );
-    });
-  }
-
-  Widget _buildGrid(
-      List<RoomAsset> items, Widget Function(RoomAsset) itemBuilder) {
-    final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
-    return GridView.builder(
-      padding: EdgeInsets.fromLTRB(20, 10, 20, 80 + bottomInset),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) => itemBuilder(items[index]),
-    );
+  String _getItemCategoryLabel(RoomAsset item, BuildContext context) {
+    final isKo = AppLocalizations.of(context)?.locale.languageCode == 'ko';
+    if (RoomAssets.backgrounds.any((e) => e.id == item.id))
+      return isKo ? '배경' : 'Background';
+    if (RoomAssets.floors.any((e) => e.id == item.id))
+      return isKo ? '바닥' : 'Floor';
+    if (RoomAssets.wallpapers.any((e) => e.id == item.id))
+      return isKo ? '벽지' : 'Wallpaper';
+    if (RoomAssets.emoticons.any((e) => e.id == item.id))
+      return isKo ? '이모티콘' : 'Emoticon';
+    if (RoomAssets.props.any((e) => e.id == item.id))
+      return isKo ? '소품' : 'Prop';
+    return isKo ? '캐릭터' : 'Character';
   }
 
   Widget _buildShopItem({
@@ -633,7 +723,6 @@ class _ShopScreenState extends State<ShopScreen> {
     required Future<void> Function(int price) onPurchase,
     required AppColorScheme colorScheme,
   }) {
-    // 상품마다 고정된 랜덤 배경 이미지를 사용하기 위해 hashCode를 활용
     final cardIndex = (item.hashCode % 6) + 1;
     final cardBgImage = 'assets/icons/Friend_Card$cardIndex.png';
 
@@ -644,344 +733,342 @@ class _ShopScreenState extends State<ShopScreen> {
       final isDiscounted = discountedPrice < item.price;
       final canAfford = controller.currentUser!.points >= discountedPrice;
 
-      return Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            // 배경 이미지 비율에 맞춰 내용을 배치
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(cardBgImage),
-                fit: BoxFit.fill,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-                // 아이템 이미지
-                Container(
-                  width: 40, // 56 -> 40 축소
-                  height: 40, // 56 -> 40 축소
-                  alignment: Alignment.center,
-                  child: item.imagePath != null
-                      ? NetworkOrAssetImage(
+      void handleTap() async {
+        if (isPurchased) return;
+        final l10n = AppLocalizations.of(itemContext);
+        final localizedName = item.getLocalizedName(itemContext);
+        final categoryStr = _getItemCategoryLabel(item, itemContext);
+
+        final shouldPurchase = await AppDialog.show<bool>(
+          context: itemContext,
+          key: AppDialogKey.purchase,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: item.imagePath != null
+                    ? SizedBox(
+                        width: 100,
+                        height: 100,
+                        child: NetworkOrAssetImage(
                           imagePath: item.imagePath!,
                           fit: BoxFit.contain,
-                        )
-                      : Icon(item.icon,
-                          color: item.color ?? colorScheme.primaryButton,
-                          size: 24), // 32 -> 24 축소
+                        ),
+                      )
+                    : Icon(
+                        item.icon,
+                        size: 60,
+                        color: item.color ?? colorScheme.primaryButton,
+                      ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '[$categoryStr]',
+                style: TextStyle(
+                  fontFamily: 'BMJUA',
+                  fontSize: 14,
+                  color: colorScheme.textHint,
                 ),
-                const SizedBox(height: 8),
-                // 아이템 이름
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n?.getFormat('purchaseConfirm', {'item': localizedName}) ??
+                    'Do you want to purchase $localizedName?',
+                style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              if (isDiscounted)
                 Text(
-                  item.getLocalizedName(context),
+                  l10n?.getFormat('salePrice', {
+                        'original': item.price.toString(),
+                        'discounted': discountedPrice.toString()
+                      }) ??
+                      'SALE! ${item.price} -> $discountedPrice 가지',
                   style: const TextStyle(
-                    fontSize: 14,
+                    color: Colors.red,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'BMJUA',
-                    color: Color(0xFF5D4037),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const Spacer(),
+              if (!canAfford) ...[
+                const SizedBox(height: 12),
+                Text(
+                  l10n?.get('notEnoughBranch') ?? 'Not enough branches.',
+                  style: TextStyle(
+                    color: colorScheme.error,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'BMJUA',
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            AppDialogAction(
+              label: '$discountedPrice',
+              labelWidget: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/branch.png',
+                    width: 18,
+                    height: 18,
+                    cacheWidth: 72,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$discountedPrice',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.1,
+                      fontFamily: 'BMJUA',
+                      color: isDiscounted ? Colors.red : null,
+                    ),
+                  ),
+                ],
+              ),
+              isPrimary: true,
+              isFullWidth: true,
+              isEnabled: AlwaysStoppedAnimation<bool>(canAfford),
+              onPressed: (context) => Navigator.pop(context, true),
+            ),
+          ],
+        );
 
-                // 구매 버튼 (WakeUp_Button.png 배경)
-                GestureDetector(
-                  onTap: isPurchased
-                      ? null
-                      : () async {
-                          final l10n = AppLocalizations.of(itemContext);
-                          final localizedName =
-                              item.getLocalizedName(itemContext);
+        if (shouldPurchase == true) {
+          try {
+            await onPurchase(discountedPrice);
+            if (mounted) {
+              await AppDialog.show<String>(
+                context: context,
+                key: AppDialogKey.purchaseComplete,
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 16),
+                    Center(
+                      child: item.imagePath != null
+                          ? SizedBox(
+                              width: 120,
+                              height: 120,
+                              child: NetworkOrAssetImage(
+                                imagePath: item.imagePath!,
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                          : Icon(
+                              item.icon,
+                              size: 100,
+                              color: item.color ?? colorScheme.primaryButton,
+                            ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n?.getFormat(
+                              'purchaseSuccess', {'item': localizedName}) ??
+                          '$localizedName을(를) 구매했습니다.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16, fontFamily: 'BMJUA'),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+                actions: [
+                  AppDialogAction(
+                    label: l10n?.get('close') ?? '닫기',
+                    onPressed: (dialogCtx) => Navigator.pop(dialogCtx),
+                  ),
+                  AppDialogAction(
+                    label: l10n?.get('decorate') ?? '꾸미기',
+                    isPrimary: true,
+                    onPressed: (dialogCtx) {
+                      Navigator.pop(dialogCtx);
+                      final isCharacterItem =
+                          CharacterAssets.items.any((i) => i.id == item.id);
+                      if (isCharacterItem) {
+                        context.push('/character-decoration');
+                      } else {
+                        context.push('/decoration');
+                      }
+                    },
+                  ),
+                ],
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              MemoNotification.show(
+                  context, e.toString().replaceFirst('Exception: ', ''));
+            }
+          }
+        }
+      }
 
-                          final shouldPurchase = await AppDialog.show<bool>(
-                            context: itemContext,
-                            key: AppDialogKey.purchase,
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Center(
-                                  child: item.imagePath != null
-                                      ? SizedBox(
-                                          width: 100,
-                                          height: 100,
-                                          child: NetworkOrAssetImage(
-                                            imagePath: item.imagePath!,
-                                            fit: BoxFit.contain,
-                                          ),
-                                        )
-                                      : Icon(
-                                          item.icon,
-                                          size: 60,
-                                          color: item.color ??
-                                              colorScheme.primaryButton,
-                                        ),
+      return GestureDetector(
+        onTap: isPurchased ? null : handleTap,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(cardBgImage),
+                  fit: BoxFit.fill,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    child: item.imagePath != null
+                        ? NetworkOrAssetImage(
+                            imagePath: item.imagePath!,
+                            fit: BoxFit.contain,
+                          )
+                        : Icon(item.icon,
+                            color: item.color ?? colorScheme.primaryButton,
+                            size: 24),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    item.getLocalizedName(context),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'BMJUA',
+                      color: Color(0xFF5D4037),
+                      height: 1.1,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Spacer(),
+                  isPurchased
+                      ? SizedBox(
+                          width: double.infinity,
+                          height: 20,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/icons/WakeUp_Button.png',
+                                width: double.infinity,
+                                height: 30,
+                                fit: BoxFit.fill,
+                                filterQuality: FilterQuality.none,
+                              ),
+                              Text(
+                                AppLocalizations.of(itemContext)
+                                        ?.get('owned') ??
+                                    'Owned',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF5D4037),
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'BMJUA',
                                 ),
-                                const SizedBox(height: 16),
-                                const SizedBox(height: 16),
-                                Text(
-                                  l10n?.getFormat('purchaseConfirm',
-                                          {'item': localizedName}) ??
-                                      'Do you want to purchase $localizedName?',
-                                  style: const TextStyle(fontFamily: 'BMJUA'),
-                                ),
-                                const SizedBox(height: 12),
-                                if (isDiscounted)
-                                  Text(
-                                    l10n?.getFormat('salePrice', {
-                                          'original': item.price.toString(),
-                                          'discounted':
-                                              discountedPrice.toString()
-                                        }) ??
-                                        'SALE! ${item.price} -> $discountedPrice 가지',
-                                    style: const TextStyle(
-                                      color: Colors.red,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'BMJUA',
-                                    ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SizedBox(
+                          width: double.infinity,
+                          height: 20,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/icons/WakeUp_Button.png',
+                                width: double.infinity,
+                                height: 30,
+                                fit: BoxFit.fill,
+                                filterQuality: FilterQuality.none,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/branch.png',
+                                    width: 12,
+                                    height: 12,
+                                    cacheWidth: 48,
                                   ),
-                                if (!canAfford) ...[
-                                  const SizedBox(height: 12),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    l10n?.get('notEnoughBranch') ??
-                                        'Not enough branches.',
+                                    '$discountedPrice',
                                     style: TextStyle(
-                                      color: colorScheme.error,
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
+                                      color: isDiscounted
+                                          ? Colors.red
+                                          : const Color(0xFF5D4037),
                                       fontFamily: 'BMJUA',
                                     ),
                                   ),
                                 ],
-                              ],
-                            ),
-                            actions: [
-                              AppDialogAction(
-                                label: '$discountedPrice',
-                                labelWidget: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/branch.png',
-                                      width: 18,
-                                      height: 18,
-                                      cacheWidth: 72,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '$discountedPrice',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        height: 1.1,
-                                        fontFamily: 'BMJUA',
-                                        color: isDiscounted ? Colors.red : null,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                isPrimary: true,
-                                isFullWidth: true,
-                                isEnabled:
-                                    AlwaysStoppedAnimation<bool>(canAfford),
-                                onPressed: (context) =>
-                                    Navigator.pop(context, true),
                               ),
                             ],
-                          );
-
-                          if (shouldPurchase == true) {
-                            try {
-                              await onPurchase(discountedPrice);
-                              if (mounted) {
-                                final result = await AppDialog.show<String>(
-                                  context: context,
-                                  key: AppDialogKey.purchaseComplete,
-                                  content: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      const SizedBox(height: 16),
-                                      Center(
-                                        child: item.imagePath != null
-                                            ? SizedBox(
-                                                width: 120,
-                                                height: 120,
-                                                child: NetworkOrAssetImage(
-                                                  imagePath: item.imagePath!,
-                                                  fit: BoxFit.contain,
-                                                ),
-                                              )
-                                            : Icon(
-                                                item.icon,
-                                                size: 100,
-                                                color: item.color ??
-                                                    colorScheme.primaryButton,
-                                              ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      Text(
-                                        l10n?.getFormat('purchaseSuccess',
-                                                {'item': localizedName}) ??
-                                            '$localizedName을(를) 구매했습니다.',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                            fontSize: 16, fontFamily: 'BMJUA'),
-                                      ),
-                                      const SizedBox(height: 8),
-                                    ],
-                                  ),
-                                  actions: [
-                                    AppDialogAction(
-                                      label:
-                                          l10n?.get('decorate') ?? 'Decorate',
-                                      onPressed: (context) {
-                                        Navigator.pop(context, 'decorate');
-                                      },
-                                    ),
-                                    AppDialogAction(
-                                      label: l10n?.get('confirm') ?? 'Confirm',
-                                      isPrimary: true,
-                                      onPressed: (context) =>
-                                          Navigator.pop(context),
-                                    ),
-                                  ],
-                                );
-
-                                if (mounted && result == 'decorate') {
-                                  // 캐릭터 아이템이면 캐릭터 꾸미기 화면으로, 아니면 방 꾸미기 화면으로
-                                  final isCharacterItem = CharacterAssets.items
-                                      .any((i) => i.id == item.id);
-                                  if (isCharacterItem) {
-                                    context.push('/character-decoration');
-                                  } else {
-                                    context.push('/decoration');
-                                  }
-                                }
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                MemoNotification.show(
-                                    context,
-                                    e
-                                        .toString()
-                                        .replaceFirst('Exception: ', ''));
-                              }
-                            }
-                          }
-                        },
-                  child: Opacity(
-                    opacity: isPurchased ? 0.7 : 1.0,
-                    child: SizedBox(
-                      width: double
-                          .infinity, // 너비를 약간 제한하여 너무 뚱뚱해지지 않게 함 (필요 시 조절)
-                      height: 20, // 높이를 36 -> 30으로 줄임
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/icons/WakeUp_Button.png',
-                            width: double.infinity,
-                            height: 30,
-                            fit: BoxFit.fill,
-                            filterQuality:
-                                FilterQuality.none, // 픽셀 깨짐 방지 (선명하게)
                           ),
-                          Center(
-                            child: isPurchased
-                                ? Text(
-                                    AppLocalizations.of(itemContext)
-                                            ?.get('owned') ??
-                                        'Owned',
-                                    style: const TextStyle(
-                                      fontSize: 11, // 폰트 사이즈 살짝 축소
-                                      color: Color(0xFF5D4037), // 갈색으로 변경
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'BMJUA',
-                                    ),
-                                  )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Image.asset(
-                                        'assets/images/branch.png',
-                                        width: 12, // 아이콘 사이즈 살짝 축소
-                                        height: 12,
-                                        cacheWidth: 48,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '$discountedPrice',
-                                        style: TextStyle(
-                                          fontSize: 12, // 폰트 사이즈 살짝 축소
-                                          fontWeight: FontWeight.bold,
-                                          color: isDiscounted
-                                              ? Colors.red
-                                              : const Color(0xFF5D4037),
-                                          fontFamily: 'BMJUA',
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                        ],
-                      ),
+                        ),
+                ],
+              ),
+            ),
+            if (isDiscounted && !isPurchased)
+              Positioned(
+                top: -5,
+                right: -5,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(itemContext)?.get('sale') ?? 'SALE',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          if (isDiscounted && !isPurchased)
-            Positioned(
-              top: -5,
-              right: -5,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: Text(
-                  AppLocalizations.of(itemContext)?.get('sale') ?? 'SALE',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
+              ),
+            if (isPurchased)
+              Center(
+                child: Opacity(
+                  opacity: 0.9,
+                  child: Image.asset(
+                    AppLocalizations.of(context)?.locale.languageCode == 'en'
+                        ? 'assets/icons/Purchase_IconEng.png'
+                        : 'assets/icons/purchase_Icon.png',
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
-            ),
-          if (isPurchased)
-            Center(
-              child: Opacity(
-                opacity: 0.9,
-                child: Image.asset(
-                  AppLocalizations.of(context)?.locale.languageCode == 'en'
-                      ? 'assets/icons/Purchase_IconEng.png'
-                      : 'assets/icons/purchase_Icon.png',
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       );
     });
   }
