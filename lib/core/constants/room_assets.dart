@@ -707,6 +707,19 @@ class RoomAssets {
       shadowDyCorrection: -10.0,
       releasedAt: DateTime(2026, 3, 2),
     ),
+    RoomAsset(
+      id: 'rainbow_spin_light',
+      name: '무지개 회전등',
+      nameEn: 'Rainbow Spin Light',
+      price: 1000,
+      icon: Icons.light,
+      imagePath: 'assets/items/Rainbow Spin Light.webp',
+      sizeMultiplier: 1.0,
+      aspectRatio: 1.0,
+      noShadow: true,
+      isLight: true,
+      releasedAt: DateTime(2026, 3, 3), // 출시일 보정 (상점 최근 아이템 노출 보장)
+    ),
   ];
 
   static List<RoomAsset> floors = [

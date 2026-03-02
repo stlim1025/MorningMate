@@ -1129,6 +1129,15 @@ class _EnhancedCharacterRoomWidgetState
       );
     }
 
+    // 특수 소품: 무지개 회전등 (코드 기반 반짝임 효과)
+    if (asset.id == 'rainbow_spin_light' && !isShadow) {
+      return _RainbowSpinLightProp(
+        width: width,
+        height: height,
+        imagePath: asset.imagePath ?? '',
+      );
+    }
+
     if (asset.imagePath != null) {
       Widget imageWidget = NetworkOrAssetImage(
         imagePath: asset.imagePath!,
@@ -1812,13 +1821,18 @@ class _NightOverlayPainter extends CustomPainter {
       // isLight 속성이 없으면 패스
       if (!asset.isLight) continue;
 
+      // 조명이 무지개 회전등인 경우 특수 색상 처리
+      final isRainbow = asset.id == 'rainbow_spin_light';
+
       final xPos = prop.x * width;
-      // prop의 바닥 기준점에서 위로 조금 올려 실제 빛이 나는 위치를 찾음
-      final yPos = prop.y * height - (width + height) * 0.04;
+      // 일반 조명은 본체 위치에서 구멍을 뚫고, 무지개 조명은 바닥(yPos)에 더 가깝게 구멍을 뚫음
+      final yPos = isRainbow
+          ? prop.y * height - (width + height) * 0.01 // 바닥면 근처
+          : prop.y * height - (width + height) * 0.04; // 본체 중심 부근
 
       final double glowRadius =
           (width > height ? width : height) * 0.2 * asset.lightIntensity;
-      final double brightnessMulti = asset.lightIntensity * 0.7; // 전체 밝기를 조금 낮춤
+      final double brightnessMulti = asset.lightIntensity * 0.7;
 
       // 뚫기 (dstOut) - 어두운 화면에 자연스러운 원형 구멍을 냄
       final punchHolePaint = Paint()
@@ -1836,19 +1850,62 @@ class _NightOverlayPainter extends CustomPainter {
       canvas.drawCircle(Offset(xPos, yPos), glowRadius, punchHolePaint);
 
       // 따뜻한 조명 색 더하기 (plus) - 밝아진 구멍 위에 한번 더 은은한 불빛 터치
-      final glowLightPaint = Paint()
-        ..blendMode = BlendMode.plus
-        ..shader = RadialGradient(
-          colors: [
-            const Color(0xFFFFFACD).withOpacity(0.4 * brightnessMulti),
-            const Color(0xFFFFE066).withOpacity(0.2 * brightnessMulti),
-            const Color(0xFFFFB347).withOpacity(0.0),
-          ],
-          stops: const [0.0, 0.3, 1.0],
-        ).createShader(Rect.fromCircle(
-            center: Offset(xPos, yPos), radius: glowRadius * 1.5));
+      if (isRainbow) {
+        // 무지개 조명 특수 처리: 아래로 뻗어나가는 무지개 빔 (Night Mode) - 강도 하향 조정
+        final int rayCount = 8;
+        final double beamLength = glowRadius * 3.5; // 길이 소폭 축소
+        final double spread = 0.22; // 확산 범위 소폭 축소
 
-      canvas.drawCircle(Offset(xPos, yPos), glowRadius * 1.5, glowLightPaint);
+        for (int i = 0; i < rayCount; i++) {
+          final double angle = pi / 2 + (i - (rayCount - 1) / 2) * 0.35;
+          final Color beamColor = HSLColor.fromAHSL(
+            0.15 * brightnessMulti, // 불투명도 절반으로 감소 (0.3 -> 0.15)
+            (i * (360 / rayCount)) % 360,
+            0.8,
+            0.6,
+          ).toColor();
+
+          final Path beamPath = Path();
+          beamPath.moveTo(xPos, yPos);
+
+          final double dx1 = cos(angle - spread) * beamLength;
+          final double dy1 = sin(angle - spread) * beamLength;
+          final double dx2 = cos(angle + spread) * beamLength;
+          final double dy2 = sin(angle + spread) * beamLength;
+
+          beamPath.lineTo(xPos + dx1, yPos + dy1);
+          beamPath.lineTo(xPos + dx2, yPos + dy2);
+          beamPath.close();
+
+          final Paint beamPaint = Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [beamColor, beamColor.withOpacity(0)],
+            ).createShader(Rect.fromLTWH(
+                xPos - beamLength, yPos, beamLength * 2, beamLength))
+            ..blendMode = BlendMode.plus
+            ..maskFilter = const MaskFilter.blur(
+                BlurStyle.normal, 25); // 더 부드럽게 번지도록 (15 -> 25)
+
+          canvas.drawPath(beamPath, beamPaint);
+        }
+      } else {
+        // 일반 조명 처리
+        final glowLightPaint = Paint()
+          ..blendMode = BlendMode.plus
+          ..shader = RadialGradient(
+            colors: [
+              const Color(0xFFFFFACD).withOpacity(0.4 * brightnessMulti),
+              const Color(0xFFFFE066).withOpacity(0.2 * brightnessMulti),
+              const Color(0xFFFFB347).withOpacity(0.0),
+            ],
+            stops: const [0.0, 0.3, 1.0],
+          ).createShader(Rect.fromCircle(
+              center: Offset(xPos, yPos), radius: glowRadius * 1.5));
+
+        canvas.drawCircle(Offset(xPos, yPos), glowRadius * 1.5, glowLightPaint);
+      }
     }
 
     canvas.restore();
@@ -1969,3 +2026,147 @@ class _ArchWindowClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
+
+/// 무지개 회전등 전용 위젯 (코드 기반 반짝임 및 하단 투사 효과)
+class _RainbowSpinLightProp extends StatefulWidget {
+  final double width;
+  final double height;
+  final String imagePath;
+
+  const _RainbowSpinLightProp({
+    required this.width,
+    required this.height,
+    required this.imagePath,
+  });
+
+  @override
+  State<_RainbowSpinLightProp> createState() => _RainbowSpinLightPropState();
+}
+
+class _RainbowSpinLightPropState extends State<_RainbowSpinLightProp>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: Stack(
+        alignment: Alignment.topCenter, // 조명 상단 기준
+        clipBehavior: Clip.none,
+        children: [
+          // 1. 빛의 줄기 (Light Beams) - 아래로 뻗어나오는 무지개 빔 (더 길고 선명하게)
+          Positioned(
+            top: widget.height * 0.3,
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return CustomPaint(
+                  size: Size(widget.width * 2.5, widget.height * 2.5), // 영역 확장
+                  painter: _RainbowBeamPainter(
+                    rotation: _controller.value,
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // 2. 조명 본체
+          NetworkOrAssetImage(
+            imagePath: widget.imagePath,
+            width: widget.width * 0.9,
+            height: widget.height * 0.9,
+            fit: BoxFit.contain,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 무지개 빛 줄기를 그리는 페인터
+class _RainbowBeamPainter extends CustomPainter {
+  final double rotation;
+
+  _RainbowBeamPainter({required this.rotation});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, 0); // 상단 중앙에서 시작
+    final double beamLength = size.height;
+    final int rayCount = 12; // 줄기 개수를 12개로 늘려 풍성함과 색 분해능 강화
+
+    for (int i = 0; i < rayCount; i++) {
+      // 360도 전체를 활용하여 더 촘촘하고 풍성한 무지개 배치
+      final double baseAngle = (i / rayCount) * pi * 2;
+      final double currentAngle = (baseAngle + rotation * pi * 2) % (pi * 2);
+
+      // 아래쪽 (0 ~ pi) 영역에서만 빔이 출력되도록 함 (sin 값으로 테두리 부드럽게)
+      double opacity = 0.0;
+      if (currentAngle > 0 && currentAngle < pi) {
+        opacity = sin(currentAngle).clamp(0.0, 1.0) * 0.6; // 불투명도 소폭 강화
+      }
+
+      if (opacity <= 0.01) continue;
+
+      // 선명한 무지개 색상 (채도 0.95, 명도 0.5로 고정)
+      final Color beamColor = HSLColor.fromAHSL(
+        opacity * 0.9,
+        (i * (360 / rayCount) + rotation * 360) % 360,
+        0.95, // 채도 대폭 강화 (Vivid)
+        0.5, // 명도 최적화 (가장 뚜렷한 원색)
+      ).toColor();
+
+      final Paint paint = Paint()
+        ..blendMode = BlendMode.plus // 빛 중첩 효과 강화
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [beamColor, beamColor.withOpacity(0)],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+
+      // 빔의 형태 (삼각형/사다리꼴)
+      final Path path = Path();
+      path.moveTo(center.dx, center.dy);
+
+      final double spread = 0.2; // 빔의 퍼짐 정도
+      final double targetX1 =
+          center.dx + cos(currentAngle - spread) * beamLength;
+      final double targetY1 =
+          center.dy + sin(currentAngle - spread) * beamLength;
+      final double targetX2 =
+          center.dx + cos(currentAngle + spread) * beamLength;
+      final double targetY2 =
+          center.dy + sin(currentAngle + spread) * beamLength;
+
+      path.lineTo(targetX1, targetY1);
+      path.lineTo(targetX2, targetY2);
+      path.close();
+
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RainbowBeamPainter oldDelegate) =>
+      oldDelegate.rotation != rotation;
+}
+
+// (이전 내용: _RainbowBeamPainter 클래스 이후 파일 끝)
