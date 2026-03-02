@@ -150,33 +150,42 @@ class _ShopScreenState extends State<ShopScreen> {
     final unownedEmoticons = RoomAssets.emoticons
         .where((e) => e.price > 0 && !user.purchasedEmoticonIds.contains(e.id))
         .toList();
+    final unownedWindows = RoomAssets.windows
+        .where((w) =>
+            w.id != 'default' &&
+            w.price > 0 &&
+            !user.purchasedWindowIds.contains(w.id))
+        .toList();
 
-    // 기본 비율: 벽지1, 배경1, 바닥1, 소품5, 캐릭터1 = 9개
+    // 기본 비율: 벽지1, 배경1, 바닥1, 소품2, 캐릭터1 = 6개
     // 유동성 적용: 각 카테고리 +-1 범위로 랜덤하게 조절
     int wallpaperCount = _randomAdjust(1, random, unownedWallpapers.length);
     int backgroundCount = _randomAdjust(1, random, unownedBackgrounds.length);
     int floorCount = _randomAdjust(1, random, unownedFloors.length);
     int characterCount = _randomAdjust(1, random, unownedCharacterItems.length);
     int emoticonCount = _randomAdjust(0, random, unownedEmoticons.length);
+    int windowCount = _randomAdjust(0, random, unownedWindows.length);
 
-    // 나머지는 소품으로 채움 (총 9개)
-    int propCount = 9 -
+    // 나머지는 소품으로 채움 (총 6개)
+    int propCount = 6 -
         wallpaperCount -
         backgroundCount -
         floorCount -
         characterCount -
-        emoticonCount;
+        emoticonCount -
+        windowCount;
     propCount = propCount.clamp(0, unownedProps.length);
 
-    // 총합이 9보다 적을 경우 소품에서 보충
+    // 총합이 6보다 적을 경우 소품에서 보충
     int total = wallpaperCount +
         backgroundCount +
         floorCount +
         propCount +
         characterCount +
-        emoticonCount;
-    if (total < 9) {
-      final extra = min(9 - total, unownedProps.length - propCount);
+        emoticonCount +
+        windowCount;
+    if (total < 6) {
+      final extra = min(6 - total, unownedProps.length - propCount);
       propCount += extra;
     }
 
@@ -195,6 +204,7 @@ class _ShopScreenState extends State<ShopScreen> {
         result, unownedCharacterItems, characterCount, seedForSorting);
     _addDeterministicItems(
         result, unownedEmoticons, emoticonCount, seedForSorting);
+    _addDeterministicItems(result, unownedWindows, windowCount, seedForSorting);
 
     // 결과도 아이디와 시드 기반으로 섞어줍니다 (순서 고정)
     result.sort((a, b) {
@@ -202,6 +212,9 @@ class _ShopScreenState extends State<ShopScreen> {
       final rB = Random(b.id.hashCode ^ seedForSorting).nextInt(100000);
       return rA.compareTo(rB);
     });
+    if (result.length > 6) {
+      return result.take(6).toList();
+    }
     return result;
   }
 
@@ -237,6 +250,7 @@ class _ShopScreenState extends State<ShopScreen> {
       item ??= RoomAssets.floors.where((f) => f.id == itemId).firstOrNull;
       item ??= RoomAssets.props.where((p) => p.id == itemId).firstOrNull;
       item ??= RoomAssets.emoticons.where((e) => e.id == itemId).firstOrNull;
+      item ??= RoomAssets.windows.where((w) => w.id == itemId).firstOrNull;
       item ??= CharacterAssets.items.where((i) => i.id == itemId).firstOrNull;
       if (item != null) saleItems.add(item);
     }
@@ -262,6 +276,7 @@ class _ShopScreenState extends State<ShopScreen> {
     addRecent(RoomAssets.backgrounds);
     addRecent(RoomAssets.floors);
     addRecent(RoomAssets.props);
+    addRecent(RoomAssets.windows);
     addRecent(RoomAssets.emoticons);
     addRecent(CharacterAssets.items);
 
@@ -282,7 +297,12 @@ class _ShopScreenState extends State<ShopScreen> {
     } else if (RoomAssets.floors.any((f) => f.id == item.id)) {
       return (price) => controller.purchaseFloor(uid, item.id, price);
     } else if (RoomAssets.props.any((p) => p.id == item.id)) {
+      if (item.category == 'window') {
+        return (price) => controller.purchaseWindow(uid, item.id, price);
+      }
       return (price) => controller.purchaseProp(uid, item.id, price);
+    } else if (RoomAssets.windows.any((w) => w.id == item.id)) {
+      return (price) => controller.purchaseWindow(uid, item.id, price);
     } else if (RoomAssets.emoticons.any((e) => e.id == item.id)) {
       return (price) => controller.purchaseEmoticon(uid, item.id, price);
     } else {
@@ -295,11 +315,19 @@ class _ShopScreenState extends State<ShopScreen> {
     if (RoomAssets.wallpapers.any((w) => w.id == item.id)) {
       return user.purchasedThemeIds.contains(item.id);
     } else if (RoomAssets.backgrounds.any((b) => b.id == item.id)) {
-      return user.purchasedBackgroundIds.contains(item.id);
+      return item.id == 'default' ||
+          item.id == 'none' ||
+          user.purchasedBackgroundIds.contains(item.id);
     } else if (RoomAssets.floors.any((f) => f.id == item.id)) {
       return user.purchasedFloorIds.contains(item.id);
     } else if (RoomAssets.props.any((p) => p.id == item.id)) {
+      if (item.category == 'window') {
+        return item.id == 'default' ||
+            user.purchasedWindowIds.contains(item.id);
+      }
       return user.purchasedPropIds.contains(item.id);
+    } else if (RoomAssets.windows.any((w) => w.id == item.id)) {
+      return item.id == 'default' || user.purchasedWindowIds.contains(item.id);
     } else if (RoomAssets.emoticons.any((e) => e.id == item.id)) {
       return user.purchasedEmoticonIds.contains(item.id);
     } else {
@@ -362,7 +390,11 @@ class _ShopScreenState extends State<ShopScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
+              onTap: () {
+                if (Navigator.of(context).canPop()) {
+                  context.pop();
+                }
+              },
               child: Container(
                 alignment: Alignment.center,
                 padding: const EdgeInsets.only(left: 16),
@@ -712,8 +744,12 @@ class _ShopScreenState extends State<ShopScreen> {
       return isKo ? '벽지' : 'Wallpaper';
     if (RoomAssets.emoticons.any((e) => e.id == item.id))
       return isKo ? '이모티콘' : 'Emoticon';
-    if (RoomAssets.props.any((e) => e.id == item.id))
+    if (RoomAssets.props.any((e) => e.id == item.id)) {
+      if (item.category == 'window') return isKo ? '창문' : 'Window';
       return isKo ? '소품' : 'Prop';
+    }
+    if (RoomAssets.windows.any((e) => e.id == item.id))
+      return isKo ? '창문' : 'Window';
     return isKo ? '캐릭터' : 'Character';
   }
 
@@ -885,8 +921,12 @@ class _ShopScreenState extends State<ShopScreen> {
                   AppDialogAction(
                     label: l10n?.get('decorate') ?? '꾸미기',
                     isPrimary: true,
-                    onPressed: (dialogCtx) {
+                    onPressed: (dialogCtx) async {
                       Navigator.pop(dialogCtx);
+                      // 다이얼로그가 닫히는 시간을 확보하여 Navigator lock 방지
+                      await Future.delayed(Duration.zero);
+                      if (!mounted) return;
+
                       final isCharacterItem =
                           CharacterAssets.items.any((i) => i.id == item.id);
                       if (isCharacterItem) {

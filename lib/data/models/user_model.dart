@@ -39,6 +39,7 @@ class UserModel {
   final List<String> purchasedEmoticonIds; // 구매한 이모티콘 ID 목록
   final List<String> activeEmoticonIds; // 활성화된 이모티콘 ID 목록
   final List<String> purchasedCharacterItemIds; // 구매한 캐릭터 아이템 ID 목록
+  final List<String> purchasedWindowIds; // 구매한 창문 ID 목록
   final Map<String, dynamic>
       equippedCharacterItems; // 장착된 캐릭터 아이템 (slot: itemId)
   final String currentThemeId; // 현재 선택된 테마 ID
@@ -100,6 +101,7 @@ class UserModel {
       'sad',
       'love'
     ], // 기본 활성화 이모티콘
+    this.purchasedWindowIds = const ['default'],
     this.purchasedCharacterItemIds = const [],
     this.equippedCharacterItems = const {},
     this.currentThemeId = 'light',
@@ -192,6 +194,8 @@ class UserModel {
       memoCount: (data['memoCount'] as num?)?.toInt() ?? 0,
       diaryCount: (data['diaryCount'] as num?)?.toInt() ?? 0,
       isSetupComplete: data['isSetupComplete'] ?? false, // 기존 유저는 true로 간주
+      purchasedWindowIds:
+          List<String>.from(data['purchasedWindowIds'] ?? ['default']),
       referralCode: data['referralCode'],
       referredBy: data['referredBy'],
     );
@@ -255,6 +259,7 @@ class UserModel {
       'memoCount': memoCount,
       'diaryCount': diaryCount,
       'isSetupComplete': isSetupComplete,
+      'purchasedWindowIds': purchasedWindowIds,
       'referralCode': referralCode,
       'referredBy': referredBy,
     };
@@ -309,6 +314,7 @@ class UserModel {
     int? memoCount,
     int? diaryCount,
     bool? isSetupComplete,
+    List<String>? purchasedWindowIds,
     String? referralCode,
     String? referredBy,
   }) {
@@ -365,6 +371,7 @@ class UserModel {
       memoCount: memoCount ?? this.memoCount,
       diaryCount: diaryCount ?? this.diaryCount,
       isSetupComplete: isSetupComplete ?? this.isSetupComplete,
+      purchasedWindowIds: purchasedWindowIds ?? this.purchasedWindowIds,
       referralCode: referralCode ?? this.referralCode,
       referredBy: referredBy ?? this.referredBy,
     );

@@ -27,7 +27,7 @@ class DecorationScreen extends StatefulWidget {
 class _DecorationScreenState extends State<DecorationScreen>
     with SingleTickerProviderStateMixin {
   late ValueNotifier<RoomDecorationModel> _decorationNotifier;
-  String _selectedCategory = 'background'; // 'background', 'wallpaper', 'props'
+  String _selectedCategory = 'props'; // 초기 탭을 소품으로 변경
   int? _selectedPropIndex; // Track selected prop for editing
 
   bool _isPanelExpanded = false; // Track panel state
@@ -36,10 +36,11 @@ class _DecorationScreenState extends State<DecorationScreen>
   late List<String> _selectedEmoticonIds;
 
   final List<String> _categories = [
-    'background',
-    'wallpaper',
     'props',
+    'wallpaper',
     'floor',
+    'background',
+    'window',
     'emoticon'
   ];
   int _currentIndex = 0;
@@ -599,12 +600,13 @@ class _DecorationScreenState extends State<DecorationScreen>
 
   Future<void> _handleSave() async {
     final characterController = context.read<CharacterController>();
-    final user = characterController.currentUser;
+    // 최신 유저 정보를 가져오기 위해 갱신된 currentUser를 사용
+    var user = characterController.currentUser;
     if (user == null) return;
 
     final decoration = _decorationNotifier.value;
 
-    // 1. 미구매 상품 수집
+    // 1. 미구매 상품 수집 (저장 전 체크)
     final List<RoomAsset> unownedItems = [];
 
     // 배경
@@ -630,6 +632,19 @@ class _DecorationScreenState extends State<DecorationScreen>
       final item = RoomAssets.floors
           .where((f) => f.id == decoration.floorId)
           .firstOrNull;
+      if (item != null) unownedItems.add(item);
+    }
+
+    // 창문
+    if (decoration.windowId != 'default' &&
+        !user.purchasedWindowIds.contains(decoration.windowId)) {
+      final item = RoomAssets.windows
+              .where((w) => w.id == decoration.windowId)
+              .firstOrNull ??
+          RoomAssets.props
+              .where(
+                  (p) => p.id == decoration.windowId && p.category == 'window')
+              .firstOrNull;
       if (item != null) unownedItems.add(item);
     }
 
@@ -667,7 +682,11 @@ class _DecorationScreenState extends State<DecorationScreen>
               context,
               AppLocalizations.of(context)?.get('decorationSaved') ??
                   'Settings saved! ✨');
-          Navigator.of(context).pop();
+          // 내비게이션 안정성을 위해 미세한 지연 후 pop
+          await Future.delayed(Duration.zero);
+          if (mounted && Navigator.of(context).canPop()) {
+            context.pop();
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -709,6 +728,8 @@ class _DecorationScreenState extends State<DecorationScreen>
 
     if (shouldSave == true) {
       try {
+        // 다시 최신 상태 확인 (팝업 떠있는 동안 변화 가능성)
+        user = characterController.currentUser ?? user;
         final unownedIds = unownedItems.map((e) => e.id).toSet();
 
         var finalDecoration = _decorationNotifier.value;
@@ -724,6 +745,10 @@ class _DecorationScreenState extends State<DecorationScreen>
         // 바닥
         if (unownedIds.contains(finalDecoration.floorId)) {
           finalDecoration = finalDecoration.copyWith(floorId: 'wood');
+        }
+        // 창문
+        if (unownedIds.contains(finalDecoration.windowId)) {
+          finalDecoration = finalDecoration.copyWith(windowId: 'default');
         }
         // 소품
         final cleanedProps = finalDecoration.props
@@ -746,7 +771,10 @@ class _DecorationScreenState extends State<DecorationScreen>
               context,
               AppLocalizations.of(context)?.get('decorationSaved') ??
                   'Settings saved! ✨');
-          Navigator.of(context).pop();
+          await Future.delayed(Duration.zero);
+          if (mounted && Navigator.of(context).canPop()) {
+            context.pop();
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -836,9 +864,9 @@ class _DecorationScreenState extends State<DecorationScreen>
         child: Row(
           children: [
             _buildTabItem(
-                'background',
-                AppLocalizations.of(context)?.get('background') ?? 'Background',
-                Icons.landscape_outlined,
+                'props',
+                AppLocalizations.of(context)?.get('prop') ?? 'Prop',
+                Icons.chair,
                 colorScheme),
             const SizedBox(width: 8),
             _buildTabItem(
@@ -848,15 +876,21 @@ class _DecorationScreenState extends State<DecorationScreen>
                 colorScheme),
             const SizedBox(width: 8),
             _buildTabItem(
-                'props',
-                AppLocalizations.of(context)?.get('prop') ?? 'Prop',
-                Icons.auto_awesome_motion,
-                colorScheme),
-            const SizedBox(width: 8),
-            _buildTabItem(
                 'floor',
                 AppLocalizations.of(context)?.get('floor') ?? 'Floor',
                 Icons.grid_on_outlined,
+                colorScheme),
+            const SizedBox(width: 8),
+            _buildTabItem(
+                'background',
+                AppLocalizations.of(context)?.get('background') ?? 'Background',
+                Icons.landscape_outlined,
+                colorScheme),
+            const SizedBox(width: 8),
+            _buildTabItem(
+                'window',
+                AppLocalizations.of(context)?.get('window') ?? 'Window',
+                Icons.window,
                 colorScheme),
             const SizedBox(width: 8),
             _buildTabItem(
@@ -938,6 +972,8 @@ class _DecorationScreenState extends State<DecorationScreen>
         return _buildPropList(user, colorScheme);
       case 'floor':
         return _buildFloorList(user, colorScheme);
+      case 'window':
+        return _buildWindowList(user, colorScheme);
       case 'emoticon':
         return _buildEmoticonList(user, colorScheme);
       default:
@@ -1086,8 +1122,9 @@ class _DecorationScreenState extends State<DecorationScreen>
       valueListenable: _decorationNotifier,
       builder: (context, decoration, _) {
         // 스티커 메모 제외, 전체 또는 구매한 상품만 표시
-        final allProps =
-            RoomAssets.props.where((p) => p.id != 'sticky_note').toList();
+        final allProps = RoomAssets.props
+            .where((p) => p.id != 'sticky_note' && p.category != 'window')
+            .toList();
         final availableProps = _isOwnedOnly
             ? allProps
                 .where((p) =>
@@ -1216,14 +1253,18 @@ class _DecorationScreenState extends State<DecorationScreen>
     required VoidCallback onTap,
     required AppColorScheme colorScheme,
     double fontSize = 10,
-    double bottom = 12,
+    double bottom = 15,
     double stampSize = 80,
     bool showStamp = true,
     bool showDashedBorder = false,
     bool isOwned = true,
     int price = 0,
+    EdgeInsets? imagePadding,
   }) {
     final effectiveBottom = isOwned ? bottom : bottom + 20;
+    final effectiveImagePadding = imagePadding ??
+        EdgeInsets.only(
+            left: 18.0, right: 18.0, top: 26.0, bottom: isOwned ? 26.0 : 44.0);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1256,11 +1297,7 @@ class _DecorationScreenState extends State<DecorationScreen>
               if (imagePath != null)
                 Positioned.fill(
                   child: Padding(
-                    padding: EdgeInsets.only(
-                        left: 18.0,
-                        right: 18.0,
-                        top: 26.0,
-                        bottom: isOwned ? 26.0 : 44.0),
+                    padding: effectiveImagePadding,
                     child: NetworkOrAssetImage(
                       imagePath: imagePath,
                       fit: BoxFit.contain,
@@ -1299,12 +1336,13 @@ class _DecorationScreenState extends State<DecorationScreen>
                 right: 4,
                 child: Text(
                   label,
-                  maxLines: 1,
+                  maxLines: 2,
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: 'BMJUA',
                     fontSize: fontSize,
+                    height: 1.1, // 줄 간격 좁게
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     color: colorScheme.textPrimary,
                   ),
@@ -1313,7 +1351,7 @@ class _DecorationScreenState extends State<DecorationScreen>
               // Lock icon for unowned items
               if (!isOwned)
                 Positioned(
-                  bottom: 8,
+                  bottom: 11,
                   left: 8,
                   right: 8,
                   child: Center(
@@ -1354,6 +1392,66 @@ class _DecorationScreenState extends State<DecorationScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWindowList(user, AppColorScheme colorScheme) {
+    // RoomAssets.windows + RoomAssets.props 중 category가 'window'인 항목들
+    final defaultWindows = RoomAssets.windows;
+    final propWindows =
+        RoomAssets.props.where((p) => p.category == 'window').toList();
+    final allWindows = [...defaultWindows, ...propWindows];
+
+    final filtered = _isOwnedOnly
+        ? allWindows
+            .where((w) =>
+                w.id == 'default' ||
+                w.id == 'none' ||
+                user.purchasedWindowIds.contains(w.id))
+            .toList()
+        : allWindows;
+
+    return ValueListenableBuilder<RoomDecorationModel>(
+      valueListenable: _decorationNotifier,
+      builder: (context, decoration, _) {
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 100),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.75,
+          ),
+          itemCount: filtered.length,
+          itemBuilder: (context, index) {
+            final w = filtered[index];
+            final isOwned = w.id == 'default' ||
+                w.id == 'none' ||
+                user.purchasedWindowIds.contains(w.id);
+            final isSelected = decoration.windowId == w.id;
+
+            return _buildSelectionCard(
+              label: w.getLocalizedName(context),
+              color: w.color ?? colorScheme.backgroundLight,
+              imagePath: w.imagePath,
+              icon: w.icon,
+              isSelected: isSelected,
+              isOwned: isOwned,
+              price: w.price,
+              imagePadding: EdgeInsets.only(
+                left: 28,
+                right: 28,
+                top: 32,
+                bottom: isOwned ? 32 : 48,
+              ),
+              onTap: () {
+                _decorationNotifier.value = decoration.copyWith(windowId: w.id);
+              },
+              colorScheme: colorScheme,
+            );
+          },
+        );
+      },
     );
   }
 }

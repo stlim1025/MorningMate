@@ -2,12 +2,14 @@ class RoomDecorationModel {
   final String wallpaperId;
   final String backgroundId; // 'none', 'forest', 'valley', 'sea', 'space'
   final String floorId;
+  final String windowId; // 창문틀 ID 추가
   final List<RoomPropModel> props;
 
   RoomDecorationModel({
     this.wallpaperId = 'default',
     this.backgroundId = 'default',
     this.floorId = 'wood',
+    this.windowId = 'default',
     this.props = const [],
   });
 
@@ -16,6 +18,7 @@ class RoomDecorationModel {
       'wallpaperId': wallpaperId,
       'backgroundId': backgroundId,
       'floorId': floorId,
+      'windowId': windowId,
       'props': props.map((p) => p.toMap()).toList(),
     };
   }
@@ -28,6 +31,7 @@ class RoomDecorationModel {
       wallpaperId: map['wallpaperId'] ?? 'default',
       backgroundId: map['backgroundId'] ?? 'default',
       floorId: mappedFloorId,
+      windowId: map['windowId'] ?? 'default',
       props: (map['props'] as List<dynamic>?)
               ?.map((p) => RoomPropModel.fromMap(p as Map<String, dynamic>))
               .toList() ??
@@ -39,12 +43,14 @@ class RoomDecorationModel {
     String? wallpaperId,
     String? backgroundId,
     String? floorId,
+    String? windowId,
     List<RoomPropModel>? props,
   }) {
     return RoomDecorationModel(
       wallpaperId: wallpaperId ?? this.wallpaperId,
       backgroundId: backgroundId ?? this.backgroundId,
       floorId: floorId ?? this.floorId,
+      windowId: windowId ?? this.windowId,
       props: props ?? this.props,
     );
   }

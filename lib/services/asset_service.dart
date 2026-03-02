@@ -63,6 +63,9 @@ class AssetService {
           shadowDyCorrection: (data['shadowDyCorrection'] ?? 0.0).toDouble(),
           isLight: data['isLight'] ?? false,
           lightIntensity: (data['lightIntensity'] ?? 1.0).toDouble(),
+          isThinWindow: data['isThinWindow'] ?? false,
+          isArchWindow: data['isArchWindow'] ?? false,
+          windowBgScale: (data['windowBgScale'] ?? 1.0).toDouble(),
           releasedAt: releasedAt,
           category: category,
         );
@@ -73,7 +76,7 @@ class AssetService {
       debugPrint(
           '동적 에셋 로드 완료: ${docs.length}개 처리됨 (신규: $addedCount, 업데이트: $updatedCount)');
       debugPrint(
-          '현재 에셋 수 - props: ${RoomAssets.props.length}, wallpapers: ${RoomAssets.wallpapers.length}, backgrounds: ${RoomAssets.backgrounds.length}, floors: ${RoomAssets.floors.length}, emoticons: ${RoomAssets.emoticons.length}');
+          '현재 에셋 수 - props: ${RoomAssets.props.length}, wallpapers: ${RoomAssets.wallpapers.length}, backgrounds: ${RoomAssets.backgrounds.length}, floors: ${RoomAssets.floors.length}, emoticons: ${RoomAssets.emoticons.length}, windows: ${RoomAssets.windows.length}');
     } catch (e) {
       debugPrint('동적 에셋 로드 실패: $e');
     }
@@ -99,6 +102,9 @@ class AssetService {
         break;
       case 'emoticon':
         targetList = RoomAssets.emoticons;
+        break;
+      case 'window':
+        targetList = RoomAssets.windows;
         break;
       default:
         targetList = null;
@@ -145,6 +151,7 @@ class AssetService {
         'background': RoomAssets.backgrounds,
         'floor': RoomAssets.floors,
         'emoticon': RoomAssets.emoticons,
+        'window': RoomAssets.windows,
       };
 
       int uploadCount = 0;
@@ -211,6 +218,8 @@ class AssetService {
                 'shadowDyCorrection': prop.shadowDyCorrection,
                 'isLight': prop.isLight,
                 'lightIntensity': prop.lightIntensity,
+                'isArchWindow': prop.isArchWindow,
+                'windowBgScale': prop.windowBgScale,
               },
               SetOptions(merge: true));
         }
@@ -242,6 +251,9 @@ class AssetService {
     double shadowDyCorrection = 0.0,
     bool isLight = false,
     double lightIntensity = 1.0,
+    bool isThinWindow = false,
+    bool isArchWindow = false,
+    double windowBgScale = 1.0,
   }) async {
     try {
       // 이미지 화질 및 크기 유지한 채로 Storage 업로드
@@ -266,6 +278,9 @@ class AssetService {
         'shadowDyCorrection': shadowDyCorrection,
         'isLight': isLight,
         'lightIntensity': lightIntensity,
+        'isThinWindow': isThinWindow,
+        'isArchWindow': isArchWindow,
+        'windowBgScale': windowBgScale,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -294,6 +309,9 @@ class AssetService {
     double shadowDyCorrection = 0.0,
     bool isLight = false,
     double lightIntensity = 1.0,
+    bool isThinWindow = false,
+    bool isArchWindow = false,
+    double windowBgScale = 1.0,
   }) async {
     try {
       String downloadUrl = existingImageUrl;
@@ -319,6 +337,9 @@ class AssetService {
         'shadowDyCorrection': shadowDyCorrection,
         'isLight': isLight,
         'lightIntensity': lightIntensity,
+        'isThinWindow': isThinWindow,
+        'isArchWindow': isArchWindow,
+        'windowBgScale': windowBgScale,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -345,6 +366,7 @@ class AssetService {
       RoomAssets.backgrounds.removeWhere((p) => p.id == id);
       RoomAssets.floors.removeWhere((p) => p.id == id);
       RoomAssets.emoticons.removeWhere((p) => p.id == id);
+      RoomAssets.windows.removeWhere((p) => p.id == id);
 
       debugPrint('에셋 [$id] 삭제 완료');
     } catch (e) {

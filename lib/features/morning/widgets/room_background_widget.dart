@@ -16,7 +16,10 @@ class RoomBackgroundWidget extends StatelessWidget {
     required this.isDarkMode,
     required this.colorScheme,
     this.isAwake = true,
+    this.scale = 1.0,
   });
+
+  final double scale;
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +36,12 @@ class RoomBackgroundWidget extends StatelessWidget {
         // 2. 배경 이미지
         if (backgroundImagePath != null)
           Positioned.fill(
-            child: NetworkOrAssetImage(
-              imagePath: backgroundImagePath,
-              fit: BoxFit.cover,
+            child: Transform.scale(
+              scale: scale,
+              child: NetworkOrAssetImage(
+                imagePath: backgroundImagePath,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
       ],

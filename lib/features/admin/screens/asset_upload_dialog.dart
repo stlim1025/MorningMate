@@ -39,6 +39,9 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
   double _shadowDyCorrection = 0.0;
   bool _isLight = false;
   double _lightIntensity = 1.0;
+  bool _isThinWindow = false;
+  bool _isArchWindow = false;
+  double _windowBgScale = 1.0;
 
   final List<String> _categories = [
     'prop',
@@ -46,7 +49,8 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
     'wallpaper',
     'background',
     'floor',
-    'characterItem'
+    'characterItem',
+    'window'
   ];
 
   @override
@@ -73,6 +77,9 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
       _shadowDyCorrection = item.shadowDyCorrection;
       _isLight = item.isLight;
       _lightIntensity = item.lightIntensity;
+      _isThinWindow = item.isThinWindow;
+      _isArchWindow = item.isArchWindow;
+      _windowBgScale = item.windowBgScale ?? 1.0;
     }
   }
 
@@ -142,6 +149,9 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           shadowDyCorrection: _shadowDyCorrection,
           isLight: _isLight,
           lightIntensity: _lightIntensity,
+          isThinWindow: _isThinWindow,
+          isArchWindow: _isArchWindow,
+          windowBgScale: _windowBgScale,
         );
       } else {
         await _assetService.updateAsset(
@@ -160,6 +170,9 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           shadowDyCorrection: _shadowDyCorrection,
           isLight: _isLight,
           lightIntensity: _lightIntensity,
+          isThinWindow: _isThinWindow,
+          isArchWindow: _isArchWindow,
+          windowBgScale: _windowBgScale,
         );
       }
 
@@ -473,6 +486,41 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
                                     double.tryParse(value ?? '1.0') ?? 1.0,
                               ),
                             ),
+                          if (_category == 'window') ...[
+                            const SizedBox(height: 16),
+                            const Text('🪟 창문 상세 설정',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 14)),
+                            const SizedBox(height: 8),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('얇은 창문틀 (배경 꽉 채움)'),
+                              value: _isThinWindow,
+                              onChanged: (val) =>
+                                  setState(() => _isThinWindow = val),
+                            ),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('아치형 창문 (상단 라운드)'),
+                              value: _isArchWindow,
+                              onChanged: (val) =>
+                                  setState(() => _isArchWindow = val),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              decoration: const InputDecoration(
+                                  labelText: '배경 크기 비율 (기본 1.0)',
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                  helperText: '창문 안쪽 배경의 배율입니다 (1.0~2.0 권장)'),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              initialValue: _windowBgScale.toString(),
+                              onSaved: (value) => _windowBgScale =
+                                  double.tryParse(value ?? '1.0') ?? 1.0,
+                            ),
+                          ],
                         ],
                       ),
                     ),

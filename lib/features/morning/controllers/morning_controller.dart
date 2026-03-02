@@ -146,7 +146,16 @@ class MorningController extends ChangeNotifier {
       final filePath = await _getDiaryFilePath(userId, now);
       final file = File(filePath);
 
-      if (await file.exists()) {
+      final diary = await _diaryService.getDiaryByDate(userId, now);
+
+      if (diary != null) {
+        _todayDiary = diary;
+        if (diary.isCompleted) {
+          _notificationService.cancelNightlyReminder();
+        } else {
+          _notificationService.scheduleNightlyReminder();
+        }
+      } else if (await file.exists()) {
         final encryptedContent = await file.readAsString();
         _todayDiary = DiaryModel(
           id: 'local_temp',
@@ -157,24 +166,10 @@ class MorningController extends ChangeNotifier {
           isCompleted: false,
           createdAt: now,
         );
-        _isLoading = false;
-        _hasInitialized = true;
         _notificationService.scheduleNightlyReminder();
-        notifyListeners();
       } else {
-        final diary =
-            await _diaryService.getDiaryByDate(userId, DateTime.now());
-        if (diary != null) {
-          _todayDiary = diary;
-          if (diary.isCompleted) {
-            _notificationService.cancelNightlyReminder();
-          } else {
-            _notificationService.scheduleNightlyReminder();
-          }
-        } else {
-          _todayDiary = null;
-          _notificationService.scheduleNightlyReminder();
-        }
+        _todayDiary = null;
+        _notificationService.scheduleNightlyReminder();
       }
     } catch (e) {
       debugPrint('오늘의 일기 확인 오류: $e');

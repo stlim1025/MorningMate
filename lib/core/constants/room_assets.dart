@@ -19,6 +19,9 @@ class RoomAsset {
   final double shadowDyCorrection;
   final bool isLight;
   final double lightIntensity;
+  final bool isThinWindow;
+  final bool isArchWindow;
+  final double windowBgScale;
   final DateTime? releasedAt;
 
   const RoomAsset({
@@ -38,6 +41,9 @@ class RoomAsset {
     this.shadowDyCorrection = 0.0,
     this.isLight = false,
     this.lightIntensity = 1.0,
+    this.isThinWindow = false,
+    this.isArchWindow = false,
+    this.windowBgScale = 1.0,
     this.releasedAt,
     this.category,
     this.charWidthPct,
@@ -87,6 +93,9 @@ class RoomAsset {
       shadowDyCorrection: shadowDyCorrection,
       isLight: isLight,
       lightIntensity: lightIntensity,
+      isThinWindow: isThinWindow,
+      isArchWindow: isArchWindow,
+      windowBgScale: windowBgScale,
       releasedAt: releasedAt,
       category: category,
       charWidthPct: charWidthPct,
@@ -278,6 +287,17 @@ class RoomAssets {
         icon: Icons.star,
         color: Colors.indigo,
         imagePath: 'assets/images/backgrounds/NightMoon.png'),
+  ];
+
+  static List<RoomAsset> windows = [
+    RoomAsset(id: 'none', name: '없음', price: 0, icon: Icons.not_interested),
+    RoomAsset(
+      id: 'default',
+      name: '기본 창문',
+      price: 0,
+      icon: Icons.window,
+      imagePath: 'assets/images/backgrounds/WIndow_Curton.png',
+    ),
   ];
 
   static List<RoomAsset> props = [
@@ -675,6 +695,17 @@ class RoomAssets {
       sizeMultiplier: 0.7,
       isLight: true,
       lightIntensity: 1.0,
+    ),
+    RoomAsset(
+      id: 'bubble_bubble_fish_world',
+      name: '보글보글 물고기 월드',
+      price: 1000,
+      icon: Icons.set_meal,
+      imagePath: 'assets/items/Bubble Bubble Fish World.png',
+      sizeMultiplier: 1.0,
+      aspectRatio: 2.0,
+      shadowDyCorrection: -10.0,
+      releasedAt: DateTime(2026, 3, 2),
     ),
   ];
 

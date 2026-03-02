@@ -603,6 +603,9 @@ class AppLocalizations {
       'todaySpeakWrite': 'Write',
       'todaySpeakRewardTitle': 'Reward Earned!',
       'todaySpeakRewardDesc': 'You earned 10 branches for today\'s word!',
+      'item_name_bubble_bubble_fish_world': 'Bubble Bubble Fish World',
+      'none': 'None',
+      'window': 'Window',
     },
     'ko': {
       'settings': '설정',
@@ -1179,6 +1182,9 @@ class AppLocalizations {
       'todaySpeakWrite': '작성',
       'todaySpeakRewardTitle': '보상 획득!',
       'todaySpeakRewardDesc': '오늘의 한마디 보상으로 10가지를 획득했습니다!',
+      'item_name_bubble_bubble_fish_world': '보글보글 물고기 월드',
+      'none': '없음',
+      'window': '창문',
     },
   };
 

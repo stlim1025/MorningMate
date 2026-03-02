@@ -9,6 +9,7 @@ import '../../character/widgets/character_display.dart';
 import 'room_background_widget.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'moving_prop_item.dart';
 
 class EnhancedCharacterRoomWidget extends StatefulWidget {
   final bool isAwake;
@@ -94,12 +95,6 @@ class _EnhancedCharacterRoomWidgetState
   // 2D 화면 좌표 (0~1 정규화)
   double? _dragX;
   double? _dragY;
-
-  // Background Caching
-  Widget? _cachedBackgroundWidget;
-  RoomDecorationModel? _cachedDecorationForBg;
-  Size? _cachedSizeForBg;
-  bool? _cachedAwakeForBg;
 
   // Prop Dragging State
   String? _activeDragPropId;
@@ -345,20 +340,7 @@ class _EnhancedCharacterRoomWidgetState
     RoomDecorationModel decoration,
     AppColorScheme colorScheme,
   ) {
-    if (_cachedBackgroundWidget != null &&
-        _cachedSizeForBg == Size(width, height) &&
-        _cachedAwakeForBg == widget.isAwake &&
-        _cachedDecorationForBg?.wallpaperId == decoration.wallpaperId &&
-        _cachedDecorationForBg?.floorId == decoration.floorId &&
-        _cachedDecorationForBg?.backgroundId == decoration.backgroundId) {
-      return _cachedBackgroundWidget!;
-    }
-
-    _cachedSizeForBg = Size(width, height);
-    _cachedAwakeForBg = widget.isAwake;
-    _cachedDecorationForBg = decoration;
-
-    _cachedBackgroundWidget = Room3DBackground(
+    return Room3DBackground(
       isAwake: widget.isAwake,
       colorScheme: colorScheme,
       decoration: decoration, // Pass full decoration, but only IDs are used
@@ -367,8 +349,6 @@ class _EnhancedCharacterRoomWidgetState
       fullHeight: height,
       isDarkMode: widget.isDarkMode,
     );
-
-    return _cachedBackgroundWidget!;
   }
 
   @override
@@ -548,7 +528,8 @@ class _EnhancedCharacterRoomWidgetState
               transform: Matrix4.identity()
                 ..scale(1.0, 0.3)
                 ..setEntry(0, 1, -0.3)
-                ..translate(-propWidth * 0.02, -propHeight * 0.15),
+                ..translate(-propWidth * 0.02,
+                    -propHeight * 0.15 + (asset.shadowDyCorrection * scale)),
               alignment: Alignment.bottomCenter,
               child: Opacity(
                 opacity: 0.2, // 그림자 농도 유지
@@ -1139,6 +1120,15 @@ class _EnhancedCharacterRoomWidgetState
             const RoomAsset(id: '', name: '', price: 0, icon: Icons.circle));
     if (asset.id.isEmpty) return SizedBox(width: width, height: height);
 
+    // 특수 소품: 어항 (애니메이션 처리)
+    if (asset.id == 'bubble_bubble_fish_world' && !isShadow) {
+      return _FishWorldProp(
+        width: width,
+        height: height,
+        imagePath: asset.imagePath ?? '',
+      );
+    }
+
     if (asset.imagePath != null) {
       Widget imageWidget = NetworkOrAssetImage(
         imagePath: asset.imagePath!,
@@ -1376,6 +1366,13 @@ class Room3DBackground extends StatelessWidget {
         ? baseColor
         : Color.lerp(baseColor, Colors.black, 0.05) ?? baseColor;
 
+    final windowAsset = RoomAssets.windows
+            .where((w) => w.id == decoration.windowId)
+            .firstOrNull ??
+        RoomAssets.props
+            .where((p) => p.id == decoration.windowId && p.category == 'window')
+            .firstOrNull;
+
     // 3. 공용 벽지 레이어 생성 (정면 + 왼쪽 "잇닿" 배치)
     final totalW = leftW + frontW;
 
@@ -1607,51 +1604,79 @@ class Room3DBackground extends StatelessWidget {
                   height: 2,
                   child: Container(color: Colors.black.withOpacity(0.5)),
                 ),
-                // 창문 그림자
-                Positioned(
-                  left: leftW * 0.2 + 6,
-                  top: wallH * 0.15 + 6,
-                  width: leftW * 0.6,
-                  height: wallH * 0.63,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-                // 창문 (벽면 변환을 그대로 따름)
-                Positioned(
-                  left: leftW * 0.2, // 벽 너비의 20% 지점
-                  top: wallH * 0.15, // 벽 높이의 15% 지점
-                  width: leftW * 0.65,
-                  height: wallH * 0.7,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // 1. 창 밖 풍경 (Background)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                            12, 12, 12, 20), // 하단 패딩을 더 주어 바닥 부분 축소
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: RoomBackgroundWidget(
-                            decoration: decoration,
-                            isAwake: isAwake,
-                            isDarkMode: isDarkMode,
-                            colorScheme: colorScheme,
-                          ),
+                // (이전의 중복된 그림자 로직 제거됨)
+                // 창문 (벽면 변환을 그대로 따름, 창문 ID가 'none'이 아닐 때만 노출)
+                if (decoration.windowId != 'none')
+                  (() {
+                    final double winWidth = leftW *
+                        (windowAsset?.isThinWindow == true ? 0.55 : 0.65);
+                    final double winHeight =
+                        wallH * (windowAsset?.isThinWindow == true ? 0.6 : 0.7);
+                    final bool isArch = windowAsset?.isArchWindow ?? false;
+                    final bool isThin = windowAsset?.isThinWindow ?? false;
+
+                    return Positioned(
+                      left: leftW * (isThin ? 0.25 : 0.2),
+                      top: wallH * (isThin ? 0.2 : 0.15),
+                      width: winWidth,
+                      height: winHeight,
+                      child: Container(
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          borderRadius: isArch
+                              ? BorderRadius.vertical(
+                                  top: Radius.circular(winWidth / 2 - 0.5))
+                              : BorderRadius.circular(4),
+                          boxShadow: [
+                            if (!(windowAsset?.noShadow ?? false))
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: const Offset(4, 4),
+                              ),
+                          ],
+                        ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // 1. 창 밖 풍경 (Background)
+                            Padding(
+                              padding: isThin
+                                  ? (isArch
+                                      ? const EdgeInsets.fromLTRB(6, 6, 6, 8)
+                                      : EdgeInsets.zero)
+                                  : const EdgeInsets.fromLTRB(12, 12, 12, 20),
+                              child: isArch
+                                  ? ClipPath(
+                                      clipper: const _ArchWindowClipper(),
+                                      child: RoomBackgroundWidget(
+                                        decoration: decoration,
+                                        isAwake: isAwake,
+                                        isDarkMode: isDarkMode,
+                                        colorScheme: colorScheme,
+                                        scale:
+                                            windowAsset?.windowBgScale ?? 1.0,
+                                      ),
+                                    )
+                                  : RoomBackgroundWidget(
+                                      decoration: decoration,
+                                      isAwake: isAwake,
+                                      isDarkMode: isDarkMode,
+                                      colorScheme: colorScheme,
+                                      scale: windowAsset?.windowBgScale ?? 1.0,
+                                    ),
+                            ),
+                            // 2. 창문 프레임 + 커튼 이미지 (Overlay)
+                            NetworkOrAssetImage(
+                              imagePath: windowAsset?.imagePath ??
+                                  'assets/images/backgrounds/WIndow_Curton.png',
+                              fit: BoxFit.fill,
+                            ),
+                          ],
                         ),
                       ),
-                      // 2. 창문 프레임 + 커튼 이미지 (Overlay)
-                      NetworkOrAssetImage(
-                        imagePath:
-                            'assets/images/backgrounds/WIndow_Curton.png',
-                        fit: BoxFit.fill,
-                      ),
-                    ],
-                  ),
-                ),
+                    );
+                  })(),
               ],
             ),
           ),
@@ -1833,4 +1858,114 @@ class _NightOverlayPainter extends CustomPainter {
   bool shouldRepaint(covariant _NightOverlayPainter oldDelegate) {
     return true; // 드래그 등으로 props 좌표가 변경될 수 있음
   }
+}
+
+/// 어항 소품 전용 위젯 (물고기 애니메이션 포함)
+class _FishWorldProp extends StatelessWidget {
+  final double width;
+  final double height;
+  final String imagePath;
+
+  const _FishWorldProp({
+    required this.width,
+    required this.height,
+    required this.imagePath,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 1. 어항 본체
+          NetworkOrAssetImage(
+            imagePath: imagePath,
+            width: width * 0.9,
+            height: height * 0.9,
+            fit: BoxFit.contain,
+          ),
+          // 2. 물고기들 (공통 이동 컴포넌트 사용)
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(width * 0.1),
+              child: Stack(
+                children: [
+                  MovingPropItem(
+                    imagePath: 'assets/items/Fish1.png',
+                    size: 22,
+                    durationSeconds: 5,
+                    yOffset: -12,
+                    moveRange: 140,
+                  ),
+                  MovingPropItem(
+                    imagePath: 'assets/items/Fish2.png',
+                    size: 28,
+                    durationSeconds: 8,
+                    yOffset: 8,
+                    flipped: true,
+                    moveRange: 150,
+                  ),
+                  MovingPropItem(
+                    imagePath: 'assets/items/Fish2.png',
+                    size: 24,
+                    durationSeconds: 10,
+                    yOffset: -5,
+                    flipped: true,
+                    moveRange: 130,
+                  ),
+                  MovingPropItem(
+                    imagePath: 'assets/items/Fish3.png',
+                    size: 26,
+                    durationSeconds: 6,
+                    yOffset: 0,
+                    flipped: true,
+                    moveRange: 145,
+                  ),
+                  MovingPropItem(
+                    imagePath: 'assets/items/Fish3.png',
+                    size: 20,
+                    durationSeconds: 9,
+                    yOffset: 15,
+                    flipped: true,
+                    moveRange: 135,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 아치형 창문을 위한 클리퍼 (상단 둥근 형태)
+class _ArchWindowClipper extends CustomClipper<Path> {
+  const _ArchWindowClipper();
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final width = size.width;
+    final height = size.height;
+
+    // 상단 아치 그리기 (너비의 절반이 반지름인 반원 형태)
+    path.moveTo(0, height);
+    path.lineTo(0, width / 2); // 왼쪽 직선
+    path.arcToPoint(
+      Offset(width, width / 2),
+      radius: Radius.circular(width / 2),
+      clockwise: true,
+    );
+    path.lineTo(width, height); // 오른쪽 직선
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

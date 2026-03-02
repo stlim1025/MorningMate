@@ -419,24 +419,33 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
 
   Future<void> _handleSave() async {
     final characterController = context.read<CharacterController>();
-    final user = characterController.currentUser;
+    var user = characterController.currentUser;
     if (user == null) return;
 
-    // 1. Identify unowned items in current preview
+    // 1. Identify unowned items in current preview (using latest user state)
     final unownedItemIds = _previewEquippedItems.values
-        .where((id) => !user.purchasedCharacterItemIds.contains(id))
+        .where((id) => !user!.purchasedCharacterItemIds.contains(id))
         .toSet();
 
     if (unownedItemIds.isEmpty) {
-      // All owned -> Just save
-      await characterController.updateEquippedCharacterItems(
-          user.uid, _previewEquippedItems);
-      if (mounted) {
-        MemoNotification.show(
-            context,
-            AppLocalizations.of(context)?.get('decorationSaved') ??
-                'Settings saved! ✨');
-        context.pop();
+      try {
+        // All owned -> Just save
+        await characterController.updateEquippedCharacterItems(
+            user.uid, _previewEquippedItems);
+        if (mounted) {
+          MemoNotification.show(
+              context,
+              AppLocalizations.of(context)?.get('decorationSaved') ??
+                  'Settings saved! ✨');
+          await Future.delayed(Duration.zero);
+          if (mounted && Navigator.of(context).canPop()) {
+            context.pop();
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          MemoNotification.show(context, '저장 실패: $e');
+        }
       }
       return;
     }
@@ -471,23 +480,39 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
     );
 
     if (shouldSaveWithoutUnowned == true && mounted) {
-      // 미보유 상품 제외하고 저장
-      final finalEquippedItems = Map<String, String>.from(_previewEquippedItems)
-        ..removeWhere((slot, id) => unownedItemIds.contains(id));
+      try {
+        // 다시 최신 상태 확인
+        user = characterController.currentUser ?? user;
+        final latestUnownedItemIds = _previewEquippedItems.values
+            .where((id) => !user!.purchasedCharacterItemIds.contains(id))
+            .toSet();
 
-      setState(() {
-        _previewEquippedItems = Map.from(finalEquippedItems);
-      });
+        // 미보유 상품 제외하고 저장
+        final finalEquippedItems =
+            Map<String, String>.from(_previewEquippedItems)
+              ..removeWhere((slot, id) => latestUnownedItemIds.contains(id));
 
-      await characterController.updateEquippedCharacterItems(
-          user.uid, finalEquippedItems);
+        setState(() {
+          _previewEquippedItems = Map.from(finalEquippedItems);
+        });
 
-      if (mounted) {
-        MemoNotification.show(
-            context,
-            AppLocalizations.of(context)?.get('decorationSaved') ??
-                'Settings saved! ✨');
-        context.pop();
+        await characterController.updateEquippedCharacterItems(
+            user.uid, finalEquippedItems);
+
+        if (mounted) {
+          MemoNotification.show(
+              context,
+              AppLocalizations.of(context)?.get('decorationSaved') ??
+                  'Settings saved! ✨');
+          await Future.delayed(Duration.zero);
+          if (mounted && Navigator.of(context).canPop()) {
+            context.pop();
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          MemoNotification.show(context, '저장 실패: $e');
+        }
       }
     }
   }

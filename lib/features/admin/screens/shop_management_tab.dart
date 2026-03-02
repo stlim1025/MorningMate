@@ -28,13 +28,14 @@ class _ShopManagementTabState extends State<ShopManagementTab>
         ...RoomAssets.backgrounds,
         ...RoomAssets.props,
         ...RoomAssets.floors,
+        ...RoomAssets.windows,
         ...CharacterAssets.items,
       ].where((item) => item.price > 0).toList();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 8, vsync: this);
+    _tabController = TabController(length: 9, vsync: this);
     // 관리자 페이지 열릴 때 Firestore에서 최신 에셋 목록을 가져와서 반영
     _refreshAssets();
   }
@@ -75,7 +76,10 @@ class _ShopManagementTabState extends State<ShopManagementTab>
       case 6: // 바닥
         items = RoomAssets.floors.where((item) => item.price > 0).toList();
         break;
-      case 7: // 할인중
+      case 7: // 창문
+        items = RoomAssets.windows.where((item) => item.price > 0).toList();
+        break;
+      case 8: // 할인중
         items =
             _allItems.where((item) => discounts.containsKey(item.id)).toList();
         break;
@@ -117,6 +121,7 @@ class _ShopManagementTabState extends State<ShopManagementTab>
               Tab(text: '배경'),
               Tab(text: '소품'),
               Tab(text: '바닥'),
+              Tab(text: '창문'),
               Tab(text: '할인중'),
             ],
           ),
@@ -230,7 +235,8 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                       '📦 표시 중: ${filteredItems.length}개  |  '
                       'props: ${RoomAssets.props.where((p) => p.price > 0).length}  '
                       'wallpapers: ${RoomAssets.wallpapers.where((p) => p.price > 0).length}  '
-                      'floors: ${RoomAssets.floors.where((p) => p.price > 0).length}',
+                      'floors: ${RoomAssets.floors.where((p) => p.price > 0).length}  '
+                      'windows: ${RoomAssets.windows.where((p) => p.price > 0).length}',
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ),

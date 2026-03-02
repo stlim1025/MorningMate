@@ -563,6 +563,33 @@ class CharacterController extends ChangeNotifier {
     await checkAchievements();
   }
 
+  // 창문 구매
+  Future<void> purchaseWindow(String userId, String windowId, int price) async {
+    if (_currentUser == null) return;
+    if (_currentUser!.points < price) throw Exception('가지가 부족합니다');
+    if (_currentUser!.purchasedWindowIds.contains(windowId)) {
+      throw Exception('이미 구매한 창문입니다');
+    }
+
+    final newPurchasedWindows = List<String>.from(
+      _currentUser!.purchasedWindowIds,
+    )..add(windowId);
+    final newPoints = _currentUser!.points - price;
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+      'purchasedWindowIds': newPurchasedWindows,
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      purchasedWindowIds: newPurchasedWindows,
+    );
+    notifyListeners();
+
+    await checkAchievements();
+  }
+
   // 캐릭터 아이템 구매
   Future<void> purchaseCharacterItem(
     String userId,
