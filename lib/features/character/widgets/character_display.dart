@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/character_assets.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 
 class CharacterDisplay extends StatefulWidget {
   final bool isAwake;
@@ -132,13 +133,11 @@ class _CharacterDisplayState extends State<CharacterDisplay>
 
                   return Transform.scale(
                     scale: clothesScale,
-                    child: Image.asset(
-                      asset.imagePath!,
+                    child: NetworkOrAssetImage(
+                      imagePath: asset.imagePath!,
                       width: charWidth,
                       height: charHeight,
                       fit: BoxFit.contain,
-                      cacheWidth: 500,
-                      filterQuality: FilterQuality.medium,
                     ),
                   );
                 } catch (e) {
@@ -159,16 +158,26 @@ class _CharacterDisplayState extends State<CharacterDisplay>
                   if (asset.imagePath == null) return const SizedBox.shrink();
 
                   // Remove hardcoding: Use asset properties
-                  final double bottomPct = asset.charBottomPct ?? 0.08;
-                  final double widthPct = asset.charWidthPct ?? 0.15;
+                  final isMuffler = (asset.name.contains('목도리') ||
+                      (asset.nameEn?.toLowerCase() ?? '').contains('muffler') ||
+                      asset.id.contains('mupler') ||
+                      asset.id.contains('muffler'));
+                  final isRibbon = (asset.name.contains('리본') ||
+                      (asset.nameEn?.toLowerCase() ?? '').contains('ribbon') ||
+                      asset.id.contains('ribbon'));
+
+                  final double bottomPct = asset.charBottomPct ??
+                      (isMuffler ? -0.15 : (isRibbon ? 0.25 : 0.08));
+                  final double widthPct = asset.charWidthPct ??
+                      (isMuffler ? 0.7 : (isRibbon ? 0.3 : 0.15));
 
                   return Positioned(
                     bottom: charHeight * bottomPct,
                     left: 0,
                     right: 0,
                     child: Center(
-                      child: Image.asset(
-                        asset.imagePath!,
+                      child: NetworkOrAssetImage(
+                        imagePath: asset.imagePath!,
                         width: charWidth * widthPct,
                         fit: BoxFit.contain,
                       ),
@@ -249,10 +258,14 @@ class _CharacterDisplayState extends State<CharacterDisplay>
 
                   return Positioned(
                     top: charHeight * topPct,
-                    child: Image.asset(
-                      asset.imagePath!,
-                      width: itemWidth,
-                      fit: BoxFit.contain,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: NetworkOrAssetImage(
+                        imagePath: asset.imagePath!,
+                        width: itemWidth,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   );
                 } catch (e) {
@@ -279,10 +292,14 @@ class _CharacterDisplayState extends State<CharacterDisplay>
 
                   return Positioned(
                     top: charHeight * topPct,
-                    child: Image.asset(
-                      asset.imagePath!,
-                      width: itemWidth,
-                      fit: BoxFit.contain,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: NetworkOrAssetImage(
+                        imagePath: asset.imagePath!,
+                        width: itemWidth,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   );
                 } catch (e) {

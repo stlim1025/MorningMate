@@ -12,6 +12,7 @@ class NetworkOrAssetImage extends StatelessWidget {
   final double? height;
   final Color? color;
   final BlendMode? colorBlendMode;
+  final ImageErrorWidgetBuilder? errorBuilder;
 
   // 인메모리 캐시 추가: 스플래시에서 미리 로드한 바이트를 재사용하여 즉시 표시
   static final Map<String, Uint8List> firebaseWebCache = {};
@@ -24,6 +25,7 @@ class NetworkOrAssetImage extends StatelessWidget {
     this.height,
     this.color,
     this.colorBlendMode,
+    this.errorBuilder,
   });
 
   @override
@@ -40,11 +42,12 @@ class NetworkOrAssetImage extends StatelessWidget {
               height: height,
               color: color,
               colorBlendMode: colorBlendMode,
-              errorBuilder: (context, error, stackTrace) => Icon(
-                Icons.broken_image_outlined,
-                size: width ?? height ?? 24,
-                color: Colors.grey[400],
-              ),
+              errorBuilder: errorBuilder ??
+                  (context, error, stackTrace) => Icon(
+                        Icons.broken_image_outlined,
+                        size: width ?? height ?? 24,
+                        color: Colors.grey[400],
+                      ),
             );
           }
           return _FirebaseStorageImage(
@@ -54,6 +57,7 @@ class NetworkOrAssetImage extends StatelessWidget {
             height: height,
             color: color,
             colorBlendMode: colorBlendMode,
+            errorBuilder: errorBuilder,
           );
         }
         // 일반 URL은 Image.network 사용
@@ -64,11 +68,12 @@ class NetworkOrAssetImage extends StatelessWidget {
           height: height,
           color: color,
           colorBlendMode: colorBlendMode,
-          errorBuilder: (context, error, stackTrace) => Icon(
-            Icons.broken_image_outlined,
-            size: width ?? height ?? 24,
-            color: Colors.grey[400],
-          ),
+          errorBuilder: errorBuilder ??
+              (context, error, stackTrace) => Icon(
+                    Icons.broken_image_outlined,
+                    size: width ?? height ?? 24,
+                    color: Colors.grey[400],
+                  ),
         );
       }
       return Image(
@@ -78,7 +83,8 @@ class NetworkOrAssetImage extends StatelessWidget {
         height: height,
         color: color,
         colorBlendMode: colorBlendMode,
-        errorBuilder: (context, error, stackTrace) => const SizedBox(),
+        errorBuilder:
+            errorBuilder ?? (context, error, stackTrace) => const SizedBox(),
       );
     } else if (imagePath.endsWith('.svg')) {
       return SvgPicture.asset(
@@ -98,6 +104,7 @@ class NetworkOrAssetImage extends StatelessWidget {
         height: height,
         color: color,
         colorBlendMode: colorBlendMode,
+        errorBuilder: errorBuilder,
       );
     }
   }
@@ -111,6 +118,7 @@ class _FirebaseStorageImage extends StatefulWidget {
   final double? height;
   final Color? color;
   final BlendMode? colorBlendMode;
+  final ImageErrorWidgetBuilder? errorBuilder;
 
   const _FirebaseStorageImage({
     required this.url,
@@ -119,6 +127,7 @@ class _FirebaseStorageImage extends StatefulWidget {
     this.height,
     this.color,
     this.colorBlendMode,
+    this.errorBuilder,
   });
 
   @override
@@ -186,11 +195,12 @@ class _FirebaseStorageImageState extends State<_FirebaseStorageImage> {
         height: widget.height,
         color: widget.color,
         colorBlendMode: widget.colorBlendMode,
-        errorBuilder: (context, error, stackTrace) => Icon(
-          Icons.broken_image_outlined,
-          size: widget.width ?? widget.height ?? 24,
-          color: Colors.grey[400],
-        ),
+        errorBuilder: widget.errorBuilder ??
+            (context, error, stackTrace) => Icon(
+                  Icons.broken_image_outlined,
+                  size: widget.width ?? widget.height ?? 24,
+                  color: Colors.grey[400],
+                ),
       );
     }
 
@@ -203,11 +213,12 @@ class _FirebaseStorageImageState extends State<_FirebaseStorageImage> {
         height: widget.height,
         color: widget.color,
         colorBlendMode: widget.colorBlendMode,
-        errorBuilder: (context, error, stackTrace) => Icon(
-          Icons.broken_image_outlined,
-          size: widget.width ?? widget.height ?? 24,
-          color: Colors.grey[400],
-        ),
+        errorBuilder: widget.errorBuilder ??
+            (context, error, stackTrace) => Icon(
+                  Icons.broken_image_outlined,
+                  size: widget.width ?? widget.height ?? 24,
+                  color: Colors.grey[400],
+                ),
       );
     }
 
@@ -220,11 +231,12 @@ class _FirebaseStorageImageState extends State<_FirebaseStorageImage> {
         height: widget.height,
         color: widget.color,
         colorBlendMode: widget.colorBlendMode,
-        errorBuilder: (context, error, stackTrace) => Icon(
-          Icons.broken_image_outlined,
-          size: widget.width ?? widget.height ?? 24,
-          color: Colors.grey[400],
-        ),
+        errorBuilder: widget.errorBuilder ??
+            (context, error, stackTrace) => Icon(
+                  Icons.broken_image_outlined,
+                  size: widget.width ?? widget.height ?? 24,
+                  color: Colors.grey[400],
+                ),
       );
     }
 

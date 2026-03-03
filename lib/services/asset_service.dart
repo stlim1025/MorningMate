@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../core/constants/room_assets.dart';
+import '../core/constants/character_assets.dart';
 
 class AssetService {
   FirebaseFirestore get _db {
@@ -68,6 +69,18 @@ class AssetService {
           windowBgScale: (data['windowBgScale'] ?? 1.0).toDouble(),
           releasedAt: releasedAt,
           category: category,
+          charWidthPct:
+              (data['charWidthPct'] ?? (data['charWidth']?.toDouble()))
+                  ?.toDouble(),
+          charTopPctAwake:
+              (data['charTopPctAwake'] ?? (data['charTopAwake']?.toDouble()))
+                  ?.toDouble(),
+          charTopPctSleep:
+              (data['charTopPctSleep'] ?? (data['charTopSleep']?.toDouble()))
+                  ?.toDouble(),
+          charBottomPct: (data['charBottomPct']?.toDouble()),
+          charScaleAwake: (data['charScaleAwake']?.toDouble()),
+          charScaleSleep: (data['charScaleSleep']?.toDouble()),
         );
 
         _upsertAsset(
@@ -105,6 +118,13 @@ class AssetService {
         break;
       case 'window':
         targetList = RoomAssets.windows;
+        break;
+      case 'character':
+      case 'face':
+      case 'body':
+      case 'head':
+      case 'clothes':
+        targetList = CharacterAssets.items;
         break;
       default:
         targetList = null;
@@ -152,6 +172,7 @@ class AssetService {
         'floor': RoomAssets.floors,
         'emoticon': RoomAssets.emoticons,
         'window': RoomAssets.windows,
+        'character': CharacterAssets.items,
       };
 
       int uploadCount = 0;
@@ -254,6 +275,12 @@ class AssetService {
     bool isThinWindow = false,
     bool isArchWindow = false,
     double windowBgScale = 1.0,
+    double? charWidthPct,
+    double? charTopPctAwake,
+    double? charTopPctSleep,
+    double? charBottomPct,
+    double? charScaleAwake,
+    double? charScaleSleep,
   }) async {
     try {
       // 이미지 화질 및 크기 유지한 채로 Storage 업로드
@@ -281,6 +308,12 @@ class AssetService {
         'isThinWindow': isThinWindow,
         'isArchWindow': isArchWindow,
         'windowBgScale': windowBgScale,
+        'charWidthPct': charWidthPct,
+        'charTopPctAwake': charTopPctAwake,
+        'charTopPctSleep': charTopPctSleep,
+        'charBottomPct': charBottomPct,
+        'charScaleAwake': charScaleAwake,
+        'charScaleSleep': charScaleSleep,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -312,6 +345,12 @@ class AssetService {
     bool isThinWindow = false,
     bool isArchWindow = false,
     double windowBgScale = 1.0,
+    double? charWidthPct,
+    double? charTopPctAwake,
+    double? charTopPctSleep,
+    double? charBottomPct,
+    double? charScaleAwake,
+    double? charScaleSleep,
   }) async {
     try {
       String downloadUrl = existingImageUrl;
@@ -340,6 +379,12 @@ class AssetService {
         'isThinWindow': isThinWindow,
         'isArchWindow': isArchWindow,
         'windowBgScale': windowBgScale,
+        'charWidthPct': charWidthPct,
+        'charTopPctAwake': charTopPctAwake,
+        'charTopPctSleep': charTopPctSleep,
+        'charBottomPct': charBottomPct,
+        'charScaleAwake': charScaleAwake,
+        'charScaleSleep': charScaleSleep,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -367,6 +412,7 @@ class AssetService {
       RoomAssets.floors.removeWhere((p) => p.id == id);
       RoomAssets.emoticons.removeWhere((p) => p.id == id);
       RoomAssets.windows.removeWhere((p) => p.id == id);
+      CharacterAssets.items.removeWhere((p) => p.id == id);
 
       debugPrint('에셋 [$id] 삭제 완료');
     } catch (e) {

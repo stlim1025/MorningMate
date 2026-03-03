@@ -504,8 +504,13 @@ class _EnhancedCharacterRoomWidgetState
     );
 
     // Simple scale based on Y position for depth cue
-    final scale = 0.7 + 0.4 * prop.y.clamp(0.0, 1.0);
-    final baseSize = (width + height) * 0.08 * asset.sizeMultiplier * scale;
+    final depthScale = 0.7 + 0.4 * prop.y.clamp(0.0, 1.0);
+    // Manual scale from prop.scale
+    final manualScale = prop.scale;
+    final totalScale = depthScale * manualScale;
+
+    final baseSize =
+        (width + height) * 0.08 * asset.sizeMultiplier * totalScale;
     final propWidth = baseSize * asset.aspectRatio;
     final propHeight = baseSize;
 
@@ -528,8 +533,10 @@ class _EnhancedCharacterRoomWidgetState
               transform: Matrix4.identity()
                 ..scale(1.0, 0.3)
                 ..setEntry(0, 1, -0.3)
-                ..translate(-propWidth * 0.02,
-                    -propHeight * 0.15 + (asset.shadowDyCorrection * scale)),
+                ..translate(
+                    -propWidth * 0.02,
+                    -propHeight * 0.15 +
+                        (asset.shadowDyCorrection * depthScale)),
               alignment: Alignment.bottomCenter,
               child: Opacity(
                 opacity: 0.2, // 그림자 농도 유지
@@ -549,13 +556,16 @@ class _EnhancedCharacterRoomWidgetState
       ],
     );
 
-    // 1. Selection Visuals (Border + Delete Button)
+    // 1. Selection Visuals (Border + Delete Button + Resize Button)
     final isSelected =
         widget.isPropEditable && widget.selectedPropIndex == index;
 
     Widget mainContent = visualChild;
 
     if (isSelected) {
+      // Condition for Resizing: no shadow checked (z=1) and not wall mounted
+      final canResize = (prop.z == 1 || asset.noShadow) && !asset.isWallMounted;
+
       mainContent = Stack(
         clipBehavior: Clip.none,
         children: [
@@ -593,6 +603,36 @@ class _EnhancedCharacterRoomWidgetState
               ),
             ),
           ),
+          // Resize Button (Left Bottom)
+          if (canResize)
+            Positioned(
+              bottom: -25,
+              left: -25,
+              child: GestureDetector(
+                onPanStart: (details) {
+                  // No initial state needed for delta-based scaling
+                },
+                onPanUpdate: (details) {
+                  // Dragging towards left (negative) or bottom (positive) increases scale if handle is bottom-left
+                  final scaleDelta =
+                      (-details.delta.dx + details.delta.dy) * 0.005;
+                  final newScale = (prop.scale + scaleDelta).clamp(0.2, 5.0);
+
+                  widget.onPropChanged
+                      ?.call(index, prop.copyWith(scale: newScale));
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  color: Colors.transparent,
+                  child: Image.asset(
+                    'assets/icons/Resize_Button.png',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
         ],
       );
     }
@@ -1639,9 +1679,9 @@ class Room3DBackground extends StatelessWidget {
                           boxShadow: [
                             if (!(windowAsset?.noShadow ?? false))
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 8,
-                                offset: const Offset(4, 4),
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 4,
+                                offset: const Offset(1.5, 2.5),
                               ),
                           ],
                         ),

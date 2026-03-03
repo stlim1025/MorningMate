@@ -458,10 +458,13 @@ class AuthController extends ChangeNotifier {
 
         final uid = user.uid;
 
-        // 2. 소셜 계정 연동 해제 (Google disconnect, Kakao unlink 등)
+        // 2. Auth 유저 삭제 전 Firestore 데이터 전체 삭제 (인증된 상태에서만 삭제 가능할 수 있음)
+        await _userService.deleteUserData(uid);
+
+        // 3. 소셜 계정 연동 해제 (Google disconnect, Kakao unlink 등)
         await _authService.disconnectSocial();
 
-        // 3. Auth 유저 삭제 (가장 민감한 작업)
+        // 4. Auth 유저 삭제 (가장 민감한 작업)
         try {
           await user.delete();
         } on FirebaseAuthException catch (e) {
@@ -470,9 +473,6 @@ class AuthController extends ChangeNotifier {
           }
           rethrow;
         }
-
-        // 4. Auth 유저 삭제 성공 후 Firestore 데이터 전체 삭제
-        await _userService.deleteUserData(uid);
 
         // 5. 로그아웃 상태 처리
         _currentUser = null;

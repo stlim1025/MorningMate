@@ -13,7 +13,7 @@ import '../../core/constants/room_assets.dart'; // To reuse RoomAsset if desired
 // it might be better to keep using RoomAsset class but move the static list `characterItems` to this new file.
 
 class CharacterAssets {
-  static const List<RoomAsset> items = [
+  static List<RoomAsset> items = [
     RoomAsset(
       id: 'heart_glass',
       name: '하트 안경',

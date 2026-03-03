@@ -13,15 +13,17 @@ import 'dart:io';
 
 import '../../../services/user_service.dart';
 import '../../../services/notification_service.dart';
+import '../../../services/point_history_service.dart';
 
 class MorningController extends ChangeNotifier {
   final DiaryService _diaryService;
   final QuestionService _questionService;
   final UserService _userService;
   final NotificationService _notificationService;
+  final PointHistoryService _pointHistoryService;
 
   MorningController(this._diaryService, this._questionService,
-      this._userService, this._notificationService) {
+      this._userService, this._notificationService, this._pointHistoryService) {
     _loadCachedQuestion();
   }
 
@@ -369,12 +371,13 @@ class MorningController extends ChangeNotifier {
           // 먼저 오늘 날짜 기준으로 연속 기록을 업데이트함
           await _userService.updateConsecutiveDays(userId);
 
-          int calculatedPoints = 10;
+          int calculatedPoints = 20;
           try {
             // 연속 기록이 업데이트된 최신 유저 정보를 가져와서 점수 계산
             final user = await _userService.getUser(userId);
             if (user != null) {
-              calculatedPoints = 10 + (user.consecutiveDays * 2);
+              // 기본 20 + (연속일수 - 1) * 2 (1일차엔 0 추가됨)
+              calculatedPoints = 20 + ((user.consecutiveDays - 1) * 2);
             }
 
             final nestQuery = await FirebaseFirestore.instance
@@ -404,6 +407,14 @@ class MorningController extends ChangeNotifier {
           }
 
           _lastEarnedPoints = calculatedPoints;
+
+          // 포인트 내역 기록 추가
+          await _pointHistoryService.addHistory(
+            userId: userId,
+            type: 'diary',
+            description: '${now.year}-${now.month}-${now.day} 일기 작성 보상',
+            amount: _lastEarnedPoints,
+          );
 
           await _userService.updateUser(userId, {
             'points': FieldValue.increment(_lastEarnedPoints),

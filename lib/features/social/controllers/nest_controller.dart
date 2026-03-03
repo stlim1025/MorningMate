@@ -2,12 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../services/nest_service.dart';
+import '../../../services/point_history_service.dart';
 import '../../../models/nest_model.dart';
 
 class NestController extends ChangeNotifier {
   final NestService _nestService;
+  final PointHistoryService _pointHistoryService;
 
-  NestController(this._nestService);
+  NestController(this._nestService, this._pointHistoryService);
 
   List<NestModel> _myNests = [];
   List<NestModel> get myNests => _myNests;
@@ -99,6 +101,14 @@ class NestController extends ChangeNotifier {
     }
     await _nestService.donateGaji(
         nestId, userId, senderNickname, nestName, amount);
+
+    // 포인트 내역 기록 추가
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'donation',
+      description: '둥지 기부: $nestName',
+      amount: -amount,
+    );
   }
 
   Future<bool> postNestMessage(String nestId, String userId,
@@ -106,8 +116,20 @@ class NestController extends ChangeNotifier {
     if (message.trim().isEmpty) {
       throw Exception('한마디를 입력해주세요.');
     }
-    return await _nestService.postNestMessage(
+    final rewarded = await _nestService.postNestMessage(
         nestId, userId, senderNickname, nestName, message);
+
+    if (rewarded) {
+      // 포인트 내역 기록 추가
+      await _pointHistoryService.addHistory(
+        userId: userId,
+        type: 'reward',
+        description: '오늘의 한마디 보상',
+        amount: 10,
+      );
+    }
+
+    return rewarded;
   }
 
   Stream<List<Map<String, dynamic>>> getNestMessagesStream(

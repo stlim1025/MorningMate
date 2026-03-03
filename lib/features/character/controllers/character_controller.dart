@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../../router/app_router.dart'; // navigatorKey 접근을 위해
 import '../../../services/user_service.dart';
+import '../../../services/point_history_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/room_decoration_model.dart';
@@ -25,8 +26,9 @@ enum CharacterState {
 
 class CharacterController extends ChangeNotifier {
   final UserService _userService;
+  final PointHistoryService _pointHistoryService;
 
-  CharacterController(this._userService) {
+  CharacterController(this._userService, this._pointHistoryService) {
     _startShopDiscountListener();
   }
 
@@ -198,6 +200,13 @@ class CharacterController extends ChangeNotifier {
       'memoCount': FieldValue.increment(1),
     };
 
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'sticky_note',
+      description: '메모 작성',
+      amount: -5,
+    );
+
     await _userService.updateUser(userId, updates);
 
     _currentUser = _currentUser!.copyWith(
@@ -273,8 +282,8 @@ class CharacterController extends ChangeNotifier {
       notifyListeners();
     });
 
-    // 포인트 및 경험치 지급
-    await _addPointsAndExp(userId, 10, 10);
+    // 경험치만 지급 (포인트는 MorningController에서 통합 지급)
+    await _addPointsAndExp(userId, 0, 10);
 
     // 일기 작성 후 최신 사용자 정보 동기화
     await _syncUserData(userId);
@@ -397,6 +406,13 @@ class CharacterController extends ChangeNotifier {
     )..add(themeId);
     final newPoints = _currentUser!.points - price;
 
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'purchase',
+      description: '테마 구매: $themeId',
+      amount: -price,
+    );
+
     await _userService.updateUser(userId, {
       'points': newPoints,
       'purchasedThemeIds': newPurchasedThemes,
@@ -427,6 +443,13 @@ class CharacterController extends ChangeNotifier {
       _currentUser!.purchasedBackgroundIds,
     )..add(backgroundId);
     final newPoints = _currentUser!.points - price;
+
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'purchase',
+      description: '배경 구매: $backgroundId',
+      amount: -price,
+    );
 
     await _userService.updateUser(userId, {
       'points': newPoints,
@@ -460,6 +483,13 @@ class CharacterController extends ChangeNotifier {
     )..add(wallpaperId);
     final newPoints = _currentUser!.points - price;
 
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'purchase',
+      description: '벽지 구매: $wallpaperId',
+      amount: -price,
+    );
+
     await _userService.updateUser(userId, {
       'points': newPoints,
       'purchasedThemeIds': newPurchasedThemes,
@@ -490,6 +520,13 @@ class CharacterController extends ChangeNotifier {
     final newPurchasedProps = List<String>.from(_currentUser!.purchasedPropIds)
       ..add(propId);
     final newPoints = _currentUser!.points - price;
+
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'purchase',
+      description: '소품 구매: $propId',
+      amount: -price,
+    );
 
     await _userService.updateUser(userId, {
       'points': newPoints,
@@ -522,6 +559,13 @@ class CharacterController extends ChangeNotifier {
     )..add(emoticonId);
     final newPoints = _currentUser!.points - price;
 
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'purchase',
+      description: '이모티콘 구매: $emoticonId',
+      amount: -price,
+    );
+
     await _userService.updateUser(userId, {
       'points': newPoints,
       'purchasedEmoticonIds': newPurchasedEmoticons,
@@ -549,6 +593,13 @@ class CharacterController extends ChangeNotifier {
     )..add(floorId);
     final newPoints = _currentUser!.points - price;
 
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'purchase',
+      description: '바닥 구매: $floorId',
+      amount: -price,
+    );
+
     await _userService.updateUser(userId, {
       'points': newPoints,
       'purchasedFloorIds': newPurchasedFloors,
@@ -575,6 +626,13 @@ class CharacterController extends ChangeNotifier {
       _currentUser!.purchasedWindowIds,
     )..add(windowId);
     final newPoints = _currentUser!.points - price;
+
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'purchase',
+      description: '창문 구매: $windowId',
+      amount: -price,
+    );
 
     await _userService.updateUser(userId, {
       'points': newPoints,
@@ -606,6 +664,13 @@ class CharacterController extends ChangeNotifier {
       _currentUser!.purchasedCharacterItemIds,
     )..add(itemId);
     final newPoints = _currentUser!.points - price;
+
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'purchase',
+      description: '캐릭터 아이템 구매: $itemId',
+      amount: -price,
+    );
 
     await _userService.updateUser(userId, {
       'points': newPoints,
@@ -816,6 +881,13 @@ class CharacterController extends ChangeNotifier {
     final newPoints = _currentUser!.points + 20;
     final newCount = currentCount + 1;
 
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'ad',
+      description: '광고 시청 보상',
+      amount: 20,
+    );
+
     await _userService.updateUser(userId, {
       'points': newPoints,
       'adRewardCount': newCount,
@@ -884,6 +956,15 @@ class CharacterController extends ChangeNotifier {
     }
 
     final newPoints = user.points + totalReward;
+
+    for (final c in completedNow) {
+      await _pointHistoryService.addHistory(
+        userId: user.uid,
+        type: 'challenge',
+        description: '도전과제 달성: ${c.id}',
+        amount: c.reward,
+      );
+    }
 
     await _userService.updateUser(user.uid, {
       'completedChallengeIds': newCompletedIds,

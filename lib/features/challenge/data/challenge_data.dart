@@ -32,7 +32,10 @@ final List<Challenge> challenges = [
     titleKey: 'challenge_dawn_start_title',
     descKey: 'challenge_dawn_start_desc',
     reward: 50,
-    isCompleted: (user) => user.displayConsecutiveDays >= 1,
+    isCompleted: (user) =>
+        user.completedChallengeIds.contains('dawn_start') ||
+        ((user.lastDiaryDate?.hour ?? 24) < 6 &&
+            user.displayConsecutiveDays >= 1),
     category: 'streak',
     group: 'streak',
     targetValue: 1,

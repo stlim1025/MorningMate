@@ -42,6 +42,15 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
   bool _isThinWindow = false;
   bool _isArchWindow = false;
   double _windowBgScale = 1.0;
+  double? _charWidthPct;
+  double? _charTopPctAwake;
+  double? _charTopPctSleep;
+  double? _charBottomPct;
+  double? _charScaleAwake;
+  double? _charScaleSleep;
+
+  bool get _isCharCategory =>
+      ['face', 'body', 'head', 'clothes', 'character'].contains(_category);
 
   final List<String> _categories = [
     'prop',
@@ -49,7 +58,11 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
     'wallpaper',
     'background',
     'floor',
-    'characterItem',
+    'face',
+    'body',
+    'head',
+    'clothes',
+    'character',
     'window'
   ];
 
@@ -80,6 +93,12 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
       _isThinWindow = item.isThinWindow;
       _isArchWindow = item.isArchWindow;
       _windowBgScale = item.windowBgScale ?? 1.0;
+      _charWidthPct = item.charWidthPct;
+      _charTopPctAwake = item.charTopPctAwake;
+      _charTopPctSleep = item.charTopPctSleep;
+      _charBottomPct = item.charBottomPct;
+      _charScaleAwake = item.charScaleAwake;
+      _charScaleSleep = item.charScaleSleep;
     }
   }
 
@@ -152,6 +171,12 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           isThinWindow: _isThinWindow,
           isArchWindow: _isArchWindow,
           windowBgScale: _windowBgScale,
+          charWidthPct: _charWidthPct,
+          charTopPctAwake: _charTopPctAwake,
+          charTopPctSleep: _charTopPctSleep,
+          charBottomPct: _charBottomPct,
+          charScaleAwake: _charScaleAwake,
+          charScaleSleep: _charScaleSleep,
         );
       } else {
         await _assetService.updateAsset(
@@ -173,6 +198,12 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           isThinWindow: _isThinWindow,
           isArchWindow: _isArchWindow,
           windowBgScale: _windowBgScale,
+          charWidthPct: _charWidthPct,
+          charTopPctAwake: _charTopPctAwake,
+          charTopPctSleep: _charTopPctSleep,
+          charBottomPct: _charBottomPct,
+          charScaleAwake: _charScaleAwake,
+          charScaleSleep: _charScaleSleep,
         );
       }
 
@@ -519,6 +550,124 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
                               initialValue: _windowBgScale.toString(),
                               onSaved: (value) => _windowBgScale =
                                   double.tryParse(value ?? '1.0') ?? 1.0,
+                            ),
+                          ],
+                          if (_isCharCategory) ...[
+                            const SizedBox(height: 16),
+                            const Text('👤 캐릭터 아이템 배치 설정',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 14)),
+                            const SizedBox(height: 8),
+                            const Text('아이템의 크기와 위치 비율(0.0 ~ 1.0)을 설정합니다.',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey)),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    decoration: const InputDecoration(
+                                        labelText: '가로폭 비율',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
+                                        helperText: '캐릭터 대비 폭 (ex 0.7)'),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                    initialValue: _charWidthPct?.toString(),
+                                    onChanged: (value) =>
+                                        _charWidthPct = double.tryParse(value),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    decoration: const InputDecoration(
+                                        labelText: '하단 여백 비율',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
+                                        helperText: '목걸이 등 (ex 0.08)'),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                    initialValue: _charBottomPct?.toString(),
+                                    onChanged: (value) =>
+                                        _charBottomPct = double.tryParse(value),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    decoration: const InputDecoration(
+                                        labelText: '상단 여백 (눈)',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
+                                        helperText: '평상시 (ex 0.35)'),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                    initialValue: _charTopPctAwake?.toString(),
+                                    onChanged: (value) => _charTopPctAwake =
+                                        double.tryParse(value),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    decoration: const InputDecoration(
+                                        labelText: '상단 여백 (잠)',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
+                                        helperText: '잠잘때 (ex 0.17)'),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                    initialValue: _charTopPctSleep?.toString(),
+                                    onChanged: (value) => _charTopPctSleep =
+                                        double.tryParse(value),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    decoration: const InputDecoration(
+                                        labelText: '크기 비율 (눈)',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
+                                        helperText: '옷/평소 (ex 1.0)'),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                    initialValue: _charScaleAwake?.toString(),
+                                    onChanged: (value) => _charScaleAwake =
+                                        double.tryParse(value),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    decoration: const InputDecoration(
+                                        labelText: '크기 비율 (잠)',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
+                                        helperText: '옷/잠 (ex 0.95)'),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                    initialValue: _charScaleSleep?.toString(),
+                                    onChanged: (value) => _charScaleSleep =
+                                        double.tryParse(value),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ],

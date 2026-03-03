@@ -40,6 +40,7 @@ enum AppDialogKey {
   nestUpgradeSuccess,
   deleteTodaySpeak,
   todaySpeakReward,
+  pointHistory,
 }
 
 class AppDialogAction {
@@ -535,6 +536,23 @@ class AppDialog {
               ],
           actionsAlignment: MainAxisAlignment.center,
           showConfetti: true,
+        );
+      case AppDialogKey.pointHistory:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('pointHistoryTitle') ??
+              '가지 상세 내역',
+          content: content,
+          showCloseButton: true,
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context),
+                ),
+              ],
+          actionsAlignment: MainAxisAlignment.center,
         );
     }
   }

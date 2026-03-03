@@ -866,14 +866,15 @@ class _WritingScreenState extends State<WritingScreen> {
                                       ? context
                                           .read<MorningController>()
                                           .lastEarnedPoints
-                                      : (10 +
-                                          (controller.currentUser
-                                                      ?.consecutiveDays ??
-                                                  0) *
+                                      : (20 +
+                                          ((controller.currentUser
+                                                          ?.consecutiveDays ??
+                                                      1) -
+                                                  1) *
                                               2))
                                   .toString()
                             }) ??
-                            '+${context.read<MorningController>().lastEarnedPoints > 0 ? context.read<MorningController>().lastEarnedPoints : (10 + (controller.currentUser?.consecutiveDays ?? 0) * 2)} Branch Earned',
+                            '+${context.read<MorningController>().lastEarnedPoints > 0 ? context.read<MorningController>().lastEarnedPoints : (20 + ((controller.currentUser?.consecutiveDays ?? 1) - 1) * 2)} Branch Earned',
                         style: TextStyle(
                           fontFamily: 'BMJUA',
                           color: colorScheme.twig,

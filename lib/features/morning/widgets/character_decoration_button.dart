@@ -31,17 +31,10 @@ class _CharacterDecorationButtonState extends State<CharacterDecorationButton> {
             Container(
               width: 80,
               height: 80,
-              decoration: BoxDecoration(
-                // shape: BoxShape.circle, // Optional: if circular
-                // borderRadius: BorderRadius.circular(40), // Optional
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+              decoration: const BoxDecoration(
+                  // shape: BoxShape.circle, // Optional: if circular
+                  // borderRadius: BorderRadius.circular(40), // Optional
                   ),
-                ],
-              ),
               child: Image.asset(
                 'assets/images/Nofriend_Charactor.png',
                 fit: BoxFit.contain,

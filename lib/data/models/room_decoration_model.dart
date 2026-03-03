@@ -62,6 +62,7 @@ class RoomPropModel {
   final double x; // 0.0 ~ 1.0 (normalized relative to room width)
   final double y; // 0.0 ~ 1.0 (normalized relative to room height)
   final int z; // 0: floor, 1: on top of something (no shadow)
+  final double scale; // manual scale multiplier (added)
   final Map<String, dynamic>? metadata;
 
   RoomPropModel({
@@ -70,6 +71,7 @@ class RoomPropModel {
     required this.x,
     required this.y,
     this.z = 0,
+    this.scale = 1.0,
     this.metadata,
   });
 
@@ -80,6 +82,7 @@ class RoomPropModel {
       'x': x,
       'y': y,
       'z': z,
+      'scale': scale,
       'metadata': metadata,
     };
   }
@@ -91,6 +94,7 @@ class RoomPropModel {
       x: (map['x'] as num?)?.toDouble() ?? 0.0,
       y: (map['y'] as num?)?.toDouble() ?? 0.0,
       z: (map['z'] as num?)?.toInt() ?? 0,
+      scale: (map['scale'] as num?)?.toDouble() ?? 1.0,
       metadata: map['metadata'] as Map<String, dynamic>?,
     );
   }
@@ -101,6 +105,7 @@ class RoomPropModel {
     double? x,
     double? y,
     int? z,
+    double? scale,
     Map<String, dynamic>? metadata,
   }) {
     return RoomPropModel(
@@ -109,6 +114,7 @@ class RoomPropModel {
       x: x ?? this.x,
       y: y ?? this.y,
       z: z ?? this.z,
+      scale: scale ?? this.scale,
       metadata: metadata ?? this.metadata,
     );
   }

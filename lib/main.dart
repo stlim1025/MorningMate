@@ -17,6 +17,7 @@ import 'services/friend_service.dart';
 import 'services/nest_service.dart';
 import 'services/question_service.dart';
 import 'services/asset_service.dart';
+import 'services/point_history_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/morning/controllers/morning_controller.dart';
 import 'features/character/controllers/character_controller.dart';
@@ -158,6 +159,7 @@ class _MorniAppState extends State<MorniApp> {
   late final FriendService _friendService;
   late final NestService _nestService;
   late final AssetService _assetService;
+  late final PointHistoryService _pointHistoryService;
 
   late final AuthController _authController;
   late final GoRouter _router;
@@ -182,6 +184,7 @@ class _MorniAppState extends State<MorniApp> {
     _friendService = FriendService(_userService);
     _nestService = NestService();
     _assetService = AssetService();
+    _pointHistoryService = PointHistoryService();
 
     // 동적 에셋은 로그인 완료 후에 로드 (인증 없이 호출하면 permission-denied 발생)
 
@@ -220,6 +223,7 @@ class _MorniAppState extends State<MorniApp> {
         Provider.value(value: _questionService),
         Provider.value(value: _friendService),
         Provider.value(value: _nestService),
+        Provider.value(value: _pointHistoryService),
 
         // Controllers
         // AuthController (이미 생성된 인스턴스 주입)
@@ -230,8 +234,13 @@ class _MorniAppState extends State<MorniApp> {
 
         // ProxyManagers (의존성 있는 컨트롤러들은 기존대로 Proxy 사용)
         ChangeNotifierProxyProvider<AuthController, MorningController>(
-          create: (context) => MorningController(_diaryService,
-              _questionService, _userService, _notificationService),
+          create: (context) => MorningController(
+            _diaryService,
+            _questionService,
+            _userService,
+            _notificationService,
+            _pointHistoryService,
+          ),
           update: (context, auth, previous) {
             final controller = previous ??
                 MorningController(
@@ -239,6 +248,7 @@ class _MorniAppState extends State<MorniApp> {
                   _questionService,
                   _userService,
                   _notificationService,
+                  _pointHistoryService,
                 );
             if (auth.userModel == null) {
               controller.clear();
@@ -247,9 +257,11 @@ class _MorniAppState extends State<MorniApp> {
           },
         ),
         ChangeNotifierProxyProvider<AuthController, CharacterController>(
-          create: (context) => CharacterController(_userService),
+          create: (context) =>
+              CharacterController(_userService, _pointHistoryService),
           update: (context, auth, previous) {
-            final controller = previous ?? CharacterController(_userService);
+            final controller = previous ??
+                CharacterController(_userService, _pointHistoryService);
             if (auth.userModel == null) {
               controller.clear();
             } else {
@@ -279,9 +291,11 @@ class _MorniAppState extends State<MorniApp> {
           },
         ),
         ChangeNotifierProxyProvider<AuthController, NestController>(
-          create: (context) => NestController(_nestService),
+          create: (context) =>
+              NestController(_nestService, _pointHistoryService),
           update: (context, auth, previous) {
-            final controller = previous ?? NestController(_nestService);
+            final controller =
+                previous ?? NestController(_nestService, _pointHistoryService);
             if (auth.userModel == null) {
               controller.clear();
             } else {

@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/network_or_asset_image.dart';
 
 class CharacterDecorationScreen extends StatefulWidget {
   const CharacterDecorationScreen({super.key});
@@ -587,8 +588,10 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                 child: item.imagePath != null
                     ? (item.imagePath!.endsWith('.svg')
                         ? SvgPicture.asset(item.imagePath!, fit: BoxFit.contain)
-                        : Image.asset(item.imagePath!,
-                            cacheWidth: 150, fit: BoxFit.contain))
+                        : NetworkOrAssetImage(
+                            imagePath: item.imagePath!,
+                            fit: BoxFit.contain,
+                          ))
                     : Icon(item.icon,
                         color: item.color ?? colorScheme.primaryButton,
                         size: 24),

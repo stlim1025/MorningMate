@@ -71,119 +71,131 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
       scale: _scaleAnim,
       child: Dialog(
         backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // ── 배경 종이 카드 ──
-            Container(
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-              ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          resizeToAvoidBottomInset: true,
+          body: Center(
+            child: SingleChildScrollView(
               child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Positioned.fill(
-                    child: Image.asset(
-                      'assets/images/Popup_Background.png',
-                      fit: BoxFit.fill,
+                  // ── 배경 종이 카드 ──
+                  Container(
+                    width: double.infinity,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 44, 24, 28),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Stack(
                       children: [
-                        // ── 타이틀 ──
-                        Text(
-                          AppLocalizations.of(context)
-                                  ?.get('notificationTime') ??
-                              '알림 시간 설정',
-                          style: const TextStyle(
-                            fontFamily: 'BMJUA',
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF4E342E),
+                        Positioned.fill(
+                          child: Image.asset(
+                            'assets/images/Popup_Background.png',
+                            fit: BoxFit.fill,
                           ),
                         ),
-                        const SizedBox(height: 24),
-
-                        // ── 시간 디스플레이 ──
-                        _buildTimeDisplay(),
-                        const SizedBox(height: 20),
-
-                        // ── AM / PM 토글 ──
-                        _buildAmPmToggle(),
-                        const SizedBox(height: 24),
-
-                        // ── 시 스와이퍼 ──
-                        _NumberSwiper(
-                          label: AppLocalizations.of(context)
-                                  ?.get('timePickerHour') ??
-                              '시',
-                          value: _hour12,
-                          min: 1,
-                          max: 12,
-                          onChanged: (v) => setState(() => _hour12 = v),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // ── 분 스와이퍼 ──
-                        _NumberSwiper(
-                          label: AppLocalizations.of(context)
-                                  ?.get('timePickerMinute') ??
-                              '분',
-                          value: _minute,
-                          min: 0,
-                          max: 59,
-                          onChanged: (v) => setState(() => _minute = v),
-                        ),
-                        const SizedBox(height: 28),
-
-                        // ── 버튼 ──
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _ActionBtn(
-                                imagePath: 'assets/images/Cancel_Button.png',
-                                label: AppLocalizations.of(context)
-                                        ?.get('cancel') ??
-                                    '취소',
-                                onTap: () => Navigator.pop(context),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 44, 24, 28),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // ── 타이틀 ──
+                              Text(
+                                AppLocalizations.of(context)
+                                        ?.get('notificationTime') ??
+                                    '알림 시간 설정',
+                                style: const TextStyle(
+                                  fontFamily: 'BMJUA',
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF4E342E),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _ActionBtn(
-                                imagePath: 'assets/images/Confirm_Button.png',
+                              const SizedBox(height: 24),
+
+                              // ── 시간 디스플레이 ──
+                              _buildTimeDisplay(),
+                              const SizedBox(height: 20),
+
+                              // ── AM / PM 토글 ──
+                              _buildAmPmToggle(),
+                              const SizedBox(height: 24),
+
+                              // ── 시 스와이퍼 ──
+                              _NumberSwiper(
                                 label: AppLocalizations.of(context)
-                                        ?.get('confirm') ??
-                                    '확인',
-                                onTap: () =>
-                                    Navigator.pop(context, _formattedTime),
+                                        ?.get('timePickerHour') ??
+                                    '시',
+                                value: _hour12,
+                                min: 1,
+                                max: 12,
+                                onChanged: (v) => setState(() => _hour12 = v),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 12),
+
+                              // ── 분 스와이퍼 ──
+                              _NumberSwiper(
+                                label: AppLocalizations.of(context)
+                                        ?.get('timePickerMinute') ??
+                                    '분',
+                                value: _minute,
+                                min: 0,
+                                max: 59,
+                                onChanged: (v) => setState(() => _minute = v),
+                              ),
+                              const SizedBox(height: 28),
+
+                              // ── 버튼 ──
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _ActionBtn(
+                                      imagePath:
+                                          'assets/images/Cancel_Button.png',
+                                      label: AppLocalizations.of(context)
+                                              ?.get('cancel') ??
+                                          '취소',
+                                      onTap: () => Navigator.pop(context),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _ActionBtn(
+                                      imagePath:
+                                          'assets/images/Confirm_Button.png',
+                                      label: AppLocalizations.of(context)
+                                              ?.get('confirm') ??
+                                          '확인',
+                                      onTap: () => Navigator.pop(
+                                          context, _formattedTime),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
+                    ),
+                  ),
+
+                  // ── 마스킹테이프 스티커 ──
+                  Positioned(
+                    top: -25,
+                    left: -10,
+                    child: Image.asset(
+                      'assets/images/Popup_Sticker.png',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ],
               ),
             ),
-
-            // ── 마스킹테이프 스티커 ──
-            Positioned(
-              top: -25,
-              left: -10,
-              child: Image.asset(
-                'assets/images/Popup_Sticker.png',
-                width: 120,
-                height: 120,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

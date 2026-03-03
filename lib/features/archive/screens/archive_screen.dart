@@ -17,6 +17,8 @@ import '../../morning/controllers/morning_controller.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../admin/controllers/admin_controller.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
+import '../widgets/point_history_list.dart';
+import '../../../core/widgets/app_dialog.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -332,51 +334,61 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               Positioned(
                 top: 0,
                 right: 0,
-                child: Container(
-                  width: 120,
-                  height: 36,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/TextBox_Background.png'),
-                      fit: BoxFit.fill,
-                      filterQuality: FilterQuality.medium,
+                child: GestureDetector(
+                  onTap: () {
+                    AppDialog.show(
+                      context: context,
+                      key: AppDialogKey.pointHistory,
+                      content: const PointHistoryList(),
+                    );
+                  },
+                  child: Container(
+                    width: 120,
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image:
+                            AssetImage('assets/images/TextBox_Background.png'),
+                        fit: BoxFit.fill,
+                        filterQuality: FilterQuality.medium,
+                      ),
                     ),
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/images/branch.png',
-                          width: 18,
-                          height: 18,
-                          cacheWidth: 72,
-                          filterQuality: FilterQuality.medium,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${user?.points ?? 0}',
-                          style: const TextStyle(
-                            color: Color(0xFF5D4037),
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'BMJUA',
-                            fontSize: 14,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/branch.png',
+                            width: 18,
+                            height: 18,
+                            cacheWidth: 72,
+                            filterQuality: FilterQuality.medium,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          AppLocalizations.of(context)?.get('branch') ??
-                              'Branch',
-                          style: TextStyle(
-                            color: Color(0xFF8D6E63),
-                            fontFamily: 'BMJUA',
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(width: 8),
+                          Text(
+                            '${user?.points ?? 0}',
+                            style: const TextStyle(
+                              color: Color(0xFF5D4037),
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'BMJUA',
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Text(
+                            AppLocalizations.of(context)?.get('branch') ??
+                                'Branch',
+                            style: TextStyle(
+                              color: Color(0xFF8D6E63),
+                              fontFamily: 'BMJUA',
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
