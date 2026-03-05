@@ -166,6 +166,10 @@ class _EnhancedCharacterRoomWidgetState
             ResizeImage(const AssetImage('assets/images/Egg_Wing4.png'),
                 width: 300),
             context);
+        precacheImage(
+            ResizeImage(const AssetImage('assets/images/Egg_Wing5.png'),
+                width: 300),
+            context);
 
         _precacheCurrentDecoration();
       }
