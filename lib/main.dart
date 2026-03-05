@@ -48,12 +48,14 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint('1. WidgetsFlutterBinding initialized');
 
   // 가로 회전 방지 (세로 모드 고정)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  debugPrint('2. SystemChrome orientations set');
 
   // 저사양 기기를 위한 이미지 캐시 제한 설정
   PaintingBinding.instance.imageCache.maximumSize = 50; // 최대 50개 이미지
@@ -62,14 +64,18 @@ void main() async {
 
   // 날짜 형식 초기화 (한국어)
   await initializeDateFormatting('ko_KR', null);
+  debugPrint('3. Date formatting initialized');
 
   // Timezone 초기화
   tz.initializeTimeZones();
+  debugPrint('4. TimeZones initialized');
   try {
+    debugPrint('5. Getting local timezone...');
     final tzValue = await FlutterTimezone.getLocalTimezone();
     final String timeZoneName =
         tzValue is String ? tzValue : (tzValue as dynamic).identifier;
     tz.setLocalLocation(tz.getLocation(timeZoneName));
+    debugPrint('6. Local timezone set: $timeZoneName');
   } catch (e) {
     debugPrint('타임존 초기화 실패: $e');
     tz.setLocalLocation(tz.getLocation('Asia/Seoul')); // 기본값 폴백
@@ -78,11 +84,12 @@ void main() async {
   // Firebase 초기화
   bool isFirebaseInitialized = false;
   try {
+    debugPrint('7. Initializing Firebase...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     isFirebaseInitialized = true;
-    debugPrint('Firebase 초기화 성공');
+    debugPrint('8. Firebase 초기화 성공');
   } catch (e) {
     debugPrint('Firebase 초기화 실패: $e');
   }
@@ -90,11 +97,12 @@ void main() async {
   // 카카오 SDK 초기화
   // TODO: 카카오 개발자 콘솔에서 발급받은 네이티브 앱 키를 입력하세요
   try {
+    debugPrint('9. Initializing Kakao SDK...');
     KakaoSdk.init(
       nativeAppKey:
           'b85bd2621b6bf24cf21211b92e352c50', // 카카오 개발자 콘솔에서 발급받은 네이티브 앱 키
     );
-    debugPrint('카카오 SDK 초기화 성공');
+    debugPrint('10. 카카오 SDK 초기화 성공');
   } catch (e) {
     debugPrint('카카오 SDK 초기화 실패: $e');
   }
@@ -102,18 +110,21 @@ void main() async {
   if (isFirebaseInitialized) {
     // Firebase App Check 초기화 (개발 환경용 디버그 모드)
     try {
+      debugPrint('11. Activating Firebase App Check...');
       await FirebaseAppCheck.instance.activate(
         androidProvider: AndroidProvider.debug,
         appleProvider: AppleProvider.debug,
       );
-      debugPrint('Firebase App Check 초기화 성공 (디버그 모드)');
+      debugPrint('12. Firebase App Check 초기화 성공 (디버그 모드)');
     } catch (e) {
       debugPrint('Firebase App Check 초기화 실패: $e');
     }
 
     // 로그인 상태 유지 설정 (모든 플랫폼에서 명시적으로 LOCAL 설정 시도)
     try {
+      debugPrint('13. Setting FirebaseAuth persistence...');
       await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+      debugPrint('14. FirebaseAuth persistence set');
     } catch (e) {
       debugPrint('Persistence Error: $e');
     }
@@ -124,12 +135,14 @@ void main() async {
 
   // 광고 SDK 초기화
   try {
-    MobileAds.instance.initialize();
-    debugPrint('광고 SDK 초기화 성공');
+    debugPrint('15. Initializing MobileAds...');
+    await MobileAds.instance.initialize();
+    debugPrint('16. 광고 SDK 초기화 성공');
   } catch (e) {
     debugPrint('광고 SDK 초기화 실패: $e');
   }
 
+  debugPrint('17. Running app...');
   runApp(MorniApp(
       initialRoute: '/splash', isFirebaseInitialized: isFirebaseInitialized));
 }

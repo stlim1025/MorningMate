@@ -155,18 +155,9 @@ class _FloatingNotificationState extends State<FloatingNotification>
               child: Container(
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor.withOpacity(0.98),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.shadowColor.withOpacity(0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                  border: Border.all(
-                    color: colorScheme.primaryButton.withOpacity(0.1),
-                    width: 1,
+                  image: const DecorationImage(
+                    image: AssetImage('assets/images/TodaySpeak_TextBox.png'),
+                    fit: BoxFit.fill,
                   ),
                 ),
                 child: GestureDetector(

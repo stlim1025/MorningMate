@@ -9,7 +9,6 @@ import '../router/app_router.dart';
 import '../core/localization/app_localizations.dart';
 import '../data/models/notification_model.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   FirebaseMessaging get _fcm {
@@ -136,44 +135,9 @@ class NotificationService {
   }
 
   Future<void> scheduleNightlyReminder() async {
-    final context = AppRouter.navigatorKey.currentContext;
-    final loc = AppLocalizations.of(
-        context!); // Navigator key should have context or fallback
-
-    try {
-      await _localPlugin.zonedSchedule(
-        id: 1123,
-        title: loc?.get('nightlyReminderTitle') ?? '오늘의 일기를 작성해주세요!',
-        body: loc?.get('nightlyReminderBody') ??
-            '아직 일기를 작성하지 않았어요. 작성하지 않으면 연속 기록이 날아가요!',
-        scheduledDate: _nextInstanceOfElevenPM(),
-        notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'nightly_reminder_channel',
-            '야간 일기 알림',
-            channelDescription: '밤 11시 일기 미작성 시 알림',
-            importance: Importance.high,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-      print('밤 11시 푸시 알림 스케줄링 완료');
-    } catch (e) {
-      print('밤 11시 알림 스케줄링 실패: $e');
-    }
-  }
-
-  tz.TZDateTime _nextInstanceOfElevenPM() {
-    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduledDate =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, 23, 0);
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-    return scheduledDate;
+    // 이제 야간 알림은 Firebase Cloud Functions에서 처리하므로 클라이언트 스케줄링을 제거합니다.
+    // 이전 버전에 예약된 알림이 있을 수 있으므로 취소만 수행합니다.
+    await cancelNightlyReminder();
   }
 
   Future<void> cancelNightlyReminder() async {
@@ -186,44 +150,9 @@ class NotificationService {
   }
 
   Future<void> scheduleMorningReminder(String time) async {
-    try {
-      final parts = time.split(':');
-      if (parts.length != 2) return;
-      final hour = int.tryParse(parts[0]) ?? 8;
-      final minute = int.tryParse(parts[1]) ?? 0;
-
-      final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-      tz.TZDateTime scheduledDate =
-          tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
-      if (scheduledDate.isBefore(now)) {
-        scheduledDate = scheduledDate.add(const Duration(days: 1));
-      }
-
-      final context = AppRouter.navigatorKey.currentContext;
-      final loc = AppLocalizations.of(context!);
-
-      await _localPlugin.zonedSchedule(
-        id: 1124, // 아침 알림 고유 ID
-        title: loc?.get('morningReminderTitle') ?? '굿모닝! 아침 일기를 작성할 시간이에요 ☀️',
-        body: loc?.get('morningReminderBody') ?? '상쾌한 하루를 시작하며 일기를 남겨보세요!',
-        scheduledDate: scheduledDate,
-        notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'morning_reminder_channel',
-            '아침 일기 알림',
-            channelDescription: '설정한 시간에 아침 일기 작성 알림',
-            importance: Importance.high,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-      print('아침 알림 설정 완료: $time');
-    } catch (e) {
-      print('아침 알림 설정 실패: $e');
-    }
+    // 이제 아침 알림은 Firebase Cloud Functions에서 처리하므로 클라이언트 스케줄링을 제거합니다.
+    // 이전 버전에 예약된 알림이 있을 수 있으므로 취소만 수행합니다.
+    await cancelMorningReminder();
   }
 
   Future<void> cancelMorningReminder() async {
@@ -387,7 +316,17 @@ class NotificationService {
             '친구 요청 거절';
         break;
       case NotificationType.cheerMessage:
-        title = AppLocalizations.of(context)?.get('cheerMessage') ?? '응원 메시지';
+        final dynamic isReplyVal = data['isReply'];
+        final bool isReply = isReplyVal == true || isReplyVal == 'true';
+        if (isReply) {
+          title = AppLocalizations.of(context)?.getFormat(
+                  'notiMsgReplyTitle', {'name': dummyNoti.senderNickname}) ??
+              '${dummyNoti.senderNickname}님이 답장을 보냈습니다!';
+        } else {
+          title = AppLocalizations.of(context)?.getFormat(
+                  'notiMsgCheerTitle', {'name': dummyNoti.senderNickname}) ??
+              '${dummyNoti.senderNickname}님이 응원 메시지를 보냈습니다!';
+        }
         break;
       case NotificationType.nestInvite:
         title = AppLocalizations.of(context)?.get('nestInvite') ?? '둥지 초대';

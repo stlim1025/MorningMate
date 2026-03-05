@@ -108,6 +108,12 @@ class NotificationModel {
         }
         return loc.getFormat('notiMsgFriendReject', {'name': name});
       case NotificationType.cheerMessage:
+        final dynamic isReplyVal = data?['isReply'];
+        final bool isReply = isReplyVal == true || isReplyVal == 'true';
+        if (isReply) {
+          return loc.getFormat(
+              'notiMsgReplyWithContent', {'name': name, 'message': message});
+        }
         return loc.getFormat(
             'notiMsgCheerWithContent', {'name': name, 'message': message});
       case NotificationType.nestInvite:

@@ -74,39 +74,41 @@ const normalizeNotificationType = (type) => {
 };
 
 const buildNotificationContent = (type, message, senderNickname, extraData) => {
+    const name = senderNickname || "친구";
     switch (type) {
         case "wake_up":
             return {
                 title: "깨우기 알림",
-                body: message ?? `${senderNickname ?? "친구"}님이 당신을 깨우고 있어요!`,
+                body: message ?? `${name}님이 당신을 깨우고 있어요!`,
             };
         case "friend_request":
             return {
                 title: "친구 요청",
-                body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 보냈습니다! 👋`,
+                body: message ?? `${name}님이 친구 요청을 보냈습니다! 👋`,
             };
-        case "cheer_message":
-            const isReply = extraData && extraData.isReply === true;
+        case "cheer_message": {
+            const isReplyFlag = extraData && (extraData.isReply === true || extraData.isReply === "true");
             return {
-                title: isReply
-                    ? `${senderNickname ?? "친구"}님이 답장을 보냈어요.`
-                    : `${senderNickname ?? "친구"}님이 응원 메시지를 보냈어요.`,
+                title: isReplyFlag
+                    ? `${name}님이 답장을 보냈습니다!`
+                    : `${name}님이 응원 메시지를 보냈습니다!`,
                 body: message ?? "응원 메시지가 도착했어요.",
             };
+        }
         case "friend_accept":
             return {
                 title: "친구 요청 수락",
-                body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 수락했어요.`,
+                body: message ?? `${name}님이 친구 요청을 수락했어요.`,
             };
         case "friend_reject":
             return {
                 title: "친구 요청 거절",
-                body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 거절했어요.`,
+                body: message ?? `${name}님이 친구 요청을 거절했어요.`,
             };
         case "nest_invite":
             return {
                 title: "둥지 초대",
-                body: message ?? `${senderNickname ?? "친구"}님이 둥지에 초대했습니다!`,
+                body: message ?? `${name}님이 둥지에 초대했습니다!`,
             };
         case "nest_donation":
             return {
@@ -188,6 +190,10 @@ exports.sendNotificationOnCreate = onDocumentCreated("notifications/{notificatio
         data.data
     );
 
+    const isReply = data.data && (data.data.isReply === true || data.data.isReply === "true");
+
+    logger.info(`Sending FCM: type=${normalizedType}, title=${title}, body=${body}, userId=${userId}`);
+
     const message = {
         token: fcmToken,
         notification: {
@@ -199,11 +205,14 @@ exports.sendNotificationOnCreate = onDocumentCreated("notifications/{notificatio
             senderId: data.senderId ?? "",
             senderNickname: data.senderNickname ?? "",
             message: data.message ?? "",
+            isReply: isReply ? "true" : "false",
             click_action: "FLUTTER_NOTIFICATION_CLICK",
         },
         android: {
             priority: "high",
             notification: {
+                title,
+                body,
                 channelId: "high_importance_channel",
             },
         },
@@ -212,13 +221,22 @@ exports.sendNotificationOnCreate = onDocumentCreated("notifications/{notificatio
                 aps: {
                     contentAvailable: true,
                     sound: "default",
+                    alert: {
+                        title,
+                        body,
+                    },
                 },
             },
         },
     };
 
-    await admin.messaging().send(message);
-    await snapshot.ref.update({ fcmSent: true });
+    try {
+        const response = await admin.messaging().send(message);
+        logger.info(`FCM Success: ${response}`);
+        await snapshot.ref.update({ fcmSent: true });
+    } catch (error) {
+        logger.error(`FCM Error: ${error}`);
+    }
 });
 
 // 친구 깨우기 함수

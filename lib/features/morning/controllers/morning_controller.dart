@@ -154,6 +154,7 @@ class MorningController extends ChangeNotifier {
         _todayDiary = diary;
         if (diary.isCompleted) {
           _notificationService.cancelNightlyReminder();
+          _notificationService.cancelMorningReminder();
         } else {
           _notificationService.scheduleNightlyReminder();
         }
@@ -352,6 +353,7 @@ class MorningController extends ChangeNotifier {
 
       if (!isDraft) {
         _notificationService.cancelNightlyReminder();
+        _notificationService.cancelMorningReminder();
       }
 
       // 새로 완료된 경우에만 보상 (임시저장 아님 AND (새 일기거나 기존에 미완료였던 경우))
