@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../core/widgets/floating_notification.dart';
 import '../router/app_router.dart';
+import '../core/localization/app_localizations.dart';
+import '../data/models/notification_model.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -120,25 +122,30 @@ class NotificationService {
     print('포그라운드 메시지 수신: ${message.notification?.title}');
 
     // 앱이 실행 중일 때 메시지를 받으면 여기서 처리
-    if (message.notification != null) {
+    // notification 객체가 있더라도 데이터가 있으면 로컬에서 로컬라이징하여 보여주는 것이 더 정확함 (언어 설정 즉시 반영)
+    if (message.data.isNotEmpty) {
+      _showInAppNotificationFromData(message.data);
+      _handleDataMessage(message.data);
+    } else if (message.notification != null) {
       _showInAppNotification(
         title: message.notification!.title,
         body: message.notification!.body,
-        data: message.data, // data를 함께 넘겨서 한 번만 처리
+        data: message.data,
       );
-    } else if (message.data.isNotEmpty) {
-      // notification이 없고 data만 있는 경우
-      _showInAppNotificationFromData(message.data);
-      _handleDataMessage(message.data);
     }
   }
 
   Future<void> scheduleNightlyReminder() async {
+    final context = AppRouter.navigatorKey.currentContext;
+    final loc = AppLocalizations.of(
+        context!); // Navigator key should have context or fallback
+
     try {
       await _localPlugin.zonedSchedule(
         id: 1123,
-        title: '오늘의 일기를 작성해주세요!',
-        body: '아직 일기를 작성하지 않았어요. 작성하지 않으면 연속 기록이 날아가요!',
+        title: loc?.get('nightlyReminderTitle') ?? '오늘의 일기를 작성해주세요!',
+        body: loc?.get('nightlyReminderBody') ??
+            '아직 일기를 작성하지 않았어요. 작성하지 않으면 연속 기록이 날아가요!',
         scheduledDate: _nextInstanceOfElevenPM(),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -192,10 +199,13 @@ class NotificationService {
         scheduledDate = scheduledDate.add(const Duration(days: 1));
       }
 
+      final context = AppRouter.navigatorKey.currentContext;
+      final loc = AppLocalizations.of(context!);
+
       await _localPlugin.zonedSchedule(
         id: 1124, // 아침 알림 고유 ID
-        title: '굿모닝! 아침 일기를 작성할 시간이에요 ☀️',
-        body: '상쾌한 하루를 시작하며 일기를 남겨보세요!',
+        title: loc?.get('morningReminderTitle') ?? '굿모닝! 아침 일기를 작성할 시간이에요 ☀️',
+        body: loc?.get('morningReminderBody') ?? '상쾌한 하루를 시작하며 일기를 남겨보세요!',
         scheduledDate: scheduledDate,
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -305,68 +315,113 @@ class NotificationService {
   }
 
   void _showInAppNotificationFromData(Map<String, dynamic> data) {
-    final String? type = data['type'];
-    String? title;
-    String? body;
+    if (data.isEmpty) return;
+    final context = AppRouter.navigatorKey.currentContext;
+    if (context == null) return;
 
-    switch (type) {
+    final String? typeStr = data['type'];
+    NotificationType type;
+    switch (typeStr) {
       case 'wake_up':
-        final String? friendName = data['friendName'];
-        title = '깨우기 알림';
-        body = friendName == null || friendName.isEmpty
-            ? '친구가 당신을 깨우려고 합니다!'
-            : '$friendName님이 당신을 깨우려고 합니다!';
+        type = NotificationType.wakeUp;
         break;
       case 'character_evolved':
-        title = '캐릭터 진화';
-        body = '축하합니다! 캐릭터가 진화했습니다!';
+        type = NotificationType.challenge; // Not perfect mapping but close
         break;
       case 'cheer_message':
-        final String? senderNickname = data['senderNickname'];
-        title = senderNickname != null && senderNickname.isNotEmpty
-            ? '$senderNickname님이 응원 메시지를 보냈어요.'
-            : '친구가 응원 메시지를 보냈어요.';
-        body = data['message']?.toString();
+        type = NotificationType.cheerMessage;
         break;
       case 'friend_request':
       case 'friendRequest':
-        final String? friendName = data['friendName'] ?? data['senderNickname'];
-        title = '친구 요청';
-        body = friendName == null || friendName.isEmpty
-            ? '친구 요청이 도착했어요.'
-            : '$friendName 님이 친구 추가를 요청하였습니다.';
+        type = NotificationType.friendRequest;
         break;
       case 'friend_accept':
       case 'friendAccept':
-        final String? friendName = data['senderNickname'];
-        title = '친구 요청 수락';
-        body = friendName == null || friendName.isEmpty
-            ? '친구 요청이 수락되었어요.'
-            : '$friendName님이 친구 요청을 수락했어요.';
+        type = NotificationType.friendAccept;
         break;
       case 'friend_reject':
       case 'friendReject':
-        final String? friendName = data['senderNickname'];
-        title = '친구 요청 거절';
-        body = friendName == null || friendName.isEmpty
-            ? '친구 요청이 거절되었어요.'
-            : '$friendName님이 친구 요청을 거절했어요.';
+        type = NotificationType.friendReject;
         break;
       case 'nestInvite':
-        title = '둥지 초대';
-        body = data['message']?.toString();
+        type = NotificationType.nestInvite;
         break;
       case 'nestDonation':
-        title = '둥지 기부 알림';
-        body = data['message']?.toString();
+        type = NotificationType.nestDonation;
         break;
       default:
-        title = '알림';
-        body = data['message']?.toString();
+        type = NotificationType.system;
         break;
     }
 
-    _showInAppNotification(title: title, body: body, type: type, data: data);
+    // Create a dummy NotificationModel from data just to reuse getLocalizedMessage
+    final dummyNoti = NotificationModel(
+      id: '',
+      userId: '',
+      senderId:
+          data['senderId']?.toString() ?? data['sender_id']?.toString() ?? '',
+      senderNickname: data['senderNickname']?.toString() ??
+          data['friendName']?.toString() ??
+          '알 수 없음',
+      type: type,
+      message: data['message']?.toString() ?? '',
+      createdAt: DateTime.now(),
+      data: data,
+    );
+
+    String? title;
+    switch (dummyNoti.type) {
+      case NotificationType.wakeUp:
+      case NotificationType.nestPoke:
+        title = AppLocalizations.of(context)?.get('wakeUpAlert') ?? '깨우기 알림';
+        break;
+      case NotificationType.friendRequest:
+        title = AppLocalizations.of(context)?.get('friendRequest') ?? '친구 요청';
+        break;
+      case NotificationType.friendAccept:
+        title = AppLocalizations.of(context)?.get('friendAcceptNotiTitle') ??
+            '친구 요청 수락';
+        break;
+      case NotificationType.friendReject:
+        title = AppLocalizations.of(context)?.get('friendRejectShort') ??
+            '친구 요청 거절';
+        break;
+      case NotificationType.cheerMessage:
+        title = AppLocalizations.of(context)?.get('cheerMessage') ?? '응원 메시지';
+        break;
+      case NotificationType.nestInvite:
+        title = AppLocalizations.of(context)?.get('nestInvite') ?? '둥지 초대';
+        break;
+      case NotificationType.nestDonation:
+        title = AppLocalizations.of(context)?.get('nestDonation') ?? '둥지 기부 알림';
+        break;
+      case NotificationType.nestUpgrade:
+        title =
+            AppLocalizations.of(context)?.get('nestUpgradeTitle') ?? '둥지 업그레이드';
+        break;
+      case NotificationType.memoLike:
+      case NotificationType.reportResult:
+      case NotificationType.system:
+        if (typeStr == 'character_evolved') {
+          title =
+              AppLocalizations.of(context)?.get('characterEvolutionTitle') ??
+                  '캐릭터 진화';
+        } else {
+          title = AppLocalizations.of(context)?.get('notifications') ?? '알림';
+        }
+        break;
+      case NotificationType.challenge:
+        title =
+            AppLocalizations.of(context)?.get('challengeComplete') ?? '도전 완료';
+        break;
+      case NotificationType.referralReward:
+        title = AppLocalizations.of(context)?.get('referralReward') ?? '보상';
+        break;
+    }
+
+    final body = dummyNoti.getLocalizedMessage(context);
+
+    _showInAppNotification(title: title, body: body, type: typeStr, data: data);
   }
 
   void _showInAppNotification(

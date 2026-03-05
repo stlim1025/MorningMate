@@ -8,6 +8,7 @@ Future<void> main() async {
   final db = FirebaseFirestore.instance;
   final docs = await db.collection('diaries').get();
   for (var doc in docs.docs) {
-    print('Diary: ${doc.id} - ${doc.data()['dateKey']} - ${doc.data()['userId']}');
+    print(
+        'Diary: ${doc.id} - ${doc.data()['dateKey']} - ${doc.data()['userId']}');
   }
 }

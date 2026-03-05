@@ -70,8 +70,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '237548170950',
     projectId: 'morningmate-11c87',
     storageBucket: 'morningmate-11c87.firebasestorage.app',
-    androidClientId: '237548170950-eikhniv3piqlj3quh5bm7mfeh73lps9v.apps.googleusercontent.com',
-    iosClientId: '237548170950-gspdk280eifqjb7140kba89bqikn79ol.apps.googleusercontent.com',
+    androidClientId:
+        '237548170950-eikhniv3piqlj3quh5bm7mfeh73lps9v.apps.googleusercontent.com',
+    iosClientId:
+        '237548170950-gspdk280eifqjb7140kba89bqikn79ol.apps.googleusercontent.com',
     iosBundleId: 'com.stlim1025.morningmate',
   );
 }

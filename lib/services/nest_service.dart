@@ -121,6 +121,7 @@ class NestService {
           'message':
               '[$nestName] 둥지에서 $senderNickname님이 가지 ${amount}개를 기부했습니다!',
           'isRead': false,
+          'fcmSent': false,
           'createdAt': FieldValue.serverTimestamp(),
           'data': {
             'nestId': nestId,
@@ -338,6 +339,7 @@ class NestService {
       'type': 'nestInvite',
       'message': '$senderNickname님이 \'$nestName\' 둥지에 초대했습니다!',
       'isRead': false,
+      'fcmSent': false,
       'createdAt': FieldValue.serverTimestamp(),
       'data': {
         'inviteId': inviteRef.id,
@@ -400,6 +402,10 @@ class NestService {
         'message': '\'$nestName\' 둥지 초대를 수락했습니다.',
         'type': 'system',
         'isRead': true,
+        'data': {
+          ...Map<String, dynamic>.from(data['data'] ?? {}),
+          'systemType': 'inviteAccept',
+        },
       });
     }
 
@@ -431,6 +437,10 @@ class NestService {
         'message': '\'$nestName\' 둥지 초대를 거절했습니다.',
         'type': 'system',
         'isRead': true,
+        'data': {
+          ...Map<String, dynamic>.from(data['data'] ?? {}),
+          'systemType': 'inviteReject',
+        },
       });
     }
 

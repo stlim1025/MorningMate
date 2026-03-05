@@ -10,6 +10,7 @@
 import { setGlobalOptions } from "firebase-functions/v2";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 
@@ -71,6 +72,13 @@ const normalizeNotificationType = (type?: string) => {
       return "nest_donation";
     case "reportResult":
       return "report_result";
+    case "nestPoke":
+      return "nest_poke";
+    case "memoLike":
+      return "memo_like";
+    case "morning_diary":
+    case "morning_reminder":
+      return "morning_reminder";
     case "system":
       return "system";
     default:
@@ -80,45 +88,94 @@ const normalizeNotificationType = (type?: string) => {
 
 const buildNotificationContent = (
   type: string,
+  lang: string = "ko",
   message?: string,
   senderNickname?: string
 ) => {
+  const isEn = lang === "en";
+  const name = senderNickname ?? (isEn ? "Friend" : "친구");
+
   switch (type) {
     case "wake_up":
       return {
-        title: "깨우기 알림",
-        body: message ?? `${senderNickname ?? "친구"}님이 당신을 깨우고 있어요!`,
+        title: isEn ? "Wake Up Alert" : "깨우기 알림",
+        body: isEn
+          ? `${name} is waking you up! ⏰`
+          : `${name}님이 당신을 깨우고 있어요!`,
       };
     case "friend_request":
       return {
-        title: "친구 요청",
-        body: message ?? `${senderNickname ?? "친구"}님이 친구 요청을 보냈습니다! 👋`,
+        title: isEn ? "Friend Request" : "친구 요청",
+        body: isEn
+          ? `${name} sent you a friend request! 👋`
+          : `${name}님이 친구 요청을 보냈습니다! 👋`,
+      };
+    case "friend_accept":
+      return {
+        title: isEn ? "Friend Request Accepted" : "친구 요청 수락",
+        body: isEn
+          ? `${name} accepted your friend request.`
+          : `${name}님이 친구 요청을 수락했어요.`,
+      };
+    case "friend_reject":
+      return {
+        title: isEn ? "Friend Request Rejected" : "친구 요청 거절",
+        body: isEn
+          ? `${name} rejected your friend request.`
+          : `${name}님이 친구 요청을 거절했어요.`,
       };
     case "cheer_message":
       return {
-        title: "친구가 응원 메시지를 보냈어요.",
-        body: message ?? "응원 메시지가 도착했어요.",
+        title: name,
+        body: message ?? (isEn ? "Sent a cheer message." : "응원 메시지가 도착했어요."),
       };
     case "nest_invite":
       return {
-        title: "둥지 초대",
-        body: message ?? `${senderNickname ?? "친구"}님이 둥지에 초대했습니다!`,
+        title: isEn ? "Nest Invitation" : "둥지 초대",
+        body: isEn
+          ? `${name} invited you to a nest!`
+          : `${name}님이 둥지에 초대했습니다!`,
       };
     case "nest_donation":
       return {
-        title: "둥지 기부 알림",
-        body: message ?? "둥지에 새로운 기부가 도착했습니다.",
+        title: isEn ? "Nest Donation" : "둥지 기부 알림",
+        body: isEn
+          ? "A new donation arrived at the nest."
+          : "둥지에 새로운 기부가 도착했습니다.",
       };
     case "report_result":
       return {
-        title: "신고 처리 결과",
-        body: message ?? "신고하신 건에 대한 처리 결과가 도착했습니다.",
+        title: isEn ? "Report Result" : "신고 처리 결과",
+        body: isEn
+          ? "Your report has been processed."
+          : "신고하신 건에 대한 처리 결과가 도착했습니다.",
+      };
+    case "nest_poke":
+      return {
+        title: isEn ? "Poke Alert" : "찌르기 알림",
+        body: isEn
+          ? `${name} poked you! 👉`
+          : `${name}님이 당신을 찔렀습니다! 👉`,
+      };
+    case "memo_like":
+      return {
+        title: isEn ? "Memo Heart" : "메모 하트",
+        body: isEn
+          ? `${name} sent a heart to your memo! ❤️`
+          : `${name}님이 내 메모에 하트를 보냈어요! ❤️`,
+      };
+    case "morning_reminder":
+      return {
+        title: isEn ? "Good Morning!" : "아침 일기",
+        body: isEn
+          ? "It's time to write your diary and wake up your character! ☀️"
+          : "일기를 작성하고 캐릭터를 깨워주세요! ☀️",
       };
     case "system":
     default:
       return {
-        title: "알림",
-        body: message ?? "새로운 알림이 도착했어요.",
+        title: isEn ? "Notification" : "알림",
+        body: message ?? (isEn ? "You have a new notification." : "새로운 알림이 도착했어요."),
       };
   }
 };
@@ -153,9 +210,12 @@ export const sendNotificationOnCreate = onDocumentCreated(
       return;
     }
 
+    const userLang = userData?.languageCode ?? "ko";
+
     const normalizedType = normalizeNotificationType(data.type);
     const { title, body } = buildNotificationContent(
       normalizedType,
+      userLang,
       data.message,
       data.senderNickname
     );
@@ -204,10 +264,10 @@ export const wakeUpFriend = onCall(async (request) => {
     );
   }
 
-  const { userId, friendId, friendName, message: customMessage } = request.data;
+  const { userId, friendId } = request.data;
 
   // 유효성 검사
-  if (!userId || !friendId || !friendName) {
+  if (!userId || !friendId) {
     throw new HttpsError(
       "invalid-argument",
       "The function must be called with valid arguments."
@@ -236,40 +296,7 @@ export const wakeUpFriend = onCall(async (request) => {
       return { success: false, message: "Friend not reachable." };
     }
 
-    // 알림 페이로드
-    const message = {
-      token: fcmToken,
-      notification: {
-        title: customMessage ? "찌르기 알림" : "일어나세요! ☀️",
-        body: customMessage ?? `${friendName}님이 당신을 깨우고 있어요!`,
-      },
-      data: {
-        type: "wake_up",
-        friendId: userId,
-        friendName: friendName,
-        message: customMessage ?? "",
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
-      },
-      android: {
-        priority: "high" as const,
-        notification: {
-          channelId: "high_importance_channel",
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            contentAvailable: true,
-            sound: "default",
-          },
-        },
-      },
-    };
-
-    // 알림 전송
-    await admin.messaging().send(message);
-    logger.info(`Wake up notification sent to ${friendId} from ${userId}`);
-
+    logger.info(`Wake up check passed for ${friendId} from ${userId}`);
     return { success: true };
   } catch (error) {
     logger.error("Error sending notification:", error);
@@ -286,7 +313,7 @@ export const sendCheerMessage = onCall(async (request) => {
     );
   }
 
-  const { userId, friendId, message, senderNickname } = request.data;
+  const { userId, friendId, message } = request.data;
 
   if (!userId || !friendId || !message) {
     throw new HttpsError(
@@ -316,38 +343,7 @@ export const sendCheerMessage = onCall(async (request) => {
       return { success: false, message: "Friend not reachable." };
     }
 
-    const notificationMessage = {
-      token: fcmToken,
-      notification: {
-        title: "친구가 응원 메시지를 보냈어요.",
-        body: message,
-      },
-      data: {
-        type: "cheer_message",
-        senderId: userId,
-        senderNickname: senderNickname ?? "",
-        message: message,
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
-      },
-      android: {
-        priority: "high" as const,
-        notification: {
-          channelId: "high_importance_channel",
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            contentAvailable: true,
-            sound: "default",
-          },
-        },
-      },
-    };
-
-    await admin.messaging().send(notificationMessage);
-    logger.info(`Cheer message sent to ${friendId} from ${userId}`);
-
+    logger.info(`Cheer message check passed for ${friendId} from ${userId}`);
     return { success: true };
   } catch (error) {
     logger.error("Error sending cheer message:", error);
@@ -392,37 +388,7 @@ export const sendFriendRequestNotification = onCall(async (request) => {
       return { success: false, message: "Friend not reachable." };
     }
 
-    const notificationMessage = {
-      token: fcmToken,
-      notification: {
-        title: "친구 요청",
-        body: `${senderNickname}님이 친구 요청을 보냈습니다! 👋`,
-      },
-      data: {
-        type: "friend_request",
-        senderId: userId,
-        senderNickname: senderNickname,
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
-      },
-      android: {
-        priority: "high" as const,
-        notification: {
-          channelId: "high_importance_channel",
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            contentAvailable: true,
-            sound: "default",
-          },
-        },
-      },
-    };
-
-    await admin.messaging().send(notificationMessage);
-    logger.info(`Friend request sent to ${friendId} from ${userId}`);
-
+    logger.info(`Friend request check passed for ${friendId} from ${userId}`);
     return { success: true };
   } catch (error) {
     logger.error("Error sending friend request:", error);
@@ -467,37 +433,7 @@ export const sendFriendAcceptNotification = onCall(async (request) => {
       return { success: false, message: "Friend not reachable." };
     }
 
-    const notificationMessage = {
-      token: fcmToken,
-      notification: {
-        title: "친구 요청 수락",
-        body: `${senderNickname}님이 친구 요청을 수락했어요.`,
-      },
-      data: {
-        type: "friend_accept",
-        senderId: userId,
-        senderNickname: senderNickname,
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
-      },
-      android: {
-        priority: "high" as const,
-        notification: {
-          channelId: "high_importance_channel",
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            contentAvailable: true,
-            sound: "default",
-          },
-        },
-      },
-    };
-
-    await admin.messaging().send(notificationMessage);
-    logger.info(`Friend accept sent to ${friendId} from ${userId}`);
-
+    logger.info(`Friend accept check passed for ${friendId} from ${userId}`);
     return { success: true };
   } catch (error) {
     logger.error("Error sending friend accept:", error);
@@ -542,16 +478,69 @@ export const sendFriendRejectNotification = onCall(async (request) => {
       return { success: false, message: "Friend not reachable." };
     }
 
-    const notificationMessage = {
+    logger.info(`Friend reject check passed for ${friendId} from ${userId}`);
+    return { success: true };
+  } catch (error) {
+    logger.error("Error sending friend reject:", error);
+    throw new HttpsError("internal", "Error sending friend reject.");
+  }
+});
+
+// 아침 일기 작성 알림 예약 함수 (매 5분마다 실행)
+export const morningReminder = onSchedule("every 5 minutes", async () => {
+  const now = new Date();
+  // 한국 시간 (UTC+9) 기준 시간 계산
+  const krTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+  const hours = krTime.getUTCHours().toString().padStart(2, "0");
+  const minutes = krTime.getUTCMinutes().toString().padStart(2, "0");
+  const currentTimeStr = `${hours}:${minutes}`;
+
+  logger.info(`Running morningReminder at ${currentTimeStr} (KR Time)`);
+
+  const usersRef = admin.firestore().collection("users");
+  // 알림이 켜져 있는 사용자 쿼리
+  const snapshot = await usersRef
+    .where("morningDiaryNoti", "==", true)
+    .where("morningDiaryNotiTime", "==", currentTimeStr)
+    .get();
+
+  if (snapshot.empty) {
+    logger.info("No users to remind at this time.");
+    return;
+  }
+
+  const todayStr = krTime.toISOString().split("T")[0]; // YYYY-MM-DD
+
+  const promises = snapshot.docs.map(async (doc) => {
+    const userData = doc.data();
+    const userId = doc.id;
+
+    // 오늘 이미 일기를 썼는지 확인
+    if (userData.lastDiaryDate) {
+      const lastDate = userData.lastDiaryDate.toDate();
+      const lastDateKR = new Date(lastDate.getTime() + (9 * 60 * 60 * 1000));
+      const lastDateStr = lastDateKR.toISOString().split("T")[0];
+
+      if (lastDateStr === todayStr) {
+        logger.info(`User ${userId} already wrote a diary today.`);
+        return;
+      }
+    }
+
+    const fcmToken = userData.fcmToken;
+    if (!fcmToken) return;
+
+    const userLang = userData.languageCode ?? "ko";
+    const { title, body } = buildNotificationContent("morning_reminder", userLang);
+
+    const message = {
       token: fcmToken,
       notification: {
-        title: "친구 요청 거절",
-        body: `${senderNickname}님이 친구 요청을 거절했어요.`,
+        title,
+        body,
       },
       data: {
-        type: "friend_reject",
-        senderId: userId,
-        senderNickname: senderNickname,
+        type: "morning_reminder",
         click_action: "FLUTTER_NOTIFICATION_CLICK",
       },
       android: {
@@ -570,12 +559,13 @@ export const sendFriendRejectNotification = onCall(async (request) => {
       },
     };
 
-    await admin.messaging().send(notificationMessage);
-    logger.info(`Friend reject sent to ${friendId} from ${userId}`);
+    try {
+      await admin.messaging().send(message);
+      logger.info(`Sent morning reminder to user ${userId}`);
+    } catch (error) {
+      logger.error(`Error sending reminder to user ${userId}:`, error);
+    }
+  });
 
-    return { success: true };
-  } catch (error) {
-    logger.error("Error sending friend reject:", error);
-    throw new HttpsError("internal", "Error sending friend reject.");
-  }
+  await Promise.all(promises);
 });

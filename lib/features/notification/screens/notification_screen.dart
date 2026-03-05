@@ -263,7 +263,8 @@ class NotificationScreen extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          notification.message,
+                                          notification
+                                              .getLocalizedMessage(context),
                                           style: TextStyle(
                                             fontFamily: 'BMJUA',
                                             color: colorScheme.textPrimary,

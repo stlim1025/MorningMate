@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LanguageProvider extends ChangeNotifier {
   Locale _locale = const Locale('ko');
@@ -26,6 +28,9 @@ class LanguageProvider extends ChangeNotifier {
       }
     }
     notifyListeners();
+
+    // Sync to Firestore on initial load
+    _syncLanguageToFirestore(_locale.languageCode);
   }
 
   Future<void> setLocale(Locale locale) async {
@@ -33,5 +38,22 @@ class LanguageProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('languageCode', locale.languageCode);
     notifyListeners();
+
+    // Sync to Firestore for Firebase Functions to read
+    await _syncLanguageToFirestore(locale.languageCode);
+  }
+
+  Future<void> _syncLanguageToFirestore(String languageCode) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'languageCode': languageCode});
+      }
+    } catch (e) {
+      debugPrint('Firestore 언어 동기화 실패: $e');
+    }
   }
 }

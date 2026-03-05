@@ -245,6 +245,7 @@ class AdminController extends ChangeNotifier {
           'message': '신고하신 메모가 삭제 조치되었습니다. 건전한 커뮤니티를 위해 힘써주셔서 감사합니다.',
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
+          'data': {'status': 'resolved'},
         });
 
         final violatorNotiRef = _firestore.collection('notifications').doc();
@@ -254,6 +255,7 @@ class AdminController extends ChangeNotifier {
           'message': '작성하신 메모가 신고 접수되어 커뮤니티 가이드라인 위반으로 삭제되었습니다.',
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
+          'data': {'systemType': 'violator'},
         });
       });
       await fetchReports();
@@ -277,6 +279,7 @@ class AdminController extends ChangeNotifier {
         'message': '신고가 반려되었습니다. 사유: $rejectReason',
         'isRead': false,
         'createdAt': FieldValue.serverTimestamp(),
+        'data': {'status': 'rejected', 'reason': rejectReason},
       });
 
       await _firestore.collection('reports').doc(reportId).update({
@@ -340,6 +343,7 @@ class AdminController extends ChangeNotifier {
               '신고하신 회원이 $durationStr 정지 처리되었습니다. 보상으로 100가지가 지급되었습니다. 건전한 커뮤니티를 위해 힘써주셔서 감사합니다.',
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
+          'data': {'status': 'suspended', 'duration': durationStr},
         });
 
         // 신고자 보상 (100가지)

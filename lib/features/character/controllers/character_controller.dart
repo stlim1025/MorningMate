@@ -999,6 +999,11 @@ class CharacterController extends ChangeNotifier {
         'isRead': false,
         'fcmSent': false,
         'createdAt': FieldValue.serverTimestamp(),
+        'data': {
+          'challengeId': challenge.id,
+          'challengeTitleKey': challenge.titleKey,
+          'reward': challenge.reward,
+        },
       });
 
       // 팝업 표시

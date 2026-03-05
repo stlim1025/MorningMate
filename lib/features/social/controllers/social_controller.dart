@@ -264,7 +264,7 @@ class SocialController extends ChangeNotifier {
       for (var doc in notificationsSnapshot.docs) {
         b.update(doc.reference, {
           'message': '$friendNickname님과 친구가 되었습니다!',
-          'type': 'system',
+          'type': 'friendAccept',
           'isRead': true,
         });
       }
@@ -325,8 +325,9 @@ class SocialController extends ChangeNotifier {
           'message': isRecipient
               ? '$friendNickname님의 친구 요청을 거절했습니다.'
               : '$userNickname님이 친구 요청을 거절하셨습니다.',
-          'type': 'system',
+          'type': 'friendReject',
           'isRead': true,
+          'data': {'isSender': isRecipient},
         });
       }
       await b.commit();
@@ -416,6 +417,7 @@ class SocialController extends ChangeNotifier {
           'nestId': nestId,
           'nestName': nestName,
         },
+        // nestName stored in data for getLocalizedMessage
       });
 
       unawaited(() async {
