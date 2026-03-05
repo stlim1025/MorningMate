@@ -386,22 +386,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 8),
-
-                // 회원가입 버튼
-                TextButton(
-                  onPressed: () => context.push('/signup'),
-                  child: Text(
-                    l10n?.get('noAccountSignup') ??
-                        "Don't have an account? Sign Up",
-                    style: const TextStyle(
-                      fontFamily: 'BMJUA',
-                      color: Color(0xFF4E342E),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
