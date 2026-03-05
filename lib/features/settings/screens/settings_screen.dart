@@ -113,11 +113,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           title: AppLocalizations.of(context)?.get('email') ??
                               'Email',
                           subtitle: (user?.email?.startsWith('kakao_') ?? false)
-                              ? '카카오 로그인'
+                              ? (AppLocalizations.of(context)
+                                      ?.get('kakaoLogin') ??
+                                  'Kakao Login')
                               : ((user?.email ?? '').startsWith('apple_') ||
                                       (user?.email ?? '')
                                           .contains('privaterelay.appleid.com'))
-                                  ? 'Apple 로그인'
+                                  ? (AppLocalizations.of(context)
+                                          ?.get('appleLogin') ??
+                                      'Apple Login')
                                   : user?.email ?? '',
                           onTap: null,
                         ),
@@ -127,7 +131,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             context,
                             colorScheme,
                             icon: Icons.card_giftcard,
-                            title: '내 추천인 코드',
+                            title: AppLocalizations.of(context)
+                                    ?.get('myReferralCode') ??
+                                'My Referral Code',
                             subtitle: '${user?.referralCode ?? ''}',
                             trailingIcon: Icons.copy,
                             onTap: () async {
@@ -135,7 +141,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ClipboardData(text: user!.referralCode!));
                               if (context.mounted) {
                                 MemoNotification.show(
-                                    context, '추천인 코드가 복사되었습니다.');
+                                    context,
+                                    AppLocalizations.of(context)
+                                            ?.get('referralCodeCopied') ??
+                                        'Referral code copied.');
                               }
                             },
                           ),
@@ -854,10 +863,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: PopupTextField(
                 controller: currentPasswordController,
                 obscureText: true,
-                hintText: '현재 비밀번호',
+                hintText:
+                    AppLocalizations.of(context)?.get('currentPassword') ??
+                        'Current Password',
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return '현재 비밀번호를 입력해주세요';
+                    return AppLocalizations.of(context)
+                            ?.get('currentPasswordRequired') ??
+                        'Please enter current password';
                   }
                   return null;
                 },
@@ -869,13 +882,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: PopupTextField(
                 controller: newPasswordController,
                 obscureText: true,
-                hintText: '새 비밀번호 (6자 이상)',
+                hintText:
+                    AppLocalizations.of(context)?.get('newPasswordHint') ??
+                        'New Password (min 6 chars)',
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return '새 비밀번호를 입력해주세요';
+                    return AppLocalizations.of(context)
+                            ?.get('newPasswordRequired') ??
+                        'Please enter new password';
                   }
                   if (value.trim().length < 6) {
-                    return '비밀번호는 최소 6자 이상이어야 합니다';
+                    return AppLocalizations.of(context)
+                            ?.get('passwordLengthError') ??
+                        'Password must be at least 6 characters';
                   }
                   return null;
                 },
@@ -887,13 +906,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: PopupTextField(
                 controller: confirmPasswordController,
                 obscureText: true,
-                hintText: '비밀번호 확인',
+                hintText:
+                    AppLocalizations.of(context)?.get('passwordConfirmHint') ??
+                        'Confirm Password',
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return '비밀번호 확인을 입력해주세요';
+                    return AppLocalizations.of(context)
+                            ?.get('passwordConfirmRequired') ??
+                        'Please confirm new password';
                   }
                   if (value != newPasswordController.text) {
-                    return '비밀번호가 일치하지 않습니다';
+                    return AppLocalizations.of(context)
+                            ?.get('passwordMismatch') ??
+                        'Passwords do not match';
                   }
                   return null;
                 },
@@ -922,21 +947,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    _buildSnackBar('비밀번호가 변경되었습니다', colorScheme,
+                    _buildSnackBar(
+                        AppLocalizations.of(context)
+                                ?.get('passwordChangedSuccess') ??
+                            'Password successfully changed',
+                        colorScheme,
                         isSuccess: true),
                   );
                 }
               } catch (e) {
                 if (context.mounted) {
-                  String errorMessage = '오류가 발생했습니다';
+                  String errorMessage =
+                      AppLocalizations.of(context)?.get('errorOccurred') ??
+                          'An error occurred';
                   if (e is FirebaseAuthException) {
                     switch (e.code) {
                       case 'wrong-password':
                       case 'invalid-credential':
-                        errorMessage = '현재 비밀번호가 일치하지 않습니다';
+                        errorMessage = AppLocalizations.of(context)
+                                ?.get('currentPasswordMismatch') ??
+                            'Current password does not match';
                         break;
                       case 'requires-recent-login':
-                        errorMessage = '보안을 위해 다시 로그인 후 시도해주세요';
+                        errorMessage = AppLocalizations.of(context)
+                                ?.get('requireRecentLogin') ??
+                            'Please log in again for security';
                         break;
                       default:
                         errorMessage = e.message ?? errorMessage;
