@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_dialog.dart';
 import '../controllers/auth_controller.dart';
 import '../../notification/controllers/notification_controller.dart';
 import '../../../../services/user_service.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 class NicknameSetupScreen extends StatefulWidget {
   const NicknameSetupScreen({super.key});
@@ -298,7 +299,8 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                     const SizedBox(height: 16),
                     const SizedBox(height: 60),
                     Text(
-                      '환영합니다!',
+                      AppLocalizations.of(context)?.get('welcomeTitle') ??
+                          '환영합니다!',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -316,7 +318,8 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '사용하실 닉네임과 추천인 코드를 입력해주세요.',
+                      AppLocalizations.of(context)?.get('welcomeDesc') ??
+                          '사용하실 닉네임과 추천인 코드를 입력해주세요.',
                       style: TextStyle(
                         fontSize: 16,
                         color: const Color(0xFFF5F5F0),
@@ -331,155 +334,158 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 60),
-                    Text(
-                      '닉네임',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFF5F5F0),
-                        fontFamily: 'BMJUA',
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withOpacity(0.3),
-                            offset: const Offset(0, 1),
-                            blurRadius: 3,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    PopupTextField(
-                      controller: _nicknameController,
-                      maxLength: 15,
-                      hintText: '닉네임을 입력하세요',
-                      fontFamily: 'KyoboHandwriting2024psw',
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      '추천인 코드 (선택)',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFF5F5F0),
-                        fontFamily: 'BMJUA',
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withOpacity(0.3),
-                            offset: const Offset(0, 1),
-                            blurRadius: 3,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    PopupTextField(
-                      controller: _referralController,
-                      hintText: '추천인 코드가 있다면 입력해주세요 (혜택 제공)',
-                      fontFamily: 'KyoboHandwriting2024psw',
-                    ),
-                    if (_referralError != null)
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(top: 8.0),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFDD8D8),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(0xFFD32F2F).withOpacity(0.5),
-                          ),
-                        ),
-                        child: Text(
-                          _referralError!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFFD32F2F),
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'BMJUA',
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 28),
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image:
+                              AssetImage('assets/images/Popup_Background.png'),
+                          fit: BoxFit.fill,
                         ),
                       ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '나와 친구가 같이 ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: const Color(0xFFF5F5F0),
-                            fontFamily: 'BMJUA',
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withOpacity(0.3),
-                                offset: const Offset(0, 1),
-                                blurRadius: 3,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Image.asset(
-                          'assets/images/branch.png',
-                          width: 18,
-                          height: 18,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '100개 받아요!',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFF5F5F0),
-                            fontFamily: 'BMJUA',
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withOpacity(0.3),
-                                offset: const Offset(0, 1),
-                                blurRadius: 3,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 60),
-                    GestureDetector(
-                      onTap: _isLoading ? null : _submit,
-                      child: Opacity(
-                        opacity: _isLoading ? 0.6 : 1.0,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/images/Confirm_Button.png',
-                              width: double.infinity,
-                              height: 60,
-                              fit: BoxFit.fill,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)
+                                    ?.get('nicknameLabel') ??
+                                '닉네임',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF4E342E),
+                              fontFamily: 'BMJUA',
                             ),
-                            _isLoading
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Color(0xFF4E342E)),
-                                    ),
-                                  )
-                                : const Text(
-                                    '시작하기',
-                                    style: TextStyle(
-                                      fontFamily: 'BMJUA',
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF4E342E),
-                                    ),
+                          ),
+                          const SizedBox(height: 8),
+                          PopupTextField(
+                            controller: _nicknameController,
+                            maxLength: 15,
+                            hintText: AppLocalizations.of(context)
+                                    ?.get('nicknamePlaceholder2') ??
+                                '닉네임을 입력하세요',
+                            fontFamily: 'KyoboHandwriting2024psw',
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            AppLocalizations.of(context)
+                                    ?.get('referralLabel') ??
+                                '추천인 코드 (선택)',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF4E342E),
+                              fontFamily: 'BMJUA',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          PopupTextField(
+                            controller: _referralController,
+                            hintText: AppLocalizations.of(context)
+                                    ?.get('referralPlaceholder') ??
+                                '추천인 코드가 있다면 입력해주세요 (혜택 제공)',
+                            fontFamily: 'KyoboHandwriting2024psw',
+                          ),
+                          if (_referralError != null)
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(top: 8.0),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFDD8D8),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color:
+                                      const Color(0xFFD32F2F).withOpacity(0.5),
+                                ),
+                              ),
+                              child: Text(
+                                _referralError!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFFD32F2F),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'BMJUA',
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)
+                                        ?.get('referralReward1') ??
+                                    '나와 친구가 같이 ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: const Color(0xFF4E342E),
+                                  fontFamily: 'BMJUA',
+                                ),
+                              ),
+                              Image.asset(
+                                'assets/images/branch.png',
+                                width: 18,
+                                height: 18,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                AppLocalizations.of(context)
+                                        ?.get('referralReward2') ??
+                                    '100개 받아요!',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF4E342E),
+                                  fontFamily: 'BMJUA',
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          GestureDetector(
+                            onTap: _isLoading ? null : _submit,
+                            child: Opacity(
+                              opacity: _isLoading ? 0.6 : 1.0,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/Confirm_Button.png',
+                                    width: double.infinity,
+                                    height: 60,
+                                    fit: BoxFit.fill,
                                   ),
-                          ],
-                        ),
+                                  _isLoading
+                                      ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Color(0xFF4E342E)),
+                                          ),
+                                        )
+                                      : Text(
+                                          AppLocalizations.of(context)
+                                                  ?.get('start') ??
+                                              '시작하기',
+                                          style: const TextStyle(
+                                            fontFamily: 'BMJUA',
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF4E342E),
+                                          ),
+                                        ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
