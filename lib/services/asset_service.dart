@@ -362,7 +362,7 @@ class AssetService {
       }
 
       final docRef = _db.collection('assets').doc(id);
-      await docRef.update({
+      await docRef.set({
         'name': name,
         'nameKo': nameKo,
         'nameEn': nameEn,
@@ -386,7 +386,7 @@ class AssetService {
         'charScaleAwake': charScaleAwake,
         'charScaleSleep': charScaleSleep,
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       await fetchDynamicAssets();
       debugPrint('에셋 [$id] 업데이트 및 반영 완료');
