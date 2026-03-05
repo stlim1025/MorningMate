@@ -509,9 +509,9 @@ class NotificationService {
   // iOS 포그라운드 알림 설정
   Future<void> setForegroundNotificationPresentationOptions() async {
     await _fcm.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
+      alert: false,
+      badge: false,
+      sound: false,
     );
   }
 

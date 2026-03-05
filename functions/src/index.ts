@@ -7,17 +7,17 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import {setGlobalOptions} from "firebase-functions/v2";
-import {onCall, HttpsError} from "firebase-functions/v2/https";
-import {onDocumentCreated} from "firebase-functions/v2/firestore";
-import {onSchedule} from "firebase-functions/v2/scheduler";
+import { setGlobalOptions } from "firebase-functions/v2";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 
 admin.initializeApp();
 
 // Set global options
-setGlobalOptions({maxInstances: 10});
+setGlobalOptions({ maxInstances: 10 });
 
 const RATE_LIMIT_WINDOW_MS = 30 * 1000;
 
@@ -53,36 +53,36 @@ async function enforceRateLimit(
         type,
         lastSentAt: admin.firestore.Timestamp.fromMillis(now),
       },
-      {merge: true}
+      { merge: true }
     );
   });
 }
 
 const normalizeNotificationType = (type?: string) => {
   switch (type) {
-  case "wakeUp":
-    return "wake_up";
-  case "friendRequest":
-    return "friend_request";
-  case "cheerMessage":
-    return "cheer_message";
-  case "nestInvite":
-    return "nest_invite";
-  case "nestDonation":
-    return "nest_donation";
-  case "reportResult":
-    return "report_result";
-  case "nestPoke":
-    return "nest_poke";
-  case "memoLike":
-    return "memo_like";
-  case "morning_diary":
-  case "morning_reminder":
-    return "morning_reminder";
-  case "system":
-    return "system";
-  default:
-    return type ?? "system";
+    case "wakeUp":
+      return "wake_up";
+    case "friendRequest":
+      return "friend_request";
+    case "cheerMessage":
+      return "cheer_message";
+    case "nestInvite":
+      return "nest_invite";
+    case "nestDonation":
+      return "nest_donation";
+    case "reportResult":
+      return "report_result";
+    case "nestPoke":
+      return "nest_poke";
+    case "memoLike":
+      return "memo_like";
+    case "morning_diary":
+    case "morning_reminder":
+      return "morning_reminder";
+    case "system":
+      return "system";
+    default:
+      return type ?? "system";
   }
 };
 
@@ -90,93 +90,104 @@ const buildNotificationContent = (
   type: string,
   lang = "ko",
   message?: string,
-  senderNickname?: string
+  senderNickname?: string,
+  isReply?: boolean
 ) => {
   const isEn = lang === "en";
   const name = senderNickname ?? (isEn ? "Friend" : "친구");
 
   switch (type) {
-  case "wake_up":
-    return {
-      title: isEn ? "Wake Up Alert" : "깨우기 알림",
-      body: isEn ?
-        `${name} is waking you up! ⏰` :
-        `${name}님이 당신을 깨우고 있어요!`,
-    };
-  case "friend_request":
-    return {
-      title: isEn ? "Friend Request" : "친구 요청",
-      body: isEn ?
-        `${name} sent you a friend request! 👋` :
-        `${name}님이 친구 요청을 보냈습니다! 👋`,
-    };
-  case "friend_accept":
-    return {
-      title: isEn ? "Friend Request Accepted" : "친구 요청 수락",
-      body: isEn ?
-        `${name} accepted your friend request.` :
-        `${name}님이 친구 요청을 수락했어요.`,
-    };
-  case "friend_reject":
-    return {
-      title: isEn ? "Friend Request Rejected" : "친구 요청 거절",
-      body: isEn ?
-        `${name} rejected your friend request.` :
-        `${name}님이 친구 요청을 거절했어요.`,
-    };
-  case "cheer_message":
-    return {
-      title: isEn ? "Cheer Message" : "응원 메시지",
-      body: message ?? (isEn ? "Sent a cheer message." : "응원 메시지가 도착했어요."),
-    };
-  case "nest_invite":
-    return {
-      title: isEn ? "Nest Invitation" : "둥지 초대",
-      body: isEn ?
-        `${name} invited you to a nest!` :
-        `${name}님이 둥지에 초대했습니다!`,
-    };
-  case "nest_donation":
-    return {
-      title: isEn ? "Nest Donation" : "둥지 기부 알림",
-      body: isEn ?
-        "A new donation arrived at the nest." :
-        "둥지에 새로운 기부가 도착했습니다.",
-    };
-  case "report_result":
-    return {
-      title: isEn ? "Report Result" : "신고 처리 결과",
-      body: isEn ?
-        "Your report has been processed." :
-        "신고하신 건에 대한 처리 결과가 도착했습니다.",
-    };
-  case "nest_poke":
-    return {
-      title: isEn ? "Poke Alert" : "찌르기 알림",
-      body: isEn ?
-        `${name} poked you! 👉` :
-        `${name}님이 당신을 찔렀습니다! 👉`,
-    };
-  case "memo_like":
-    return {
-      title: isEn ? "Memo Heart" : "메모 하트",
-      body: isEn ?
-        `${name} sent a heart to your memo! ❤️` :
-        `${name}님이 내 메모에 하트를 보냈어요! ❤️`,
-    };
-  case "morning_reminder":
-    return {
-      title: isEn ? "Good Morning!" : "아침 일기",
-      body: isEn ?
-        "It's time to write your diary and wake up your character! ☀️" :
-        "일기를 작성하고 캐릭터를 깨워주세요! ☀️",
-    };
-  case "system":
-  default:
-    return {
-      title: isEn ? "Notification" : "알림",
-      body: message ?? (isEn ? "You have a new notification." : "새로운 알림이 도착했어요."),
-    };
+    case "wake_up":
+      return {
+        title: isEn ? "Wake Up Alert" : "깨우기 알림",
+        body: isEn ?
+          `${name} is waking you up! ⏰` :
+          `${name}님이 당신을 깨우고 있어요!`,
+      };
+    case "friend_request":
+      return {
+        title: isEn ? "Friend Request" : "친구 요청",
+        body: isEn ?
+          `${name} sent you a friend request! 👋` :
+          `${name}님이 친구 요청을 보냈습니다! 👋`,
+      };
+    case "friend_accept":
+      return {
+        title: isEn ? "Friend Request Accepted" : "친구 요청 수락",
+        body: isEn ?
+          `${name} accepted your friend request.` :
+          `${name}님이 친구 요청을 수락했어요.`,
+      };
+    case "friend_reject":
+      return {
+        title: isEn ? "Friend Request Rejected" : "친구 요청 거절",
+        body: isEn ?
+          `${name} rejected your friend request.` :
+          `${name}님이 친구 요청을 거절했어요.`,
+      };
+    case "cheer_message":
+      if (isReply) {
+        return {
+          title: isEn ?
+            `${name} sent a reply!` :
+            `${name}님이 답장을 보냈습니다!`,
+          body: message ?? (isEn ? "Sent a reply." : "답장이 도착했어요."),
+        };
+      }
+      return {
+        title: isEn ?
+          `${name} sent a cheer message!` :
+          `${name}님이 응원메시지를 보냈습니다!`,
+        body: message ?? (isEn ? "Sent a cheer message." : "응원 메시지가 도착했어요."),
+      };
+    case "nest_invite":
+      return {
+        title: isEn ? "Nest Invitation" : "둥지 초대",
+        body: isEn ?
+          `${name} invited you to a nest!` :
+          `${name}님이 둥지에 초대했습니다!`,
+      };
+    case "nest_donation":
+      return {
+        title: isEn ? "Nest Donation" : "둥지 기부 알림",
+        body: isEn ?
+          "A new donation arrived at the nest." :
+          "둥지에 새로운 기부가 도착했습니다.",
+      };
+    case "report_result":
+      return {
+        title: isEn ? "Report Result" : "신고 처리 결과",
+        body: isEn ?
+          "Your report has been processed." :
+          "신고하신 건에 대한 처리 결과가 도착했습니다.",
+      };
+    case "nest_poke":
+      return {
+        title: isEn ? "Poke Alert" : "찌르기 알림",
+        body: isEn ?
+          `${name} poked you! 👉` :
+          `${name}님이 당신을 찔렀습니다! 👉`,
+      };
+    case "memo_like":
+      return {
+        title: isEn ? "Memo Heart" : "메모 하트",
+        body: isEn ?
+          `${name} sent a heart to your memo! ❤️` :
+          `${name}님이 내 메모에 하트를 보냈어요! ❤️`,
+      };
+    case "morning_reminder":
+      return {
+        title: isEn ? "Good Morning!" : "아침 일기",
+        body: isEn ?
+          "It's time to write your diary and wake up your character! ☀️" :
+          "일기를 작성하고 캐릭터를 깨워주세요! ☀️",
+      };
+    case "system":
+    default:
+      return {
+        title: isEn ? "Notification" : "알림",
+        body: message ?? (isEn ? "You have a new notification." : "새로운 알림이 도착했어요."),
+      };
   }
 };
 
@@ -213,11 +224,12 @@ export const sendNotificationOnCreate = onDocumentCreated(
     const userLang = userData?.languageCode ?? "ko";
 
     const normalizedType = normalizeNotificationType(data.type);
-    const {title, body} = buildNotificationContent(
+    const { title, body } = buildNotificationContent(
       normalizedType,
       userLang,
       data.message,
-      data.senderNickname
+      data.senderNickname,
+      data.isReply === true || data.isReply === "true"
     );
 
     const message = {
@@ -250,7 +262,7 @@ export const sendNotificationOnCreate = onDocumentCreated(
     };
 
     await admin.messaging().send(message);
-    await snapshot.ref.update({fcmSent: true});
+    await snapshot.ref.update({ fcmSent: true });
   }
 );
 
@@ -264,7 +276,7 @@ export const wakeUpFriend = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId} = request.data;
+  const { userId, friendId } = request.data;
 
   // 유효성 검사
   if (!userId || !friendId) {
@@ -293,11 +305,11 @@ export const wakeUpFriend = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     logger.info(`Wake up check passed for ${friendId} from ${userId}`);
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending notification:", error);
     throw new HttpsError("internal", "Error sending notification.");
@@ -313,7 +325,7 @@ export const sendCheerMessage = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId, message} = request.data;
+  const { userId, friendId, message } = request.data;
 
   if (!userId || !friendId || !message) {
     throw new HttpsError(
@@ -340,11 +352,11 @@ export const sendCheerMessage = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     logger.info(`Cheer message check passed for ${friendId} from ${userId}`);
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending cheer message:", error);
     throw new HttpsError("internal", "Error sending cheer message.");
@@ -360,7 +372,7 @@ export const sendFriendRequestNotification = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId, senderNickname} = request.data;
+  const { userId, friendId, senderNickname } = request.data;
 
   if (!userId || !friendId || !senderNickname) {
     throw new HttpsError(
@@ -385,11 +397,11 @@ export const sendFriendRequestNotification = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     logger.info(`Friend request check passed for ${friendId} from ${userId}`);
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending friend request:", error);
     throw new HttpsError("internal", "Error sending friend request.");
@@ -405,7 +417,7 @@ export const sendFriendAcceptNotification = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId, senderNickname} = request.data;
+  const { userId, friendId, senderNickname } = request.data;
 
   if (!userId || !friendId || !senderNickname) {
     throw new HttpsError(
@@ -430,11 +442,11 @@ export const sendFriendAcceptNotification = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     logger.info(`Friend accept check passed for ${friendId} from ${userId}`);
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending friend accept:", error);
     throw new HttpsError("internal", "Error sending friend accept.");
@@ -450,7 +462,7 @@ export const sendFriendRejectNotification = onCall(async (request) => {
     );
   }
 
-  const {userId, friendId, senderNickname} = request.data;
+  const { userId, friendId, senderNickname } = request.data;
 
   if (!userId || !friendId || !senderNickname) {
     throw new HttpsError(
@@ -475,11 +487,11 @@ export const sendFriendRejectNotification = onCall(async (request) => {
 
     if (!fcmToken) {
       logger.info(`Friend ${friendId} does not have an FCM token.`);
-      return {success: false, message: "Friend not reachable."};
+      return { success: false, message: "Friend not reachable." };
     }
 
     logger.info(`Friend reject check passed for ${friendId} from ${userId}`);
-    return {success: true};
+    return { success: true };
   } catch (error) {
     logger.error("Error sending friend reject:", error);
     throw new HttpsError("internal", "Error sending friend reject.");
@@ -531,7 +543,7 @@ export const morningReminder = onSchedule("every 5 minutes", async () => {
     if (!fcmToken) return;
 
     const userLang = userData.languageCode ?? "ko";
-    const {title, body} = buildNotificationContent("morning_reminder", userLang);
+    const { title, body } = buildNotificationContent("morning_reminder", userLang);
 
     const message = {
       token: fcmToken,
