@@ -70,6 +70,15 @@ class NotificationService {
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('알림 권한이 허용되었습니다.');
 
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        String? apnsToken = await _fcm.getAPNSToken();
+        print('APNs 토큰: $apnsToken');
+        if (apnsToken == null) {
+          print('경고: APNs 토큰을 가져오지 못했습니다. iOS 기기에서 푸시 알림이 제대로 수신되지 않을 수 있습니다.');
+          // 시뮬레이터이거나 권한, APNs 설정 문제일 수 있으나 일단 진행
+        }
+      }
+
       // FCM 토큰 가져오기
       _fcmToken = await _fcm.getToken();
       print('FCM 토큰: $_fcmToken');
