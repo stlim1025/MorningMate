@@ -94,7 +94,7 @@ const buildNotificationContent = (
   isReply?: boolean
 ) => {
   const isEn = lang === "en";
-  const name = senderNickname ?? (isEn ? "Friend" : "친구");
+  const name = (senderNickname && senderNickname.trim() !== "") ? senderNickname : (isEn ? "Friend" : "친구");
 
   switch (type) {
     case "wake_up":
@@ -137,7 +137,7 @@ const buildNotificationContent = (
       return {
         title: isEn ?
           `${name} sent a cheer message!` :
-          `${name}님이 응원메시지를 보냈습니다!`,
+          `${name}님이 응원 메시지를 보냈습니다!`,
         body: message ?? (isEn ? "Sent a cheer message." : "응원 메시지가 도착했어요."),
       };
     case "nest_invite":
@@ -232,7 +232,9 @@ export const sendNotificationOnCreate = onDocumentCreated(
       data.isReply === true || data.isReply === "true"
     );
 
-    const message = {
+    logger.info(`Sending notification to user ${userId}: Title="${title}", Body="${body}", Type="${normalizedType}"`);
+
+    const messagePayload = {
       token: fcmToken,
       notification: {
         title,
@@ -248,12 +250,18 @@ export const sendNotificationOnCreate = onDocumentCreated(
       android: {
         priority: "high" as const,
         notification: {
+          title, // Explicitly set to override any system defaults
+          body,
           channelId: "high_importance_channel",
         },
       },
       apns: {
         payload: {
           aps: {
+            alert: {
+              title,
+              body,
+            },
             contentAvailable: true,
             sound: "default",
           },
@@ -261,7 +269,12 @@ export const sendNotificationOnCreate = onDocumentCreated(
       },
     };
 
-    await admin.messaging().send(message);
+    try {
+      await admin.messaging().send(messagePayload);
+      logger.info(`Successfully sent notification to user ${userId}`);
+    } catch (e) {
+      logger.error(`Error sending notification to user ${userId}:`, e);
+    }
     await snapshot.ref.update({ fcmSent: true });
   }
 );
@@ -545,7 +558,7 @@ export const morningReminder = onSchedule("every 5 minutes", async () => {
     const userLang = userData.languageCode ?? "ko";
     const { title, body } = buildNotificationContent("morning_reminder", userLang);
 
-    const message = {
+    const messagePayload = {
       token: fcmToken,
       notification: {
         title,
@@ -558,12 +571,18 @@ export const morningReminder = onSchedule("every 5 minutes", async () => {
       android: {
         priority: "high" as const,
         notification: {
+          title,
+          body,
           channelId: "high_importance_channel",
         },
       },
       apns: {
         payload: {
           aps: {
+            alert: {
+              title,
+              body,
+            },
             contentAvailable: true,
             sound: "default",
           },
@@ -572,7 +591,7 @@ export const morningReminder = onSchedule("every 5 minutes", async () => {
     };
 
     try {
-      await admin.messaging().send(message);
+      await admin.messaging().send(messagePayload);
       logger.info(`Sent morning reminder to user ${userId}`);
     } catch (error) {
       logger.error(`Error sending reminder to user ${userId}:`, error);

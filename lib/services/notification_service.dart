@@ -60,6 +60,21 @@ class NotificationService {
             iOS: initializationSettingsDarwin);
     await _localPlugin.initialize(settings: initializationSettings);
 
+    // 안드로이드 알림 채널 명시적 생성
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      await _localPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(const AndroidNotificationChannel(
+            'high_importance_channel', // ID
+            '알림', // Name
+            description: '모닝메이트 알림 서비스',
+            importance: Importance.max,
+            playSound: true,
+            enableVibration: true,
+          ));
+    }
+
     // 알림 권한 요청
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
