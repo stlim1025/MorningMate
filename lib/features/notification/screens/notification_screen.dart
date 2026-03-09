@@ -12,8 +12,60 @@ import '../../social/widgets/reply_dialog.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/app_dialog.dart';
 
-class NotificationScreen extends StatelessWidget {
+class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
+
+  @override
+  State<NotificationScreen> createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends State<NotificationScreen> {
+  Stream<List<NotificationModel>>? _notificationStream;
+  String? _initializedUserId;
+  int _limit = 10;
+  List<NotificationModel> _cachedNotifications = [];
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (_cachedNotifications.length >= _limit) {
+        setState(() {
+          _limit += 10;
+        });
+        _initStream(forceReload: true);
+      }
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _initStream();
+  }
+
+  void _initStream({bool forceReload = false}) {
+    final userId = context.read<AuthController>().currentUser?.uid;
+    if (userId != null && (userId != _initializedUserId || forceReload)) {
+      _initializedUserId = userId;
+      _notificationStream = context
+          .read<NotificationController>()
+          .getNotificationsStream(userId, limit: _limit);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,17 +159,27 @@ class NotificationScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
+              _initStream();
+
+              if (_notificationStream == null) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
               final notificationController =
                   context.read<NotificationController>();
               final socialController = context.read<SocialController>();
               final nestController = context.read<NestController>();
 
               return StreamBuilder<List<NotificationModel>>(
-                stream: notificationController.getNotificationsStream(userId),
-                initialData: const [],
+                stream: _notificationStream,
+                initialData: _cachedNotifications,
                 builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    _cachedNotifications = snapshot.data!;
+                  }
+
                   if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
+                      _cachedNotifications.isEmpty) {
                     return _buildEmptyState(
                       context,
                       colorScheme,
@@ -142,7 +204,7 @@ class NotificationScreen extends StatelessWidget {
                     );
                   }
 
-                  final notifications = snapshot.data ?? [];
+                  final notifications = _cachedNotifications;
 
                   if (notifications.isEmpty) {
                     return _buildEmptyState(
@@ -158,6 +220,7 @@ class NotificationScreen extends StatelessWidget {
                   }
 
                   return ListView.separated(
+                    controller: _scrollController,
                     padding: EdgeInsets.fromLTRB(
                       16,
                       MediaQuery.of(context).padding.top,

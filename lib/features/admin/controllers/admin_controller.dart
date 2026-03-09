@@ -471,18 +471,50 @@ class AdminController extends ChangeNotifier {
   int _totalUserCount = 0;
   int get totalUserCount => _totalUserCount;
 
+  int _todayNewUserCount = 0;
+  int get todayNewUserCount => _todayNewUserCount;
+
+  int _todayDiaryCount = 0;
+  int get todayDiaryCount => _todayDiaryCount;
+
+  Map<int, int> _hourlyLoginStats = {};
+  Map<int, int> get hourlyLoginStats => _hourlyLoginStats;
+
   Future<void> fetchStats() async {
     if (_isDisposed) return;
     try {
       final now = DateTime.now();
       final startOfToday = DateTime(now.year, now.month, now.day);
-      final dailyQuery = await _firestore
+
+      // 오늘 접속자
+      final loginQuery = await _firestore
           .collection('users')
           .where('lastLoginDate',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
           .count()
           .get();
-      _dailyVisitorCount = dailyQuery.count ?? 0;
+      _dailyVisitorCount = loginQuery.count ?? 0;
+
+      // 시간대별 접속자 통계 (읽기 비용 문제로 프론트엔드 직접 계산 제거, 추후 백엔드 어그리게이션 필요)
+      _hourlyLoginStats = {};
+
+      // 신규 가입자
+      final newUsersQuery = await _firestore
+          .collection('users')
+          .where('createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .count()
+          .get();
+      _todayNewUserCount = newUsersQuery.count ?? 0;
+
+      // 오늘 생성된 일기 수
+      final todayDiaryQuery = await _firestore
+          .collection('diaries')
+          .where('createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .count()
+          .get();
+      _todayDiaryCount = todayDiaryQuery.count ?? 0;
 
       final totalQuery = await _firestore.collection('users').count().get();
       _totalUserCount = totalQuery.count ?? 0;
@@ -490,6 +522,197 @@ class AdminController extends ChangeNotifier {
       debugPrint('통계 불러오기 오류: $e');
     }
     if (_isDisposed) return;
+    notifyListeners();
+  }
+
+  // 대시보드 팝업용 상세 리스트 조회
+  Future<List<UserModel>> getTodayNewUsers() async {
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final snap = await _firestore
+        .collection('users')
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .get();
+    return snap.docs.map((d) => UserModel.fromFirestore(d)).toList();
+  }
+
+  Future<List<UserModel>> getTodayLoginUsers() async {
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final snap = await _firestore
+        .collection('users')
+        .where('lastLoginDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .get();
+    return snap.docs.map((d) => UserModel.fromFirestore(d)).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getTodayDiaries() async {
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final snap = await _firestore
+        .collection('diaries')
+        .where('createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .get();
+
+    final diaries = snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+
+    // 작성자의 닉네임 가져오기
+    final nicknameMap = <String, String>{};
+    for (var diary in diaries) {
+      final userId = diary['userId'] as String?;
+      if (userId == null) continue;
+
+      if (!nicknameMap.containsKey(userId)) {
+        try {
+          final userDoc =
+              await _firestore.collection('users').doc(userId).get();
+          nicknameMap[userId] = userDoc.data()?['nickname'] ?? '알 수 없음';
+        } catch (e) {
+          nicknameMap[userId] = '알 수 없음';
+        }
+      }
+      diary['nickname'] = nicknameMap[userId];
+    }
+
+    return diaries;
+  }
+
+  // --- 공지사항 관리 (Notice) ---
+  List<Map<String, dynamic>> _notices = [];
+  List<Map<String, dynamic>> get notices => _notices;
+
+  Future<void> fetchNotices() async {
+    if (_isDisposed) return;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final snap = await _firestore
+          .collection('notices')
+          .orderBy('createdAt', descending: true)
+          .get();
+      _notices = snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+    } catch (e) {
+      debugPrint('공지사항 불러오기 오류: $e');
+    }
+    if (_isDisposed) return;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> createNotice({
+    required String title,
+    required String content,
+    required String category,
+    required bool isPinned,
+    DateTime? publishAt,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _firestore.collection('notices').add({
+        'title': title,
+        'content': content,
+        'category': category,
+        'isPinned': isPinned,
+        'publishAt': publishAt != null ? Timestamp.fromDate(publishAt) : null,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      await fetchNotices();
+    } catch (e) {
+      debugPrint('공지사항 작성 오류: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> deleteNotice(String id) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _firestore.collection('notices').doc(id).delete();
+      await fetchNotices();
+    } catch (e) {
+      debugPrint('공지사항 삭제 오류: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // --- 푸시 메시지 관리 (Push) ---
+  List<Map<String, dynamic>> _pushHistory = [];
+  List<Map<String, dynamic>> get pushHistory => _pushHistory;
+
+  Future<void> fetchPushHistory() async {
+    if (_isDisposed) return;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final snap = await _firestore
+          .collection('push_history')
+          .orderBy('sentAt', descending: true)
+          .get();
+      _pushHistory = snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+    } catch (e) {
+      debugPrint('푸시 기록 불러오기 오류: $e');
+    }
+    if (_isDisposed) return;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> sendPushMessage({
+    required String title,
+    required String body,
+    required String target,
+    String? deepLink,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      // FCM 전송 로직 (추후 Cloud Function과 연동)
+      // 현재는 기록용 저장
+      await _firestore.collection('push_history').add({
+        'title': title,
+        'body': body,
+        'target': target,
+        'deepLink': deepLink,
+        'sentAt': FieldValue.serverTimestamp(),
+        'status': 'sent',
+      });
+      await fetchPushHistory();
+    } catch (e) {
+      debugPrint('푸시 발송 오류: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // --- 유저 로그 확인 (Timeline) ---
+  List<Map<String, dynamic>> _userLogs = [];
+  List<Map<String, dynamic>> get userLogs => _userLogs;
+
+  Future<void> fetchUserLogs(String uid) async {
+    if (_isDisposed) return;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final snap = await _firestore
+          .collection('notifications')
+          .where('userId', isEqualTo: uid)
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .get();
+      _userLogs =
+          snap.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    } catch (e) {
+      debugPrint('유저 로그 불러오기 오류: $e');
+      _userLogs = [];
+    }
+    if (_isDisposed) return;
+    _isLoading = false;
     notifyListeners();
   }
 

@@ -5,16 +5,18 @@ import '../../../data/models/notification_model.dart';
 class NotificationController extends ChangeNotifier {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  Stream<List<NotificationModel>> getNotificationsStream(String userId) {
+  Stream<List<NotificationModel>> getNotificationsStream(String userId,
+      {int limit = 10}) {
     return _db
         .collection('notifications')
         .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
         .snapshots()
         .map((snapshot) {
       final notifications = snapshot.docs
           .map((doc) => NotificationModel.fromFirestore(doc))
           .toList();
-      notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return notifications;
     });
   }

@@ -26,6 +26,9 @@ class SocialScreen extends StatefulWidget {
 }
 
 class _SocialScreenState extends State<SocialScreen> {
+  Stream<List<UserModel>>? _friendsStream;
+  String? _initializedUserId;
+
   @override
   void initState() {
     super.initState();
@@ -44,7 +47,12 @@ class _SocialScreenState extends State<SocialScreen> {
     final socialController = context.read<SocialController>();
     final userId = authController.currentUser?.uid;
 
-    if (userId != null) {
+    if (userId != null && userId != _initializedUserId) {
+      setState(() {
+        _initializedUserId = userId;
+        _friendsStream = socialController.getFriendsStream(userId);
+      });
+
       // 빌드 완료 후 실행하여 setState 오류 방지
       WidgetsBinding.instance.addPostFrameCallback((_) {
         // 이미 데이터가 있으면 로딩 없이 백그라운드 갱신
@@ -56,11 +64,12 @@ class _SocialScreenState extends State<SocialScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    final authController = context.read<AuthController>();
     final socialController = context.read<SocialController>();
-    final userId = authController.currentUser?.uid;
-    final friendsStream =
-        userId == null ? null : socialController.getFriendsStream(userId);
+
+    // 이전에 초기화 안됐으면 재시도
+    _loadFriends();
+
+    final friendsStream = _friendsStream;
     final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Container(

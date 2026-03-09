@@ -13,7 +13,7 @@ import '../../../services/user_service.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
 
-class FriendCard extends StatelessWidget {
+class FriendCard extends StatefulWidget {
   final UserModel friend;
   final AppColorScheme colorScheme;
 
@@ -22,6 +22,28 @@ class FriendCard extends StatelessWidget {
     required this.friend,
     required this.colorScheme,
   });
+
+  @override
+  State<FriendCard> createState() => _FriendCardState();
+}
+
+class _FriendCardState extends State<FriendCard> {
+  late Stream<UserModel?> _userStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _userStream = context.read<UserService>().getUserStream(widget.friend.uid);
+  }
+
+  @override
+  void didUpdateWidget(FriendCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.friend.uid != widget.friend.uid) {
+      _userStream =
+          context.read<UserService>().getUserStream(widget.friend.uid);
+    }
+  }
 
   Future<void> _wakeUpFriend(BuildContext context, UserModel friend,
       SocialController controller) async {
@@ -136,13 +158,11 @@ class FriendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userService = context.read<UserService>();
-
     return StreamBuilder<UserModel?>(
-      stream: userService.getUserStream(friend.uid),
-      initialData: friend,
+      stream: _userStream,
+      initialData: widget.friend,
       builder: (context, snapshot) {
-        final currentFriend = snapshot.data ?? friend;
+        final currentFriend = snapshot.data ?? widget.friend;
 
         return Consumer<SocialController>(
           builder: (context, controller, child) {
@@ -246,7 +266,7 @@ class FriendCard extends StatelessWidget {
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: isAwakeRequested
-                                            ? colorScheme.success
+                                            ? widget.colorScheme.success
                                                 .withOpacity(0.2)
                                             : Colors.white,
                                         width: 1.5,
@@ -264,8 +284,8 @@ class FriendCard extends StatelessWidget {
                                           : Icons.bedtime,
                                       size: statusIconSize,
                                       color: isAwakeRequested
-                                          ? colorScheme.pointStar
-                                          : colorScheme.textHint,
+                                          ? widget.colorScheme.pointStar
+                                          : widget.colorScheme.textHint,
                                     ),
                                   ),
                                 ),

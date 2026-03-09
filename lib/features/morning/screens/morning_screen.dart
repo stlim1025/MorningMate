@@ -32,6 +32,27 @@ class MorningScreen extends StatefulWidget {
 
 class _MorningScreenState extends State<MorningScreen>
     with SingleTickerProviderStateMixin {
+  Stream<List<NotificationModel>>? _notificationStream;
+  String? _initializedUserId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _initStream();
+  }
+
+  void _initStream() {
+    final userId = context.read<AuthController>().currentUser?.uid;
+    if (userId != null && userId != _initializedUserId) {
+      _initializedUserId = userId;
+      _notificationStream =
+          context.read<NotificationController>().getNotificationsStream(userId);
+    } else if (userId == null) {
+      _initializedUserId = null;
+      _notificationStream = null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -477,10 +498,7 @@ class _MorningScreenState extends State<MorningScreen>
 
   Widget _buildHeader(BuildContext context, bool isAwake,
       AppColorScheme colorScheme, bool isDarkMode) {
-    final authController = context.read<AuthController>();
     final characterController = context.watch<CharacterController>();
-    final userId =
-        authController.userModel?.uid ?? authController.currentUser?.uid;
     final backgroundId =
         characterController.currentUser?.roomDecoration.backgroundId ??
             'default';
@@ -557,11 +575,7 @@ class _MorningScreenState extends State<MorningScreen>
               const SizedBox(width: 8),
               // 알림 버튼
               StreamBuilder<List<NotificationModel>>(
-                stream: userId == null
-                    ? const Stream.empty()
-                    : context
-                        .read<NotificationController>()
-                        .getNotificationsStream(userId),
+                stream: _notificationStream ?? const Stream.empty(),
                 builder: (context, snapshot) {
                   final notifications = snapshot.data ?? [];
                   final hasUnread =

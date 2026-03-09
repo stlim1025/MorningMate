@@ -20,6 +20,8 @@ class _ShopManagementTabState extends State<ShopManagementTab>
   // 모든 아이템 리스트 (가격이 0보다 큰 것만, 판매 가능한 품목)
   String _searchQuery = '';
   late TabController _tabController;
+  int _currentPage = 0;
+  static const int _itemsPerPage = 20;
 
   List<dynamic> get _allItems => [
         ...RoomAssets.themes,
@@ -115,7 +117,11 @@ class _ShopManagementTabState extends State<ShopManagementTab>
             labelColor: Colors.blue,
             unselectedLabelColor: Colors.grey,
             indicatorColor: Colors.blue,
-            onTap: (_) => setState(() {}),
+            onTap: (_) {
+              setState(() {
+                _currentPage = 0;
+              });
+            },
             tabs: const [
               Tab(text: '전체'),
               Tab(text: '테마'),
@@ -198,6 +204,7 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
+                    _currentPage = 0;
                   });
                 },
               ),
@@ -226,6 +233,19 @@ class _ShopManagementTabState extends State<ShopManagementTab>
           child: Builder(
             builder: (context) {
               final filteredItems = _getFilteredItems(discounts);
+              final totalPages = (filteredItems.length / _itemsPerPage).ceil();
+
+              if (_currentPage >= totalPages && totalPages > 0) {
+                _currentPage = totalPages - 1;
+              }
+
+              final startIndex = _currentPage * _itemsPerPage;
+              final endIndex =
+                  (startIndex + _itemsPerPage > filteredItems.length)
+                      ? filteredItems.length
+                      : startIndex + _itemsPerPage;
+
+              final pagedItems = filteredItems.sublist(startIndex, endIndex);
 
               return Column(
                 children: [
@@ -236,23 +256,19 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                     color: Colors.grey[100],
                     width: double.infinity,
                     child: Text(
-                      '📦 표시 중: ${filteredItems.length}개  |  '
-                      'props: ${RoomAssets.props.where((p) => p.price > 0).length}  '
-                      'wallpapers: ${RoomAssets.wallpapers.where((p) => p.price > 0).length}  '
-                      'floors: ${RoomAssets.floors.where((p) => p.price > 0).length}  '
-                      'windows: ${RoomAssets.windows.where((p) => p.price > 0).length}  '
-                      'character: ${CharacterAssets.items.where((p) => p.price > 0).length}',
+                      '📦 전체 검색 결과: ${filteredItems.length}개  |  '
+                      '현재 페이지: ${_currentPage + 1} / ${totalPages == 0 ? 1 : totalPages}',
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ),
-                  if (filteredItems.isEmpty)
+                  if (pagedItems.isEmpty)
                     const Expanded(child: Center(child: Text('검색 결과가 없습니다.')))
                   else
                     Expanded(
                       child: ListView.builder(
-                        itemCount: filteredItems.length,
+                        itemCount: pagedItems.length,
                         itemBuilder: (context, index) {
-                          final item = filteredItems[index];
+                          final item = pagedItems[index];
                           final itemId = item.id;
                           final isDiscounted = discounts.containsKey(itemId);
                           final discountPrice = discounts[itemId];
@@ -359,6 +375,33 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                             ),
                           );
                         },
+                      ),
+                    ),
+                  // Pagination Controls
+                  if (totalPages > 1)
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      color: Colors.white,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left),
+                            onPressed: _currentPage > 0
+                                ? () => setState(() => _currentPage--)
+                                : null,
+                          ),
+                          Text(
+                            '${_currentPage + 1} / $totalPages',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_right),
+                            onPressed: _currentPage < totalPages - 1
+                                ? () => setState(() => _currentPage++)
+                                : null,
+                          ),
+                        ],
                       ),
                     ),
                 ],
