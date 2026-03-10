@@ -6,7 +6,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class NetworkOrAssetImage extends StatelessWidget {
-  final String imagePath;
+  final String? imagePath;
+  final Uint8List? imageBytes;
   final BoxFit fit;
   final double? width;
   final double? height;
@@ -19,24 +20,39 @@ class NetworkOrAssetImage extends StatelessWidget {
 
   const NetworkOrAssetImage({
     super.key,
-    required this.imagePath,
+    this.imagePath,
+    this.imageBytes,
     this.fit = BoxFit.contain,
     this.width,
     this.height,
     this.color,
     this.colorBlendMode,
     this.errorBuilder,
-  });
+  }) : assert(imagePath != null || imageBytes != null,
+            'imagePath or imageBytes must be provided');
 
   @override
   Widget build(BuildContext context) {
-    if (imagePath.startsWith('http')) {
+    if (imageBytes != null) {
+      return Image.memory(
+        imageBytes!,
+        fit: fit,
+        width: width,
+        height: height,
+        color: color,
+        colorBlendMode: colorBlendMode,
+        errorBuilder: errorBuilder,
+      );
+    }
+
+    final path = imagePath!;
+    if (path.startsWith('http')) {
       if (kIsWeb) {
         // Firebase Storage URL인 경우, SDK를 통해 바이트 다운로드 (CORS 우회)
-        if (imagePath.contains('firebasestorage.googleapis.com')) {
-          if (firebaseWebCache.containsKey(imagePath)) {
+        if (path.contains('firebasestorage.googleapis.com')) {
+          if (firebaseWebCache.containsKey(path)) {
             return Image.memory(
-              firebaseWebCache[imagePath]!,
+              firebaseWebCache[path]!,
               fit: fit,
               width: width,
               height: height,
@@ -51,7 +67,7 @@ class NetworkOrAssetImage extends StatelessWidget {
             );
           }
           return _FirebaseStorageImage(
-            url: imagePath,
+            url: path,
             fit: fit,
             width: width,
             height: height,
@@ -62,7 +78,7 @@ class NetworkOrAssetImage extends StatelessWidget {
         }
         // 일반 URL은 Image.network 사용
         return Image.network(
-          imagePath,
+          path,
           fit: fit,
           width: width,
           height: height,
@@ -77,7 +93,7 @@ class NetworkOrAssetImage extends StatelessWidget {
         );
       }
       return Image(
-        image: CachedNetworkImageProvider(imagePath),
+        image: CachedNetworkImageProvider(path),
         fit: fit,
         width: width,
         height: height,
@@ -86,9 +102,9 @@ class NetworkOrAssetImage extends StatelessWidget {
         errorBuilder:
             errorBuilder ?? (context, error, stackTrace) => const SizedBox(),
       );
-    } else if (imagePath.endsWith('.svg')) {
+    } else if (path.endsWith('.svg')) {
       return SvgPicture.asset(
-        imagePath,
+        path,
         fit: fit,
         width: width,
         height: height,
@@ -98,7 +114,7 @@ class NetworkOrAssetImage extends StatelessWidget {
       );
     } else {
       return Image.asset(
-        imagePath,
+        path,
         fit: fit,
         width: width,
         height: height,

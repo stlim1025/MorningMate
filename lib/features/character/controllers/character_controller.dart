@@ -814,7 +814,13 @@ class CharacterController extends ChangeNotifier {
         onAdFailedToLoad: (LoadAdError error) {
           debugPrint('RewardedAd failed to load: $error');
           _isAdLoading = false;
+          _rewardedAd = null;
           notifyListeners();
+
+          // 10초 후 자동으로 다시 로드 시도
+          Future.delayed(const Duration(seconds: 10), () {
+            loadRewardedAd();
+          });
         },
       ),
     );

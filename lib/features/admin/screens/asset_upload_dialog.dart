@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../services/asset_service.dart';
 
 import '../../../../core/widgets/network_or_asset_image.dart';
+import '../../../../core/constants/room_assets.dart';
+import '../../character/widgets/character_display.dart';
 
 class AssetUploadDialog extends StatefulWidget {
   final dynamic itemToEdit;
@@ -46,6 +48,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
   double? _charTopPctAwake;
   double? _charTopPctSleep;
   double? _charBottomPct;
+  double? _charLeftPct;
   double? _charScaleAwake;
   double? _charScaleSleep;
 
@@ -97,6 +100,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
       _charTopPctAwake = item.charTopPctAwake;
       _charTopPctSleep = item.charTopPctSleep;
       _charBottomPct = item.charBottomPct;
+      _charLeftPct = item.charLeftPct;
       _charScaleAwake = item.charScaleAwake;
       _charScaleSleep = item.charScaleSleep;
     }
@@ -175,6 +179,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           charTopPctAwake: _charTopPctAwake,
           charTopPctSleep: _charTopPctSleep,
           charBottomPct: _charBottomPct,
+          charLeftPct: _charLeftPct,
           charScaleAwake: _charScaleAwake,
           charScaleSleep: _charScaleSleep,
         );
@@ -202,6 +207,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           charTopPctAwake: _charTopPctAwake,
           charTopPctSleep: _charTopPctSleep,
           charBottomPct: _charBottomPct,
+          charLeftPct: _charLeftPct,
           charScaleAwake: _charScaleAwake,
           charScaleSleep: _charScaleSleep,
         );
@@ -230,7 +236,8 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
   Widget build(BuildContext context) {
     // 화면 넓이에 따라 다이얼로그 크기 조절 (PC 작업 대응)
     final screenWidth = MediaQuery.of(context).size.width;
-    final dialogWidth = screenWidth > 800 ? 700.0 : double.infinity;
+    final dialogWidth =
+        screenWidth > 800 ? (_isCharCategory ? 950.0 : 700.0) : double.infinity;
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -256,425 +263,488 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
             ),
             const Divider(height: 32),
             Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  children: [
-                    // 이미지 선택기 (더 크게, 더 강조)
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: _selectedImageBytes == null &&
-                                  widget.itemToEdit?.imagePath == null
-                              ? Colors.blue.withOpacity(0.05)
-                              : Colors.grey[50],
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _selectedImageBytes == null &&
-                                    widget.itemToEdit?.imagePath == null
-                                ? Colors.blue
-                                : Colors.grey[300]!,
-                            width: 2,
-                            style: _selectedImageBytes == null
-                                ? BorderStyle.solid
-                                : BorderStyle.solid,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Form(
+                      key: _formKey,
+                      child: ListView(
+                        padding: const EdgeInsets.only(right: 16),
+                        children: [
+                          // ... contents moved here
+                          // 이미지 선택기 (더 크게, 더 강조)
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              height: 200,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: _selectedImageBytes == null &&
+                                        widget.itemToEdit?.imagePath == null
+                                    ? Colors.blue.withOpacity(0.05)
+                                    : Colors.grey[50],
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: _selectedImageBytes == null &&
+                                          widget.itemToEdit?.imagePath == null
+                                      ? Colors.blue
+                                      : Colors.grey[300]!,
+                                  width: 2,
+                                  style: _selectedImageBytes == null
+                                      ? BorderStyle.solid
+                                      : BorderStyle.solid,
+                                ),
+                              ),
+                              child: _selectedImageBytes != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: Image.memory(_selectedImageBytes!,
+                                          fit: BoxFit.contain),
+                                    )
+                                  : (widget.itemToEdit?.imagePath != null
+                                      ? NetworkOrAssetImage(
+                                          imagePath:
+                                              widget.itemToEdit!.imagePath!,
+                                          fit: BoxFit.contain)
+                                      : Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.cloud_upload_outlined,
+                                                size: 60,
+                                                color: Colors.blue[400]),
+                                            const SizedBox(height: 12),
+                                            const Text('여기를 클릭하여 이미지 업로드',
+                                                style: TextStyle(
+                                                  color: Colors.blue,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                )),
+                                            const SizedBox(height: 4),
+                                            Text('배경이 투명한 PNG 파일을 권장합니다.',
+                                                style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 13)),
+                                          ],
+                                        )),
+                            ),
                           ),
-                        ),
-                        child: _selectedImageBytes != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: Image.memory(_selectedImageBytes!,
-                                    fit: BoxFit.contain),
-                              )
-                            : (widget.itemToEdit?.imagePath != null
-                                ? NetworkOrAssetImage(
-                                    imagePath: widget.itemToEdit!.imagePath!,
-                                    fit: BoxFit.contain)
-                                : Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.cloud_upload_outlined,
-                                          size: 60, color: Colors.blue[400]),
-                                      const SizedBox(height: 12),
-                                      const Text('여기를 클릭하여 이미지 업로드',
-                                          style: TextStyle(
-                                            color: Colors.blue,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          )),
-                                      const SizedBox(height: 4),
-                                      Text('배경이 투명한 PNG 파일을 권장합니다.',
-                                          style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 13)),
-                                    ],
-                                  )),
-                      ),
-                    ),
-                    if (_selectedImageName != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text('파일명: $_selectedImageName',
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey)),
-                      ),
-                    const SizedBox(height: 24),
+                          if (_selectedImageName != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text('파일명: $_selectedImageName',
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.grey)),
+                            ),
+                          const SizedBox(height: 24),
 
-                    // 카테고리 선택
-                    DropdownButtonFormField<String>(
-                      value: _category,
-                      decoration: const InputDecoration(
-                          labelText: '📦 카테고리',
-                          border: OutlineInputBorder(),
-                          filled: true,
-                          fillColor: Color(0xFFF9F9F9)),
-                      items: _categories
-                          .map((c) => DropdownMenuItem(
-                              value: c, child: Text(c.toUpperCase())))
-                          .toList(),
-                      onChanged: (val) => setState(() => _category = val!),
-                      onSaved: (value) => _category = value!,
-                    ),
-                    const SizedBox(height: 16),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: TextFormField(
-                            controller: _idController,
+                          // 카테고리 선택
+                          DropdownButtonFormField<String>(
+                            value: _category,
                             decoration: const InputDecoration(
-                                labelText: '🆔 고유 ID (e.g. wall_lamp_01)',
-                                hintText: '영문 소문자, 언더바만 사용',
+                                labelText: '📦 카테고리',
+                                border: OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Color(0xFFF9F9F9)),
+                            items: _categories
+                                .map((c) => DropdownMenuItem(
+                                    value: c, child: Text(c.toUpperCase())))
+                                .toList(),
+                            onChanged: (val) =>
+                                setState(() => _category = val!),
+                            onSaved: (value) => _category = value!,
+                          ),
+                          const SizedBox(height: 16),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: TextFormField(
+                                  controller: _idController,
+                                  decoration: const InputDecoration(
+                                      labelText: '🆔 고유 ID (e.g. wall_lamp_01)',
+                                      hintText: '영문 소문자, 언더바만 사용',
+                                      border: OutlineInputBorder()),
+                                  enabled: widget.itemToEdit == null,
+                                  validator: (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'ID를 입력하세요'
+                                          : null,
+                                ),
+                              ),
+                              if (widget.itemToEdit == null)
+                                IconButton(
+                                  onPressed: () {
+                                    _idController.clear();
+                                  },
+                                  icon: const Icon(Icons.refresh),
+                                  tooltip: '초기화',
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(
+                                labelText: '🏷️ 아이템 이름',
                                 border: OutlineInputBorder()),
-                            enabled: widget.itemToEdit == null,
                             validator: (value) => value == null || value.isEmpty
-                                ? 'ID를 입력하세요'
+                                ? '이름을 입력하세요'
                                 : null,
                           ),
-                        ),
-                        if (widget.itemToEdit == null)
-                          IconButton(
-                            onPressed: () {
-                              _idController.clear();
-                            },
-                            icon: const Icon(Icons.refresh),
-                            tooltip: '초기화',
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                          labelText: '🏷️ 아이템 이름',
-                          border: OutlineInputBorder()),
-                      validator: (value) =>
-                          value == null || value.isEmpty ? '이름을 입력하세요' : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _nameKoController,
-                            decoration: const InputDecoration(
-                                labelText: '🇰🇷 한국어 이름 (선택)',
-                                border: OutlineInputBorder()),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _nameEnController,
-                            decoration: const InputDecoration(
-                                labelText: '🇺🇸 영어 이름 (선택)',
-                                border: OutlineInputBorder()),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextFormField(
-                          controller: _priceController,
-                          decoration: const InputDecoration(
-                              labelText: '💰 가격 (가지 수)',
-                              border: OutlineInputBorder(),
-                              suffixText: '가지'),
-                          keyboardType: TextInputType.number,
-                          validator: (value) =>
-                              int.tryParse(value ?? '') == null
-                                  ? '숫자를 입력하세요'
-                                  : null,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            _priceChip(50),
-                            const SizedBox(width: 8),
-                            _priceChip(100),
-                            const SizedBox(width: 8),
-                            _priceChip(200),
-                            const SizedBox(width: 8),
-                            _priceChip(300),
-                            const SizedBox(width: 8),
-                            _priceChip(500),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // 세부 속성들
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('⚙️ 고급 설정 (크기 및 속성)',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
                           const SizedBox(height: 16),
+
                           Row(
                             children: [
                               Expanded(
                                 child: TextFormField(
+                                  controller: _nameKoController,
                                   decoration: const InputDecoration(
-                                      labelText: '크기 비율 (기본 1.0)',
-                                      isDense: true,
+                                      labelText: '🇰🇷 한국어 이름 (선택)',
                                       border: OutlineInputBorder()),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                          decimal: true),
-                                  initialValue: _sizeMultiplier.toString(),
-                                  onSaved: (value) => _sizeMultiplier =
-                                      double.tryParse(value ?? '1.0') ?? 1.0,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: TextFormField(
+                                  controller: _nameEnController,
                                   decoration: const InputDecoration(
-                                      labelText: '종횡비 (기본 1.0)',
-                                      isDense: true,
+                                      labelText: '🇺🇸 영어 이름 (선택)',
                                       border: OutlineInputBorder()),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                          decimal: true),
-                                  initialValue: _aspectRatio.toString(),
-                                  onSaved: (value) => _aspectRatio =
-                                      double.tryParse(value ?? '1.0') ?? 1.0,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('벽걸이 아이템'),
-                            value: _isWallMounted,
-                            onChanged: (val) =>
-                                setState(() => _isWallMounted = val),
-                          ),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('그림자 없앰'),
-                            value: _noShadow,
-                            onChanged: (val) => setState(() => _noShadow = val),
-                          ),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('빛 방출 (램프 등)'),
-                            value: _isLight,
-                            onChanged: (val) => setState(() => _isLight = val),
-                          ),
-                          if (_isLight)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: TextFormField(
+                          const SizedBox(height: 16),
+
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextFormField(
+                                controller: _priceController,
                                 decoration: const InputDecoration(
-                                    labelText: '빛 밝기 강도 (기본 1.0)',
-                                    isDense: true,
-                                    border: OutlineInputBorder()),
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
-                                initialValue: _lightIntensity.toString(),
-                                onSaved: (value) => _lightIntensity =
-                                    double.tryParse(value ?? '1.0') ?? 1.0,
+                                    labelText: '💰 가격 (가지 수)',
+                                    border: OutlineInputBorder(),
+                                    suffixText: '가지'),
+                                keyboardType: TextInputType.number,
+                                validator: (value) =>
+                                    int.tryParse(value ?? '') == null
+                                        ? '숫자를 입력하세요'
+                                        : null,
                               ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  _priceChip(50),
+                                  const SizedBox(width: 8),
+                                  _priceChip(100),
+                                  const SizedBox(width: 8),
+                                  _priceChip(200),
+                                  const SizedBox(width: 8),
+                                  _priceChip(300),
+                                  const SizedBox(width: 8),
+                                  _priceChip(500),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          // 세부 속성들
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          if (_category == 'window') ...[
-                            const SizedBox(height: 16),
-                            const Text('🪟 창문 상세 설정',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            SwitchListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: const Text('얇은 창문틀 (배경 꽉 채움)'),
-                              value: _isThinWindow,
-                              onChanged: (val) =>
-                                  setState(() => _isThinWindow = val),
-                            ),
-                            SwitchListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: const Text('아치형 창문 (상단 라운드)'),
-                              value: _isArchWindow,
-                              onChanged: (val) =>
-                                  setState(() => _isArchWindow = val),
-                            ),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              decoration: const InputDecoration(
-                                  labelText: '배경 크기 비율 (기본 1.0)',
-                                  isDense: true,
-                                  border: OutlineInputBorder(),
-                                  helperText: '창문 안쪽 배경의 배율입니다 (1.0~2.0 권장)'),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
-                              initialValue: _windowBgScale.toString(),
-                              onSaved: (value) => _windowBgScale =
-                                  double.tryParse(value ?? '1.0') ?? 1.0,
-                            ),
-                          ],
-                          if (_isCharCategory) ...[
-                            const SizedBox(height: 16),
-                            const Text('👤 캐릭터 아이템 배치 설정',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 14)),
-                            const SizedBox(height: 8),
-                            const Text('아이템의 크기와 위치 비율(0.0 ~ 1.0)을 설정합니다.',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.grey)),
-                            const SizedBox(height: 12),
-                            Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: TextFormField(
+                                const Text('⚙️ 고급 설정 (크기 및 속성)',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16)),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        decoration: const InputDecoration(
+                                            labelText: '크기 비율 (기본 1.0)',
+                                            isDense: true,
+                                            border: OutlineInputBorder()),
+                                        keyboardType: const TextInputType
+                                            .numberWithOptions(decimal: true),
+                                        initialValue:
+                                            _sizeMultiplier.toString(),
+                                        onSaved: (value) => _sizeMultiplier =
+                                            double.tryParse(value ?? '1.0') ??
+                                                1.0,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: TextFormField(
+                                        decoration: const InputDecoration(
+                                            labelText: '종횡비 (기본 1.0)',
+                                            isDense: true,
+                                            border: OutlineInputBorder()),
+                                        keyboardType: const TextInputType
+                                            .numberWithOptions(decimal: true),
+                                        initialValue: _aspectRatio.toString(),
+                                        onSaved: (value) => _aspectRatio =
+                                            double.tryParse(value ?? '1.0') ??
+                                                1.0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                SwitchListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text('벽걸이 아이템'),
+                                  value: _isWallMounted,
+                                  onChanged: (val) =>
+                                      setState(() => _isWallMounted = val),
+                                ),
+                                SwitchListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text('그림자 없앰'),
+                                  value: _noShadow,
+                                  onChanged: (val) =>
+                                      setState(() => _noShadow = val),
+                                ),
+                                SwitchListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text('빛 방출 (램프 등)'),
+                                  value: _isLight,
+                                  onChanged: (val) =>
+                                      setState(() => _isLight = val),
+                                ),
+                                if (_isLight)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: TextFormField(
+                                      decoration: const InputDecoration(
+                                          labelText: '빛 밝기 강도 (기본 1.0)',
+                                          isDense: true,
+                                          border: OutlineInputBorder()),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                              decimal: true),
+                                      initialValue: _lightIntensity.toString(),
+                                      onSaved: (value) => _lightIntensity =
+                                          double.tryParse(value ?? '1.0') ??
+                                              1.0,
+                                    ),
+                                  ),
+                                if (_category == 'window') ...[
+                                  const SizedBox(height: 16),
+                                  const Text('🪟 창문 상세 설정',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14)),
+                                  const SizedBox(height: 8),
+                                  SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text('얇은 창문틀 (배경 꽉 채움)'),
+                                    value: _isThinWindow,
+                                    onChanged: (val) =>
+                                        setState(() => _isThinWindow = val),
+                                  ),
+                                  SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text('아치형 창문 (상단 라운드)'),
+                                    value: _isArchWindow,
+                                    onChanged: (val) =>
+                                        setState(() => _isArchWindow = val),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextFormField(
                                     decoration: const InputDecoration(
-                                        labelText: '가로폭 비율',
+                                        labelText: '배경 크기 비율 (기본 1.0)',
                                         isDense: true,
                                         border: OutlineInputBorder(),
-                                        helperText: '캐릭터 대비 폭 (ex 0.7)'),
+                                        helperText:
+                                            '창문 안쪽 배경의 배율입니다 (1.0~2.0 권장)'),
                                     keyboardType:
                                         const TextInputType.numberWithOptions(
                                             decimal: true),
-                                    initialValue: _charWidthPct?.toString(),
-                                    onChanged: (value) =>
-                                        _charWidthPct = double.tryParse(value),
+                                    initialValue: _windowBgScale.toString(),
+                                    onSaved: (value) => _windowBgScale =
+                                        double.tryParse(value ?? '1.0') ?? 1.0,
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextFormField(
-                                    decoration: const InputDecoration(
-                                        labelText: '하단 여백 비율',
-                                        isDense: true,
-                                        border: OutlineInputBorder(),
-                                        helperText: '목걸이 등 (ex 0.08)'),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    initialValue: _charBottomPct?.toString(),
-                                    onChanged: (value) =>
-                                        _charBottomPct = double.tryParse(value),
+                                ],
+                                if (_isCharCategory) ...[
+                                  const SizedBox(height: 16),
+                                  const Text('👤 캐릭터 아이템 배치 설정',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14)),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                      '아이템의 크기와 위치 비율(0.0 ~ 1.0)을 설정합니다.',
+                                      style: TextStyle(
+                                          fontSize: 12, color: Colors.grey)),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          decoration: const InputDecoration(
+                                              labelText: '가로폭 비율',
+                                              isDense: true,
+                                              border: OutlineInputBorder(),
+                                              helperText: '캐릭터 대비 폭 (기본 0.7)'),
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(decimal: true),
+                                          initialValue:
+                                              _charWidthPct?.toString(),
+                                          onChanged: (value) => setState(() =>
+                                              _charWidthPct =
+                                                  double.tryParse(value)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextFormField(
+                                          decoration: const InputDecoration(
+                                              labelText: '하단 여백 비율',
+                                              isDense: true,
+                                              border: OutlineInputBorder(),
+                                              helperText: '넥타이/목도리 등 (기본 0.0)'),
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(decimal: true),
+                                          initialValue:
+                                              _charBottomPct?.toString(),
+                                          onChanged: (value) => setState(() =>
+                                              _charBottomPct =
+                                                  double.tryParse(value)),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          decoration: const InputDecoration(
+                                              labelText: '좌우 위치 비율 (0.0=중앙)',
+                                              isDense: true,
+                                              border: OutlineInputBorder(),
+                                              helperText:
+                                                  '좌(-), 우(+) (ex 0.1)'),
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(decimal: true),
+                                          initialValue:
+                                              _charLeftPct?.toString(),
+                                          onChanged: (value) => setState(() =>
+                                              _charLeftPct =
+                                                  double.tryParse(value)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Spacer(),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          decoration: const InputDecoration(
+                                              labelText: '상단 여백 (눈)',
+                                              isDense: true,
+                                              border: OutlineInputBorder(),
+                                              helperText: '이동량: 위(-), 아래(+)'),
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(decimal: true),
+                                          initialValue:
+                                              _charTopPctAwake?.toString(),
+                                          onChanged: (value) => setState(() =>
+                                              _charTopPctAwake =
+                                                  double.tryParse(value)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextFormField(
+                                          decoration: const InputDecoration(
+                                              labelText: '상단 여백 (잠)',
+                                              isDense: true,
+                                              border: OutlineInputBorder(),
+                                              helperText: '이동량: 위(-), 아래(+)'),
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(decimal: true),
+                                          initialValue:
+                                              _charTopPctSleep?.toString(),
+                                          onChanged: (value) => setState(() =>
+                                              _charTopPctSleep =
+                                                  double.tryParse(value)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          decoration: const InputDecoration(
+                                              labelText: '크기 비율 (눈)',
+                                              isDense: true,
+                                              border: OutlineInputBorder(),
+                                              helperText: '옷/평소 (ex 1.0)'),
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(decimal: true),
+                                          initialValue:
+                                              _charScaleAwake?.toString(),
+                                          onChanged: (value) => setState(() =>
+                                              _charScaleAwake =
+                                                  double.tryParse(value)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextFormField(
+                                          decoration: const InputDecoration(
+                                              labelText: '크기 비율 (잠)',
+                                              isDense: true,
+                                              border: OutlineInputBorder(),
+                                              helperText: '옷/잠 (ex 0.95)'),
+                                          keyboardType: const TextInputType
+                                              .numberWithOptions(decimal: true),
+                                          initialValue:
+                                              _charScaleSleep?.toString(),
+                                          onChanged: (value) => setState(() =>
+                                              _charScaleSleep =
+                                                  double.tryParse(value)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    decoration: const InputDecoration(
-                                        labelText: '상단 여백 (눈)',
-                                        isDense: true,
-                                        border: OutlineInputBorder(),
-                                        helperText: '평상시 (ex 0.35)'),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    initialValue: _charTopPctAwake?.toString(),
-                                    onChanged: (value) => _charTopPctAwake =
-                                        double.tryParse(value),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextFormField(
-                                    decoration: const InputDecoration(
-                                        labelText: '상단 여백 (잠)',
-                                        isDense: true,
-                                        border: OutlineInputBorder(),
-                                        helperText: '잠잘때 (ex 0.17)'),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    initialValue: _charTopPctSleep?.toString(),
-                                    onChanged: (value) => _charTopPctSleep =
-                                        double.tryParse(value),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    decoration: const InputDecoration(
-                                        labelText: '크기 비율 (눈)',
-                                        isDense: true,
-                                        border: OutlineInputBorder(),
-                                        helperText: '옷/평소 (ex 1.0)'),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    initialValue: _charScaleAwake?.toString(),
-                                    onChanged: (value) => _charScaleAwake =
-                                        double.tryParse(value),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextFormField(
-                                    decoration: const InputDecoration(
-                                        labelText: '크기 비율 (잠)',
-                                        isDense: true,
-                                        border: OutlineInputBorder(),
-                                        helperText: '옷/잠 (ex 0.95)'),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    initialValue: _charScaleSleep?.toString(),
-                                    onChanged: (value) => _charScaleSleep =
-                                        double.tryParse(value),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                          ),
                         ],
                       ),
                     ),
+                  ),
+                  if (_isCharCategory && screenWidth > 800) ...[
+                    const VerticalDivider(),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      width: 200,
+                      child: _buildPreview(),
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
@@ -729,6 +799,76 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPreview() {
+    final previewAsset = RoomAsset(
+      id: 'preview',
+      name: _nameController.text,
+      category: _category,
+      imagePath:
+          _selectedImageBytes == null ? widget.itemToEdit?.imagePath : null,
+      imageBytes: _selectedImageBytes,
+      charWidthPct: _charWidthPct,
+      charTopPctAwake: _charTopPctAwake,
+      charTopPctSleep: _charTopPctSleep,
+      charBottomPct: _charBottomPct,
+      charLeftPct: _charLeftPct,
+      charScaleAwake: _charScaleAwake,
+      charScaleSleep: _charScaleSleep,
+      price: 0,
+      icon: Icons.help,
+    );
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const Text('👀 실시간 미리보기',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Center(
+              child: CharacterDisplay(
+                isAwake: true,
+                characterLevel: 6,
+                size: 150,
+                previewAsset: previewAsset,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text('평상시', style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const SizedBox(height: 24),
+          Container(
+            width: 150,
+            height: 150,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Center(
+              child: CharacterDisplay(
+                isAwake: false,
+                characterLevel: 6,
+                size: 100,
+                previewAsset: previewAsset,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text('잠자는 모습',
+              style: TextStyle(fontSize: 12, color: Colors.grey)),
+        ],
       ),
     );
   }

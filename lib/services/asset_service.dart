@@ -79,6 +79,7 @@ class AssetService {
               (data['charTopPctSleep'] ?? (data['charTopSleep']?.toDouble()))
                   ?.toDouble(),
           charBottomPct: (data['charBottomPct']?.toDouble()),
+          charLeftPct: (data['charLeftPct']?.toDouble()),
           charScaleAwake: (data['charScaleAwake']?.toDouble()),
           charScaleSleep: (data['charScaleSleep']?.toDouble()),
         );
@@ -99,38 +100,12 @@ class AssetService {
   /// 기존 아이템에 로컬 에셋 경로가 있으면 보존합니다.
   void _upsertAsset(String category, RoomAsset newAsset, VoidCallback onAdded,
       VoidCallback onUpdated) {
-    final List<RoomAsset>? targetList;
-    switch (category) {
-      case 'prop':
-        targetList = RoomAssets.props;
-        break;
-      case 'wallpaper':
-        targetList = RoomAssets.wallpapers;
-        break;
-      case 'background':
-        targetList = RoomAssets.backgrounds;
-        break;
-      case 'floor':
-        targetList = RoomAssets.floors;
-        break;
-      case 'emoticon':
-        targetList = RoomAssets.emoticons;
-        break;
-      case 'window':
-        targetList = RoomAssets.windows;
-        break;
-      case 'character':
-      case 'face':
-      case 'body':
-      case 'head':
-      case 'clothes':
-        targetList = CharacterAssets.items;
-        break;
-      default:
-        targetList = null;
-    }
+    final List<RoomAsset>? targetList = _getListForCategory(category);
 
     if (targetList == null) return;
+
+    // ID가 다른 카테고리 리스트에 중복으로 존재하지 않도록 정리
+    _removeFromAllOtherLists(targetList, newAsset.id);
 
     final index = targetList.indexWhere((p) => p.id == newAsset.id);
     if (index != -1) {
@@ -140,13 +115,61 @@ class AssetService {
           existingImagePath.isNotEmpty &&
           !existingImagePath.startsWith('http');
 
-      targetList[index] = existingIsLocal
+      // Firestore에서 가져온 정보(newAsset)를 우선시합니다.
+      // 단, Firestore에 이미지 경로가 없는 경우에만 기존 로컬 경로를 유지합니다.
+      final bool hasNewRemoteImage = newAsset.imagePath != null &&
+          newAsset.imagePath!.isNotEmpty &&
+          newAsset.imagePath!.startsWith('http');
+
+      targetList[index] = (existingIsLocal && !hasNewRemoteImage)
           ? newAsset.copyWithImagePath(existingImagePath)
           : newAsset;
       onUpdated();
     } else {
       targetList.add(newAsset);
       onAdded();
+    }
+  }
+
+  List<RoomAsset>? _getListForCategory(String category) {
+    switch (category) {
+      case 'prop':
+        return RoomAssets.props;
+      case 'wallpaper':
+        return RoomAssets.wallpapers;
+      case 'background':
+        return RoomAssets.backgrounds;
+      case 'floor':
+        return RoomAssets.floors;
+      case 'emoticon':
+        return RoomAssets.emoticons;
+      case 'window':
+        return RoomAssets.windows;
+      case 'character':
+      case 'face':
+      case 'body':
+      case 'head':
+      case 'clothes':
+        return CharacterAssets.items;
+      default:
+        return null;
+    }
+  }
+
+  void _removeFromAllOtherLists(List<RoomAsset> excludeList, String id) {
+    final allLists = [
+      RoomAssets.props,
+      RoomAssets.wallpapers,
+      RoomAssets.backgrounds,
+      RoomAssets.floors,
+      RoomAssets.emoticons,
+      RoomAssets.windows,
+      CharacterAssets.items,
+    ];
+
+    for (var list in allLists) {
+      if (list == excludeList) continue;
+      list.removeWhere((item) => item.id == id);
     }
   }
 
@@ -279,6 +302,7 @@ class AssetService {
     double? charTopPctAwake,
     double? charTopPctSleep,
     double? charBottomPct,
+    double? charLeftPct,
     double? charScaleAwake,
     double? charScaleSleep,
   }) async {
@@ -312,6 +336,7 @@ class AssetService {
         'charTopPctAwake': charTopPctAwake,
         'charTopPctSleep': charTopPctSleep,
         'charBottomPct': charBottomPct,
+        'charLeftPct': charLeftPct,
         'charScaleAwake': charScaleAwake,
         'charScaleSleep': charScaleSleep,
         'createdAt': FieldValue.serverTimestamp(),
@@ -349,6 +374,7 @@ class AssetService {
     double? charTopPctAwake,
     double? charTopPctSleep,
     double? charBottomPct,
+    double? charLeftPct,
     double? charScaleAwake,
     double? charScaleSleep,
   }) async {
@@ -383,6 +409,7 @@ class AssetService {
         'charTopPctAwake': charTopPctAwake,
         'charTopPctSleep': charTopPctSleep,
         'charBottomPct': charBottomPct,
+        'charLeftPct': charLeftPct,
         'charScaleAwake': charScaleAwake,
         'charScaleSleep': charScaleSleep,
         'updatedAt': FieldValue.serverTimestamp(),

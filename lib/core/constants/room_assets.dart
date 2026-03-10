@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../theme/app_theme_type.dart';
 import '../localization/app_localizations.dart';
@@ -23,6 +24,7 @@ class RoomAsset {
   final bool isArchWindow;
   final double windowBgScale;
   final DateTime? releasedAt;
+  final Uint8List? imageBytes;
 
   const RoomAsset({
     required this.id,
@@ -50,8 +52,10 @@ class RoomAsset {
     this.charTopPctAwake,
     this.charTopPctSleep,
     this.charBottomPct,
+    this.charLeftPct,
     this.charScaleAwake,
     this.charScaleSleep,
+    this.imageBytes,
   });
 
   final String? category;
@@ -59,6 +63,7 @@ class RoomAsset {
   final double? charTopPctAwake;
   final double? charTopPctSleep;
   final double? charBottomPct;
+  final double? charLeftPct;
   final double? charScaleAwake;
   final double? charScaleSleep;
 
@@ -102,8 +107,10 @@ class RoomAsset {
       charTopPctAwake: charTopPctAwake,
       charTopPctSleep: charTopPctSleep,
       charBottomPct: charBottomPct,
+      charLeftPct: charLeftPct,
       charScaleAwake: charScaleAwake,
       charScaleSleep: charScaleSleep,
+      imageBytes: imageBytes, // Preserve bytes if any
     );
   }
 }

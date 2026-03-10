@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/character_assets.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
+import '../../../core/constants/room_assets.dart';
 
 class CharacterDisplay extends StatefulWidget {
   final bool isAwake;
@@ -10,6 +11,7 @@ class CharacterDisplay extends StatefulWidget {
   final bool isTapped;
   final bool enableAnimation;
   final Map<String, dynamic>? equippedItems;
+  final RoomAsset? previewAsset;
 
   const CharacterDisplay({
     super.key,
@@ -19,6 +21,7 @@ class CharacterDisplay extends StatefulWidget {
     this.isTapped = false,
     this.enableAnimation = true,
     this.equippedItems,
+    this.previewAsset,
   });
 
   @override
@@ -116,83 +119,8 @@ class _CharacterDisplayState extends State<CharacterDisplay>
             ),
 
             // 3. Expression Layer - Position face
-
-            // 4. Clothes Slot
-            if (widget.equippedItems != null &&
-                widget.equippedItems!['clothes'] != null)
-              Builder(builder: (context) {
-                final clothesId = widget.equippedItems!['clothes'];
-                try {
-                  final asset = CharacterAssets.items
-                      .firstWhere((e) => e.id == clothesId);
-
-                  if (asset.imagePath == null) return const SizedBox.shrink();
-
-                  // Apply scale based on awake status
-                  final double clothesScale = widget.isAwake
-                      ? (asset.charScaleAwake ?? 1.0)
-                      : (asset.charScaleSleep ?? 1.0);
-
-                  return Transform.scale(
-                    scale: clothesScale,
-                    child: NetworkOrAssetImage(
-                      imagePath: asset.imagePath!,
-                      width: charWidth,
-                      height: charHeight,
-                      fit: BoxFit.contain,
-                    ),
-                  );
-                } catch (e) {
-                  return const SizedBox.shrink();
-                }
-              }),
-
-            // 4. Accessories Layer (Necktie, Glasses, etc.)
-            // Body Slot (Necktie)
-            if (widget.equippedItems != null &&
-                widget.equippedItems!['body'] != null)
-              Builder(builder: (context) {
-                final bodyId = widget.equippedItems!['body'];
-                try {
-                  final asset =
-                      CharacterAssets.items.firstWhere((e) => e.id == bodyId);
-
-                  if (asset.imagePath == null) return const SizedBox.shrink();
-
-                  // Remove hardcoding: Use asset properties
-                  final isMuffler = (asset.name.contains('목도리') ||
-                      (asset.nameEn?.toLowerCase() ?? '').contains('muffler') ||
-                      asset.id.contains('mupler') ||
-                      asset.id.contains('muffler'));
-                  final isRibbon = (asset.name.contains('리본') ||
-                      (asset.nameEn?.toLowerCase() ?? '').contains('ribbon') ||
-                      asset.id.contains('ribbon'));
-
-                  final double bottomPct = asset.charBottomPct ??
-                      (isMuffler ? -0.15 : (isRibbon ? 0.25 : 0.08));
-                  final double widthPct = asset.charWidthPct ??
-                      (isMuffler ? 0.7 : (isRibbon ? 0.3 : 0.15));
-
-                  return Positioned(
-                    bottom: charHeight * bottomPct,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: NetworkOrAssetImage(
-                        imagePath: asset.imagePath!,
-                        width: charWidth * widthPct,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  );
-                } catch (e) {
-                  return const SizedBox.shrink();
-                }
-              }),
-
-            // 3. Expression Layer - Position face (Moved after Clothes/Body Slot)
             Positioned(
-              top: widget.isAwake ? charHeight * 0.18 : charHeight * 0.13,
+              top: widget.isAwake ? charHeight * 0.20 : charHeight * 0.15,
               left: 0,
               right: 0,
               child: Center(
@@ -216,7 +144,7 @@ class _CharacterDisplayState extends State<CharacterDisplay>
                           ),
                           secondChild: Padding(
                             padding: EdgeInsets.only(
-                              top: widget.isAwake ? 10 : 0,
+                              top: widget.isAwake ? charHeight * 0.06 : 0,
                             ),
                             child: Image.asset(
                               widget.isAwake
@@ -239,75 +167,216 @@ class _CharacterDisplayState extends State<CharacterDisplay>
               ),
             ),
 
-            // Expression Layer is already at index 3 (lines 103-151)
+            // 4. Clothes Slot
+            Builder(builder: (context) {
+              final clothesId = widget.equippedItems?['clothes'];
+              final previewClothes =
+                  widget.previewAsset?.category == 'clothes' ||
+                          widget.previewAsset?.category == 'character'
+                      ? widget.previewAsset
+                      : null;
+
+              try {
+                final asset = previewClothes ??
+                    (clothesId != null
+                        ? CharacterAssets.items
+                            .firstWhere((e) => e.id == clothesId)
+                        : null);
+
+                if (asset == null ||
+                    (asset.imagePath == null && asset.imageBytes == null)) {
+                  return const SizedBox.shrink();
+                }
+
+                // Apply scale based on awake status
+                final double clothesScale = widget.isAwake
+                    ? (asset.charScaleAwake ?? 1.0)
+                    : (asset.charScaleSleep ?? 1.0);
+
+                return Transform.scale(
+                  scale: clothesScale,
+                  child: Transform.translate(
+                    offset: Offset(
+                      charWidth * (asset.charLeftPct ?? 0.0),
+                      charHeight *
+                          ((asset.charTopPctAwake ?? 0.0) -
+                              (asset.charBottomPct ?? 0.0)),
+                    ),
+                    child: NetworkOrAssetImage(
+                      imagePath: asset.imagePath,
+                      imageBytes: asset.imageBytes,
+                      width: charWidth,
+                      height: charHeight,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                );
+              } catch (e) {
+                return const SizedBox.shrink();
+              }
+            }),
+
+            // 4. Accessories Layer (Necktie, Glasses, etc.)
+            // Body Slot (Necktie)
+            Builder(builder: (context) {
+              final bodyId = widget.equippedItems?['body'];
+              final previewBody = widget.previewAsset?.category == 'body'
+                  ? widget.previewAsset
+                  : null;
+
+              try {
+                final asset = previewBody ??
+                    (bodyId != null
+                        ? CharacterAssets.items
+                            .firstWhere((e) => e.id == bodyId)
+                        : null);
+
+                if (asset == null ||
+                    (asset.imagePath == null && asset.imageBytes == null)) {
+                  return const SizedBox.shrink();
+                }
+
+                // Legacy defaults based on item name (to support DB items without explicit offsets)
+                final isMuffler = (asset.name.contains('목도리') ||
+                    (asset.nameEn?.toLowerCase() ?? '').contains('muffler') ||
+                    asset.id.contains('mupler') ||
+                    asset.id.contains('muffler'));
+                final isRibbon = (asset.name.contains('리본') ||
+                    (asset.nameEn?.toLowerCase() ?? '').contains('ribbon') ||
+                    asset.id.contains('ribbon'));
+
+                final double baseBottom = 0.08;
+                final double widthPct = asset.charWidthPct ??
+                    (isMuffler ? 0.7 : (isRibbon ? 0.3 : 0.15));
+
+                // If admin values are null, use legacy defaults for muffler/ribbon
+                final double offsetBottom = asset.charBottomPct ??
+                    (isMuffler ? -0.23 : (isRibbon ? 0.17 : 0.0));
+                final double offsetTop = asset.charTopPctAwake ?? 0.0;
+
+                return Positioned(
+                  bottom: charHeight * baseBottom,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Transform.translate(
+                      offset: Offset(
+                        charWidth * (asset.charLeftPct ?? 0.0),
+                        charHeight * (offsetTop - offsetBottom),
+                      ),
+                      child: NetworkOrAssetImage(
+                        imagePath: asset.imagePath,
+                        imageBytes: asset.imageBytes,
+                        width: charWidth * widthPct,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                );
+              } catch (e) {
+                return const SizedBox.shrink();
+              }
+            }),
 
             // Face Slot (Glasses)
-            if (widget.equippedItems != null &&
-                widget.equippedItems!['face'] != null)
-              Builder(builder: (context) {
-                final faceId = widget.equippedItems!['face'];
-                try {
-                  final asset =
-                      CharacterAssets.items.firstWhere((e) => e.id == faceId);
+            Builder(builder: (context) {
+              final faceId = widget.equippedItems?['face'];
+              final previewFace = widget.previewAsset?.category == 'face'
+                  ? widget.previewAsset
+                  : null;
 
-                  if (asset.imagePath == null) return const SizedBox.shrink();
+              try {
+                final asset = previewFace ??
+                    (faceId != null
+                        ? CharacterAssets.items
+                            .firstWhere((e) => e.id == faceId)
+                        : null);
 
-                  final double itemWidth =
-                      charWidth * (asset.charWidthPct ?? 0.7);
-                  final double topPct = widget.isAwake
-                      ? (asset.charTopPctAwake ?? 0.35)
-                      : (asset.charTopPctSleep ?? 0.17);
+                if (asset == null ||
+                    (asset.imagePath == null && asset.imageBytes == null)) {
+                  return const SizedBox.shrink();
+                }
 
-                  return Positioned(
-                    top: charHeight * topPct,
-                    left: 0,
-                    right: 0,
-                    child: Center(
+                final double itemWidth =
+                    charWidth * (asset.charWidthPct ?? 0.7);
+                final double baseTop = widget.isAwake ? 0.38 : 0.20;
+                final double offsetTop = widget.isAwake
+                    ? (asset.charTopPctAwake ?? 0.0)
+                    : (asset.charTopPctSleep ?? 0.0);
+
+                return Positioned(
+                  top: charHeight * baseTop,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Transform.translate(
+                      offset: Offset(
+                        charWidth * (asset.charLeftPct ?? 0.0),
+                        charHeight * (offsetTop - (asset.charBottomPct ?? 0.0)),
+                      ),
                       child: NetworkOrAssetImage(
-                        imagePath: asset.imagePath!,
+                        imagePath: asset.imagePath,
+                        imageBytes: asset.imageBytes,
                         width: itemWidth,
                         fit: BoxFit.contain,
                       ),
                     ),
-                  );
-                } catch (e) {
-                  return const SizedBox.shrink();
-                }
-              }),
+                  ),
+                );
+              } catch (e) {
+                return const SizedBox.shrink();
+              }
+            }),
 
             // Head Slot (Sprout, Plogeyes)
-            if (widget.equippedItems != null &&
-                widget.equippedItems!['head'] != null)
-              Builder(builder: (context) {
-                final headId = widget.equippedItems!['head'];
-                try {
-                  final asset =
-                      CharacterAssets.items.firstWhere((e) => e.id == headId);
+            Builder(builder: (context) {
+              final headId = widget.equippedItems?['head'];
+              final previewHead = widget.previewAsset?.category == 'head'
+                  ? widget.previewAsset
+                  : null;
 
-                  if (asset.imagePath == null) return const SizedBox.shrink();
+              try {
+                final asset = previewHead ??
+                    (headId != null
+                        ? CharacterAssets.items
+                            .firstWhere((e) => e.id == headId)
+                        : null);
 
-                  final double itemWidth =
-                      charWidth * (asset.charWidthPct ?? 0.3);
-                  final double topPct = widget.isAwake
-                      ? (asset.charTopPctAwake ?? -0.02)
-                      : (asset.charTopPctSleep ?? -0.05);
+                if (asset == null ||
+                    (asset.imagePath == null && asset.imageBytes == null)) {
+                  return const SizedBox.shrink();
+                }
 
-                  return Positioned(
-                    top: charHeight * topPct,
-                    left: 0,
-                    right: 0,
-                    child: Center(
+                final double itemWidth =
+                    charWidth * (asset.charWidthPct ?? 0.3);
+                final double baseTop = widget.isAwake ? 0.01 : -0.02;
+                final double offsetTop = widget.isAwake
+                    ? (asset.charTopPctAwake ?? 0.0)
+                    : (asset.charTopPctSleep ?? 0.0);
+
+                return Positioned(
+                  top: charHeight * baseTop,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Transform.translate(
+                      offset: Offset(
+                        charWidth * (asset.charLeftPct ?? 0.0),
+                        charHeight * (offsetTop - (asset.charBottomPct ?? 0.0)),
+                      ),
                       child: NetworkOrAssetImage(
-                        imagePath: asset.imagePath!,
+                        imagePath: asset.imagePath,
+                        imageBytes: asset.imageBytes,
                         width: itemWidth,
                         fit: BoxFit.contain,
                       ),
                     ),
-                  );
-                } catch (e) {
-                  return const SizedBox.shrink();
-                }
-              }),
+                  ),
+                );
+              } catch (e) {
+                return const SizedBox.shrink();
+              }
+            }),
 
             // Zzz animation (if sleeping and animation enabled)
             if (!widget.isAwake && widget.enableAnimation)

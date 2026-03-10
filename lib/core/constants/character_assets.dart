@@ -23,8 +23,8 @@ class CharacterAssets {
       sizeMultiplier: 1.0,
       category: 'face',
       charWidthPct: 0.7,
-      charTopPctAwake: 0.35,
-      charTopPctSleep: 0.17,
+      charTopPctAwake: 0.0,
+      charTopPctSleep: 0.0,
     ),
     RoomAsset(
       id: 'blue_ribbon',
@@ -34,7 +34,7 @@ class CharacterAssets {
       imagePath: 'assets/items/Charactor/Charactor_BlueRibbon.png',
       category: 'body',
       charWidthPct: 0.3,
-      charBottomPct: 0.25,
+      charBottomPct: 0.17,
     ),
     RoomAsset(
       id: 'pink_mupler',
@@ -44,7 +44,7 @@ class CharacterAssets {
       imagePath: 'assets/items/Charactor/Charactor_Mupler.png',
       category: 'body',
       charWidthPct: 0.7,
-      charBottomPct: -0.15,
+      charBottomPct: -0.23,
     ),
     RoomAsset(
       id: 'necktie',
@@ -54,7 +54,7 @@ class CharacterAssets {
       imagePath: 'assets/items/Charactor/Charactor_Necktie.png',
       category: 'body',
       charWidthPct: 0.15,
-      charBottomPct: 0.08,
+      charBottomPct: 0.0,
     ),
     RoomAsset(
       id: 'plogeyes',
@@ -64,8 +64,8 @@ class CharacterAssets {
       imagePath: 'assets/items/Charactor/Charactor_Plogeyes.png',
       category: 'head',
       charWidthPct: 0.75,
-      charTopPctAwake: -0.12,
-      charTopPctSleep: -0.15,
+      charTopPctAwake: -0.10,
+      charTopPctSleep: -0.10,
     ),
     RoomAsset(
       id: 'sprout',
@@ -75,8 +75,8 @@ class CharacterAssets {
       imagePath: 'assets/items/Charactor/Charactor_Sprout.png',
       category: 'head',
       charWidthPct: 0.3,
-      charTopPctAwake: -0.02,
-      charTopPctSleep: -0.05,
+      charTopPctAwake: 0.0,
+      charTopPctSleep: 0.0,
     ),
     RoomAsset(
       id: 'crown',
@@ -86,8 +86,8 @@ class CharacterAssets {
       imagePath: 'assets/items/Charactor/Charactor_Crown.png',
       category: 'head',
       charWidthPct: 0.3,
-      charTopPctAwake: -0.02,
-      charTopPctSleep: -0.05,
+      charTopPctAwake: 0.0,
+      charTopPctSleep: 0.0,
     ),
     RoomAsset(
       id: 'wood_glass',
@@ -97,8 +97,8 @@ class CharacterAssets {
       imagePath: 'assets/items/Charactor/Charactor_WoodGlass.png',
       category: 'face',
       charWidthPct: 0.7,
-      charTopPctAwake: 0.35,
-      charTopPctSleep: 0.17,
+      charTopPctAwake: 0.0,
+      charTopPctSleep: 0.0,
     ),
     RoomAsset(
       id: 'space_clothes',
