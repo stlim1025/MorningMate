@@ -477,6 +477,9 @@ class AdminController extends ChangeNotifier {
   int _todayDiaryCount = 0;
   int get todayDiaryCount => _todayDiaryCount;
 
+  int _todayAdViewerCount = 0;
+  int get todayAdViewerCount => _todayAdViewerCount;
+
   Map<int, int> _hourlyLoginStats = {};
   Map<int, int> get hourlyLoginStats => _hourlyLoginStats;
 
@@ -516,6 +519,15 @@ class AdminController extends ChangeNotifier {
           .get();
       _todayDiaryCount = todayDiaryQuery.count ?? 0;
 
+      // 오늘 광고 시청자
+      final adViewerQuery = await _firestore
+          .collection('users')
+          .where('lastAdRewardDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .count()
+          .get();
+      _todayAdViewerCount = adViewerQuery.count ?? 0;
+
       final totalQuery = await _firestore.collection('users').count().get();
       _totalUserCount = totalQuery.count ?? 0;
     } catch (e) {
@@ -548,6 +560,17 @@ class AdminController extends ChangeNotifier {
     return snap.docs.map((d) => UserModel.fromFirestore(d)).toList();
   }
 
+  Future<List<UserModel>> getTodayAdViewerUsers() async {
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final snap = await _firestore
+        .collection('users')
+        .where('lastAdRewardDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .get();
+    return snap.docs.map((d) => UserModel.fromFirestore(d)).toList();
+  }
+
   Future<List<Map<String, dynamic>>> getTodayDiaries() async {
     final now = DateTime.now();
     final startOfToday = DateTime(now.year, now.month, now.day);
@@ -559,22 +582,30 @@ class AdminController extends ChangeNotifier {
 
     final diaries = snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
 
-    // 작성자의 닉네임 가져오기
+    // 작성자의 닉네임 가져오기 (중복 제거 후 일괄 조회하여 쿼리 최적화)
+    final userIds = diaries
+        .map((d) => d['userId'] as String?)
+        .whereType<String>()
+        .toSet()
+        .toList();
     final nicknameMap = <String, String>{};
+
+    // Firestore whereIn은 최대 30개씩 지원
+    for (var i = 0; i < userIds.length; i += 30) {
+      final chunk =
+          userIds.sublist(i, i + 30 > userIds.length ? userIds.length : i + 30);
+      final userSnap = await _firestore
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      for (var doc in userSnap.docs) {
+        nicknameMap[doc.id] = doc.data()['nickname'] ?? '알 수 없음';
+      }
+    }
+
     for (var diary in diaries) {
       final userId = diary['userId'] as String?;
-      if (userId == null) continue;
-
-      if (!nicknameMap.containsKey(userId)) {
-        try {
-          final userDoc =
-              await _firestore.collection('users').doc(userId).get();
-          nicknameMap[userId] = userDoc.data()?['nickname'] ?? '알 수 없음';
-        } catch (e) {
-          nicknameMap[userId] = '알 수 없음';
-        }
-      }
-      diary['nickname'] = nicknameMap[userId];
+      diary['nickname'] = nicknameMap[userId] ?? '알 수 없음';
     }
 
     return diaries;
@@ -688,6 +719,42 @@ class AdminController extends ChangeNotifier {
     }
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<UserModel?> findUserByTarget(String target) async {
+    try {
+      if (target.contains('@')) {
+        // 이메일로 검색 (대소문자 구분 없이 검색하기 위해 소문자 변환 시도 고려 가능하나 DB 값이 소문자여야 함)
+        // 일단 정확히 일치하는 경우 검색
+        final snap = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: target)
+            .limit(1)
+            .get();
+        if (snap.docs.isNotEmpty) {
+          return UserModel.fromFirestore(snap.docs.first);
+        }
+
+        // 혹시 모르니 소문자로도 한번 더 시도
+        final snapLower = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: target.toLowerCase())
+            .limit(1)
+            .get();
+        if (snapLower.docs.isNotEmpty) {
+          return UserModel.fromFirestore(snapLower.docs.first);
+        }
+      } else {
+        // UID로 검색
+        final doc = await _firestore.collection('users').doc(target).get();
+        if (doc.exists) {
+          return UserModel.fromFirestore(doc);
+        }
+      }
+    } catch (e) {
+      debugPrint('유저 찾기 오류: $e');
+    }
+    return null;
   }
 
   // --- 유저 로그 확인 (Timeline) ---

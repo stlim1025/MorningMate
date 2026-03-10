@@ -12,6 +12,7 @@ import '../../../core/widgets/memo_notification.dart';
 import '../../challenge/data/challenge_data.dart';
 import '../../../data/models/notification_model.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/ad_helper.dart';
 
 // 캐릭터 상태 정의 - 6단계로 확장
 enum CharacterState {
@@ -798,11 +799,7 @@ class CharacterController extends ChangeNotifier {
     notifyListeners();
 
     // Test Ad Unit ID
-    // Android: ca-app-pub-3940256099942544/5224354917
-    // iOS: ca-app-pub-3940256099942544/1712485313
-    final adUnitId = Theme.of(currentContext).platform == TargetPlatform.iOS
-        ? 'ca-app-pub-3940256099942544/1712485313'
-        : 'ca-app-pub-3940256099942544/5224354917';
+    final adUnitId = AdHelper.rewardedAdUnitId;
 
     RewardedAd.load(
       adUnitId: adUnitId,

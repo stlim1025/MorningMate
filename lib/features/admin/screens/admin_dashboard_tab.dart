@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controllers/admin_controller.dart';
 
 class AdminDashboardTab extends StatelessWidget {
@@ -25,8 +26,9 @@ class AdminDashboardTab extends StatelessWidget {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
                   children: [
                     _buildStatCard(
                         context,
@@ -55,6 +57,15 @@ class AdminDashboardTab extends StatelessWidget {
                         Colors.orange,
                         onTap: () => _showDiariesDialog(context,
                             controller.getTodayDiaries(), '오늘 작성된 일기')),
+                    _buildStatCard(
+                        context,
+                        controller,
+                        '오늘 광고 시청',
+                        '${controller.todayAdViewerCount}명',
+                        Icons.play_circle_fill,
+                        Colors.redAccent,
+                        onTap: () => _showUsersDialog(context,
+                            controller.getTodayAdViewerUsers(), '오늘 광고 시청자')),
                     _buildStatCard(
                         context,
                         controller,
@@ -177,43 +188,148 @@ class AdminDashboardTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(title),
+        title: Row(
+          children: [
+            const Icon(Icons.analytics_outlined, color: Colors.blueAccent),
+            const SizedBox(width: 8),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
         content: SizedBox(
-          width: 400,
-          height: 400,
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: 600,
           child: FutureBuilder<List<dynamic>>(
             future: futureUsers,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting)
+              if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
+              }
               final users = snapshot.data ?? [];
-              if (users.isEmpty)
-                return const Center(child: Text('해당 유저가 없습니다.'));
-              return ListView.builder(
-                itemCount: users.length,
-                itemBuilder: (context, index) {
-                  final user = users[index];
-                  String loginDetail = '';
-                  if (title.contains('접속')) {
-                    final timeStr = user.lastLoginDate != null
-                        ? DateFormat('HH:mm:ss').format(user.lastLoginDate!)
-                        : '-';
-                    loginDetail = ' ($timeStr)';
-                  }
+              if (users.isEmpty) {
+                return const Center(child: Text('데이터가 없습니다.'));
+              }
 
-                  return ListTile(
-                    leading: const CircleAvatar(child: Icon(Icons.person)),
-                    title: Text('${user.nickname}$loginDetail'),
-                    subtitle: Text(user.email),
-                  );
-                },
+              return Column(
+                children: [
+                  // Table Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: const [
+                        Expanded(
+                            flex: 2,
+                            child: Text('닉네임',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 3,
+                            child: Text('이메일',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 1,
+                            child: Text('가입경로',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 2,
+                            child: Text('발생 시간',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: users.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final user = users[index];
+                        String timeStr = '-';
+                        if (title.contains('접속')) {
+                          timeStr = user.lastLoginDate != null
+                              ? DateFormat('HH:mm:ss')
+                                  .format(user.lastLoginDate!)
+                              : '-';
+                        } else if (title.contains('광고')) {
+                          timeStr = user.lastAdRewardDate != null
+                              ? DateFormat('HH:mm:ss')
+                                  .format(user.lastAdRewardDate!)
+                              : '-';
+                        } else if (title.contains('신규')) {
+                          timeStr = DateFormat('yy/MM/dd HH:mm')
+                              .format(user.createdAt);
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Text(user.nickname,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w500)),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: Text(user.email,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        color: Colors.grey[600], fontSize: 13)),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue[50],
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(user.loginProviderLabel,
+                                        style: TextStyle(
+                                            color: Colors.blue[700],
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold),
+                                        textAlign: TextAlign.center),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(timeStr,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        fontFamily: 'monospace', fontSize: 12)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('닫기'))
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('닫기',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          )
         ],
       ),
     );
@@ -224,36 +340,127 @@ class AdminDashboardTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(title),
+        title: Row(
+          children: [
+            const Icon(Icons.book_outlined, color: Colors.orangeAccent),
+            const SizedBox(width: 8),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
         content: SizedBox(
-          width: 400,
-          height: 400,
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: 600,
           child: FutureBuilder<List<Map<String, dynamic>>>(
             future: futureDiaries,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting)
+              if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
+              }
               final diaries = snapshot.data ?? [];
-              if (diaries.isEmpty)
+              if (diaries.isEmpty) {
                 return const Center(child: Text('작성된 일기가 없습니다.'));
-              return ListView.builder(
-                itemCount: diaries.length,
-                itemBuilder: (context, index) {
-                  final d = diaries[index];
-                  return ListTile(
-                    leading: const Icon(Icons.book, color: Colors.orange),
-                    title: Text(
-                        '${d['nickname'] ?? '알 수 없음'} (UID: ${d['userId']})'),
-                    subtitle: Text('글자수: ${d['wordCount'] ?? 0}자'),
-                  );
-                },
+              }
+
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: const [
+                        Expanded(
+                            flex: 2,
+                            child: Text('작성자',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 3,
+                            child: Text('UID',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 1,
+                            child: Text('글자수',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 2,
+                            child: Text('작성시간',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: diaries.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final d = diaries[index];
+                        final createdAt = d['createdAt'] is Timestamp
+                            ? (d['createdAt'] as Timestamp).toDate()
+                            : DateTime.now();
+                        final timeStr =
+                            DateFormat('HH:mm:ss').format(createdAt);
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Text(d['nickname'] ?? '알 수 없음',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w500)),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: Text(d['userId'] ?? '-',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 11,
+                                        fontFamily: 'monospace')),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text('${d['wordCount'] ?? 0}자',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(timeStr,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        fontFamily: 'monospace', fontSize: 12)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('닫기'))
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('닫기',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          )
         ],
       ),
     );

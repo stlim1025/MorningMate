@@ -260,15 +260,8 @@ class RoomAssets {
     RoomAsset(
         id: 'default', name: '기본(달)', price: 0, icon: Icons.nightlight_round),
     RoomAsset(
-        id: 'blue_moon',
-        name: '푸른 달',
-        price: 300,
-        icon: Icons.circle,
-        color: Colors.blueAccent,
-        imagePath: 'assets/images/backgrounds/BlueMoon.png'),
-    RoomAsset(
         id: 'blue_moon2',
-        name: '푸른 달2',
+        name: '푸른 달',
         price: 300,
         icon: Icons.circle,
         color: Colors.blueAccent,

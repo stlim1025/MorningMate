@@ -137,69 +137,52 @@ class _ShopManagementTabState extends State<ShopManagementTab>
           ),
         ),
         // 검색바와 할인 제거 버튼
+        // 검색바와 할인 제거 버튼
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // 동기화 및 추가 버튼 행
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: controller.isLoading
-                          ? null
-                          : () async {
-                              try {
-                                await controller.syncShopAssets();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('로컬 에셋이 Firebase와 동기화되었습니다.')),
-                                  );
-                                  _refreshAssets();
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('동기화 실패: $e')),
-                                  );
-                                }
-                              }
-                            },
-                      icon: const Icon(Icons.cloud_sync),
-                      label: const Text('로컬 에셋 동기화 (Firebase 업로드)'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade50,
-                        foregroundColor: Colors.blue.shade700,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
+              // 아이템 추가 버튼 (크게 배치)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => const AssetUploadDialog(),
+                    ).then((_) => _refreshAssets());
+                  },
+                  icon: const Icon(Icons.add_circle_outline, size: 24),
+                  label: const Text('새로운 아이템 추가하기',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade600,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: 2,
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => const AssetUploadDialog(),
-                      ).then((_) => _refreshAssets());
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade50,
-                      foregroundColor: Colors.green.shade700,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 12),
-                    ),
-                    child: const Icon(Icons.add),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: '아이템 검색',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(),
+                  hintText: '아이템 이름으로 검색하세요',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
                 ),
                 onChanged: (value) {
                   setState(() {
@@ -214,9 +197,10 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.red.shade50,
+                      foregroundColor: Colors.red.shade700,
                       padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(color: Colors.red.shade200),
                     ),
                     icon: const Icon(Icons.remove_circle_outline),
                     label: Text('모든 할인 제거 (${discounts.length}개)'),
@@ -228,7 +212,7 @@ class _ShopManagementTabState extends State<ShopManagementTab>
             ],
           ),
         ),
-        // 아이템 리스트
+        // 아이템 그리드
         Expanded(
           child: Builder(
             builder: (context) {
@@ -265,7 +249,15 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                     const Expanded(child: Center(child: Text('검색 결과가 없습니다.')))
                   else
                     Expanded(
-                      child: ListView.builder(
+                      child: GridView.builder(
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 250,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 0.72,
+                        ),
                         itemCount: pagedItems.length,
                         itemBuilder: (context, index) {
                           final item = pagedItems[index];
@@ -275,103 +267,218 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                           final originalPrice = item.price;
 
                           return Card(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              leading: GestureDetector(
-                                onTap: () => _quickChangeImage(
-                                    context, item, controller),
-                                child: Stack(
-                                  alignment: Alignment.bottomRight,
-                                  children: [
-                                    Container(
-                                      width: 60,
-                                      height: 60,
-                                      padding: const EdgeInsets.all(4),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // 상단 이미지 영역
+                                Expanded(
+                                  flex: 3,
+                                  child: GestureDetector(
+                                    onTap: () => _quickChangeImage(
+                                        context, item, controller),
+                                    child: Container(
                                       decoration: BoxDecoration(
-                                        color: Colors.grey[100],
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                            color: Colors.grey[300]!),
+                                        color: Colors.grey[50],
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          topRight: Radius.circular(12),
+                                        ),
                                       ),
-                                      child: _buildItemImage(item, size: 50),
-                                    ),
-                                    Container(
-                                      decoration: const BoxDecoration(
-                                        color: Colors.blue,
-                                        shape: BoxShape.circle,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          _buildItemImage(item, size: 100),
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.black45,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              padding: const EdgeInsets.all(4),
+                                              child: const Icon(Icons.edit,
+                                                  size: 14,
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                          // 카테고리 태그
+                                          Positioned(
+                                            bottom: 8,
+                                            left: 8,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blueGrey[700]!
+                                                    .withOpacity(0.8),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                _getCategoryLabel(
+                                                    item.category),
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 9,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ),
+                                          ),
+                                          if (isDiscounted)
+                                            Positioned(
+                                              top: 8,
+                                              left: 8,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: const Text('SALE',
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              ),
+                                            ),
+                                        ],
                                       ),
-                                      padding: const EdgeInsets.all(2),
-                                      child: const Icon(Icons.edit,
-                                          size: 12, color: Colors.white),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                              title: Text(item.name,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('ID: ${item.id}',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600])),
-                                  Text(
-                                    isDiscounted
-                                        ? '원가: $originalPrice 가지 → 할인가: $discountPrice 가지'
-                                        : '가격: $originalPrice 가지',
-                                    style: TextStyle(
-                                      color: isDiscounted
-                                          ? Colors.red
-                                          : Colors.black87,
-                                      fontWeight: isDiscounted
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
+                                // 텍스트 정보 영역
+                                Expanded(
+                                  flex: 2,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(10.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    item.name,
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Text(
+                                              'ID: ${item.id}',
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey[600]),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                if (isDiscounted)
+                                                  Text(
+                                                    '$originalPrice 가지',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.grey[400],
+                                                      decoration: TextDecoration
+                                                          .lineThrough,
+                                                    ),
+                                                  ),
+                                                Text(
+                                                  '${isDiscounted ? discountPrice : originalPrice} 가지',
+                                                  style: TextStyle(
+                                                    color: isDiscounted
+                                                        ? Colors.red
+                                                        : Colors.blueAccent,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Row(
+                                              children: [
+                                                IconButton(
+                                                  padding: EdgeInsets.zero,
+                                                  constraints:
+                                                      const BoxConstraints(),
+                                                  icon: Icon(
+                                                    Icons.local_offer_outlined,
+                                                    size: 18,
+                                                    color: isDiscounted
+                                                        ? Colors.red
+                                                        : Colors.grey,
+                                                  ),
+                                                  onPressed: () =>
+                                                      _showDiscountDialog(
+                                                          context,
+                                                          item,
+                                                          discounts,
+                                                          controller),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                IconButton(
+                                                  padding: EdgeInsets.zero,
+                                                  constraints:
+                                                      const BoxConstraints(),
+                                                  icon: const Icon(
+                                                      Icons.settings_outlined,
+                                                      size: 18,
+                                                      color: Colors.blueGrey),
+                                                  onPressed: () {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (context) =>
+                                                          AssetUploadDialog(
+                                                              itemToEdit: item),
+                                                    ).then((_) =>
+                                                        _refreshAssets());
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  Text(
-                                    item.imagePath != null
-                                        ? (item.imagePath!.startsWith('http')
-                                            ? '🌐 원격 이미지'
-                                            : '🖼️ 로컬: ${item.imagePath}')
-                                        : '❌ 이미지 없음',
-                                    style: TextStyle(
-                                        fontSize: 10, color: Colors.grey[500]),
-                                  ),
-                                ],
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.local_offer,
-                                      color: isDiscounted
-                                          ? Colors.red
-                                          : Colors.grey,
-                                    ),
-                                    tooltip: '할인 설정',
-                                    onPressed: () => _showDiscountDialog(
-                                        context, item, discounts, controller),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.settings,
-                                        color: Colors.blueGrey),
-                                    tooltip: '상세 설정/삭제',
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) =>
-                                            AssetUploadDialog(itemToEdit: item),
-                                      ).then((_) => _refreshAssets());
-                                    },
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           );
                         },
@@ -585,5 +692,28 @@ class _ShopManagementTabState extends State<ShopManagementTab>
         );
       },
     );
+  }
+
+  String _getCategoryLabel(String? category) {
+    switch (category) {
+      case 'theme':
+        return '테마';
+      case 'emoticon':
+        return '이모티콘';
+      case 'wallpaper':
+        return '배경화면';
+      case 'background':
+        return '배경';
+      case 'prop':
+        return '소품';
+      case 'floor':
+        return '바닥';
+      case 'window':
+        return '창문';
+      case 'character':
+        return '캐릭터';
+      default:
+        return '기타';
+    }
   }
 }

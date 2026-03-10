@@ -600,3 +600,143 @@ export const morningReminder = onSchedule("every 5 minutes", async () => {
 
   await Promise.all(promises);
 });
+
+// 관리자 푸시 전송 처리 (push_history 컬렉션에 새 문서 생성 시 동작)
+export const processAdminPushRequest = onDocumentCreated("push_history/{pushId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+
+  const data = snapshot.data() as any;
+  if (data.status === 'processed') return;
+
+  try {
+    const { title, body, target, deepLink } = data;
+    let tokens: string[] = [];
+
+    // 1. 타겟 대상 유저 토큰 가져오기
+    const usersRef = admin.firestore().collection("users");
+
+    if (target === 'all') {
+      const users = await usersRef.where("fcmToken", "!=", null).get();
+      users.docs.forEach(doc => {
+        const token = doc.data().fcmToken;
+        if (token) tokens.push(token);
+      });
+    } else if (target === 'inactive_3days') {
+      // 3일 전
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const users = await usersRef.where("lastLoginDate", "<", admin.firestore.Timestamp.fromDate(threeDaysAgo)).get();
+      users.docs.forEach(doc => {
+        const token = doc.data().fcmToken;
+        if (token) tokens.push(token);
+      });
+    } else if (target === 'consecutive_10days') {
+      const users = await usersRef.where("consecutiveDays", ">=", 10).get();
+      users.docs.forEach(doc => {
+        const token = doc.data().fcmToken;
+        if (token) tokens.push(token);
+      });
+    } else if (target && target.startsWith('uid:')) {
+      const specificUser = target.replace('uid:', '');
+      // 이메일 또는 UID로 검색
+      if (specificUser.includes('@')) {
+        const users = await usersRef.where("email", "==", specificUser).limit(1).get();
+        if (!users.empty && users.docs[0].data().fcmToken) {
+          tokens.push(users.docs[0].data().fcmToken);
+        }
+      } else {
+        const userDoc = await usersRef.doc(specificUser).get();
+        const userData = userDoc.data();
+        if (userDoc.exists && userData?.fcmToken) {
+          tokens.push(userData.fcmToken);
+        }
+      }
+    } else if (target && target.startsWith('uids:')) {
+      const uidsStr = target.replace('uids:', '');
+      const uids = uidsStr.split(',').map((u: string) => u.trim()).filter((u: string) => u.length > 0);
+
+      // 여러 유저의 토큰을 병렬로 가져오기
+      const tokenPromises = uids.map(async (id: string) => {
+        if (id.includes('@')) {
+          const snap = await usersRef.where("email", "==", id).limit(1).get();
+          return (!snap.empty && snap.docs[0].data().fcmToken) ? snap.docs[0].data().fcmToken : null;
+        } else {
+          const doc = await usersRef.doc(id).get();
+          return (doc.exists && doc.data()?.fcmToken) ? doc.data()?.fcmToken : null;
+        }
+      });
+
+      const results = await Promise.all(tokenPromises);
+      results.forEach((t: string | null) => { if (t) tokens.push(t); });
+    }
+
+    // 중복 토큰 제거
+    tokens = [...new Set(tokens)];
+
+    if (tokens.length === 0) {
+      logger.info(`[Admin Push] No valid tokens found for target: ${target}`);
+      await snapshot.ref.update({ status: 'processed', note: 'No valid tokens' });
+      return;
+    }
+
+    // 2. FCM 발송
+    const payload: any = {
+      notification: {
+        title: title,
+        body: body,
+      },
+      data: {
+        type: "admin_push",
+        deepLink: deepLink || "",
+        click_action: "FLUTTER_NOTIFICATION_CLICK",
+      },
+      android: {
+        priority: "high",
+        notification: {
+          title: title,
+          body: body,
+          channelId: "high_importance_channel",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            contentAvailable: true,
+            sound: "default",
+            alert: {
+              title: title,
+              body: body,
+            },
+          },
+        },
+      },
+    };
+
+    // sendEachForMulticast 최대 한도는 500개
+    const chunkSize = 500;
+    let successCount = 0;
+    let failureCount = 0;
+
+    for (let i = 0; i < tokens.length; i += chunkSize) {
+      const chunk = tokens.slice(i, i + chunkSize);
+      const chunkPayload = { ...payload, tokens: chunk };
+      const response = await admin.messaging().sendEachForMulticast(chunkPayload);
+      successCount += response.successCount;
+      failureCount += response.failureCount;
+    }
+
+    logger.info(`[Admin Push] Sent to ${tokens.length} tokens. Success: ${successCount}, Failure: ${failureCount}`);
+
+    // 3. 발송 완료 처리
+    await snapshot.ref.update({
+      status: 'processed',
+      successCount: successCount,
+      failureCount: failureCount
+    });
+
+  } catch (error: any) {
+    logger.error(`[Admin Push] Error:`, error);
+    await snapshot.ref.update({ status: 'error', error: error.toString() });
+  }
+});

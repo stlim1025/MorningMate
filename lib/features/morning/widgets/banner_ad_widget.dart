@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../../../core/utils/ad_helper.dart';
 
 class MyBannerAd extends StatefulWidget {
   const MyBannerAd({super.key});
@@ -12,9 +13,7 @@ class _MyBannerAdState extends State<MyBannerAd> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
 
-  // ⚠️ 중요: 테스트용 광고 단위 ID입니다. (개발 중엔 무조건 이거 써야 함)
-  // 실제 출시할 때는 AdMob 콘솔에서 만든 '배너 광고 단위 ID'로 교체하세요.
-  final String _adUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  final String _adUnitId = AdHelper.bannerAdUnitId;
 
   @override
   void initState() {
