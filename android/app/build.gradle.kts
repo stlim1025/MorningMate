@@ -67,3 +67,7 @@ dependencies {
         implementation("androidx.core:core-ktx:1.15.0")
     }
 }
+
+configurations.all {
+    exclude(group = "com.google.android.gms", module = "play-services-safetynet")
+}

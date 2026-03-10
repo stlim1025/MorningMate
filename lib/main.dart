@@ -112,8 +112,8 @@ void main() async {
     try {
       debugPrint('11. Activating Firebase App Check...');
       await FirebaseAppCheck.instance.activate(
-        androidProvider: AndroidProvider.debug,
-        appleProvider: AppleProvider.debug,
+        androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
       );
       debugPrint('12. Firebase App Check 초기화 성공 (디버그 모드)');
     } catch (e) {
