@@ -27,7 +27,6 @@ import 'features/admin/controllers/admin_controller.dart';
 import 'features/social/controllers/nest_controller.dart';
 import 'core/theme/theme_controller.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -132,23 +131,6 @@ void main() async {
 
     // FCM 백그라운드 핸들러 등록
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  }
-
-  // ATT(App Tracking Transparency) 권한 요청 - iOS 전용
-  if (defaultTargetPlatform == TargetPlatform.iOS) {
-    try {
-      debugPrint('15. Requesting ATT authorization...');
-      // 현재 상태 확인 후 notDetermined 상태일 때만 팝업 띄움
-      final status = await AppTrackingTransparency.trackingAuthorizationStatus;
-      if (status == TrackingStatus.notDetermined) {
-        // iOS 가이드라인: 팝업이 표시되기 전에 짧은 딜레이 권장
-        await Future.delayed(const Duration(milliseconds: 200));
-        await AppTrackingTransparency.requestTrackingAuthorization();
-      }
-      debugPrint('16. ATT 상태: $status');
-    } catch (e) {
-      debugPrint('ATT 권한 요청 실패: $e');
-    }
   }
 
   // 광고 SDK 초기화
