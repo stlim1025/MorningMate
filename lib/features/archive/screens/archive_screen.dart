@@ -7,7 +7,6 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../../core/theme/app_color_scheme.dart';
 import '../../../services/diary_service.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../character/controllers/character_controller.dart'; // Import CharacterController
 import '../../../data/models/diary_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../character/widgets/character_display.dart';
@@ -400,89 +399,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     );
   }
 
-  Widget _buildCharacterSection(
-      BuildContext context, AppColorScheme colorScheme) {
-    return Consumer<CharacterController>(
-      builder: (context, controller, child) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadowColor.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  AppLocalizations.of(context)?.get('characterInfo') ??
-                      'Character Info',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'BMJUA',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 캐릭터 아이콘
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryButton.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      _getCharacterIcon(controller.characterState),
-                      size: 48,
-                      color: colorScheme.primaryButton,
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-
-                  // 캐릭터 상태 텍스트
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getStateName(controller.characterState),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        controller.currentAnimation,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: colorScheme.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildCalendarSection(
       BuildContext context, AppColorScheme colorScheme) {
@@ -1090,45 +1006,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         );
       },
     );
-  }
-
-  IconData _getCharacterIcon(CharacterState state) {
-    switch (state) {
-      case CharacterState.egg:
-        return Icons.egg;
-      case CharacterState.cracking:
-        return Icons.egg_alt;
-      case CharacterState.hatching:
-        return Icons.cruelty_free;
-      case CharacterState.baby:
-        return Icons.pets;
-      case CharacterState.young:
-        return Icons.flutter_dash;
-      case CharacterState.adult:
-        return Icons.flight;
-      case CharacterState.sleeping:
-        return Icons.bedtime;
-    }
-  }
-
-  String _getStateName(CharacterState state) {
-    switch (state) {
-      case CharacterState.egg:
-        return AppLocalizations.of(context)?.get('state_egg') ?? '알 🥚';
-      case CharacterState.cracking:
-        return AppLocalizations.of(context)?.get('state_cracking') ??
-            '금이 간 알 🥚✨';
-      case CharacterState.hatching:
-        return AppLocalizations.of(context)?.get('state_hatching') ?? '부화 중 🐣';
-      case CharacterState.baby:
-        return AppLocalizations.of(context)?.get('state_baby') ?? '새끼 새 🐥';
-      case CharacterState.young:
-        return AppLocalizations.of(context)?.get('state_young') ?? '아기 새 🐦';
-      case CharacterState.adult:
-        return AppLocalizations.of(context)?.get('state_adult') ?? '귀여운 새 🕊️';
-      case CharacterState.sleeping:
-        return AppLocalizations.of(context)?.get('state_sleeping') ?? '수면 중 💤';
-    }
   }
 }
 

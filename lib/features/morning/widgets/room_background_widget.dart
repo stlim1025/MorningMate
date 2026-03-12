@@ -53,7 +53,6 @@ class RoomBackgroundWidget extends StatelessWidget {
   }
 
   String? _backgroundImagePath(String backgroundId) {
-    List<RoomAsset> assets = RoomAssets.backgrounds;
     try {
       final asset = RoomAssets.backgrounds.firstWhere(
         (item) => item.id == backgroundId,

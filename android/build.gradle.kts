@@ -25,6 +25,7 @@ subprojects {
             force("androidx.savedstate:savedstate-ktx:1.2.1")
             force("androidx.lifecycle:lifecycle-viewmodel:2.8.7")
             force("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+            force("androidx.browser:browser:1.8.0")
         }
     }
 }

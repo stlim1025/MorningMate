@@ -8,6 +8,9 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/bouncing_character_loader.dart';
 import '../../../services/asset_service.dart';
 import '../../../core/services/asset_precache_service.dart';
+import '../../../services/version_service.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -44,6 +47,20 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
+    // 버전 체크 추가
+    final versionService = VersionService();
+    final versionResult = await versionService.checkVersion();
+
+    if (versionResult.type != VersionUpdateType.none && mounted) {
+      final shouldContinue = await _showUpdateDialog(context, versionResult);
+      if (!shouldContinue) {
+        // 강제 업데이트의 경우 여기서 멈춤 (팝업이 떠있거나 앱 종료 유도)
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
     final user = authController.userModel;
 
     // 로그인이 안 되어 있으면 /login으로 이동
@@ -67,8 +84,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
       if (authenticated) {
         authController.setBiometricVerified(true);
+        final router = GoRouter.of(context);
         await _loadAndPrecacheAssets();
-        if (mounted) context.go('/morning');
+        router.go('/morning');
       } else {
         if (mounted) {
           setState(() {
@@ -85,8 +103,9 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     } else {
       // 생체 인증이 필요 없거나 이미 완료된 경우
+      final router = GoRouter.of(context);
       await _loadAndPrecacheAssets();
-      if (mounted) context.go('/morning');
+      router.go('/morning');
     }
   }
 
@@ -109,14 +128,14 @@ class _SplashScreenState extends State<SplashScreen> {
       actions: [
         AppDialogAction(
           label: AppLocalizations.of(context)?.get('logout') ?? '로그아웃',
-          onPressed: () {
+          onPressed: (context) {
             context.read<AuthController>().signOut();
             Navigator.pop(context, false);
           },
         ),
         AppDialogAction(
           label: AppLocalizations.of(context)?.get('retry') ?? '다시 시도',
-          onPressed: () => Navigator.pop(context, true),
+          onPressed: (context) => Navigator.pop(context, true),
           useHighlight: true,
         ),
       ],
@@ -253,6 +272,70 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
+  Future<bool> _showUpdateDialog(
+      BuildContext context, VersionCheckResult result) async {
+    final info = result.info!;
+    final isForce = result.type == VersionUpdateType.force;
+
+    final l10n = AppLocalizations.of(context);
+
+    final showResult = await AppDialog.show<bool>(
+      context: context,
+      key: AppDialogKey.versionUpdate,
+      barrierDismissible: !isForce,
+      title: info.updateTitle,
+      content: Text(
+        info.updateBody,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 16,
+          fontFamily: 'BMJUA',
+          height: 1.5,
+        ),
+      ),
+      actions: [
+        if (!isForce)
+          AppDialogAction(
+            label: l10n?.get('later') ?? '나중에 하기',
+            isCancel: true,
+            onPressed: (context) => Navigator.pop(context, true),
+          ),
+        AppDialogAction(
+          label: l10n?.get('update') ?? '업데이트',
+          isPrimary: true,
+          onPressed: (context) async {
+            await _launchStore();
+            if (!isForce) {
+              if (mounted) Navigator.pop(context, true);
+            }
+          },
+        ),
+      ],
+    );
+
+    return showResult ?? !isForce;
+  }
+
+  Future<void> _launchStore() async {
+    // TODO: 실제 스토어 URL로 변경 필요
+    final String url = Platform.isAndroid
+        ? 'market://details?id=com.stlim1025.morningmate'
+        : 'https://apps.apple.com/app/id6740639906';
+
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      // market:// 프로토콜이 안될 경우 web url로 시도
+      if (Platform.isAndroid) {
+        final webUrl =
+            'https://play.google.com/store/apps/details?id=com.stlim1025.morningmate';
+        if (await canLaunchUrl(Uri.parse(webUrl))) {
+          await launchUrl(Uri.parse(webUrl), mode: LaunchMode.externalApplication);
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -293,8 +376,10 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   TextButton(
                     onPressed: () async {
-                      await context.read<AuthController>().signOut();
-                      if (mounted) context.go('/login');
+                      final auth = context.read<AuthController>();
+                      final router = GoRouter.of(context);
+                      await auth.signOut();
+                      router.go('/login');
                     },
                     child: const Text(
                       "다른 계정으로 로그인",
@@ -307,7 +392,7 @@ class _SplashScreenState extends State<SplashScreen> {
               const BouncingCharacterLoader(),
             const SizedBox(height: 24),
             const Text(
-              "Morni",
+              "MorningMate",
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,

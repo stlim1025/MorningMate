@@ -112,8 +112,10 @@ void main() async {
     try {
       debugPrint('11. Activating Firebase App Check...');
       await FirebaseAppCheck.instance.activate(
-        androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-        appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
+        androidProvider:
+            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        appleProvider:
+            kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
       );
       debugPrint('12. Firebase App Check 초기화 성공 (디버그 모드)');
     } catch (e) {
@@ -137,7 +139,16 @@ void main() async {
   try {
     debugPrint('17. Initializing MobileAds...');
     await MobileAds.instance.initialize();
-    debugPrint('18. 광고 SDK 초기화 성공');
+
+    // 테스트 기기 ID 설정 (이 기기에서 테스트 광고를 보기 위해)
+    // 로그에 "To get test ads on this device, set: ... testDeviceIds: ["XXX"]" 라고 뜨는 ID를 여기에 추가하세요.
+    await MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(
+        testDeviceIds: [], // 예: ['33BE2250B43518CCDA7DE426D04EE231']
+      ),
+    );
+
+    debugPrint('18. 광고 SDK 초기화 및 테스트 기기 설정 성공');
   } catch (e) {
     debugPrint('광고 SDK 초기화 실패: $e');
   }

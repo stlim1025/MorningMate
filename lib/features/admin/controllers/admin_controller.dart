@@ -7,6 +7,7 @@ import '../../../services/asset_service.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../../../data/models/diary_model.dart';
+import '../../../data/models/version_model.dart';
 import '../../../utils/encryption.dart';
 
 class AdminController extends ChangeNotifier {
@@ -609,6 +610,47 @@ class AdminController extends ChangeNotifier {
     }
 
     return diaries;
+  }
+
+  // --- 버전 관리 (Version Management) ---
+  VersionModel? _versionInfo;
+  VersionModel? get versionInfo => _versionInfo;
+
+  Future<void> fetchVersionInfo() async {
+    try {
+      final doc = await _firestore.collection('settings').doc('version').get();
+      if (doc.exists) {
+        _versionInfo = VersionModel.fromFirestore(doc);
+      } else {
+        // 기본값 설정
+        _versionInfo = VersionModel(
+          latestVersion: '1.0.0',
+          minimumVersion: '1.0.0',
+          updateTitle: '업데이트 안내',
+          updateBody: '새로운 버전이 출시되었습니다. 업데이트 후 이용해 주세요!',
+          isForceUpdate: false,
+        );
+      }
+    } catch (e) {
+      debugPrint('버전 정보 불러오기 오류: $e');
+    }
+    notifyListeners();
+  }
+
+  Future<void> updateVersionInfo(VersionModel version) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _firestore
+          .collection('settings')
+          .doc('version')
+          .set(version.toFirestore());
+      _versionInfo = version;
+    } catch (e) {
+      debugPrint('버전 정보 업데이트 오류: $e');
+    }
+    _isLoading = false;
+    notifyListeners();
   }
 
   // --- 공지사항 관리 (Notice) ---

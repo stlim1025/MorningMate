@@ -41,6 +41,7 @@ enum AppDialogKey {
   deleteTodaySpeak,
   todaySpeakReward,
   pointHistory,
+  versionUpdate,
 }
 
 class AppDialogAction {
@@ -52,12 +53,14 @@ class AppDialogAction {
     this.isFullWidth = false,
     this.isEnabled,
     this.labelWidget,
+    this.isCancel = false,
   });
 
   final String label;
   final Widget? labelWidget;
   final dynamic onPressed;
   final bool isPrimary;
+  final bool isCancel;
   final bool useHighlight;
   final bool isFullWidth;
   final ValueListenable<bool>? isEnabled;
@@ -102,6 +105,7 @@ class AppDialog {
     Widget? leading,
     Widget? trailing,
     List<AppDialogAction>? actions,
+    String? title,
   }) {
     // ... (rest of buildConfig stays same)
     switch (key) {
@@ -554,6 +558,14 @@ class AppDialog {
               ],
           actionsAlignment: MainAxisAlignment.center,
         );
+      case AppDialogKey.versionUpdate:
+        return AppDialogConfig(
+          title: title ??
+              AppLocalizations.of(context)?.get('updateNotice') ??
+              '업데이트 안내',
+          content: content,
+          actions: actions ?? const [],
+        );
     }
   }
 
@@ -565,6 +577,7 @@ class AppDialog {
     Widget? trailing,
     List<AppDialogAction>? actions,
     bool barrierDismissible = true,
+    String? title,
   }) {
     final config = buildConfig(
       key: key,
@@ -573,6 +586,7 @@ class AppDialog {
       leading: leading,
       trailing: trailing,
       actions: actions,
+      title: title,
     );
     // final colors = Theme.of(context).extension<AppColorScheme>(); // Removed unused variable
 
@@ -621,26 +635,35 @@ class AppDialog {
           '중단',
           'Stop',
           '5',
-        ].contains(action.label);
+          '업데이트',
+          'Update',
+        ].contains(action.label.trim());
 
     // 'Cancel' or 'Close' style buttons. Includes '계속 작성'
-    final isCancelStyle = [
-      '취소',
-      '닫기',
-      '거절',
-      '아니오',
-      '계속 작성',
-      '꾸미기',
-      'Cancel',
-      'Close',
-      'Reject',
-      'No',
-      'Keep Writing',
-      'Decorate',
-      '계속',
-      '로그아웃',
-      'Logout'
-    ].contains(action.label);
+    final isCancelStyle = action.isCancel ||
+        [
+          '취소',
+          '닫기',
+          '거절',
+          '아니오',
+          '계속 작성',
+          '꾸미기',
+          'Cancel',
+          'Close',
+          'Reject',
+          'No',
+          'Keep Writing',
+          'Decorate',
+          '계속',
+          '로그아웃',
+          'Logout',
+          '나중에 하기',
+          '나중에',
+          '나중에 정하기',
+          'Later',
+          'Not now',
+          'Maybe later',
+        ].contains(action.label.trim());
 
     if (isConfirmStyle || isCancelStyle) {
       final imagePath = isConfirmStyle

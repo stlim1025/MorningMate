@@ -83,6 +83,7 @@ class CharacterController extends ChangeNotifier {
   // 광고 관련 상태
   RewardedAd? _rewardedAd;
   bool _isAdLoading = false;
+  LoadAdError? _lastLoadError;
 
   // Getters
   UserModel? get currentUser => _currentUser;
@@ -809,18 +810,15 @@ class CharacterController extends ChangeNotifier {
           debugPrint('$ad loaded.');
           _rewardedAd = ad;
           _isAdLoading = false;
+          _lastLoadError = null;
           notifyListeners();
         },
         onAdFailedToLoad: (LoadAdError error) {
           debugPrint('RewardedAd failed to load: $error');
           _isAdLoading = false;
           _rewardedAd = null;
+          _lastLoadError = error;
           notifyListeners();
-
-          // 10초 후 자동으로 다시 로드 시도
-          Future.delayed(const Duration(seconds: 10), () {
-            loadRewardedAd();
-          });
         },
       ),
     );
@@ -829,8 +827,24 @@ class CharacterController extends ChangeNotifier {
   // 광고 보여주기
   void showRewardedAd(BuildContext context) {
     if (_rewardedAd == null) {
-      loadRewardedAd(context: context);
-      MemoNotification.show(context, '광고가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요. 📺');
+      if (_isAdLoading) {
+        MemoNotification.show(context, '광고를 불러오고 있습니다. 잠시만 기다려주세요. 📺');
+      } else if (_lastLoadError != null) {
+        String message = '광고를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.';
+        
+        // AdMob 에러 코드 처리 (3: NO_FILL - 광고 물량 부족)
+        if (_lastLoadError!.code == 3) {
+          message = '현재 시청 가능한 광고가 없습니다. 잠시 후 다시 시도해주세요. (재고 부족) 📭';
+        } else if (_lastLoadError!.code == 2) {
+          message = '네트워크 연결이 불안정하여 광고를 불러올 수 없습니다. 🌐';
+        }
+        
+        MemoNotification.show(context, message);
+        loadRewardedAd(context: context);
+      } else {
+        loadRewardedAd(context: context);
+        MemoNotification.show(context, '광고가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요. 📺');
+      }
       return;
     }
 

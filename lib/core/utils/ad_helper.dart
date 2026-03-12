@@ -20,23 +20,6 @@ class AdHelper {
         : 'ca-app-pub-3940256099942544~1458002511';
   }
 
-  // 배너 광고 단위 ID
-  static String get bannerAdUnitId {
-    if (kReleaseMode) {
-      if (Platform.isAndroid) {
-        return 'ca-app-pub-8610826190373183/3805214029';
-      } else {
-        // iOS용 실제 광고 단위 ID가 있을 경우 여기에 입력
-        // 현재는 없으므로 테스트 ID를 반환하거나 공백으로 둡니다.
-        return 'ca-app-pub-3940256099942544/2934735716';
-      }
-    }
-    // 테스트 배너 광고 ID
-    return Platform.isAndroid
-        ? 'ca-app-pub-3940256099942544/6300978111'
-        : 'ca-app-pub-3940256099942544/2934735716';
-  }
-
   // 보상형 광고 단위 ID (필요시 추가 발급 후 교체)
   static String get rewardedAdUnitId {
     if (kReleaseMode) {

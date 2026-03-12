@@ -10,6 +10,7 @@ import 'admin_notice_tab.dart';
 import 'admin_push_tab.dart';
 import 'admin_report_tab.dart';
 import 'shop_management_tab.dart';
+import 'admin_version_tab.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -56,6 +57,9 @@ class _AdminScreenState extends State<AdminScreen> {
         break;
       case 5:
         bodyContent = const ShopManagementTab();
+        break;
+      case 6:
+        bodyContent = const AdminVersionTab();
         break;
       default:
         bodyContent = const AdminDashboardTab();
@@ -170,6 +174,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return '신고 관리';
       case 5:
         return '상점 관리';
+      case 6:
+        return '버전 관리';
       default:
         return '관리자 홈';
     }
@@ -198,6 +204,7 @@ class _AdminScreenState extends State<AdminScreen> {
             _buildSidebarItem('🔔 푸시 메시지 전송', 3),
             _buildSidebarItem('🚩 신고 관리', 4),
             _buildSidebarItem('📦 아이템/상점 관리', 5),
+            _buildSidebarItem('🆙 버전 관리', 6),
             const Spacer(),
           ],
         ),
