@@ -100,6 +100,7 @@ class _AdminUserListTabState extends State<AdminUserListTab> {
                           DataColumn(label: Text('상태')),
                           DataColumn(label: Text('닉네임')),
                           DataColumn(label: Text('가입/이메일')),
+                          DataColumn(label: Text('OS')),
                           DataColumn(label: Text('연속출석')),
                           DataColumn(label: Text('보유 가지')),
                           DataColumn(label: Text('마지막 접속/일기')),
@@ -309,16 +310,31 @@ class _UserDataSource extends DataTableSource {
       color: rowColor != null ? MaterialStateProperty.all(rowColor) : null,
       cells: [
         DataCell(
-          isSuspended
-              ? const Tooltip(
-                  message: '이용정지', child: Icon(Icons.block, color: Colors.red))
-              : hasNotWrittenDiaryRecently
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              isSuspended
                   ? const Tooltip(
-                      message: '7일 이상 일기 미성성',
-                      child: Icon(Icons.warning, color: Colors.redAccent))
-                  : const Tooltip(
-                      message: '정상',
-                      child: Icon(Icons.check_circle, color: Colors.green)),
+                      message: '이용정지',
+                      child: Icon(Icons.block, color: Colors.red))
+                  : hasNotWrittenDiaryRecently
+                      ? const Tooltip(
+                          message: '7일 이상 일기 미성성',
+                          child: Icon(Icons.warning, color: Colors.redAccent))
+                      : const Tooltip(
+                          message: '정상',
+                          child: Icon(Icons.check_circle, color: Colors.green)),
+              if (user.fcmToken != null)
+                const Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Tooltip(
+                    message: '푸시 수신 가능',
+                    child: Icon(Icons.notifications_active,
+                        size: 16, color: Colors.blueAccent),
+                  ),
+                ),
+            ],
+          ),
         ),
         DataCell(
           InkWell(
@@ -340,6 +356,19 @@ class _UserDataSource extends DataTableSource {
             Text(user.email, style: const TextStyle(fontSize: 12)),
           ],
         )),
+        DataCell(
+          Center(
+            child: Icon(
+              user.platform == 'ios'
+                  ? Icons.apple
+                  : (user.platform == 'android'
+                      ? Icons.android
+                      : Icons.device_unknown),
+              size: 20,
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
         DataCell(Text('${user.consecutiveDays}일',
             style: const TextStyle(fontWeight: FontWeight.bold))),
         DataCell(

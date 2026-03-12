@@ -53,6 +53,8 @@ class UserModel {
   final bool isSetupComplete;
   final String? referralCode;
   final String? referredBy;
+  final String? platform; // 'ios' 또는 'android'
+  final String? fcmToken; // FCM 토큰 추가
 
   UserModel({
     required this.uid,
@@ -115,6 +117,8 @@ class UserModel {
     this.isSetupComplete = false,
     this.referralCode,
     this.referredBy,
+    this.platform,
+    this.fcmToken,
   }) : roomDecoration = roomDecoration ?? RoomDecorationModel();
 
   // Firestore에서 가져오기
@@ -198,6 +202,8 @@ class UserModel {
           List<String>.from(data['purchasedWindowIds'] ?? ['default']),
       referralCode: data['referralCode'],
       referredBy: data['referredBy'],
+      platform: data['platform'],
+      fcmToken: data['fcmToken'],
     );
   }
 
@@ -262,6 +268,8 @@ class UserModel {
       'purchasedWindowIds': purchasedWindowIds,
       'referralCode': referralCode,
       'referredBy': referredBy,
+      'platform': platform,
+      'fcmToken': fcmToken,
     };
   }
 
@@ -317,6 +325,8 @@ class UserModel {
     List<String>? purchasedWindowIds,
     String? referralCode,
     String? referredBy,
+    String? platform,
+    String? fcmToken,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -374,6 +384,8 @@ class UserModel {
       purchasedWindowIds: purchasedWindowIds ?? this.purchasedWindowIds,
       referralCode: referralCode ?? this.referralCode,
       referredBy: referredBy ?? this.referredBy,
+      platform: platform ?? this.platform,
+      fcmToken: fcmToken ?? this.fcmToken,
     );
   }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../services/auth_service.dart';
@@ -104,8 +105,15 @@ class AuthController extends ChangeNotifier {
       _updateFcmToken(user.uid);
       try {
         await _userService.updateLastLogin(user.uid);
+        
+        // 플랫폼 정보가 없으면 업데이트
+        if (_userModel != null && _userModel!.platform == null) {
+          final platform = Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other');
+          await _userService.updateUser(user.uid, {'platform': platform});
+          _userModel = _userModel!.copyWith(platform: platform);
+        }
       } catch (e) {
-        debugPrint('로그인 시간 업데이트 실패: $e');
+        debugPrint('로그인 정보 업데이트 실패: $e');
       }
     } else {
       _notificationService.setOnTokenRefreshHandler(null);
@@ -168,6 +176,7 @@ class AuthController extends ChangeNotifier {
           createdAt: DateTime.now(),
           provider: 'email',
           isSetupComplete: false,
+          platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
         );
 
         await _userService.createUser(userModel);
@@ -227,8 +236,9 @@ class AuthController extends ChangeNotifier {
             email: user.email ?? '',
             nickname: user.displayName ?? '사용자',
             createdAt: DateTime.now(),
-            provider: 'google',
+             provider: 'google',
             isSetupComplete: false,
+            platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
           );
           await _userService.createUser(userModel);
           _userModel = userModel;
@@ -290,8 +300,9 @@ class AuthController extends ChangeNotifier {
             email: user.email ?? '',
             nickname: initialNickname,
             createdAt: DateTime.now(),
-            provider: 'kakao',
+             provider: 'kakao',
             isSetupComplete: false,
+            platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
           );
           await _userService.createUser(userModel);
           _userModel = userModel;
@@ -335,8 +346,9 @@ class AuthController extends ChangeNotifier {
             email: user.email ?? '',
             nickname: user.displayName ?? '사용자',
             createdAt: DateTime.now(),
-            provider: 'apple',
+             provider: 'apple',
             isSetupComplete: false,
+            platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
           );
           await _userService.createUser(userModel);
           _userModel = userModel;

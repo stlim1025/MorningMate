@@ -75,6 +75,14 @@ class AdminDashboardTab extends StatelessWidget {
                         Icons.groups,
                         Colors.purple,
                         onTap: null),
+                    _buildStatCard(
+                        context,
+                        controller,
+                        '플랫폼 현황',
+                        'A:${controller.androidUserCount} / I:${controller.iosUserCount}',
+                        Icons.phonelink_setup,
+                        Colors.blueGrey,
+                        onTap: null),
                   ],
                 ),
                 const SizedBox(height: 48),
@@ -239,6 +247,11 @@ class AdminDashboardTab extends StatelessWidget {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontWeight: FontWeight.bold))),
                         Expanded(
+                            flex: 1,
+                            child: Text('OS',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
                             flex: 2,
                             child: Text('발생 시간',
                                 textAlign: TextAlign.center,
@@ -305,6 +318,20 @@ class AdminDashboardTab extends StatelessWidget {
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold),
                                         textAlign: TextAlign.center),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Center(
+                                  child: Icon(
+                                    user.platform == 'ios'
+                                        ? Icons.apple
+                                        : (user.platform == 'android'
+                                            ? Icons.android
+                                            : Icons.device_unknown),
+                                    size: 20,
+                                    color: Colors.grey[600],
                                   ),
                                 ),
                               ),
@@ -390,6 +417,11 @@ class AdminDashboardTab extends StatelessWidget {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontWeight: FontWeight.bold))),
                         Expanded(
+                            flex: 1,
+                            child: Text('OS',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
                             flex: 2,
                             child: Text('작성시간',
                                 textAlign: TextAlign.center,
@@ -438,6 +470,20 @@ class AdminDashboardTab extends StatelessWidget {
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold)),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Center(
+                                  child: Icon(
+                                    d['platform'] == 'ios'
+                                        ? Icons.apple
+                                        : (d['platform'] == 'android'
+                                            ? Icons.android
+                                            : Icons.device_unknown),
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
                               ),
                               Expanded(
                                 flex: 2,

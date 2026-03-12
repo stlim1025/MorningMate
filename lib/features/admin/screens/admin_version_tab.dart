@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../controllers/admin_controller.dart';
 import '../../../data/models/version_model.dart';
 
@@ -16,6 +17,8 @@ class _AdminVersionTabState extends State<AdminVersionTab> {
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
   bool _isForceUpdate = false;
+  String _currentAppVersion = '';
+  String _currentBuildNumber = '';
 
   @override
   void initState() {
@@ -27,6 +30,16 @@ class _AdminVersionTabState extends State<AdminVersionTab> {
 
   Future<void> _loadVersionInfo() async {
     final adminController = context.read<AdminController>();
+    
+    // 현재 앱 정보 가져오기
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _currentAppVersion = packageInfo.version;
+        _currentBuildNumber = packageInfo.buildNumber;
+      });
+    }
+
     await adminController.fetchVersionInfo();
     final info = adminController.versionInfo;
     if (info != null) {
@@ -95,6 +108,25 @@ class _AdminVersionTabState extends State<AdminVersionTab> {
           _buildGuideItem('Latest Version', '현재 스토어에 출시된 최신 버전입니다.'),
           _buildGuideItem('Minimum Version', '앱이 작동하기 위한 최소 버전입니다. 현재 버전이 이보다 낮으면 강제 업데이트가 실행됩니다.'),
           _buildGuideItem('Force Update?', '체크 시 X(닫기) 버튼이 없는 강제 업데이트 팝업이 노출됩니다.'),
+          const Divider(height: 32),
+          Row(
+            children: [
+              const Icon(Icons.phonelink_setup, size: 20, color: Colors.blueGrey),
+              const SizedBox(width: 8),
+              const Text(
+                '현재 실행 중인 앱 버전: ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '$_currentAppVersion ($_currentBuildNumber)',
+                style: const TextStyle(
+                  color: Colors.blueAccent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -136,10 +168,29 @@ class _AdminVersionTabState extends State<AdminVersionTab> {
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField(
-                    label: '최신 버전 (Latest Version)',
-                    hint: '예: 1.1.0',
-                    controller: _latestController,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTextField(
+                        label: '최신 버전 (Latest Version)',
+                        hint: '예: 1.1.0',
+                        controller: _latestController,
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _latestController.text = _currentAppVersion;
+                          });
+                        },
+                        icon: const Icon(Icons.auto_fix_high, size: 16),
+                        label: const Text('현재 앱 버전으로 채우기'),
+                        style: TextButton.styleFrom(
+                          minimumSize: Size.zero,
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 24),

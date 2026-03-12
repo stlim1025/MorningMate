@@ -480,6 +480,12 @@ class AdminController extends ChangeNotifier {
 
   int _todayAdViewerCount = 0;
   int get todayAdViewerCount => _todayAdViewerCount;
+  
+  int _iosUserCount = 0;
+  int get iosUserCount => _iosUserCount;
+  
+  int _androidUserCount = 0;
+  int get androidUserCount => _androidUserCount;
 
   Map<int, int> _hourlyLoginStats = {};
   Map<int, int> get hourlyLoginStats => _hourlyLoginStats;
@@ -531,6 +537,21 @@ class AdminController extends ChangeNotifier {
 
       final totalQuery = await _firestore.collection('users').count().get();
       _totalUserCount = totalQuery.count ?? 0;
+      
+      // 플랫폼별 사용자 수
+      final iosQuery = await _firestore
+          .collection('users')
+          .where('platform', isEqualTo: 'ios')
+          .count()
+          .get();
+      _iosUserCount = iosQuery.count ?? 0;
+      
+      final androidQuery = await _firestore
+          .collection('users')
+          .where('platform', isEqualTo: 'android')
+          .count()
+          .get();
+      _androidUserCount = androidQuery.count ?? 0;
     } catch (e) {
       debugPrint('통계 불러오기 오류: $e');
     }
@@ -590,6 +611,7 @@ class AdminController extends ChangeNotifier {
         .toSet()
         .toList();
     final nicknameMap = <String, String>{};
+    final platformMap = <String, String?>{};
 
     // Firestore whereIn은 최대 30개씩 지원
     for (var i = 0; i < userIds.length; i += 30) {
@@ -601,12 +623,14 @@ class AdminController extends ChangeNotifier {
           .get();
       for (var doc in userSnap.docs) {
         nicknameMap[doc.id] = doc.data()['nickname'] ?? '알 수 없음';
+        platformMap[doc.id] = doc.data()['platform'];
       }
     }
 
     for (var diary in diaries) {
       final userId = diary['userId'] as String?;
       diary['nickname'] = nicknameMap[userId] ?? '알 수 없음';
+      diary['platform'] = platformMap[userId];
     }
 
     return diaries;
