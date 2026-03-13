@@ -320,7 +320,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // TODO: 실제 스토어 URL로 변경 필요
     final String url = Platform.isAndroid
         ? 'market://details?id=com.stlim1025.morningmate'
-        : 'https://apps.apple.com/app/id6740639906';
+        : 'https://apps.apple.com/app/id6759994945';
 
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
