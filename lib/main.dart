@@ -179,7 +179,7 @@ class MorniApp extends StatefulWidget {
   State<MorniApp> createState() => _MorniAppState();
 }
 
-class _MorniAppState extends State<MorniApp> {
+class _MorniAppState extends State<MorniApp> with WidgetsBindingObserver {
   late final AuthService _authService;
   late final UserService _userService;
   late final NotificationService _notificationService;
@@ -199,6 +199,7 @@ class _MorniAppState extends State<MorniApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     // 1. 서비스 초기화
     _authService = AuthService();
@@ -229,27 +230,39 @@ class _MorniAppState extends State<MorniApp> {
     // 3. Router 초기화 (AuthController 의존성 주입)
     _router = AppRouter.createRouter(_authController, widget.initialRoute);
 
-    // 5. 광고 로드 및 ATT 요청 (화면 빌드 후)
+    // 5. 광고 로드 (화면 빌드 후)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // iOS ATT 요청
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
+      // 최초 실행 시 한 번 더 체크 (Resumed 상태라면 바로 뜸)
+      _requestATT();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _requestATT();
+    }
+  }
+
+  Future<void> _requestATT() async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      try {
         final status = await AppTrackingTransparency.trackingAuthorizationStatus;
         if (status == TrackingStatus.notDetermined) {
-          // 약간의 지연을 주어 시스템 팝업이 안정적으로 표시되도록 함
-          await Future.delayed(const Duration(milliseconds: 500));
+          // 아주 짧은 지연을 주어 시스템이 팝업을 띄울 준비가 되도록 함
+          await Future.delayed(const Duration(milliseconds: 1000));
           await AppTrackingTransparency.requestTrackingAuthorization();
         }
+      } catch (e) {
+        debugPrint('ATT 요청 오류: $e');
       }
-
-      // 이 시점에는 context가 유효함 (하지만 Provider.value로 주입된 서비스/컨트롤러 사용 권장)
-      // CharacterController는 아래 ProxyProvider를 통해 생성되므로,
-      // 여기서는 직접 접근하기보다 Route가 세팅된 후 화면 진입 시 처리하는 것이 안전할 수 있음.
-      // 기존 로직 유지:
-      // final rootContext = AppRouter.navigatorKey.currentContext;
-      // ...
-      // 하지만 여기서 바로 호출하기는 어려움 (CharacterController가 아직 생성되지 않았을 수 있음 - build 실행 전)
-      // 따라서 build 내의 Consumer/WidgetsBinding을 유지하거나 생략.
-    });
+    }
   }
 
   @override
