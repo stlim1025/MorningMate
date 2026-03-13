@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -760,6 +761,9 @@ class _WritingScreenState extends State<WritingScreen> {
         unawaited(characterController.wakeUpCharacter(userId));
         await _showCompletionDialog(context, colorScheme);
         if (context.mounted) {
+          await _tryShowBonusAdOffer(context, characterController, userId);
+        }
+        if (context.mounted) {
           context.go('/morning');
         }
       }
@@ -769,6 +773,42 @@ class _WritingScreenState extends State<WritingScreen> {
           AppLocalizations.of(context)?.get('saveDiaryError') ??
               'Error saving diary. ⚠️');
     }
+  }
+
+  /// 일기 완료 후 30% 확률로 보너스 광고 오퍼를 띄운다.
+  Future<void> _tryShowBonusAdOffer(
+    BuildContext context,
+    CharacterController characterController,
+    String userId,
+  ) async {
+    // 광고가 준비되지 않았으면 스킵
+    if (!characterController.isBonusAdReady) return;
+
+    // 30% 확률 체크
+    if (Random().nextInt(10) >= 3) return;
+
+    if (!context.mounted) return;
+
+    // 오퍼 팝업 표시
+    final watchAd = await AppDialog.show<bool>(
+      context: context,
+      key: AppDialogKey.bonusAdOffer,
+      barrierDismissible: false,
+    );
+
+    if (watchAd != true || !context.mounted) return;
+
+    // 광고 시청 → 완료 시 보너스 지급 + 보상 팝업
+    characterController.showBonusRewardedAd(context, () async {
+      await characterController.watchBonusAdAndGetPoints(userId);
+      final navContext = context.mounted ? context : null;
+      if (navContext != null && navContext.mounted) {
+        await AppDialog.show(
+          context: navContext,
+          key: AppDialogKey.adReward,
+        );
+      }
+    });
   }
 
   Future<void> _saveDraft(

@@ -42,6 +42,7 @@ enum AppDialogKey {
   todaySpeakReward,
   pointHistory,
   versionUpdate,
+  bonusAdOffer,
 }
 
 class AppDialogAction {
@@ -558,6 +559,51 @@ class AppDialog {
               ],
           actionsAlignment: MainAxisAlignment.center,
         );
+      case AppDialogKey.bonusAdOffer:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('bonusAdOfferTitle') ??
+              '🎁 보너스 가지 획득!',
+          content: content ??
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/branch.png',
+                      width: 70,
+                      height: 70,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      AppLocalizations.of(context)?.get('bonusAdOfferDesc') ??
+                          '광고를 시청하면 보너스 가지 20개를 드려요!',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'BMJUA',
+                        fontSize: 15,
+                        color: Color(0xFF4E342E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label: AppLocalizations.of(context)?.get('cancel') ??
+                      'Cancel',
+                  onPressed: (context) => Navigator.pop(context, false),
+                ),
+                AppDialogAction(
+                  label: AppLocalizations.of(context)?.get('watchAd') ??
+                      '광고 보기',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context, true),
+                ),
+              ],
+        );
       case AppDialogKey.versionUpdate:
         return AppDialogConfig(
           title: title ??
@@ -637,6 +683,8 @@ class AppDialog {
           '5',
           '업데이트',
           'Update',
+          '광고 보기',
+          'Watch Ad',
         ].contains(action.label.trim());
 
     // 'Cancel' or 'Close' style buttons. Includes '계속 작성'

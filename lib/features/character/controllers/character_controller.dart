@@ -85,6 +85,10 @@ class CharacterController extends ChangeNotifier {
   bool _isAdLoading = false;
   LoadAdError? _lastLoadError;
 
+  // 보너스 광고 관련 상태 (일기 완료 후)
+  RewardedAd? _bonusRewardedAd;
+  bool _isBonusAdLoading = false;
+
   // Getters
   UserModel? get currentUser => _currentUser;
   bool get isAwake => _isAwake;
@@ -93,6 +97,7 @@ class CharacterController extends ChangeNotifier {
   int? get justLeveledUpTo => _justLeveledUpTo;
   bool get isAdLoading => _isAdLoading;
   bool get isAdReady => _rewardedAd != null;
+  bool get isBonusAdReady => _bonusRewardedAd != null;
 
   void consumeLevelUpDialog() {
     _showLevelUpDialog = false;
@@ -917,6 +922,79 @@ class CharacterController extends ChangeNotifier {
       lastAdRewardDate: now,
     );
     notifyListeners();
+  }
+
+  /// 일기 작성 후 보너스 광고 보상 (하루 제한 없음, 별도 카운트)
+  Future<void> watchBonusAdAndGetPoints(String userId) async {
+    if (_currentUser == null) return;
+
+    final newPoints = _currentUser!.points + 20;
+
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'ad',
+      description: '일기 완료 보너스 광고 보상',
+      amount: 20,
+    );
+
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+    });
+
+    _currentUser = _currentUser!.copyWith(points: newPoints);
+    notifyListeners();
+  }
+
+  // 보너스 보상형 광고 로드 (일기 완료 후)
+  void loadBonusRewardedAd() {
+    if (_bonusRewardedAd != null || _isBonusAdLoading) return;
+
+    _isBonusAdLoading = true;
+
+    RewardedAd.load(
+      adUnitId: AdHelper.bonusRewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          debugPrint('BonusRewardedAd loaded.');
+          _bonusRewardedAd = ad;
+          _isBonusAdLoading = false;
+          notifyListeners();
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          debugPrint('BonusRewardedAd failed to load: $error');
+          _isBonusAdLoading = false;
+          _bonusRewardedAd = null;
+        },
+      ),
+    );
+  }
+
+  // 보너스 보상형 광고 보여주기 (완료 시 onRewarded 콜백)
+  void showBonusRewardedAd(BuildContext context, VoidCallback onRewarded) {
+    if (_bonusRewardedAd == null) {
+      debugPrint('Bonus ad: not ready, skipping.');
+      return;
+    }
+
+    _bonusRewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _bonusRewardedAd = null;
+        loadBonusRewardedAd();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _bonusRewardedAd = null;
+        loadBonusRewardedAd();
+      },
+    );
+
+    _bonusRewardedAd!.show(
+      onUserEarnedReward: (AdWithoutView ad, RewardItem rewardItem) {
+        onRewarded();
+      },
+    );
   }
 
   // 모든 상태 초기화 (로그아웃용)

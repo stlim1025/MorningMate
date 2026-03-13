@@ -124,7 +124,6 @@ class _ShopScreenState extends State<ShopScreen> {
     final now = DateTime.now();
     final daySeed = now.year * 10000 + now.month * 100 + now.day;
     final userSeed = user.uid.hashCode;
-    final random = Random(daySeed ^ userSeed);
 
     // 각 카테고리별 미보유 상품 목록
     final unownedWallpapers = RoomAssets.wallpapers
@@ -157,84 +156,32 @@ class _ShopScreenState extends State<ShopScreen> {
             !user.purchasedWindowIds.contains(w.id))
         .toList();
 
-    // 기본 비율: 벽지1, 배경1, 바닥1, 소품2, 캐릭터1 = 6개
-    // 유동성 적용: 각 카테고리 +-1 범위로 랜덤하게 조절
-    int wallpaperCount = _randomAdjust(1, random, unownedWallpapers.length);
-    int backgroundCount = _randomAdjust(1, random, unownedBackgrounds.length);
-    int floorCount = _randomAdjust(1, random, unownedFloors.length);
-    int characterCount = _randomAdjust(1, random, unownedCharacterItems.length);
-    int emoticonCount = _randomAdjust(0, random, unownedEmoticons.length);
-    int windowCount = _randomAdjust(0, random, unownedWindows.length);
+    // 기본 상품군들 합치기
+    final List<RoomAsset> allUnowned = [
+      ...unownedWallpapers,
+      ...unownedBackgrounds,
+      ...unownedFloors,
+      ...unownedProps,
+      ...unownedCharacterItems,
+      ...unownedEmoticons,
+      ...unownedWindows,
+    ];
 
-    // 나머지는 소품으로 채움 (총 6개)
-    int propCount = 6 -
-        wallpaperCount -
-        backgroundCount -
-        floorCount -
-        characterCount -
-        emoticonCount -
-        windowCount;
-    propCount = propCount.clamp(0, unownedProps.length);
+    if (allUnowned.isEmpty) return [];
 
-    // 총합이 6보다 적을 경우 소품에서 보충
-    int total = wallpaperCount +
-        backgroundCount +
-        floorCount +
-        propCount +
-        characterCount +
-        emoticonCount +
-        windowCount;
-    if (total < 6) {
-      final extra = min(6 - total, unownedProps.length - propCount);
-      propCount += extra;
-    }
-
-    final List<RoomAsset> result = [];
-
+    // 시드 기반으로 전체 미보유 아이템 섞기
     final seedForSorting = daySeed ^ userSeed;
-
-    // 각 카테고리에서 랜덤(하지만 하루 종일 고정된 순서로) 선택
-    _addDeterministicItems(
-        result, unownedWallpapers, wallpaperCount, seedForSorting);
-    _addDeterministicItems(
-        result, unownedBackgrounds, backgroundCount, seedForSorting);
-    _addDeterministicItems(result, unownedFloors, floorCount, seedForSorting);
-    _addDeterministicItems(result, unownedProps, propCount, seedForSorting);
-    _addDeterministicItems(
-        result, unownedCharacterItems, characterCount, seedForSorting);
-    _addDeterministicItems(
-        result, unownedEmoticons, emoticonCount, seedForSorting);
-    _addDeterministicItems(result, unownedWindows, windowCount, seedForSorting);
-
-    // 결과도 아이디와 시드 기반으로 섞어줍니다 (순서 고정)
-    result.sort((a, b) {
-      final rA = Random(a.id.hashCode ^ seedForSorting).nextInt(100000);
-      final rB = Random(b.id.hashCode ^ seedForSorting).nextInt(100000);
-      return rA.compareTo(rB);
-    });
-    if (result.length > 6) {
-      return result.take(6).toList();
-    }
-    return result;
-  }
-
-  int _randomAdjust(int base, Random random, int maxAvailable) {
-    final delta = random.nextInt(3) - 1; // -1, 0, +1
-    final adjusted = (base + delta).clamp(0, maxAvailable);
-    return adjusted;
-  }
-
-  void _addDeterministicItems(
-      List<RoomAsset> result, List<RoomAsset> source, int count, int seed) {
-    if (source.isEmpty || count <= 0) return;
-    final sorted = List<RoomAsset>.from(source)
+    final List<RoomAsset> sortedAll = List<RoomAsset>.from(allUnowned)
       ..sort((a, b) {
-        final rA = Random(a.id.hashCode ^ seed).nextInt(1000000);
-        final rB = Random(b.id.hashCode ^ seed).nextInt(1000000);
+        final rA = Random(a.id.hashCode ^ seedForSorting).nextInt(1000000);
+        final rB = Random(b.id.hashCode ^ seedForSorting).nextInt(1000000);
         return rA.compareTo(rB);
       });
-    result.addAll(sorted.take(count));
+
+    // 무조건 상위 6개 반환 (전체 아이템이 6개 미만이면 전체 반환)
+    return sortedAll.take(6).toList();
   }
+
 
   /// 세일 중인 상품 목록
   List<RoomAsset> _getSaleItems(CharacterController controller) {

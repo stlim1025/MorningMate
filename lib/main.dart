@@ -27,6 +27,7 @@ import 'features/admin/controllers/admin_controller.dart';
 import 'features/social/controllers/nest_controller.dart';
 import 'core/theme/theme_controller.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'services/unity_ad_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -135,7 +136,7 @@ void main() async {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
-  // 광고 SDK 초기화
+  // AdMob SDK 초기화
   try {
     debugPrint('17. Initializing MobileAds...');
     await MobileAds.instance.initialize();
@@ -148,9 +149,18 @@ void main() async {
       ),
     );
 
-    debugPrint('18. 광고 SDK 초기화 및 테스트 기기 설정 성공');
+    debugPrint('18. AdMob SDK 초기화 성공');
   } catch (e) {
-    debugPrint('광고 SDK 초기화 실패: $e');
+    debugPrint('AdMob SDK 초기화 실패: $e');
+  }
+
+  // Unity Ads SDK 초기화
+  try {
+    debugPrint('18-1. Initializing Unity Ads...');
+    await UnityAdService().initialize();
+    debugPrint('18-2. Unity Ads 초기화 요청 완료 (콜백으로 결과 수신)');
+  } catch (e) {
+    debugPrint('Unity Ads 초기화 실패: $e');
   }
 
   debugPrint('19. Running app...');
@@ -367,9 +377,9 @@ class _MorniAppState extends State<MorniApp> {
           // 광고 로드 (Context 접근 가능)
           WidgetsBinding.instance.addPostFrameCallback((_) {
             try {
-              context.read<CharacterController>().loadRewardedAd(
-                    context: context,
-                  );
+              final cc = context.read<CharacterController>();
+              cc.loadRewardedAd(context: context);
+              cc.loadBonusRewardedAd();
             } catch (_) {}
           });
 

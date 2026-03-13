@@ -46,7 +46,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-8610826190373183~3901486756</string>
 	<key>GIDClientID</key>
 	<string>237548170950-gspdk280eifqjb7140kba89bqikn79ol.apps.googleusercontent.com</string>
 	<key>KAKAO_APP_KEY</key>
