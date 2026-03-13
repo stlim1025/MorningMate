@@ -4,3 +4,9 @@
 
 -dontwarn com.google.android.gms.safetynet.**
 -dontwarn com.google.firebase.appcheck.safetynet.**
+
+# Facebook Audience Network (Meta)
+-dontwarn com.facebook.infer.annotation.**
+-keep class com.facebook.ads.** { *; }
+-dontwarn com.facebook.ads.**
+

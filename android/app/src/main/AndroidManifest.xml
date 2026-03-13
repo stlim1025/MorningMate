@@ -38,6 +38,9 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-8610826190373183~5503542141"/>
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="1473356910981975"/>
         <!-- 알람 동작 용 포그라운드 서비스 Start -->
         <service
             android:name="com.gdelataillade.alarm.services.AlarmService"

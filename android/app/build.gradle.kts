@@ -61,6 +61,7 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.javascriptengine:javascriptengine:1.0.0-beta01")
     constraints {
         implementation("androidx.activity:activity:1.9.3")
         implementation("androidx.activity:activity-ktx:1.9.3")
