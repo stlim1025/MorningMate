@@ -4,6 +4,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../../router/app_router.dart'; // navigatorKey 접근을 위해
 import '../../../services/user_service.dart';
 import '../../../services/point_history_service.dart';
+import '../../../services/ad_service.dart';
+import '../../../data/models/ad_log_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/room_decoration_model.dart';
@@ -28,8 +30,9 @@ enum CharacterState {
 class CharacterController extends ChangeNotifier {
   final UserService _userService;
   final PointHistoryService _pointHistoryService;
+  final AdService _adService;
 
-  CharacterController(this._userService, this._pointHistoryService) {
+  CharacterController(this._userService, this._pointHistoryService, this._adService) {
     _startShopDiscountListener();
   }
 
@@ -86,7 +89,7 @@ class CharacterController extends ChangeNotifier {
   LoadAdError? _lastLoadError;
 
   // 보너스 광고 관련 상태 (일기 완료 후)
-  RewardedAd? _bonusRewardedAd;
+  RewardedInterstitialAd? _bonusRewardedAd;
   bool _isBonusAdLoading = false;
 
   // Getters
@@ -794,6 +797,30 @@ class CharacterController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 광고 로그 기록 헬퍼
+  Future<void> _logAdEvent({
+    required String adType,
+    required bool success,
+    String? adProvider,
+    String? errorCode,
+    String? errorMessage,
+    String? adNetworkClassName,
+  }) async {
+    if (_currentUser == null) return;
+
+    await _adService.logAdEvent(AdLogModel(
+      userId: _currentUser!.uid,
+      userNickname: _currentUser!.nickname,
+      adType: adType,
+      adProvider: adProvider ?? 'AdMob',
+      adNetworkClassName: adNetworkClassName,
+      timestamp: DateTime.now(),
+      success: success,
+      errorCode: errorCode,
+      errorMessage: errorMessage,
+    ));
+  }
+
   // 광고 로드
   void loadRewardedAd({BuildContext? context}) {
     if (_rewardedAd != null || _isAdLoading) return;
@@ -816,6 +843,14 @@ class CharacterController extends ChangeNotifier {
           _rewardedAd = ad;
           _isAdLoading = false;
           _lastLoadError = null;
+          
+          // 로드 성공 로그 (선택사항, 너무 많으면 제외 가능하나 일단 추가)
+          _logAdEvent(
+            adType: 'rewarded',
+            success: true,
+            adNetworkClassName: ad.responseInfo?.mediationAdapterClassName,
+          );
+          
           notifyListeners();
         },
         onAdFailedToLoad: (LoadAdError error) {
@@ -823,6 +858,15 @@ class CharacterController extends ChangeNotifier {
           _isAdLoading = false;
           _rewardedAd = null;
           _lastLoadError = error;
+          
+          // 로드 실패 로그
+          _logAdEvent(
+            adType: 'rewarded',
+            success: false,
+            errorCode: error.code.toString(),
+            errorMessage: error.message,
+          );
+          
           notifyListeners();
         },
       ),
@@ -862,6 +906,15 @@ class CharacterController extends ChangeNotifier {
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
         _rewardedAd = null;
+        
+        // 표시 실패 로그
+        _logAdEvent(
+          adType: 'rewarded',
+          success: false,
+          errorCode: error.code.toString(),
+          errorMessage: error.message,
+        );
+        
         loadRewardedAd();
       },
     );
@@ -951,20 +1004,36 @@ class CharacterController extends ChangeNotifier {
 
     _isBonusAdLoading = true;
 
-    RewardedAd.load(
+    RewardedInterstitialAd.load(
       adUnitId: AdHelper.bonusRewardedAdUnitId,
       request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
+      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
         onAdLoaded: (ad) {
-          debugPrint('BonusRewardedAd loaded.');
+          debugPrint('BonusRewardedInterstitialAd loaded.');
           _bonusRewardedAd = ad;
           _isBonusAdLoading = false;
+          
+          _logAdEvent(
+            adType: 'bonus_rewarded_interstitial',
+            success: true,
+            adNetworkClassName: ad.responseInfo?.mediationAdapterClassName,
+          );
+          
           notifyListeners();
         },
         onAdFailedToLoad: (LoadAdError error) {
-          debugPrint('BonusRewardedAd failed to load: $error');
+          debugPrint('BonusRewardedInterstitialAd failed to load: $error');
           _isBonusAdLoading = false;
           _bonusRewardedAd = null;
+          
+          _logAdEvent(
+            adType: 'bonus_rewarded_interstitial',
+            success: false,
+            errorCode: error.code.toString(),
+            errorMessage: error.message,
+          );
+          
+          notifyListeners();
         },
       ),
     );
@@ -986,6 +1055,14 @@ class CharacterController extends ChangeNotifier {
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
         _bonusRewardedAd = null;
+        
+        _logAdEvent(
+          adType: 'bonus_rewarded',
+          success: false,
+          errorCode: error.code.toString(),
+          errorMessage: error.message,
+        );
+        
         loadBonusRewardedAd();
       },
     );

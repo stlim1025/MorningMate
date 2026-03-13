@@ -43,35 +43,11 @@ class AdHelper {
         return 'ca-app-pub-8610826190373183/1498986014';
       }
     }
-    // 테스트 보상형 광고 ID
+    // 테스트 보상형 전면 광고 ID
     return Platform.isAndroid
-        ? 'ca-app-pub-3940256099942544/5224354917'
-        : 'ca-app-pub-3940256099942544/1712485313';
+        ? 'ca-app-pub-3940256099942544/5354046379'
+        : 'ca-app-pub-3940256099942544/6978759866';
   }
 
-  // ─── Unity Ads ───────────────────────────────────────────────────────────
 
-  /// Unity Ads Game ID
-  /// Unity 대시보드에서 발급받은 Game ID를 여기에 입력하세요.
-  static String get unityGameId {
-    if (Platform.isAndroid) {
-      return '6064447';
-    } else {
-      return '6064446';
-    }
-  }
-
-  /// Unity Ads 테스트 모드 여부 (디버그 빌드에서는 true)
-  static bool get unityTestMode => !kReleaseMode;
-
-  /// Unity Ads Placement ID — 보상형 광고
-  /// Unity 대시보드의 Placement ID를 입력하세요.
-  // TODO: 실제 Placement ID로 교체
-  static String get unityRewardedPlacementId =>
-      Platform.isAndroid ? 'Rewarded_Android' : 'Rewarded_iOS';
-
-  /// Unity Ads Placement ID — 전면 광고
-  // TODO: 실제 Placement ID로 교체
-  static String get unityInterstitialPlacementId =>
-      Platform.isAndroid ? 'Rewarded_Android' : 'Rewarded_iOS';
 }

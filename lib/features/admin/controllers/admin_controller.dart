@@ -4,6 +4,8 @@ import 'package:nanoid/nanoid.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/question_service.dart';
 import '../../../services/asset_service.dart';
+import '../../../services/ad_service.dart';
+import '../../../data/models/ad_log_model.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../../../data/models/diary_model.dart';
@@ -14,6 +16,7 @@ class AdminController extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AssetService _assetService = AssetService();
   final QuestionService _questionService = QuestionService();
+  final AdService _adService = AdService();
   final String? _currentUserEmail;
 
   String? get currentUserEmail => _currentUserEmail;
@@ -785,6 +788,65 @@ class AdminController extends ChangeNotifier {
     }
     _isLoading = false;
     notifyListeners();
+  }
+
+  // --- 광고 로그 관리 (Ad Logs) ---
+  List<AdLogModel> _adLogs = [];
+  List<AdLogModel> get adLogs => _adLogs;
+
+  DocumentSnapshot? _lastAdLogDoc;
+  bool _hasMoreAdLogs = true;
+  bool get hasMoreAdLogs => _hasMoreAdLogs;
+  bool _isLoadingMoreAdLogs = false;
+  bool get isLoadingMoreAdLogs => _isLoadingMoreAdLogs;
+
+  Future<void> fetchAdLogs({int limit = 20, bool refresh = true}) async {
+    if (_isDisposed) return;
+
+    if (refresh) {
+      _adLogs = [];
+      _lastAdLogDoc = null;
+      _hasMoreAdLogs = true;
+      _isLoading = true;
+    } else {
+      if (!_hasMoreAdLogs || _isLoadingMoreAdLogs) return;
+      _isLoadingMoreAdLogs = true;
+    }
+
+    notifyListeners();
+
+    try {
+      final snapshot = await _adService.getAdLogsPaginated(
+        lastDocument: _lastAdLogDoc,
+        limit: limit,
+      );
+
+      final newLogs =
+          snapshot.docs.map((doc) => AdLogModel.fromFirestore(doc)).toList();
+
+      if (refresh) {
+        _adLogs = newLogs;
+      } else {
+        _adLogs.addAll(newLogs);
+      }
+
+      if (snapshot.docs.isNotEmpty) {
+        _lastAdLogDoc = snapshot.docs.last;
+      }
+
+      _hasMoreAdLogs = newLogs.length == limit;
+    } catch (e) {
+      debugPrint('광고 로그 불러오기 오류: $e');
+    }
+
+    if (_isDisposed) return;
+    _isLoading = false;
+    _isLoadingMoreAdLogs = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMoreAdLogs() async {
+    await fetchAdLogs(refresh: false);
   }
 
   Future<UserModel?> findUserByTarget(String target) async {

@@ -18,6 +18,7 @@ import 'services/nest_service.dart';
 import 'services/question_service.dart';
 import 'services/asset_service.dart';
 import 'services/point_history_service.dart';
+import 'services/ad_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/morning/controllers/morning_controller.dart';
 import 'features/character/controllers/character_controller.dart';
@@ -27,7 +28,8 @@ import 'features/admin/controllers/admin_controller.dart';
 import 'features/social/controllers/nest_controller.dart';
 import 'core/theme/theme_controller.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'services/unity_ad_service.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -154,14 +156,7 @@ void main() async {
     debugPrint('AdMob SDK 초기화 실패: $e');
   }
 
-  // Unity Ads SDK 초기화
-  try {
-    debugPrint('18-1. Initializing Unity Ads...');
-    await UnityAdService().initialize();
-    debugPrint('18-2. Unity Ads 초기화 요청 완료 (콜백으로 결과 수신)');
-  } catch (e) {
-    debugPrint('Unity Ads 초기화 실패: $e');
-  }
+
 
   debugPrint('19. Running app...');
   runApp(MorniApp(
@@ -194,6 +189,7 @@ class _MorniAppState extends State<MorniApp> {
   late final NestService _nestService;
   late final AssetService _assetService;
   late final PointHistoryService _pointHistoryService;
+  late final AdService _adService;
 
   late final AuthController _authController;
   late final GoRouter _router;
@@ -219,6 +215,7 @@ class _MorniAppState extends State<MorniApp> {
     _nestService = NestService();
     _assetService = AssetService();
     _pointHistoryService = PointHistoryService();
+    _adService = AdService();
 
     // 동적 에셋은 로그인 완료 후에 로드 (인증 없이 호출하면 permission-denied 발생)
 
@@ -232,8 +229,18 @@ class _MorniAppState extends State<MorniApp> {
     // 3. Router 초기화 (AuthController 의존성 주입)
     _router = AppRouter.createRouter(_authController, widget.initialRoute);
 
-    // 5. 광고 로드 (화면 빌드 후)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // 5. 광고 로드 및 ATT 요청 (화면 빌드 후)
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // iOS ATT 요청
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+        if (status == TrackingStatus.notDetermined) {
+          // 약간의 지연을 주어 시스템 팝업이 안정적으로 표시되도록 함
+          await Future.delayed(const Duration(milliseconds: 500));
+          await AppTrackingTransparency.requestTrackingAuthorization();
+        }
+      }
+
       // 이 시점에는 context가 유효함 (하지만 Provider.value로 주입된 서비스/컨트롤러 사용 권장)
       // CharacterController는 아래 ProxyProvider를 통해 생성되므로,
       // 여기서는 직접 접근하기보다 Route가 세팅된 후 화면 진입 시 처리하는 것이 안전할 수 있음.
@@ -258,6 +265,7 @@ class _MorniAppState extends State<MorniApp> {
         Provider.value(value: _friendService),
         Provider.value(value: _nestService),
         Provider.value(value: _pointHistoryService),
+        Provider.value(value: _adService),
 
         // Controllers
         // AuthController (이미 생성된 인스턴스 주입)
@@ -292,10 +300,10 @@ class _MorniAppState extends State<MorniApp> {
         ),
         ChangeNotifierProxyProvider<AuthController, CharacterController>(
           create: (context) =>
-              CharacterController(_userService, _pointHistoryService),
+              CharacterController(_userService, _pointHistoryService, _adService),
           update: (context, auth, previous) {
             final controller = previous ??
-                CharacterController(_userService, _pointHistoryService);
+                CharacterController(_userService, _pointHistoryService, _adService);
             if (auth.userModel == null) {
               controller.clear();
             } else {

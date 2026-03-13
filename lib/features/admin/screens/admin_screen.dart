@@ -11,6 +11,7 @@ import 'admin_push_tab.dart';
 import 'admin_report_tab.dart';
 import 'shop_management_tab.dart';
 import 'admin_version_tab.dart';
+import 'admin_ad_log_tab.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -61,6 +62,9 @@ class _AdminScreenState extends State<AdminScreen> {
       case 6:
         bodyContent = const AdminVersionTab();
         break;
+      case 7:
+        bodyContent = const AdminAdLogTab();
+        break;
       default:
         bodyContent = const AdminDashboardTab();
     }
@@ -88,7 +92,7 @@ class _AdminScreenState extends State<AdminScreen> {
             BottomNavigationBarItem(
                 icon: Icon(Icons.notifications), label: '공지'),
             BottomNavigationBarItem(icon: Icon(Icons.send), label: '푸시'),
-            BottomNavigationBarItem(icon: Icon(Icons.report), label: '신고'),
+            BottomNavigationBarItem(icon: Icon(Icons.ads_click), label: '광고'),
           ],
         ),
       );
@@ -176,6 +180,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return '상점 관리';
       case 6:
         return '버전 관리';
+      case 7:
+        return '광고 로그';
       default:
         return '관리자 홈';
     }
@@ -205,6 +211,7 @@ class _AdminScreenState extends State<AdminScreen> {
             _buildSidebarItem('🚩 신고 관리', 4),
             _buildSidebarItem('📦 아이템/상점 관리', 5),
             _buildSidebarItem('🆙 버전 관리', 6),
+            _buildSidebarItem('📺 광고 시청 로그', 7),
             const Spacer(),
           ],
         ),

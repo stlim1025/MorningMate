@@ -586,6 +586,18 @@ class AppDialog {
                         color: Color(0xFF4E342E),
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      AppLocalizations.of(context)?.get('bonusAdOfferWarning') ??
+                          '※ 광고를 끝까지 시청하지 않고 닫으면 보상이 지급되지 않습니다.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'BMJUA',
+                        fontSize: 11,
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -761,10 +761,11 @@ class _WritingScreenState extends State<WritingScreen> {
         unawaited(characterController.wakeUpCharacter(userId));
         await _showCompletionDialog(context, colorScheme);
         if (context.mounted) {
-          await _tryShowBonusAdOffer(context, characterController, userId);
-        }
-        if (context.mounted) {
-          context.go('/morning');
+          final adShown =
+              await _tryShowBonusAdOffer(context, characterController, userId);
+          if (!adShown && context.mounted) {
+            context.go('/morning');
+          }
         }
       }
     } else if (context.mounted) {
@@ -775,40 +776,47 @@ class _WritingScreenState extends State<WritingScreen> {
     }
   }
 
-  /// 일기 완료 후 30% 확률로 보너스 광고 오퍼를 띄운다.
-  Future<void> _tryShowBonusAdOffer(
+  /// 일기 완료 후 보너스 광고 오퍼를 띄운다.
+  /// 광고가 표시되면 true를 반환한다.
+  Future<bool> _tryShowBonusAdOffer(
     BuildContext context,
     CharacterController characterController,
     String userId,
   ) async {
     // 광고가 준비되지 않았으면 스킵
-    if (!characterController.isBonusAdReady) return;
+    if (!characterController.isBonusAdReady) return false;
 
-    // 30% 확률 체크
-    if (Random().nextInt(10) >= 3) return;
+    if (Random().nextInt(10) >= 3) return false;
 
-    if (!context.mounted) return;
+    if (!context.mounted) return false;
 
-    // 오퍼 팝업 표시
+    // 보상형 전면 광고는 인트로가 생략되는 경우가 있으므로, 확실하게 의사를 묻는 팝업을 띄웁니다.
     final watchAd = await AppDialog.show<bool>(
       context: context,
       key: AppDialogKey.bonusAdOffer,
       barrierDismissible: false,
     );
 
-    if (watchAd != true || !context.mounted) return;
+    if (watchAd != true || !context.mounted) return false;
 
     // 광고 시청 → 완료 시 보너스 지급 + 보상 팝업
     characterController.showBonusRewardedAd(context, () async {
       await characterController.watchBonusAdAndGetPoints(userId);
       final navContext = context.mounted ? context : null;
       if (navContext != null && navContext.mounted) {
+        // 보상 확인 팝업 (상점과 동일)
         await AppDialog.show(
           context: navContext,
           key: AppDialogKey.adReward,
         );
+        // 팝업까지 닫히면 메인으로 이동
+        if (navContext.mounted) {
+          navContext.go('/morning');
+        }
       }
     });
+
+    return true;
   }
 
   Future<void> _saveDraft(

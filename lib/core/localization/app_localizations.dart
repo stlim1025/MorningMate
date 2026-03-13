@@ -289,6 +289,10 @@ class AppLocalizations {
       'report': 'Report',
       'ok': 'OK',
       'close': 'Close',
+      'bonusAdOfferTitle': '🎁 Bonus Branch!',
+      'bonusAdOfferDesc': 'Watch an ad and get 20 bonus branches!',
+      'bonusAdOfferWarning': 'Warning: Closing the ad before it finishes will not grant the reward.',
+      'watchAd': 'Watch Ad',
       // Items (Names)
       'item_name_default': 'Basic',
       'item_name_stripe': 'Stripe',
@@ -957,6 +961,10 @@ class AppLocalizations {
       'report': '신고',
       'ok': '확인',
       'close': '닫기',
+      'bonusAdOfferTitle': '🎁 보너스 가지 획득!',
+      'bonusAdOfferDesc': '광고를 시청하면 보너스 가지 20개를 드려요!',
+      'bonusAdOfferWarning': '※ 광고를 끝까지 시청하지 않고 닫으면 보상이 지급되지 않습니다.',
+      'watchAd': '광고 보기',
       // Items (Names)
       'item_name_default': '기본',
       'item_name_stripe': '스트라이프',
