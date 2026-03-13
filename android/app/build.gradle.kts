@@ -31,7 +31,7 @@ android {
 
     defaultConfig {
         applicationId = "com.stlim1025.morningmate"
-        minSdk = flutter.minSdkVersion
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
