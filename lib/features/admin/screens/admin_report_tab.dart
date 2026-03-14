@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../controllers/admin_controller.dart';
+import '../widgets/admin_dialog.dart';
 
 class AdminReportTab extends StatelessWidget {
   const AdminReportTab({super.key});
@@ -15,114 +16,348 @@ class AdminReportTab extends StatelessWidget {
         }
 
         final reports = controller.reports;
-        if (reports.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              await controller.fetchReports();
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height - 100,
-                child: const Center(child: Text('신고 내역이 없습니다.')),
+
+        return Column(
+          children: [
+            // ── Header Bar ──
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.flag_rounded,
+                      size: 20, color: Color(0xFF475569)),
+                  const SizedBox(width: 8),
+                  Text(
+                    '전체 ${reports.length}건',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF334155),
+                    ),
+                  ),
+                  const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: () => controller.fetchReports(),
+                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                    label: const Text('새로고침'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF64748B),
+                      side:
+                          const BorderSide(color: Color(0xFFCBD5E1)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ],
               ),
             ),
-          );
-        }
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            await controller.fetchReports();
-          },
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: reports.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final report = reports[index];
-              return _buildReportCard(context, controller, report);
-            },
-          ),
+            // ── Empty State ──
+            if (reports.isEmpty)
+              const Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle_outline_rounded,
+                          size: 64, color: Color(0xFFCBD5E1)),
+                      SizedBox(height: 16),
+                      Text('처리할 신고가 없습니다.',
+                          style: TextStyle(
+                              color: Color(0xFF94A3B8), fontSize: 15)),
+                    ],
+                  ),
+                ),
+              ),
+
+            // ── Table ──
+            if (reports.isNotEmpty) ...[
+              // Table Header
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                color: const Color(0xFFF8FAFC),
+                child: const Row(
+                  children: [
+                    SizedBox(
+                        width: 80,
+                        child: Center(
+                          child: Text('상태',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF64748B))),
+                        )),
+                    Expanded(
+                        flex: 2,
+                        child: Text('신고 대상',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B)))),
+                    Expanded(
+                        flex: 2,
+                        child: Text('사유 / 내용',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B)))),
+                    Expanded(
+                        flex: 1,
+                        child: Text('신고자',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B)))),
+                    SizedBox(
+                        width: 120,
+                        child: Text('일시',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B)))),
+                    SizedBox(
+                        width: 160,
+                        child: Center(
+                          child: Text('조치',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF64748B))),
+                        )),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+              // Table Body
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await controller.fetchReports();
+                  },
+                  child: ListView.separated(
+                    itemCount: reports.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    itemBuilder: (context, index) {
+                      final report = reports[index];
+                      return _buildReportRow(context, controller, report);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ],
         );
       },
     );
   }
 
-  Widget _buildReportCard(BuildContext context, AdminController controller,
+  Widget _buildReportRow(BuildContext context, AdminController controller,
       Map<String, dynamic> report) {
     final status = report['status'];
     final isPending = status == 'pending';
     final createdAt = report['createdAt'];
     String dateStr = '';
     if (createdAt is DateTime) {
-      dateStr = DateFormat('yyyy-MM-dd HH:mm').format(createdAt);
+      dateStr = DateFormat('MM.dd HH:mm').format(createdAt);
     } else {
       dateStr = createdAt.toString();
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '상태: $status',
+    Color statusColor;
+    String statusLabel;
+    if (isPending) {
+      statusColor = const Color(0xFFEF4444);
+      statusLabel = '대기중';
+    } else if (status == 'rejected') {
+      statusColor = const Color(0xFF94A3B8);
+      statusLabel = '반려';
+    } else {
+      statusColor = const Color(0xFF10B981);
+      statusLabel = '처리완료';
+    }
+
+    final targetType = report['targetType'] == 'sticky_note'
+        ? '포스트잇 메모'
+        : (report['targetType'] ?? '기타');
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Status Badge
+          SizedBox(
+            width: 80,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  statusLabel,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isPending ? Colors.red : Colors.grey,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: statusColor,
                   ),
                 ),
-                Text(dateStr),
+              ),
+            ),
+          ),
+          // Target Info
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  report['targetUserName'] ?? '알 수 없는 유저',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: Color(0xFF1E293B)),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  targetType,
+                  style: const TextStyle(
+                      fontSize: 11, color: Color(0xFF94A3B8)),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text('신고자: ${report['reporterName']}'),
-            Text('작성자: ${report['targetUserName']}'),
-            Text(
-                '신고 대상 종류: ${report['targetType'] == 'sticky_note' ? '포스트잇 메모' : (report['targetType'] ?? '기타')}'),
-            const SizedBox(height: 8),
-            Text('신고 사유: ${report['reason']}'),
-            const SizedBox(height: 8),
-            const Text('내용:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Container(
-              padding: const EdgeInsets.all(8),
-              width: double.infinity,
-              color: Colors.grey[200],
-              child: Text(report['targetContent'] ?? ''),
-            ),
-            if (isPending) ...[
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlinedButton(
-                    onPressed: () =>
-                        _showRejectDialog(context, controller, report),
-                    child: const Text('반려'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    onPressed: () =>
-                        _showSuspendDialog(context, controller, report),
-                    child:
-                        const Text('정지', style: TextStyle(color: Colors.white)),
+          ),
+          // Reason & Content
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  report['reason'] ?? '',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF334155)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (report['targetContent'] != null) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      report['targetContent'],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFF64748B)),
+                    ),
                   ),
                 ],
-              ),
-            ],
-            if (status == 'rejected')
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text('반려 사유: ${report['rejectReason'] ?? ''}',
-                    style: const TextStyle(color: Colors.red)),
-              ),
-          ],
+                if (status == 'rejected' &&
+                    report['rejectReason'] != null) ...[
+                  const SizedBox(height: 4),
+                  Text('반려: ${report['rejectReason']}',
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFFF59E0B))),
+                ],
+              ],
+            ),
+          ),
+          // Reporter
+          Expanded(
+            flex: 1,
+            child: Text(
+              report['reporterName'] ?? '-',
+              style:
+                  const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+          ),
+          // Date
+          SizedBox(
+            width: 120,
+            child: Text(
+              dateStr,
+              style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF94A3B8),
+                  fontFamily: 'monospace'),
+            ),
+          ),
+          // Actions
+          SizedBox(
+            width: 160,
+            child: isPending
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildActionButton(
+                        label: '반려',
+                        color: const Color(0xFF64748B),
+                        onTap: () =>
+                            _showRejectDialog(context, controller, report),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionButton(
+                        label: '정지',
+                        color: const Color(0xFFEF4444),
+                        filled: true,
+                        onTap: () =>
+                            _showSuspendDialog(context, controller, report),
+                      ),
+                    ],
+                  )
+                : const Center(
+                    child: Text('—',
+                        style: TextStyle(color: Color(0xFFCBD5E1))),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required Color color,
+    bool filled = false,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: filled ? color : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: filled ? Colors.white : color,
+          ),
         ),
       ),
     );
@@ -133,16 +368,26 @@ class AdminReportTab extends StatelessWidget {
     final reasonController = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('신고 반려'),
-        content: TextField(
-          controller: reasonController,
-          decoration: const InputDecoration(hintText: '반려 사유를 입력하세요'),
+      builder: (context) => AdminWebDialog(
+        title: '신고 반려',
+        titleIcon: Icons.undo,
+        height: 250,
+        content: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: TextField(
+            controller: reasonController,
+            decoration: InputDecoration(
+              hintText: '반려 사유를 입력하세요',
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('취소')),
-          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소')),
+          ElevatedButton(
             onPressed: () {
               if (reasonController.text.isNotEmpty) {
                 controller.rejectReport(
@@ -150,6 +395,10 @@ class AdminReportTab extends StatelessWidget {
                 Navigator.pop(context);
               }
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+              foregroundColor: Colors.white,
+            ),
             child: const Text('확인'),
           ),
         ],
@@ -161,31 +410,36 @@ class AdminReportTab extends StatelessWidget {
       Map<String, dynamic> report) {
     showDialog(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('사용자 정지 기간 선택'),
-        children: [
-          _suspendSimpleAction(context, controller, report, '1일 정지', 1),
-          _suspendSimpleAction(context, controller, report, '3일 정지', 3),
-          _suspendSimpleAction(context, controller, report, '5일 정지', 5),
-          _suspendSimpleAction(context, controller, report, '7일 정지', 7),
-          _suspendSimpleAction(context, controller, report, '한달 정지', 30),
-          _suspendSimpleAction(context, controller, report, '영구 정지', -1),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('취소')),
-          ),
+      builder: (context) => AdminWebDialog(
+        title: '사용자 정지 기간 선택',
+        titleIcon: Icons.block,
+        height: 420,
+        width: 380,
+        content: Column(
+          children: [
+            _suspendOption(context, controller, report, '1일 정지', 1),
+            _suspendOption(context, controller, report, '3일 정지', 3),
+            _suspendOption(context, controller, report, '5일 정지', 5),
+            _suspendOption(context, controller, report, '7일 정지', 7),
+            _suspendOption(context, controller, report, '한달 정지', 30),
+            const Divider(height: 1),
+            _suspendOption(context, controller, report, '영구 정지', -1),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소')),
         ],
       ),
     );
   }
 
-  Widget _suspendSimpleAction(BuildContext context, AdminController controller,
+  Widget _suspendOption(BuildContext context, AdminController controller,
       Map<String, dynamic> report, String label, int days) {
-    return SimpleDialogOption(
-      onPressed: () {
+    final isPerma = days == -1;
+    return InkWell(
+      onTap: () {
         controller.suspendUser(
           reportId: report['id'],
           targetUserId: report['targetUserId'],
@@ -195,14 +449,28 @@ class AdminReportTab extends StatelessWidget {
         Navigator.pop(context);
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            color: days == -1 ? Colors.red : Colors.blue[800],
-            fontWeight: days == -1 ? FontWeight.bold : FontWeight.normal,
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        child: Row(
+          children: [
+            Icon(
+              isPerma ? Icons.gavel_rounded : Icons.access_time_rounded,
+              size: 18,
+              color: isPerma
+                  ? const Color(0xFFEF4444)
+                  : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: isPerma
+                    ? const Color(0xFFEF4444)
+                    : const Color(0xFF1E293B),
+                fontWeight: isPerma ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

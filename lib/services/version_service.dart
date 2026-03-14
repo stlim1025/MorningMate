@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../data/models/version_model.dart';
@@ -18,7 +19,16 @@ class VersionService {
         return VersionCheckResult(type: VersionUpdateType.none);
       }
 
-      final info = VersionModel.fromFirestore(doc);
+      final data = doc.data();
+      final platformKey = defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
+      
+      VersionModel info;
+      if (data != null && data.containsKey(platformKey)) {
+        info = VersionModel.fromMap(data[platformKey]);
+      } else {
+        // Fallback to legacy structure
+        info = VersionModel.fromFirestore(doc);
+      }
 
       // 3. Compare versions
       if (VersionUtils.isUpdateRequired(currentVersion, info.minimumVersion)) {

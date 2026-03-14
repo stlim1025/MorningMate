@@ -17,6 +17,10 @@ class VersionModel {
 
   factory VersionModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>?;
+    return VersionModel.fromMap(data);
+  }
+
+  factory VersionModel.fromMap(Map<String, dynamic>? data) {
     return VersionModel(
       latestVersion: data?['latestVersion'] ?? '1.0.0',
       minimumVersion: data?['minimumVersion'] ?? '1.0.0',

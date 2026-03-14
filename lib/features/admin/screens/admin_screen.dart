@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/admin_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../../core/widgets/app_dialog.dart';
+import '../widgets/admin_dialog.dart';
 
 import 'admin_dashboard_tab.dart';
 import 'admin_user_list_tab.dart';
@@ -34,6 +34,17 @@ class _AdminScreenState extends State<AdminScreen> {
       }
     });
   }
+
+  static const _menuItems = [
+    _MenuItem(Icons.grid_view_rounded, '대시보드'),
+    _MenuItem(Icons.people_alt_rounded, '유저 관리'),
+    _MenuItem(Icons.article_rounded, '공지사항'),
+    _MenuItem(Icons.notifications_active_rounded, '푸시 발송'),
+    _MenuItem(Icons.flag_rounded, '신고 관리'),
+    _MenuItem(Icons.shopping_bag_rounded, '상점 관리'),
+    _MenuItem(Icons.system_update_rounded, '버전 관리'),
+    _MenuItem(Icons.smart_display_rounded, '광고 로그'),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +81,6 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     if (!isWideScreen) {
-      // Fallback for portrait mobile views or small windows
       return Scaffold(
         appBar: AppBar(
           title: const Text('관리자 페이지'),
@@ -92,24 +102,22 @@ class _AdminScreenState extends State<AdminScreen> {
             BottomNavigationBarItem(
                 icon: Icon(Icons.notifications), label: '공지'),
             BottomNavigationBarItem(icon: Icon(Icons.send), label: '푸시'),
-            BottomNavigationBarItem(icon: Icon(Icons.ads_click), label: '광고'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.ads_click), label: '광고'),
           ],
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50], // Dashboard background
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Row(
         children: [
           _buildSidebar(),
-          const VerticalDivider(thickness: 1, width: 1, color: Colors.black12),
-          // Main Content
           Expanded(
             child: Column(
               children: [
                 _buildHeader(),
-                const Divider(height: 1, thickness: 1, color: Colors.black12),
                 Expanded(child: bodyContent),
               ],
             ),
@@ -121,126 +129,218 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Widget _buildHeader() {
     return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      color: Colors.white,
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            _getMenuTitle(_currentIndex),
+            _menuItems[_currentIndex].label,
             style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87),
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1E293B),
+              letterSpacing: -0.3,
+            ),
           ),
-          Row(
-            children: [
-              if (_currentIndex != 2)
-                OutlinedButton.icon(
-                  onPressed: () => setState(() => _currentIndex = 2),
-                  icon: const Icon(Icons.edit_document, size: 18),
-                  label: const Text('신규 공지 작성'),
-                ),
-              if (_currentIndex != 2) const SizedBox(width: 8),
-              if (_currentIndex != 3)
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent),
-                  onPressed: () => setState(() => _currentIndex = 3),
-                  icon: const Icon(Icons.send, size: 18, color: Colors.white),
-                  label: const Text('푸시 발송',
-                      style: TextStyle(color: Colors.white)),
-                ),
-              const SizedBox(width: 16),
-              IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: () => _showLogoutDialog(context),
-                  tooltip: '로그아웃'),
-            ],
-          )
+          const Spacer(),
+          if (_currentIndex != 2)
+            _buildHeaderAction(
+              label: '공지 작성',
+              icon: Icons.edit_note_rounded,
+              onTap: () => setState(() => _currentIndex = 2),
+            ),
+          if (_currentIndex != 2) const SizedBox(width: 8),
+          if (_currentIndex != 3)
+            _buildHeaderAction(
+              label: '푸시 발송',
+              icon: Icons.send_rounded,
+              filled: true,
+              onTap: () => setState(() => _currentIndex = 3),
+            ),
+          const SizedBox(width: 16),
+          InkWell(
+            onTap: () => _showLogoutDialog(context),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.logout_rounded,
+                  size: 18, color: Color(0xFF64748B)),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  String _getMenuTitle(int index) {
-    switch (index) {
-      case 0:
-        return '대시보드';
-      case 1:
-        return '유저 관리';
-      case 2:
-        return '공지사항 관리';
-      case 3:
-        return '푸시 발송';
-      case 4:
-        return '신고 관리';
-      case 5:
-        return '상점 관리';
-      case 6:
-        return '버전 관리';
-      case 7:
-        return '광고 로그';
-      default:
-        return '관리자 홈';
+  Widget _buildHeaderAction({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    bool filled = false,
+  }) {
+    if (filled) {
+      return ElevatedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: 16, color: Colors.white),
+        label: Text(label,
+            style: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w600)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF6366F1),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
     }
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16),
+      label: Text(label,
+          style:
+              const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFF475569),
+        side: const BorderSide(color: Color(0xFFCBD5E1)),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   Widget _buildSidebar() {
-    return SizedBox(
-      width: 250,
-      child: Material(
+    return Container(
+      width: 240,
+      decoration: const BoxDecoration(
         color: Colors.white,
-        child: Column(
-          children: [
-            const SizedBox(height: 32),
-            const Text(
-              'MorningMate Admin',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.indigo),
-              textAlign: TextAlign.center,
+        border: Border(right: BorderSide(color: Color(0xFFE2E8F0))),
+      ),
+      child: Column(
+        children: [
+          // Logo area
+          Container(
+            height: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            alignment: Alignment.centerLeft,
+            child: const Row(
+              children: [
+                Icon(Icons.wb_sunny_rounded,
+                    size: 22, color: Color(0xFF6366F1)),
+                SizedBox(width: 10),
+                Text(
+                  'MorningMate',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1E293B),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 32),
-            _buildSidebarItem('🏠 대시보드 (통계)', 0),
-            _buildSidebarItem('👤 유저 관리 (상세정보)', 1),
-            _buildSidebarItem('📝 공지사항 관리', 2),
-            _buildSidebarItem('🔔 푸시 메시지 전송', 3),
-            _buildSidebarItem('🚩 신고 관리', 4),
-            _buildSidebarItem('📦 아이템/상점 관리', 5),
-            _buildSidebarItem('🆙 버전 관리', 6),
-            _buildSidebarItem('📺 광고 시청 로그', 7),
-            const Spacer(),
-          ],
+          ),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+          const SizedBox(height: 16),
+
+          // Menu Section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildMenuLabel('서비스'),
+                _buildMenuItem(0),
+                _buildMenuItem(1),
+
+                const SizedBox(height: 16),
+                _buildMenuLabel('운영'),
+                _buildMenuItem(2),
+                _buildMenuItem(3),
+                _buildMenuItem(4),
+
+                const SizedBox(height: 16),
+                _buildMenuLabel('관리'),
+                _buildMenuItem(5),
+                _buildMenuItem(6),
+                _buildMenuItem(7),
+              ],
+            ),
+          ),
+
+          const Spacer(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, bottom: 8, top: 4),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF94A3B8),
+          letterSpacing: 0.5,
         ),
       ),
     );
   }
 
-  Widget _buildSidebarItem(String label, int index) {
+  Widget _buildMenuItem(int index) {
     final isSelected = _currentIndex == index;
+    final item = _menuItems[index];
+
     return InkWell(
       onTap: () => setState(() => _currentIndex = index),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        color:
-            isSelected ? Colors.indigo.withOpacity(0.05) : Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.only(bottom: 2),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFEEF2FF)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Row(
           children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Colors.indigo : Colors.black87,
-                ),
+            Icon(
+              item.icon,
+              size: 18,
+              color: isSelected
+                  ? const Color(0xFF6366F1)
+                  : const Color(0xFF94A3B8),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              item.label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight:
+                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected
+                    ? const Color(0xFF6366F1)
+                    : const Color(0xFF475569),
               ),
             ),
-            if (isSelected)
-              const Icon(Icons.chevron_right, color: Colors.indigo, size: 20),
           ],
         ),
       ),
@@ -248,20 +348,41 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   void _showLogoutDialog(BuildContext context) {
-    AppDialog.show(
+    showDialog(
       context: context,
-      key: AppDialogKey.logout,
-      actions: [
-        AppDialogAction(label: '취소', onPressed: () => Navigator.pop(context)),
-        AppDialogAction(
-          label: '로그아웃',
-          isPrimary: true,
-          onPressed: () {
-            Navigator.pop(context);
-            context.read<AuthController>().signOut();
-          },
+      builder: (ctx) => AdminWebDialog(
+        title: '로그아웃',
+        titleIcon: Icons.logout,
+        width: 400,
+        height: 180,
+        content: const Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Text('정말로 로그아웃 하시겠습니까?'),
         ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthController>().signOut();
+            },
+            child: const Text('로그아웃'),
+          ),
+        ],
+      ),
     );
   }
+}
+
+class _MenuItem {
+  final IconData icon;
+  final String label;
+  const _MenuItem(this.icon, this.label);
 }

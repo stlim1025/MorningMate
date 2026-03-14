@@ -6,6 +6,7 @@ import '../../../../core/constants/character_assets.dart';
 import '../../../../core/widgets/network_or_asset_image.dart';
 import '../../../../services/asset_service.dart';
 import '../controllers/admin_controller.dart';
+import '../widgets/admin_dialog.dart';
 import 'asset_upload_dialog.dart';
 
 class ShopManagementTab extends StatefulWidget {
@@ -532,26 +533,36 @@ class _ShopManagementTabState extends State<ShopManagementTab>
       if (!context.mounted) return;
       final confirm = await showDialog<bool>(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('이미지 즉시 변경'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('선택한 이미지로 교체하시겠습니까? (서버에 즉시 반영됩니다)'),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 150,
-                child: Image.memory(imageBytes, fit: BoxFit.contain),
-              ),
-            ],
+        builder: (ctx) => AdminWebDialog(
+          title: '이미지 즉시 변경',
+          titleIcon: Icons.image_outlined,
+          height: 350,
+          content: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('선택한 이미지로 교체하시겠습니까? (서버에 즉시 반영됩니다)'),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 150,
+                  child: Image.memory(imageBytes, fit: BoxFit.contain),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
                 child: const Text('취소')),
             ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('변경하기')),
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('변경하기'),
+            ),
           ],
         ),
       );
@@ -617,23 +628,29 @@ class _ShopManagementTabState extends State<ShopManagementTab>
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: Text('${item.name} 할인 설정'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('원가: $originalPrice 가지'),
-              const SizedBox(height: 16),
-              TextField(
-                controller: textController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: '할인 가격',
-                  border: OutlineInputBorder(),
-                  suffixText: '가지',
+        return AdminWebDialog(
+          title: '${item.name} 할인 설정',
+          titleIcon: Icons.local_offer,
+          height: 300,
+          content: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('원가: $originalPrice 가지',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: textController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: '할인 가격',
+                    border: OutlineInputBorder(),
+                    suffixText: '가지',
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             if (discounts.containsKey(itemId))
@@ -656,6 +673,10 @@ class _ShopManagementTabState extends State<ShopManagementTab>
                   Navigator.pop(dialogContext);
                 }
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('저장'),
             ),
           ],
@@ -669,9 +690,14 @@ class _ShopManagementTabState extends State<ShopManagementTab>
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('모든 할인 제거'),
-          content: const Text('정말로 모든 할인을 제거하시겠습니까?\n모든 상품이 원래 가격으로 돌아갑니다.'),
+        return AdminWebDialog(
+          title: '모든 할인 제거',
+          titleIcon: Icons.remove_circle_outline,
+          height: 200,
+          content: const Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Text('정말로 모든 할인을 제거하시겠습니까?\n모든 상품이 원래 가격으로 돌아갑니다.'),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),

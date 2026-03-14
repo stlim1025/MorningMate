@@ -7,6 +7,7 @@ class AdLogModel {
   final String adType; // 'rewarded', 'bonus_rewarded', etc.
   final String adProvider; // 'AdMob', 'Unity', etc.
   final String? adNetworkClassName; // e.g., 'UnityAdapter'
+  final String action; // 'load', 'show', 'reward'
   final DateTime timestamp;
   final bool success;
   final String? errorCode;
@@ -19,6 +20,7 @@ class AdLogModel {
     required this.adType,
     required this.adProvider,
     this.adNetworkClassName,
+    required this.action,
     required this.timestamp,
     required this.success,
     this.errorCode,
@@ -32,6 +34,7 @@ class AdLogModel {
       'adType': adType,
       'adProvider': adProvider,
       'adNetworkClassName': adNetworkClassName,
+      'action': action,
       'timestamp': FieldValue.serverTimestamp(),
       'success': success,
       'errorCode': errorCode,
@@ -48,6 +51,7 @@ class AdLogModel {
       adType: data['adType'] ?? '',
       adProvider: data['adProvider'] ?? '',
       adNetworkClassName: data['adNetworkClassName'],
+      action: data['action'] ?? 'load', // 기본값 load (하위 호환)
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       success: data['success'] ?? false,
       errorCode: data['errorCode'],

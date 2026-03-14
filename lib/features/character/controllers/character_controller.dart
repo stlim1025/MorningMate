@@ -800,6 +800,7 @@ class CharacterController extends ChangeNotifier {
   // 광고 로그 기록 헬퍼
   Future<void> _logAdEvent({
     required String adType,
+    required String action, // 'load', 'show', 'reward'
     required bool success,
     String? adProvider,
     String? errorCode,
@@ -814,6 +815,7 @@ class CharacterController extends ChangeNotifier {
       adType: adType,
       adProvider: adProvider ?? 'AdMob',
       adNetworkClassName: adNetworkClassName,
+      action: action,
       timestamp: DateTime.now(),
       success: success,
       errorCode: errorCode,
@@ -844,9 +846,9 @@ class CharacterController extends ChangeNotifier {
           _isAdLoading = false;
           _lastLoadError = null;
           
-          // 로드 성공 로그 (선택사항, 너무 많으면 제외 가능하나 일단 추가)
           _logAdEvent(
             adType: 'rewarded',
+            action: 'load',
             success: true,
             adNetworkClassName: ad.responseInfo?.mediationAdapterClassName,
           );
@@ -859,9 +861,9 @@ class CharacterController extends ChangeNotifier {
           _rewardedAd = null;
           _lastLoadError = error;
           
-          // 로드 실패 로그
           _logAdEvent(
             adType: 'rewarded',
+            action: 'load',
             success: false,
             errorCode: error.code.toString(),
             errorMessage: error.message,
@@ -898,6 +900,14 @@ class CharacterController extends ChangeNotifier {
     }
 
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (ad) {
+        _logAdEvent(
+          adType: 'rewarded',
+          action: 'show',
+          success: true,
+          adNetworkClassName: ad.responseInfo?.mediationAdapterClassName,
+        );
+      },
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
         _rewardedAd = null;
@@ -907,9 +917,9 @@ class CharacterController extends ChangeNotifier {
         ad.dispose();
         _rewardedAd = null;
         
-        // 표시 실패 로그
         _logAdEvent(
           adType: 'rewarded',
+          action: 'show',
           success: false,
           errorCode: error.code.toString(),
           errorMessage: error.message,
@@ -921,6 +931,13 @@ class CharacterController extends ChangeNotifier {
 
     _rewardedAd!.show(
       onUserEarnedReward: (AdWithoutView ad, RewardItem rewardItem) async {
+        _logAdEvent(
+          adType: 'rewarded',
+          action: 'reward',
+          success: true,
+          adNetworkClassName: ad.responseInfo?.mediationAdapterClassName,
+        );
+        
         if (_currentUser != null) {
           await watchAdAndGetPoints(_currentUser!.uid);
           if (context.mounted) {
@@ -1015,6 +1032,7 @@ class CharacterController extends ChangeNotifier {
           
           _logAdEvent(
             adType: 'bonus_rewarded_interstitial',
+            action: 'load',
             success: true,
             adNetworkClassName: ad.responseInfo?.mediationAdapterClassName,
           );
@@ -1028,6 +1046,7 @@ class CharacterController extends ChangeNotifier {
           
           _logAdEvent(
             adType: 'bonus_rewarded_interstitial',
+            action: 'load',
             success: false,
             errorCode: error.code.toString(),
             errorMessage: error.message,
@@ -1047,6 +1066,14 @@ class CharacterController extends ChangeNotifier {
     }
 
     _bonusRewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (ad) {
+         _logAdEvent(
+          adType: 'bonus_rewarded_interstitial',
+          action: 'show',
+          success: true,
+          adNetworkClassName: ad.responseInfo?.mediationAdapterClassName,
+        );
+      },
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
         _bonusRewardedAd = null;
@@ -1057,7 +1084,8 @@ class CharacterController extends ChangeNotifier {
         _bonusRewardedAd = null;
         
         _logAdEvent(
-          adType: 'bonus_rewarded',
+          adType: 'bonus_rewarded_interstitial',
+          action: 'show',
           success: false,
           errorCode: error.code.toString(),
           errorMessage: error.message,
@@ -1069,6 +1097,12 @@ class CharacterController extends ChangeNotifier {
 
     _bonusRewardedAd!.show(
       onUserEarnedReward: (AdWithoutView ad, RewardItem rewardItem) {
+        _logAdEvent(
+          adType: 'bonus_rewarded_interstitial',
+          action: 'reward',
+          success: true,
+          adNetworkClassName: ad.responseInfo?.mediationAdapterClassName,
+        );
         onRewarded();
       },
     );

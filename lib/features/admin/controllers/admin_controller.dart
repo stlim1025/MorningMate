@@ -451,6 +451,14 @@ class AdminController extends ChangeNotifier {
     }
   }
 
+  DateTime _selectedDate = DateTime.now();
+  DateTime get selectedDate => _selectedDate;
+
+  void setSelectedDate(DateTime date) {
+    _selectedDate = date;
+    fetchStats();
+  }
+
   Future<void> updateUserPoints(String userId, int points) async {
     try {
       _isLoading = true;
@@ -493,21 +501,26 @@ class AdminController extends ChangeNotifier {
   Map<int, int> _hourlyLoginStats = {};
   Map<int, int> get hourlyLoginStats => _hourlyLoginStats;
 
+  Map<String, int> _countryStats = {};
+  Map<String, int> get countryStats => _countryStats;
+
   Future<void> fetchStats() async {
     if (_isDisposed) return;
     try {
-      final now = DateTime.now();
-      final startOfToday = DateTime(now.year, now.month, now.day);
+      final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+      final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
 
-      // 오늘 접속자
-      final loginQuery = await _firestore
+      // 오늘 접속자 (historical 지원을 위해 query 결과에서 국가 통계 추출)
+      final loginUsers = await _firestore
           .collection('users')
           .where('lastLoginDate',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
-          .count()
+          .where('lastLoginDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
           .get();
-      _dailyVisitorCount = loginQuery.count ?? 0;
-
+      
+      _dailyVisitorCount = loginUsers.docs.length;
+      
       // 시간대별 접속자 통계 (읽기 비용 문제로 프론트엔드 직접 계산 제거, 추후 백엔드 어그리게이션 필요)
       _hourlyLoginStats = {};
 
@@ -516,6 +529,8 @@ class AdminController extends ChangeNotifier {
           .collection('users')
           .where('createdAt',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .where('createdAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
           .count()
           .get();
       _todayNewUserCount = newUsersQuery.count ?? 0;
@@ -525,6 +540,8 @@ class AdminController extends ChangeNotifier {
           .collection('diaries')
           .where('createdAt',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .where('createdAt',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
           .count()
           .get();
       _todayDiaryCount = todayDiaryQuery.count ?? 0;
@@ -534,12 +551,22 @@ class AdminController extends ChangeNotifier {
           .collection('users')
           .where('lastAdRewardDate',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .where('lastAdRewardDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
           .count()
           .get();
       _todayAdViewerCount = adViewerQuery.count ?? 0;
 
       final totalQuery = await _firestore.collection('users').count().get();
       _totalUserCount = totalQuery.count ?? 0;
+
+      // 전체 유저 대상 국가 통계 계산 (읽기 비용 발생하지만 요청에 따라 구현)
+      final allUsers = await _firestore.collection('users').get();
+      _countryStats = {};
+      for (var doc in allUsers.docs) {
+        final country = doc.data()['countryCode'] as String? ?? '알수없음';
+        _countryStats[country] = (_countryStats[country] ?? 0) + 1;
+      }
       
       // 플랫폼별 사용자 수
       final iosQuery = await _firestore
@@ -564,34 +591,40 @@ class AdminController extends ChangeNotifier {
 
   // 대시보드 팝업용 상세 리스트 조회
   Future<List<UserModel>> getTodayNewUsers() async {
-    final now = DateTime.now();
-    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
     final snap = await _firestore
         .collection('users')
         .where('createdAt',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .where('createdAt',
+            isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
         .get();
     return snap.docs.map((d) => UserModel.fromFirestore(d)).toList();
   }
 
   Future<List<UserModel>> getTodayLoginUsers() async {
-    final now = DateTime.now();
-    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
     final snap = await _firestore
         .collection('users')
         .where('lastLoginDate',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .where('lastLoginDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
         .get();
     return snap.docs.map((d) => UserModel.fromFirestore(d)).toList();
   }
 
   Future<List<UserModel>> getTodayAdViewerUsers() async {
-    final now = DateTime.now();
-    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
     final snap = await _firestore
         .collection('users')
         .where('lastAdRewardDate',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .where('lastAdRewardDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
         .get();
     return snap.docs.map((d) => UserModel.fromFirestore(d)).toList();
   }
@@ -640,23 +673,46 @@ class AdminController extends ChangeNotifier {
   }
 
   // --- 버전 관리 (Version Management) ---
-  VersionModel? _versionInfo;
-  VersionModel? get versionInfo => _versionInfo;
+  VersionModel? _androidVersionInfo;
+  VersionModel? get androidVersionInfo => _androidVersionInfo;
+
+  VersionModel? _iosVersionInfo;
+  VersionModel? get iosVersionInfo => _iosVersionInfo;
+
+  // 기존 호환성 유지용 (필요시)
+  VersionModel? get versionInfo => _androidVersionInfo;
 
   Future<void> fetchVersionInfo() async {
     try {
       final doc = await _firestore.collection('settings').doc('version').get();
-      if (doc.exists) {
-        _versionInfo = VersionModel.fromFirestore(doc);
+      final data = doc.data();
+      if (doc.exists && data is Map<String, dynamic>) {
+        // 안드로이드 정보
+        if (data.containsKey('android')) {
+          _androidVersionInfo = VersionModel.fromMap(data['android']);
+        } else {
+          // 레거시: 루트에 있는 정보를 안드로이드로 간주
+          _androidVersionInfo = VersionModel.fromFirestore(doc);
+        }
+
+        // iOS 정보
+        if (data.containsKey('ios')) {
+          _iosVersionInfo = VersionModel.fromMap(data['ios']);
+        } else {
+          // 레거시: 루트에 있는 정보를 우선 iOS로도 사용 (나중에 분리 저장 시점부터 갈라짐)
+          _iosVersionInfo = VersionModel.fromFirestore(doc);
+        }
       } else {
         // 기본값 설정
-        _versionInfo = VersionModel(
+        final defaultVersion = VersionModel(
           latestVersion: '1.0.0',
           minimumVersion: '1.0.0',
           updateTitle: '업데이트 안내',
           updateBody: '새로운 버전이 출시되었습니다. 업데이트 후 이용해 주세요!',
           isForceUpdate: false,
         );
+        _androidVersionInfo = defaultVersion;
+        _iosVersionInfo = defaultVersion;
       }
     } catch (e) {
       debugPrint('버전 정보 불러오기 오류: $e');
@@ -664,17 +720,31 @@ class AdminController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateVersionInfo(VersionModel version) async {
+  Future<void> updateVersionInfo(VersionModel version, String platform) async {
     _isLoading = true;
     notifyListeners();
     try {
+      final Map<String, dynamic> updateData = {
+        platform: version.toFirestore(),
+      };
+
+      // 안드로이드 업데이트 시 레거시 앱 호환을 위해 루트 필드도 업데이트
+      if (platform == 'android') {
+        updateData.addAll(version.toFirestore());
+      }
+
       await _firestore
           .collection('settings')
           .doc('version')
-          .set(version.toFirestore());
-      _versionInfo = version;
+          .set(updateData, SetOptions(merge: true));
+      
+      if (platform == 'android') {
+        _androidVersionInfo = version;
+      } else {
+        _iosVersionInfo = version;
+      }
     } catch (e) {
-      debugPrint('버전 정보 업데이트 오류: $e');
+      debugPrint('버전 정보 업데이트 오류 ($platform): $e');
     }
     _isLoading = false;
     notifyListeners();

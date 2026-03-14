@@ -106,11 +106,22 @@ class AuthController extends ChangeNotifier {
       try {
         await _userService.updateLastLogin(user.uid);
         
-        // 플랫폼 정보가 없으면 업데이트
-        if (_userModel != null && _userModel!.platform == null) {
+        // 플랫폼 및 국가 정보가 없으면 업데이트
+        if (_userModel != null && (_userModel!.platform == null || _userModel!.countryCode == null)) {
           final platform = Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other');
-          await _userService.updateUser(user.uid, {'platform': platform});
-          _userModel = _userModel!.copyWith(platform: platform);
+          final countryCode = WidgetsBinding.instance.platformDispatcher.locale.countryCode;
+          
+          final Map<String, dynamic> updates = {};
+          if (_userModel!.platform == null) updates['platform'] = platform;
+          if (_userModel!.countryCode == null) updates['countryCode'] = countryCode;
+          
+          if (updates.isNotEmpty) {
+            await _userService.updateUser(user.uid, updates);
+            _userModel = _userModel!.copyWith(
+              platform: updates['platform'],
+              countryCode: updates['countryCode'],
+            );
+          }
         }
       } catch (e) {
         debugPrint('로그인 정보 업데이트 실패: $e');
@@ -174,9 +185,11 @@ class AuthController extends ChangeNotifier {
           email: email,
           nickname: finalNickname,
           createdAt: DateTime.now(),
+          lastLoginDate: DateTime.now(), // ✨ 신규 가입 시 접속 기록 즉시 설정
           provider: 'email',
           isSetupComplete: false,
           platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+          countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
         );
 
         await _userService.createUser(userModel);
@@ -236,9 +249,11 @@ class AuthController extends ChangeNotifier {
             email: user.email ?? '',
             nickname: user.displayName ?? '사용자',
             createdAt: DateTime.now(),
-             provider: 'google',
+            lastLoginDate: DateTime.now(), // ✨ 신규 가입 시 접속 기록 즉시 설정
+            provider: 'google',
             isSetupComplete: false,
             platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+            countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
           );
           await _userService.createUser(userModel);
           _userModel = userModel;
@@ -300,9 +315,11 @@ class AuthController extends ChangeNotifier {
             email: user.email ?? '',
             nickname: initialNickname,
             createdAt: DateTime.now(),
-             provider: 'kakao',
+            lastLoginDate: DateTime.now(), // ✨ 신규 가입 시 접속 기록 즉시 설정
+            provider: 'kakao',
             isSetupComplete: false,
             platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+            countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
           );
           await _userService.createUser(userModel);
           _userModel = userModel;
@@ -346,9 +363,11 @@ class AuthController extends ChangeNotifier {
             email: user.email ?? '',
             nickname: user.displayName ?? '사용자',
             createdAt: DateTime.now(),
-             provider: 'apple',
+            lastLoginDate: DateTime.now(), // ✨ 신규 가입 시 접속 기록 즉시 설정
+            provider: 'apple',
             isSetupComplete: false,
             platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+            countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
           );
           await _userService.createUser(userModel);
           _userModel = userModel;

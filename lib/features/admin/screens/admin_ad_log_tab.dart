@@ -22,7 +22,6 @@ class _AdminAdLogTabState extends State<AdminAdLogTab> {
         context.read<AdminController>().fetchAdLogs();
       }
     });
-
     _scrollController.addListener(_onScroll);
   }
 
@@ -45,24 +44,109 @@ class _AdminAdLogTabState extends State<AdminAdLogTab> {
       builder: (context, controller, child) {
         return Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            // ── Header Bar ──
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border:
+                    Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    '광고 로그',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  const Icon(Icons.smart_display_rounded,
+                      size: 20, color: Color(0xFF475569)),
+                  const SizedBox(width: 8),
+                  Text(
+                    '광고 로그 (${controller.adLogs.length}건)',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF334155),
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () => controller.fetchAdLogs(refresh: true),
-                    tooltip: '새로고침',
+                  const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        controller.fetchAdLogs(refresh: true),
+                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                    label: const Text('새로고침'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF64748B),
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
+
+            // ── Table Header ──
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              color: const Color(0xFFF8FAFC),
+              child: const Row(
+                children: [
+                  SizedBox(
+                      width: 40,
+                      child: Text('결과',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B)))),
+                  Expanded(
+                      flex: 2,
+                      child: Text('사용자',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B)))),
+                  Expanded(
+                      flex: 1,
+                      child: Text('액션',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B)))),
+                  Expanded(
+                      flex: 1,
+                      child: Text('제공자',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B)))),
+                  Expanded(
+                      flex: 1,
+                      child: Text('유형',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B)))),
+                  Expanded(
+                      flex: 2,
+                      child: Text('네트워크',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B)))),
+                  SizedBox(
+                      width: 120,
+                      child: Text('시간',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B)))),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+            // ── Body ──
             Expanded(
               child: _buildBody(controller),
             ),
@@ -85,7 +169,19 @@ class _AdminAdLogTabState extends State<AdminAdLogTab> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
             height: MediaQuery.of(context).size.height - 300,
-            child: const Center(child: Text('광고 로그가 없습니다.')),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.smart_display_outlined,
+                      size: 64, color: Color(0xFFCBD5E1)),
+                  SizedBox(height: 16),
+                  Text('광고 로그가 없습니다.',
+                      style:
+                          TextStyle(color: Color(0xFF94A3B8), fontSize: 15)),
+                ],
+              ),
+            ),
           ),
         ),
       );
@@ -95,9 +191,9 @@ class _AdminAdLogTabState extends State<AdminAdLogTab> {
       onRefresh: () => controller.fetchAdLogs(refresh: true),
       child: ListView.separated(
         controller: _scrollController,
-        padding: const EdgeInsets.all(16),
         itemCount: logs.length + (controller.hasMoreAdLogs ? 1 : 0),
-        separatorBuilder: (context, index) => const Divider(),
+        separatorBuilder: (_, __) =>
+            const Divider(height: 1, color: Color(0xFFF1F5F9)),
         itemBuilder: (context, index) {
           if (index == logs.length) {
             return const Padding(
@@ -105,74 +201,142 @@ class _AdminAdLogTabState extends State<AdminAdLogTab> {
               child: Center(child: CircularProgressIndicator()),
             );
           }
-          final log = logs[index];
-          return _buildLogTile(log);
+          return _buildLogRow(logs[index]);
         },
       ),
     );
   }
 
-  Widget _buildLogTile(AdLogModel log) {
-    final dateStr = DateFormat('MM-dd HH:mm:ss').format(log.timestamp);
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+  Widget _buildLogRow(AdLogModel log) {
+    final dateStr = DateFormat('MM.dd HH:mm:ss').format(log.timestamp);
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                log.success ? Icons.check_circle : Icons.error_outline,
-                color: log.success ? Colors.green : Colors.red,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${log.userNickname} (${log.userId.substring(log.userId.length - 6)})',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              // Status dot
+              SizedBox(
+                width: 40,
+                child: Icon(
+                  log.success
+                      ? Icons.check_circle_rounded
+                      : Icons.cancel_rounded,
+                  size: 16,
+                  color: log.success
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFEF4444),
                 ),
               ),
-              Text(
-                dateStr,
-                style: const TextStyle(color: Colors.grey, fontSize: 13),
+              // User
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      log.userNickname,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Color(0xFF1E293B)),
+                    ),
+                    Text(
+                      log.userId.length > 12
+                          ? '${log.userId.substring(log.userId.length - 8)}'
+                          : log.userId,
+                      style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF94A3B8),
+                          fontFamily: 'monospace'),
+                    ),
+                  ],
+                ),
+              ),
+              // Action
+              Expanded(
+                flex: 1,
+                child: _buildTag(
+                  log.action.toUpperCase(),
+                  log.action == 'reward'
+                      ? const Color(0xFF10B981)
+                      : log.action == 'show'
+                          ? const Color(0xFF6366F1)
+                          : const Color(0xFF64748B),
+                ),
+              ),
+              // Provider
+              Expanded(
+                flex: 1,
+                child:
+                    _buildTag(log.adProvider, const Color(0xFF3B82F6)),
+              ),
+              // Type
+              Expanded(
+                flex: 1,
+                child:
+                    _buildTag(log.adType, const Color(0xFFF59E0B)),
+              ),
+              // Network
+              Expanded(
+                flex: 2,
+                child: Text(
+                  log.adNetworkClassName ?? '-',
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF64748B)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              // Time
+              SizedBox(
+                width: 120,
+                child: Text(
+                  dateStr,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
+                    fontFamily: 'monospace',
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              _buildBadge(log.adProvider, Colors.blue),
-              const SizedBox(width: 4),
-              _buildBadge(log.adType, Colors.orange),
-              if (log.adNetworkClassName != null) ...[
-                const SizedBox(width: 4),
-                _buildBadge(log.adNetworkClassName!, Colors.teal),
-              ],
-            ],
-          ),
+
+          // Error Details (expanded)
           if (!log.success) ...[
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              margin: const EdgeInsets.only(left: 40),
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.red[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red[100]!),
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFFECACA)),
               ),
-              child: Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Error Code: ${log.errorCode}',
-                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
+                    'Code ${log.errorCode}',
+                    style: const TextStyle(
+                      color: Color(0xFFEF4444),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    log.errorMessage ?? '알 수 없는 에러',
-                    style: TextStyle(color: Colors.red[900], fontSize: 13),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      log.errorMessage ?? '알 수 없는 에러',
+                      style: const TextStyle(
+                          color: Color(0xFFB91C1C), fontSize: 11),
+                    ),
                   ),
                 ],
               ),
@@ -183,17 +347,23 @@ class _AdminAdLogTabState extends State<AdminAdLogTab> {
     );
   }
 
-  Widget _buildBadge(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+  Widget _buildTag(String text, Color color) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
     );
   }

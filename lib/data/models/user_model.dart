@@ -54,6 +54,7 @@ class UserModel {
   final String? referralCode;
   final String? referredBy;
   final String? platform; // 'ios' 또는 'android'
+  final String? countryCode; // 국가 코드 (예: KR, US)
   final String? fcmToken; // FCM 토큰 추가
 
   UserModel({
@@ -118,6 +119,7 @@ class UserModel {
     this.referralCode,
     this.referredBy,
     this.platform,
+    this.countryCode,
     this.fcmToken,
   }) : roomDecoration = roomDecoration ?? RoomDecorationModel();
 
@@ -203,6 +205,7 @@ class UserModel {
       referralCode: data['referralCode'],
       referredBy: data['referredBy'],
       platform: data['platform'],
+      countryCode: data['countryCode'],
       fcmToken: data['fcmToken'],
     );
   }
@@ -269,6 +272,7 @@ class UserModel {
       'referralCode': referralCode,
       'referredBy': referredBy,
       'platform': platform,
+      'countryCode': countryCode,
       'fcmToken': fcmToken,
     };
   }
@@ -326,6 +330,7 @@ class UserModel {
     String? referralCode,
     String? referredBy,
     String? platform,
+    String? countryCode,
     String? fcmToken,
   }) {
     return UserModel(
@@ -385,6 +390,7 @@ class UserModel {
       referralCode: referralCode ?? this.referralCode,
       referredBy: referredBy ?? this.referredBy,
       platform: platform ?? this.platform,
+      countryCode: countryCode ?? this.countryCode,
       fcmToken: fcmToken ?? this.fcmToken,
     );
   }
