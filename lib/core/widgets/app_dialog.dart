@@ -48,6 +48,7 @@ enum AppDialogKey {
   refreshShop,
   refreshShopFree,
   refreshShopLimit,
+  guestMigration,
 }
 
 class AppDialogAction {
@@ -763,7 +764,171 @@ class AppDialog {
           content: content,
           actions: actions ?? const [],
         );
+      case AppDialogKey.guestMigration:
+        final l10n = AppLocalizations.of(context);
+        return AppDialogConfig(
+          title: title ??
+              l10n?.get('guestMigrationTitle') ??
+              '작성한 기록을 안전하게 저장할까요?',
+          content: content ??
+              Builder(
+                builder: (dialogContext) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n?.get('guestLoginMigrationDesc') ?? '로그인하면',
+                      style: const TextStyle(
+                        fontFamily: 'BMJUA',
+                        fontSize: 16,
+                        color: Color(0xFF4E342E),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('• ',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: Text(
+                            l10n?.get('guestLoginBullet1') ?? '기록이 사라지지 않아요',
+                            style: const TextStyle(
+                                fontFamily: 'BMJUA', fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Text('• ',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: Text(
+                            l10n?.get('guestLoginBullet2') ??
+                                '다른 기기에서도 이어서 사용 가능',
+                            style: const TextStyle(
+                                fontFamily: 'BMJUA', fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Text('• ',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: Text(
+                            l10n?.get('guestLoginBullet3') ??
+                                '친구와 함께 하루를 공유할 수 있어요',
+                            style: const TextStyle(
+                                fontFamily: 'BMJUA', fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Text('• ',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Expanded(
+                          child: Text(
+                            l10n?.get('guestLoginBullet4') ??
+                                '둥지를 성장시키고 꾸밀 수 있어요',
+                            style: const TextStyle(
+                                fontFamily: 'BMJUA', fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSocialLoginButton(
+                      context: dialogContext,
+                      label: l10n?.get('loginWithGoogle') ?? '구글로 계속하기',
+                      icon: Icons.g_mobiledata,
+                      color: Colors.white,
+                      textColor: Colors.black87,
+                      onPressed: () => Navigator.pop(dialogContext, 'google'),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSocialLoginButton(
+                      context: dialogContext,
+                      label: l10n?.get('loginWithKakao') ?? '카카오로 계속하기',
+                      icon: Icons.chat_bubble,
+                      color: const Color(0xFFFEE500),
+                      textColor: Colors.black87,
+                      onPressed: () => Navigator.pop(dialogContext, 'kakao'),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSocialLoginButton(
+                      context: dialogContext,
+                      label: l10n?.get('loginWithApple') ?? '애플로 계속하기',
+                      icon: Icons.apple,
+                      color: Colors.black,
+                      textColor: Colors.white,
+                      onPressed: () => Navigator.pop(dialogContext, 'apple'),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: Text(
+                          l10n?.get('later') ?? '나중에 할게요',
+                          style: TextStyle(
+                            fontFamily: 'BMJUA',
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          actions: const [],
+        );
     }
+  }
+
+  static Widget _buildSocialLoginButton({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Color textColor,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: textColor, size: 24),
+        label: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'BMJUA',
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          backgroundColor: color,
+          foregroundColor: textColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: color == Colors.white
+                  ? Colors.grey.withOpacity(0.3)
+                  : Colors.transparent,
+              width: 1,
+            ),
+          ),
+          elevation: 2,
+        ),
+      ),
+    );
   }
 
   static Future<T?> show<T>({

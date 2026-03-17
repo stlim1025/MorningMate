@@ -525,9 +525,36 @@ class _SocialScreenState extends State<SocialScreen> {
 
   Future<void> _showAddFriendDialog(
       BuildContext context, AppColorScheme colorScheme) async {
+    final authController = context.read<AuthController>();
+    if (authController.isLoading) return;
+
+    // 임시 로그인 유저인 경우 소셜 로그인 유도
+    if (authController.userModel?.isAnonymous == true) {
+      final provider = await AppDialog.show<String>(
+        context: context,
+        key: AppDialogKey.guestMigration,
+        title: AppLocalizations.of(context)?.get('friendSocialLoginTitle') ??
+            '친구와 함께 하려면 로그인을 해주세요',
+      );
+
+      if (provider != null && context.mounted) {
+        try {
+          await authController.linkWithSocialProvider(provider);
+          if (context.mounted) {
+            MemoNotification.show(context,
+                AppLocalizations.of(context)?.get('signupSuccess') ?? '성공적으로 계정이 연결되었습니다!');
+          }
+        } catch (e) {
+          if (context.mounted) {
+            MemoNotification.show(context, '계정 연결 실패: $e');
+          }
+        }
+      }
+      return;
+    }
+
     final controller = TextEditingController();
     final socialController = context.read<SocialController>();
-    final authController = context.read<AuthController>();
 
     return AppDialog.show(
       context: context,

@@ -102,8 +102,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ?.get('changeNickname') ??
                               'Change Nickname',
                           subtitle: user?.nickname ?? '',
-                          onTap: () => _showChangeNicknameDialog(
-                              context, user?.nickname ?? '', colorScheme),
+                          onTap: () async {
+                            if (authController.isLoading) return;
+                            if (user?.isAnonymous ?? false) {
+                              final provider = await AppDialog.show<String>(
+                                context: context,
+                                key: AppDialogKey.guestMigration,
+                                title: AppLocalizations.of(context)
+                                        ?.get('availableAfterSocialLogin') ??
+                                    '소셜 로그인 후 이용 가능합니다',
+                              );
+
+                              if (provider != null && context.mounted) {
+                                try {
+                                  await authController
+                                      .linkWithSocialProvider(provider);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('성공적으로 계정이 연결되었습니다!'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('계정 연결 실패: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                              return;
+                            }
+                            _showChangeNicknameDialog(
+                                context, user?.nickname ?? '', colorScheme);
+                          },
                         ),
                         _buildDivider(colorScheme),
                         _buildSettingsTile(
@@ -112,17 +149,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           icon: Icons.email,
                           title: AppLocalizations.of(context)?.get('email') ??
                               'Email',
-                          subtitle: (user?.email?.startsWith('kakao_') ?? false)
+                          subtitle: user?.isAnonymous ?? false
                               ? (AppLocalizations.of(context)
-                                      ?.get('kakaoLogin') ??
-                                  'Kakao Login')
-                              : ((user?.email ?? '').startsWith('apple_') ||
-                                      (user?.email ?? '')
-                                          .contains('privaterelay.appleid.com'))
+                                      ?.get('guestLogin') ??
+                                  'Guest Login')
+                              : (user?.email?.startsWith('kakao_') ?? false)
                                   ? (AppLocalizations.of(context)
-                                          ?.get('appleLogin') ??
-                                      'Apple Login')
-                                  : user?.email ?? '',
+                                          ?.get('kakaoLogin') ??
+                                      'Kakao Login')
+                                  : ((user?.email ?? '').startsWith('apple_') ||
+                                          (user?.email ?? '')
+                                              .contains('privaterelay.appleid.com'))
+                                      ? (AppLocalizations.of(context)
+                                              ?.get('appleLogin') ??
+                                          'Apple Login')
+                                      : user?.email ?? '',
                           onTap: null,
                         ),
                         if (user?.referralCode != null) ...[
@@ -163,19 +204,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _buildOptionArea(
                       context,
                       children: [
-                        _buildBiometricTile(
-                            context, authController, colorScheme),
-                        _buildDivider(colorScheme),
-                        _buildSettingsTile(
-                          context,
-                          colorScheme,
-                          icon: Icons.lock,
-                          title: AppLocalizations.of(context)
-                                  ?.get('changePassword') ??
-                              'Change Password',
-                          onTap: () =>
-                              _showChangePasswordDialog(context, colorScheme),
-                        ),
+                        if (user?.isAnonymous ?? false)
+                          _buildSettingsTile(
+                            context,
+                            colorScheme,
+                            icon: Icons.lock_outline,
+                            title: AppLocalizations.of(context)
+                                    ?.get('availableAfterSocialLogin') ??
+                                'Available after social login',
+                            onTap: null,
+                          )
+                        else ...[
+                          _buildBiometricTile(
+                              context, authController, colorScheme),
+                          if (user?.provider != 'kakao' &&
+                              user?.provider != 'google' &&
+                              user?.provider != 'apple' &&
+                              !(authController.currentUser?.providerData.any(
+                                      (p) => p.providerId != 'password') ??
+                                  false)) ...[
+                            _buildDivider(colorScheme),
+                            _buildSettingsTile(
+                              context,
+                              colorScheme,
+                              icon: Icons.lock,
+                              title: AppLocalizations.of(context)
+                                      ?.get('changePassword') ??
+                                  'Change Password',
+                              onTap: () => _showChangePasswordDialog(
+                                  context, colorScheme),
+                            ),
+                          ],
+                        ],
                       ],
                     ),
 

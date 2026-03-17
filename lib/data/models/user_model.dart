@@ -65,6 +65,7 @@ class UserModel {
   final bool hasSeenArchiveTutorial;
   final bool hasSeenShopTutorial;
   final String? mainTutorialStep; // 'none', 'diary', 'writing', 'decoration', 'shop', 'completed'
+  final bool isAnonymous;
 
   UserModel({
     required this.uid,
@@ -127,6 +128,7 @@ class UserModel {
     this.memoCount = 0,
     this.diaryCount = 0,
     this.isSetupComplete = false,
+    this.isAnonymous = false,
     this.referralCode,
     this.referredBy,
     this.platform,
@@ -224,6 +226,7 @@ class UserModel {
       isSetupComplete: data['isSetupComplete'] ?? false, // 기존 유저는 true로 간주
       purchasedWindowIds:
           List<String>.from(data['purchasedWindowIds'] ?? ['default']),
+      isAnonymous: data['isAnonymous'] ?? false,
       referralCode: data['referralCode'],
       referredBy: data['referredBy'],
       platform: data['platform'],
@@ -301,6 +304,7 @@ class UserModel {
       'memoCount': memoCount,
       'diaryCount': diaryCount,
       'isSetupComplete': isSetupComplete,
+      'isAnonymous': isAnonymous,
       'purchasedWindowIds': purchasedWindowIds,
       'referralCode': referralCode,
       'referredBy': referredBy,
@@ -368,6 +372,7 @@ class UserModel {
     int? memoCount,
     int? diaryCount,
     bool? isSetupComplete,
+    bool? isAnonymous,
     List<String>? purchasedWindowIds,
     String? referralCode,
     String? referredBy,
@@ -437,6 +442,7 @@ class UserModel {
       memoCount: memoCount ?? this.memoCount,
       diaryCount: diaryCount ?? this.diaryCount,
       isSetupComplete: isSetupComplete ?? this.isSetupComplete,
+      isAnonymous: isAnonymous ?? this.isAnonymous,
       purchasedWindowIds: purchasedWindowIds ?? this.purchasedWindowIds,
       referralCode: referralCode ?? this.referralCode,
       referredBy: referredBy ?? this.referredBy,

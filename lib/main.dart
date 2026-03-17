@@ -119,6 +119,8 @@ void main() async {
             kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
         appleProvider:
             kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
+        webProvider: 
+            ReCaptchaV3Provider('6Lca-pQqAAAAAMN3-YI-N-L9-Z-J-Y-Q-V-B-X-X-X'), // 실제 키가 필요하지만 디버그 모드에서는 보통 동작함
       );
       debugPrint('12. Firebase App Check 초기화 성공 (디버그 모드)');
     } catch (e) {

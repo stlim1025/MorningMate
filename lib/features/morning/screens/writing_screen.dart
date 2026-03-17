@@ -833,6 +833,45 @@ class _WritingScreenState extends State<WritingScreen> {
       } else {
         unawaited(characterController.wakeUpCharacter(userId));
         await _showCompletionDialog(context, colorScheme);
+        
+        if (context.mounted) {
+          // 임시 로그인 유저이면서 첫 일기 작성인 경우 소셜 로그인 유도
+          final currentAuth = context.read<AuthController>();
+          if (currentAuth.userModel != null && 
+              currentAuth.userModel!.isAnonymous &&
+              currentAuth.userModel!.diaryCount <= 1) {
+            
+            final provider = await AppDialog.show<String>(
+              context: context,
+              key: AppDialogKey.guestMigration,
+              barrierDismissible: false,
+            );
+
+            if (provider != null && context.mounted) {
+              try {
+                await currentAuth.linkWithSocialProvider(provider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('성공적으로 계정이 연결되었습니다!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('계정 연결 실패: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            }
+          }
+        }
+
         if (context.mounted) {
           final adShown =
               await _tryShowBonusAdOffer(context, characterController, userId);
@@ -893,10 +932,13 @@ class _WritingScreenState extends State<WritingScreen> {
       BuildContext context, AppColorScheme colorScheme) async {
     final characterController = context.read<CharacterController>();
     final level = characterController.currentUser?.characterLevel ?? 1;
+    final morningController = context.read<MorningController>();
 
     return AppDialog.show(
       context: context,
       key: AppDialogKey.diaryCompletion,
+      title: AppLocalizations.of(context)?.get('diaryCompletionTitle') ??
+          'Character Woke Up!',
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -905,15 +947,50 @@ class _WritingScreenState extends State<WritingScreen> {
             equippedItems:
                 characterController.currentUser?.equippedCharacterItems ?? {},
           ),
+          const SizedBox(height: 16),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Image.asset(
+                'assets/images/TextBox_Background.png',
+                width: 180,
+                height: 44,
+                fit: BoxFit.fill,
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/branch.png',
+                    width: 22,
+                    height: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    AppLocalizations.of(context)?.getFormat('branchEarned', {
+                          'amount':
+                              morningController.lastEarnedPoints.toString()
+                        }) ??
+                        '+${morningController.lastEarnedPoints} Branch Earned',
+                    style: const TextStyle(
+                      fontFamily: 'BMJUA',
+                      color: Color(0xFF5D4037),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
-          Consumer<CharacterController>(
-            builder: (context, controller, child) {
-              return Text(
-                '+${context.read<MorningController>().lastEarnedPoints} ${AppLocalizations.of(context)?.get('branchEarned') ?? 'Branch Earned'}',
-                style: TextStyle(
-                    fontFamily: 'BMJUA', color: colorScheme.twig, fontSize: 16),
-              );
-            },
+          Text(
+            AppLocalizations.of(context)?.get('diaryCompletionDesc') ??
+                'Your character has started the day!',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

@@ -7,6 +7,12 @@ import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart' as kakao;
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthService {
+  AuthService() {
+    // Set the language code for FirebaseAuth to Korean to avoid locale-related warnings.
+    // This is done once when the AuthService is instantiated.
+    FirebaseAuth.instance.setLanguageCode('ko');
+  }
+
   FirebaseAuth get _auth {
     try {
       return FirebaseAuth.instance;
@@ -43,8 +49,8 @@ class AuthService {
         email: email,
         password: password,
       );
-    } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
+    } on FirebaseAuthException catch (_) {
+      rethrow;
     }
   }
 
@@ -55,8 +61,8 @@ class AuthService {
         email: email,
         password: password,
       );
-    } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
+    } on FirebaseAuthException catch (_) {
+      rethrow;
     }
   }
 
@@ -84,7 +90,7 @@ class AuthService {
       // Firebase에 로그인
       return await _auth.signInWithCredential(credential);
     } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
+      throw handleAuthException(e);
     } catch (e) {
       throw '구글 로그인 중 오류가 발생했습니다: $e';
     }
@@ -161,7 +167,7 @@ class AuthService {
       return userCredential;
     } on FirebaseAuthException catch (e) {
       print('Firebase 인증 오류: ${e.code} - ${e.message}');
-      throw _handleAuthException(e);
+      throw handleAuthException(e);
     } on kakao.KakaoException catch (e) {
       print('카카오 로그인 오류: ${e.toString()}');
       throw '카카오 로그인 중 오류가 발생했습니다: ${e.message}';
@@ -191,7 +197,7 @@ class AuthService {
       // Firebase에 로그인
       return await _auth.signInWithCredential(oauthCredential);
     } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
+      throw handleAuthException(e);
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) {
         throw '애플 로그인이 취소되었습니다.';
@@ -199,6 +205,77 @@ class AuthService {
       throw '애플 로그인 중 오류가 발생했습니다: ${e.message}';
     } catch (e) {
       throw '애플 로그인 중 오류가 발생했습니다: $e';
+    }
+  }
+
+  // 익명 로그인
+  Future<UserCredential> signInAnonymously() async {
+    try {
+      return await _auth.signInAnonymously();
+    } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException [${e.code}]: ${e.message}');
+      throw handleAuthException(e);
+    } catch (e) {
+      debugPrint('General Exception in signInAnonymously: $e');
+      rethrow;
+    }
+  }
+
+  // 구글 자격 증명 가져오기
+  Future<AuthCredential> getGoogleCredential() async {
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    if (googleUser == null) throw '구글 로그인이 취소되었습니다.';
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
+    return GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+  }
+
+  // 카카오 자격 증명 가져오기 (MorningMate에서는 이메일/비밀번호 방식을 사용하므로 EmailAuthCredential 반환)
+  Future<AuthCredential> getKakaoCredential() async {
+    // 카카오톡 설치 여부 확인
+    bool isKakaoTalkInstalled = await kakao.isKakaoTalkInstalled();
+    if (isKakaoTalkInstalled) {
+      await kakao.UserApi.instance.loginWithKakaoTalk();
+    } else {
+      await kakao.UserApi.instance.loginWithKakaoAccount();
+    }
+    final kakao.User user = await kakao.UserApi.instance.me();
+    final String email =
+        user.kakaoAccount?.email ?? 'kakao_${user.id}@morningmate.app';
+    final String password = 'kakao_${user.id}_morningmate';
+    return EmailAuthProvider.credential(email: email, password: password);
+  }
+
+  // 애플 자격 증명 가져오기
+  Future<AuthCredential> getAppleCredential() async {
+    final appleCredential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+    );
+    return OAuthProvider("apple.com").credential(
+      idToken: appleCredential.identityToken,
+      accessToken: appleCredential.authorizationCode,
+    );
+  }
+
+  // 자격 증명으로 계정 연결 (익명 -> 정식)
+  Future<UserCredential> linkWithCredential(AuthCredential credential) async {
+    final user = _auth.currentUser;
+    if (user == null) throw '연결할 사용자가 없습니다.';
+    try {
+      return await user.linkWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      // 이미 해당 소셜 계정으로 가입된 유저가 있는 경우 link가 실패할 수 있음
+      if (e.code == 'credential-already-in-use') {
+        throw '이미 다른 계정에 연결된 소셜 계정입니다.';
+      }
+      throw handleAuthException(e);
     }
   }
 
@@ -283,7 +360,7 @@ class AuthService {
 
       await _auth.currentUser?.reauthenticateWithCredential(credential);
     } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
+      throw handleAuthException(e);
     } catch (e) {
       throw '구글 인증 중 오류가 발생했습니다: $e';
     }
@@ -306,7 +383,7 @@ class AuthService {
 
       await _auth.currentUser?.reauthenticateWithCredential(oauthCredential);
     } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
+      throw handleAuthException(e);
     } catch (e) {
       throw '애플 인증 중 오류가 발생했습니다: $e';
     }
@@ -317,7 +394,7 @@ class AuthService {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
+      throw handleAuthException(e);
     }
   }
 
@@ -358,7 +435,7 @@ class AuthService {
   }
 
   // Firebase Auth 예외 처리
-  String _handleAuthException(FirebaseAuthException e) {
+  String handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':
         return '비밀번호가 너무 약합니다. 6자 이상의 비밀번호를 사용해주세요.';
@@ -375,10 +452,15 @@ class AuthService {
         return '관리자에 의해 비활성화된 계정입니다.';
       case 'too-many-requests':
         return '여러 번 로그인 시도에 실패하여 접근이 차단되었습니다. 잠시 후 다시 시도해주세요.';
+      case 'credential-already-in-use':
+      case 'account-exists-with-different-credential':
+        return '이미 다른 계정에서 사용 중인 소셜 계정입니다. 다른 계정을 사용하거나 로그아웃 후 해당 계정으로 로그인해주세요.';
+      case 'provider-already-linked':
+        return '이미 현재 계정에 연결된 소셜 계정입니다.';
       case 'network-request-failed':
         return '네트워크 연결이 원활하지 않습니다. 인터넷 연결을 확인해주세요.';
       default:
-        return '로그인 중 오류가 발생했습니다. 다시 시도해주세요.';
+        return '로그인 중 오류가 발생했습니다. 다시 시도해주세요. (${e.code})';
     }
   }
 }

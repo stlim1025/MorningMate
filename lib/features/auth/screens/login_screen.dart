@@ -147,29 +147,54 @@ class _LoginScreenState extends State<LoginScreen> {
 
         const SizedBox(height: 24),
 
-        // ID로 로그인 버튼
-        TextButton(
-          onPressed: () {
-            setState(() {
-              _showEmailLogin = true;
-            });
-          },
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            backgroundColor: Colors.white.withOpacity(0.2),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        // ID로 로그인 & 임시 로그인 버튼들
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _showEmailLogin = true;
+                });
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                backgroundColor: Colors.white.withOpacity(0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                l10n?.get('loginWithID') ?? 'Login with ID',
+                style: const TextStyle(
+                  fontFamily: 'BMJUA',
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-          ),
-          child: Text(
-            l10n?.get('loginWithID') ?? 'Login with ID',
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+            const SizedBox(width: 12),
+            TextButton(
+              onPressed: _isLoading ? null : _handleGuestLogin,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                backgroundColor: Colors.white.withOpacity(0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                l10n?.get('guestLogin') ?? 'Guest Login',
+                style: const TextStyle(
+                  fontFamily: 'BMJUA',
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
 
         if (kIsWeb) ...[
@@ -579,6 +604,38 @@ class _LoginScreenState extends State<LoginScreen> {
           await _showSuspensionDialog(context, user);
           return;
         }
+        context.go('/morning');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleGuestLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authController = context.read<AuthController>();
+    final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
+
+    try {
+      await authController.signInAnonymously();
+      if (mounted) {
         context.go('/morning');
       }
     } catch (e) {

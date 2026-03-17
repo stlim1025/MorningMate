@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/notification_service.dart';
@@ -222,6 +223,8 @@ class AuthController extends ChangeNotifier {
         // FCM 토큰 업데이트
         _updateFcmToken(_currentUser!.uid);
       }
+    } on FirebaseAuthException catch (e) {
+      throw _authService.handleAuthException(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -390,6 +393,177 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  // 익명 로그인 (임시 로그인)
+  Future<void> signInAnonymously() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? guestEmail = prefs.getString('guest_email');
+    String? guestPassword = prefs.getString('guest_password');
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      if (guestEmail != null && guestPassword != null) {
+        // 1. 기존에 발급된 임시 계정이 있는 경우 -> 해당 계정으로 로그인
+        debugPrint('GuestLogin: Found existing guest credentials. Logging in...');
+        try {
+          await _authService.signInWithEmail(guestEmail, guestPassword);
+          // _authController의 _handleAuthStateChange에서 userModel을 자동으로 로드함
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+            // Firebase에서 계정이 삭제된 경우 (예: 회원탈퇴) -> 로컬 정보 초기화 후 새 계정 생성
+            debugPrint('GuestLogin: Existing guest deleted from Firebase. Resetting local info...');
+            await prefs.remove('guest_email');
+            await prefs.remove('guest_password');
+            await prefs.remove('guest_uid');
+            await prefs.remove('hasUsedGuest');
+            
+            // 다시 null로 설정하여 아래의 '새 계정 생성' 로직을 타게 함
+            guestEmail = null;
+          } else {
+            rethrow;
+          }
+        }
+      }
+
+      if (guestEmail == null) {
+        // 2. 처음 임시 로그인을 시도하는 경우 (또는 기존 정보가 초기화된 경우) -> 새 계정 생성
+        debugPrint('GuestLogin: No existing guest. Creating new temporary account...');
+        
+        // 고유 아이디 생성을 위해 시간과 무작위 값 조합
+        final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+        final String randomId = timestamp.substring(timestamp.length - 6);
+        final String newGuestEmail = 'guest_$timestamp@morni.mate';
+        final String newGuestPassword = 'pw_$randomId!morni';
+
+        final userCredential = await _authService.signUpWithEmail(newGuestEmail, newGuestPassword);
+        final user = userCredential.user;
+
+        if (user != null) {
+          final userModel = UserModel(
+            uid: user.uid,
+            email: newGuestEmail,
+            nickname: 'Guest_$randomId',
+            createdAt: DateTime.now(),
+            lastLoginDate: DateTime.now(),
+            provider: 'guest',
+            isSetupComplete: true, // 임시 로그인은 설정 화면 스킵
+            isAnonymous: true,
+            platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+            countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
+          );
+
+          await _userService.createUser(userModel);
+
+          // 기기에 임시 계정 정보 저장 (재접속용)
+          await prefs.setBool('has_used_guest_account', true);
+          await prefs.setString('guest_email', newGuestEmail);
+          await prefs.setString('guest_password', newGuestPassword);
+          await prefs.setString('guest_uid', user.uid);
+
+          _userModel = userModel;
+          _updateFcmToken(user.uid);
+          debugPrint('GuestLogin: New temporary account created and saved.');
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('GuestLogin Error (FA): ${e.code}');
+      debugPrint('GuestLogin Error Message: ${_authService.handleAuthException(e)}');
+      rethrow;
+    } catch (e) {
+      debugPrint('GuestLogin Error: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // 소셜 계정 연결 (익명 데이터 이전)
+  Future<void> linkWithSocialProvider(String provider) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      AuthCredential credential;
+      switch (provider) {
+        case 'google':
+          credential = await _authService.getGoogleCredential();
+          break;
+        case 'kakao':
+          credential = await _authService.getKakaoCredential();
+          break;
+        case 'apple':
+          credential = await _authService.getAppleCredential();
+          break;
+        default:
+          throw '지원하지 않는 로그인 방식입니다.';
+      }
+
+      final userCredential = await _authService.linkWithCredential(credential);
+      final user = userCredential.user;
+
+      if (user != null) {
+        // 소셜 계정의 이메일 찾기
+        String? socialEmail;
+        if (provider == 'kakao' && credential is EmailAuthCredential) {
+          socialEmail = credential.email;
+        } else {
+          // 구글/애플의 경우 providerData에서 해당 제공자의 이메일을 찾음
+          final targetProviderId = provider == 'google' ? 'google.com' : 'apple.com';
+          for (var info in user.providerData) {
+            if (info.providerId == targetProviderId) {
+              socialEmail = info.email;
+              break;
+            }
+          }
+        }
+
+        final finalEmail = socialEmail ?? user.email;
+
+        // Firestore 데이터 업데이트 (익명 해제 및 제공자 설정)
+        final updates = {
+          'isAnonymous': false,
+          'provider': provider,
+          'isSetupComplete': false, // 소셜 연동 후 닉네임 설정 필요
+          if (finalEmail != null && finalEmail.isNotEmpty) 'email': finalEmail,
+        };
+
+        await _userService.updateUser(user.uid, updates);
+
+        // 기기에서 임시 계정 정보 제거 (연동 성공 시 더 이상 임시 계정이 아님)
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('guest_email');
+        await prefs.remove('guest_password');
+        await prefs.remove('guest_uid');
+        await prefs.remove('hasUsedGuest'); // 초기화
+
+        // Firestore 정보 업데이트 (임시 -> 정식 유저)
+        if (_userModel != null) {
+          _userModel = _userModel!.copyWith(
+            isAnonymous: false,
+            provider: provider,
+            isSetupComplete: false,
+            email: finalEmail,
+          );
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'credential-already-in-use') {
+        throw '이미 다른 계정에서 사용 중인 소셜 계정입니다. 해당 계정으로 로그인하려면 로그아웃 후 다시 시도해주세요.';
+      } else if (e.code == 'provider-already-linked') {
+        // 이미 연동된 경우라면 성공으로 간주하거나 적절한 메시지
+        return;
+      }
+      rethrow;
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // 로그아웃
   Future<void> signOut() async {
     _isSigningOut = true;
@@ -451,10 +625,14 @@ class AuthController extends ChangeNotifier {
     final email = _userModel?.email;
 
     if (user != null && email != null) {
-      // 0. 재인증 (최근 로그인 확인)
-      await _authService.reauthenticate(email, currentPassword);
-      // 1. 비밀번호 업데이트
-      await user.updatePassword(newPassword);
+      try {
+        // 0. 재인증 (최근 로그인 확인)
+        await _authService.reauthenticate(email, currentPassword);
+        // 1. 비밀번호 업데이트
+        await user.updatePassword(newPassword);
+      } on FirebaseAuthException catch (e) {
+        throw _authService.handleAuthException(e);
+      }
     }
   }
 
@@ -510,6 +688,8 @@ class AuthController extends ChangeNotifier {
         _currentUser = null;
         _userModel = null;
         notifyListeners();
+      } on FirebaseAuthException catch (e) {
+        throw _authService.handleAuthException(e);
       } finally {
         _isDeletingAccount = false;
       }
