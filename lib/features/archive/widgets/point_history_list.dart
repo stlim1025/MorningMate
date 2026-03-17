@@ -213,6 +213,8 @@ class PointHistoryList extends StatelessWidget {
     } else if (item.type == 'reward') {
       if (desc.contains('오늘의 한마디')) {
         return localizations.get('historyNestReward');
+      } else if (desc.contains('상점 튜토리얼')) {
+        return localizations.get('historyShopTutorialReward');
       }
     }
 
@@ -220,6 +222,7 @@ class PointHistoryList extends StatelessWidget {
     if (desc == '메모 작성') return localizations.get('historyStickyNote');
     if (desc == '광고 보상') return localizations.get('historyAdReward');
     if (desc == '오늘의 한마디 보상') return localizations.get('historyNestReward');
+    if (desc == '상점 튜토리얼 완료 보상') return localizations.get('historyShopTutorialReward');
 
     return desc;
   }

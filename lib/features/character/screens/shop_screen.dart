@@ -13,6 +13,8 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
 import '../controllers/character_controller.dart';
 import '../../../services/asset_service.dart';
+import '../../common/widgets/tutorial_overlay.dart';
+import '../../auth/controllers/auth_controller.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -25,6 +27,11 @@ class _ShopScreenState extends State<ShopScreen> {
   // 오늘의 상점 카운트다운 타이머
   Timer? _countdownTimer;
   Duration _timeUntilReset = Duration.zero;
+  int _refreshIndex = 0;
+  bool _showTutorial = false;
+  final GlobalKey _todayShopKey = GlobalKey();
+  final GlobalKey _refreshButtonKey = GlobalKey();
+  final GlobalKey _adButtonKey = GlobalKey();
 
   List<RoomAsset>? _todayShopItems;
 
@@ -43,6 +50,21 @@ class _ShopScreenState extends State<ShopScreen> {
     });
 
     _startCountdownTimer();
+
+    // 튜토리얼 체크
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authController = context.read<AuthController>();
+      if (authController.userModel != null &&
+          !authController.userModel!.hasSeenShopTutorial) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            setState(() {
+              _showTutorial = true;
+            });
+          }
+        });
+      }
+    });
   }
 
   Future<void> _loadTodayShopItems() async {
@@ -51,9 +73,12 @@ class _ShopScreenState extends State<ShopScreen> {
 
     final now = DateTime.now();
     final dateKey = '${user.uid}_${now.year}_${now.month}_${now.day}';
-    final savedKey = 'todayShopItems_$dateKey';
 
     final prefs = await SharedPreferences.getInstance();
+    final refreshKey = 'todayShopRefreshIndex_$dateKey';
+    _refreshIndex = prefs.getInt(refreshKey) ?? 0;
+
+    final savedKey = 'todayShopItems_${dateKey}_$_refreshIndex';
     final savedIds = prefs.getStringList(savedKey);
 
     if (savedIds != null && savedIds.isNotEmpty) {
@@ -64,6 +89,7 @@ class _ShopScreenState extends State<ShopScreen> {
         ...RoomAssets.props,
         ...CharacterAssets.items,
         ...RoomAssets.emoticons,
+        ...RoomAssets.windows,
       ];
       final Map<String, RoomAsset> assetMap = {
         for (var e in allAssets) e.id: e
@@ -81,7 +107,7 @@ class _ShopScreenState extends State<ShopScreen> {
     }
 
     // fallback: generate deterministically from unowned items
-    final generated = _generateTodayShopItemsFallback(user);
+    final generated = _generateTodayShopItemsFallback(user, _refreshIndex);
     await prefs.setStringList(savedKey, generated.map((e) => e.id).toList());
 
     if (mounted) {
@@ -95,6 +121,94 @@ class _ShopScreenState extends State<ShopScreen> {
   void dispose() {
     _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _onRefreshPress() async {
+    final user = context.read<CharacterController>().currentUser;
+    if (user == null) return;
+
+    final now = DateTime.now();
+    int refreshCount = user.shopRefreshCount;
+    final lastRefresh = user.lastShopRefreshDate;
+
+    // 날짜가 바뀌었으면 카운트 0으로 간주 (Firestore 업데이트는 _performRefresh에서 수행)
+    if (lastRefresh != null &&
+        (lastRefresh.year != now.year ||
+            lastRefresh.month != now.month ||
+            lastRefresh.day != now.day)) {
+      refreshCount = 0;
+    }
+
+    if (refreshCount == 0) {
+      // 첫 번째는 무료
+      final confirm = await AppDialog.show<bool>(
+        context: context,
+        key: AppDialogKey.refreshShopFree,
+      );
+      if (confirm == true) {
+        await _performRefresh();
+      }
+    } else if (refreshCount < 4) {
+      // 이후 3번은 광고 (총 4회 가능)
+      final confirm = await AppDialog.show<bool>(
+        context: context,
+        key: AppDialogKey.refreshShop,
+      );
+      if (confirm == true) {
+        if (mounted) {
+          context.read<CharacterController>().showRewardedAd(
+                context,
+                onReward: () => _performRefresh(),
+              );
+        }
+      }
+    } else {
+      // 하루 4회 초과 시 제한
+      if (mounted) {
+        await AppDialog.show(
+          context: context,
+          key: AppDialogKey.refreshShopLimit,
+        );
+      }
+    }
+  }
+
+  Future<void> _performRefresh() async {
+    final user = context.read<CharacterController>().currentUser;
+    if (user == null) return;
+
+    final now = DateTime.now();
+    final dateKey = '${user.uid}_${now.year}_${now.month}_${now.day}';
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      _refreshIndex++;
+    });
+
+    final refreshKey = 'todayShopRefreshIndex_$dateKey';
+    await prefs.setInt(refreshKey, _refreshIndex);
+
+    final savedKey = 'todayShopItems_${dateKey}_$_refreshIndex';
+    final generated = _generateTodayShopItemsFallback(user, _refreshIndex);
+    await prefs.setStringList(savedKey, generated.map((e) => e.id).toList());
+
+    if (mounted) {
+      // Firestore 카운트 증가
+      await context
+          .read<CharacterController>()
+          .incrementShopRefreshCount(user.uid);
+
+      if (!mounted) return;
+
+      setState(() {
+        _todayShopItems = generated;
+      });
+      MemoNotification.show(
+        context,
+        AppLocalizations.of(context)?.get('refreshShopSuccess') ??
+            '상점 상품이 새로고침 되었습니다! ✨',
+      );
+    }
   }
 
   void _startCountdownTimer() {
@@ -120,68 +234,57 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   /// 오늘의 상점 아이템 생성 (최초 실행 또는 리셋 시)
-  List<RoomAsset> _generateTodayShopItemsFallback(dynamic user) {
+  List<RoomAsset> _generateTodayShopItemsFallback(
+      dynamic user, int refreshIndex) {
     final now = DateTime.now();
     final daySeed = now.year * 10000 + now.month * 100 + now.day;
     final userSeed = user.uid.hashCode;
 
-    // 각 카테고리별 미보유 상품 목록
-    final unownedWallpapers = RoomAssets.wallpapers
-        .where((w) => w.price > 0 && !user.purchasedThemeIds.contains(w.id))
-        .toList();
-    final unownedBackgrounds = RoomAssets.backgrounds
-        .where(
-            (b) => b.price > 0 && !user.purchasedBackgroundIds.contains(b.id))
-        .toList();
-    final unownedFloors = RoomAssets.floors
-        .where((f) => f.price > 0 && !user.purchasedFloorIds.contains(f.id))
-        .toList();
-    final unownedProps = RoomAssets.props
-        .where((p) =>
-            p.price > 0 &&
-            p.id != 'sticky_note' &&
-            !user.purchasedPropIds.contains(p.id))
-        .toList();
-    final unownedCharacterItems = CharacterAssets.items
-        .where((i) =>
-            i.price > 0 && !user.purchasedCharacterItemIds.contains(i.id))
-        .toList();
-    final unownedEmoticons = RoomAssets.emoticons
-        .where((e) => e.price > 0 && !user.purchasedEmoticonIds.contains(e.id))
-        .toList();
-    final unownedWindows = RoomAssets.windows
-        .where((w) =>
-            w.id != 'default' &&
-            w.price > 0 &&
-            !user.purchasedWindowIds.contains(w.id))
-        .toList();
+    // 1. 상점에 노출 가능한 모든 아이템 목록 (유료 상품만)
+    final allShopAssets = [
+      ...RoomAssets.wallpapers,
+      ...RoomAssets.backgrounds,
+      ...RoomAssets.floors,
+      ...RoomAssets.props,
+      ...CharacterAssets.items,
+      ...RoomAssets.emoticons,
+      ...RoomAssets.windows,
+    ].where((a) => a.price > 0 && a.id != 'sticky_note' && a.id != 'none').toList();
 
-    // 기본 상품군들 합치기
-    final List<RoomAsset> allUnowned = [
-      ...unownedWallpapers,
-      ...unownedBackgrounds,
-      ...unownedFloors,
-      ...unownedProps,
-      ...unownedCharacterItems,
-      ...unownedEmoticons,
-      ...unownedWindows,
-    ];
+    if (allShopAssets.isEmpty) return [];
 
-    if (allUnowned.isEmpty) return [];
+    // 2. 미보유와 보유 아이템 구분
+    final unownedItems = allShopAssets.where((item) => !_isItemPurchased(item, user)).toList();
+    final ownedItems = allShopAssets.where((item) => _isItemPurchased(item, user)).toList();
 
-    // 시드 기반으로 전체 미보유 아이템 섞기
-    final seedForSorting = daySeed ^ userSeed;
-    final List<RoomAsset> sortedAll = List<RoomAsset>.from(allUnowned)
-      ..sort((a, b) {
+    // 3. 시드 기반 셔플을 위한 헬퍼
+    final seedForSorting = daySeed ^ userSeed ^ refreshIndex;
+    
+    void shuffleList(List<RoomAsset> list) {
+      list.sort((a, b) {
         final rA = Random(a.id.hashCode ^ seedForSorting).nextInt(1000000);
         final rB = Random(b.id.hashCode ^ seedForSorting).nextInt(1000000);
         return rA.compareTo(rB);
       });
+    }
 
-    // 무조건 상위 6개 반환 (전체 아이템이 6개 미만이면 전체 반환)
-    return sortedAll.take(6).toList();
+    shuffleList(unownedItems);
+    shuffleList(ownedItems);
+
+    // 4. 결과 리스트 생성 (미보유 우선, 부족하면 보유 아이템으로 채움)
+    final List<RoomAsset> result = [];
+    
+    // 미보유 상품 먼저 담기
+    result.addAll(unownedItems.take(6));
+    
+    // 6개가 안 되면 보유 상품으로 채우기
+    if (result.length < 6) {
+      final neededCount = 6 - result.length;
+      result.addAll(ownedItems.take(neededCount));
+    }
+
+    return result;
   }
-
 
   /// 세일 중인 상품 목록
   List<RoomAsset> _getSaleItems(CharacterController controller) {
@@ -308,193 +411,284 @@ class _ShopScreenState extends State<ShopScreen> {
     final todayItems = _todayShopItems ?? [];
     final recentItems = _getRecentItems();
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFFDF7E2),
-        image: DecorationImage(
-          image: ResizeImage(AssetImage('assets/images/Store_Background.png'),
-              width: 1080),
-          fit: BoxFit.cover,
+    return PopScope(
+      canPop: !_showTutorial,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+      },
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFFDF7E2),
+          image: DecorationImage(
+            image: ResizeImage(AssetImage('assets/images/Store_Background.png'),
+                width: 1080),
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      child: DefaultTextStyle(
-        style: const TextStyle(
-          fontFamily: 'BMJUA',
-          color: Colors.black87,
-        ),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            title: Text(
-              AppLocalizations.of(context)?.get('shop') ?? 'Shop',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontFamily: 'BMJUA',
-                color: Color(0xFF4E342E),
-              ),
-            ),
-            centerTitle: true,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: GestureDetector(
-              onTap: () {
-                if (Navigator.of(context).canPop()) {
-                  context.pop();
-                }
-              },
-              child: Container(
-                alignment: Alignment.center,
-                padding: const EdgeInsets.only(left: 16),
-                color: Colors.transparent,
-                child: Image.asset(
-                  'assets/icons/X_Button.png',
-                  width: 55,
-                  height: 55,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            leadingWidth: 72,
-            actions: [
-              Container(
-                margin: const EdgeInsets.only(right: 16, top: 6, bottom: 6),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/Item_Background.png'),
-                    fit: BoxFit.fill,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Image.asset(
-                      'assets/images/branch.png',
-                      width: 20,
-                      height: 20,
-                      cacheWidth: 80,
+        child: DefaultTextStyle(
+          style: const TextStyle(
+            fontFamily: 'BMJUA',
+            color: Colors.black87,
+          ),
+          child: Stack(
+            children: [
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                appBar: AppBar(
+                  title: Text(
+                    AppLocalizations.of(context)?.get('shop') ?? 'Shop',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'BMJUA',
+                      color: Color(0xFF4E342E),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${user.points}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'BMJUA',
-                        color: Colors.black87,
+                  ),
+                  centerTitle: true,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  leading: GestureDetector(
+                    onTap: () {
+                      if (_showTutorial) return;
+                      if (Navigator.of(context).canPop()) {
+                        context.pop();
+                      }
+                    },
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.only(left: 16),
+                      color: Colors.transparent,
+                      child: Image.asset(
+                        'assets/icons/X_Button.png',
+                        width: 55,
+                        height: 55,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      AppLocalizations.of(context)?.get('branch') ?? 'Branch',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'BMJUA',
+                  ),
+                  leadingWidth: 72,
+                  actions: [
+                    Container(
+                      margin: const EdgeInsets.only(right: 16, top: 6, bottom: 6),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/images/Item_Background.png'),
+                          fit: BoxFit.fill,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Image.asset(
+                            'assets/images/branch.png',
+                            width: 20,
+                            height: 20,
+                            cacheWidth: 80,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${user.points}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'BMJUA',
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            AppLocalizations.of(context)?.get('branch') ??
+                                'Branch',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'BMJUA',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          body: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewPadding.bottom + 30,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 광고 보기 버튼
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                  child: _buildAdButton(
-                      user, colorScheme, context.read<CharacterController>()),
-                ),
+                body: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewPadding.bottom + 30,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 광고 보기 버튼
+                      Padding(
+                        key: _adButtonKey,
+                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                        child: _buildAdButton(user, colorScheme,
+                            context.read<CharacterController>()),
+                      ),
 
-                // 오늘의 상점 섹션
-                if (todayItems.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  _buildSectionHeader(
-                    titleWidget: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset(
-                          AppLocalizations.of(context)?.locale.languageCode ==
-                                  'ko'
-                              ? 'assets/images/TodayShop_Kor.png'
-                              : 'assets/images/TodayShop_Eng.png',
-                          height: 48,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.access_time,
-                                size: 14, color: Color(0xFF8D6E63)),
-                            const SizedBox(width: 4),
-                            Text(
-                              _formatCountdown(_timeUntilReset),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontFamily: 'BMJUA',
-                                color: Color(0xFF8D6E63),
-                              ),
+                      // 오늘의 상점 섹션
+                      if (todayItems.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Container(
+                            key: _todayShopKey,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Column(
+                              children: [
+                                _buildSectionHeader(
+                                  trailing: _buildRefreshButton(user),
+                                  titleWidget: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        AppLocalizations.of(context)
+                                                    ?.locale
+                                                    .languageCode ==
+                                                'ko'
+                                            ? 'assets/images/TodayShop_Kor.png'
+                                            : 'assets/images/TodayShop_Eng.png',
+                                        height: 48,
+                                        fit: BoxFit.contain,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(Icons.access_time,
+                                              size: 14, color: Color(0xFF8D6E63)),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _formatCountdown(_timeUntilReset),
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontFamily: 'BMJUA',
+                                              color: Color(0xFF8D6E63),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildItemGrid(
+                                  items: todayItems,
+                                  user: user,
+                                  characterController: characterController,
+                                  colorScheme: colorScheme,
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildItemGrid(
-                    items: todayItems,
-                    user: user,
-                    characterController: characterController,
-                    colorScheme: colorScheme,
-                  ),
-                ],
 
-                // 세일 중인 상품 섹션
-                if (saleItems.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    title:
-                        '🔥 ${AppLocalizations.of(context)?.get('sale') ?? 'SALE'}',
-                  ),
-                  const SizedBox(height: 8),
-                  _buildItemGrid(
-                    items: saleItems,
-                    user: user,
-                    characterController: characterController,
-                    colorScheme: colorScheme,
-                  ),
-                ],
+                      // 세일 중인 상품 섹션
+                      if (saleItems.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        _buildSectionHeader(
+                          title:
+                              '🔥 ${AppLocalizations.of(context)?.get('sale') ?? 'SALE'}',
+                        ),
+                        const SizedBox(height: 8),
+                        _buildItemGrid(
+                          items: saleItems,
+                          user: user,
+                          characterController: characterController,
+                          colorScheme: colorScheme,
+                        ),
+                      ],
 
-                // 최근 출시 상품 섹션
-                if (recentItems.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(
-                    titleWidget: Image.asset(
-                      AppLocalizations.of(context)?.locale.languageCode == 'ko'
-                          ? 'assets/images/NewItem_Kor.png'
-                          : 'assets/images/NewItem_Eng.png',
-                      height: 52,
-                      fit: BoxFit.contain,
-                    ),
+                      // 최근 출시 상품 섹션
+                      if (recentItems.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        _buildSectionHeader(
+                          titleWidget: Image.asset(
+                            AppLocalizations.of(context)?.locale.languageCode ==
+                                    'ko'
+                                ? 'assets/images/NewItem_Kor.png'
+                                : 'assets/images/NewItem_Eng.png',
+                            height: 52,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildItemGrid(
+                          items: recentItems,
+                          user: user,
+                          characterController: characterController,
+                          colorScheme: colorScheme,
+                        ),
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  _buildItemGrid(
-                    items: recentItems,
-                    user: user,
-                    characterController: characterController,
-                    colorScheme: colorScheme,
+                ),
+              ),
+              if (_showTutorial)
+                Positioned.fill(
+                  child: InteractiveTutorialOverlay(
+                    steps: [
+                      TutorialStep(
+                        targetKey: _todayShopKey,
+                        title: AppLocalizations.of(context)
+                                ?.get('shop_tutorial_1_title') ??
+                            "오늘의 상점 🎁",
+                        text: AppLocalizations.of(context)
+                                ?.get('shop_tutorial_1_text') ??
+                            "매일 밤 12시, 새로운 보물들이 찾아와! 🎁✨\n랜덤 아이템들로 나만의 멋진 방과 캐릭터를 꾸며봐!",
+                        isFixedBottom: true,
+                      ),
+                      TutorialStep(
+                        targetKey: _refreshButtonKey,
+                        title: AppLocalizations.of(context)
+                                ?.get('shop_tutorial_refresh_title') ??
+                            "상점 새로고침 🔄",
+                        text: AppLocalizations.of(context)
+                                ?.get('shop_tutorial_refresh_text') ??
+                            "상점의 아이템이 마음에 들지 않아? 새로운 아이템들로 다시 불러올 수 있어! (매일 무료 1회 + 광고 3회)",
+                      ),
+                      TutorialStep(
+                        targetKey: _adButtonKey,
+                        title: AppLocalizations.of(context)
+                                ?.get('shop_tutorial_2_title') ??
+                            "가지가 부족할 땐? 📽️",
+                        text: AppLocalizations.of(context)
+                                ?.get('shop_tutorial_2_text') ??
+                            "찜해둔 가구가 눈앞에 있어? 광고 보고 가지 보너스를 받아서 꿈꾸던 나만의 방을 더 빨리 완성해 봐!",
+                      ),
+                    ],
+                    onComplete: () async {
+                      context.read<AuthController>().completeShopTutorial();
+                      setState(() {
+                        _showTutorial = false;
+                      });
+
+                      // 보상 지급
+                      final controller = context.read<CharacterController>();
+                      await controller.addRewardPoints(
+                        user.uid,
+                        50,
+                        '상점 튜토리얼 완료 보상',
+                        'reward',
+                      );
+
+                      if (mounted) {
+                        AppDialog.show(
+                          context: context,
+                          key: AppDialogKey.tutorialCompletionReward,
+                        );
+                      }
+                    },
+                    onSkip: () {
+                      context.read<AuthController>().skipAllTutorials();
+                      setState(() {
+                        _showTutorial = false;
+                      });
+                    },
                   ),
-                ],
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),
@@ -502,9 +696,63 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   /// 섹션 헤더 위젯
-  Widget _buildSectionHeader(
-      {String? title, Widget? titleWidget, Widget? trailing}) {
+  Widget _buildRefreshButton(dynamic user) {
+    final now = DateTime.now();
+    int refreshCount = user.shopRefreshCount;
+    final lastRefresh = user.lastShopRefreshDate;
+
+    // 날짜가 바뀌었으면 카운트 0으로 간주
+    if (lastRefresh != null &&
+        (lastRefresh.year != now.year ||
+            lastRefresh.month != now.month ||
+            lastRefresh.day != now.day)) {
+      refreshCount = 0;
+    }
+
+    String label = '';
+    final l10n = AppLocalizations.of(context);
+    if (refreshCount == 0) {
+      label = l10n?.get('free') ?? '무료';
+    } else if (refreshCount < 4) {
+      final adLabel = l10n?.get('ad') ?? '광고';
+      label = '$adLabel ${refreshCount - 1}/3';
+    } else {
+      label = l10n?.get('completed') ?? '완료';
+    }
+
     return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: GestureDetector(
+        key: _refreshButtonKey,
+        onTap: _onRefreshPress,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/icons/Refresh_Button.png',
+              width: 40,
+              height: 40,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                fontFamily: 'BMJUA',
+                color: Color(0xFF8D6E63),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+      {Key? key, String? title, Widget? titleWidget, Widget? trailing}) {
+    return Padding(
+      key: key,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SizedBox(
         width: double.infinity,

@@ -16,6 +16,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../data/models/question_model.dart';
 import '../../../data/models/diary_model.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
+import '../../common/widgets/tutorial_overlay.dart';
 
 class WritingScreen extends StatefulWidget {
   final QuestionModel? initialQuestion;
@@ -44,6 +45,12 @@ class _WritingScreenState extends State<WritingScreen> {
   final PageController _pageController = PageController();
   int _currentMoodPage = 0;
 
+  final GlobalKey _blurKey = GlobalKey();
+  final GlobalKey _draftKey = GlobalKey();
+  final GlobalKey _moodKey = GlobalKey();
+  final GlobalKey _saveKey = GlobalKey();
+  bool _showWritingTutorial = false;
+
   @override
   void initState() {
     super.initState();
@@ -61,7 +68,6 @@ class _WritingScreenState extends State<WritingScreen> {
       _selectedMoods.clear();
       _selectedMoods.addAll(widget.existingDiary!.moods);
 
-      // 글자수 업데이트 Trigger
       morningController.updateCharCount(_textController.text);
     } else {
       final characterController = context.read<CharacterController>();
@@ -73,12 +79,29 @@ class _WritingScreenState extends State<WritingScreen> {
         _selectedMoods.add('normal');
       }
 
-      // 드래프트 로드 (편집 모드가 아닐 때만)
       _loadDraft();
     }
 
     _textController.addListener(() {
       morningController.updateCharCount(_textController.text);
+    });
+
+    // 튜토리얼 체크
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final authController = context.read<AuthController>();
+        if (authController.userModel != null &&
+            !authController.userModel!.hasSeenWritingTutorial) {
+          // 레이아웃이 완전히 자리를 잡을 수 있도록 지연 시간을 둡니다.
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              setState(() {
+                _showWritingTutorial = true;
+              });
+            }
+          });
+        }
+      }
     });
   }
 
@@ -89,7 +112,6 @@ class _WritingScreenState extends State<WritingScreen> {
 
     if (userId == null) return;
 
-    // 이미 로드된 오늘의 일기가 있고, 완료되지 않은 상태라면(임시저장)
     if (morningController.todayDiary != null &&
         !morningController.todayDiary!.isCompleted) {
       try {
@@ -107,7 +129,6 @@ class _WritingScreenState extends State<WritingScreen> {
               _selectedMoods.addAll(morningController.todayDiary!.moods);
             }
           });
-          // 글자수 업데이트 Trigger
           morningController.updateCharCount(content);
         }
       } catch (e) {
@@ -143,18 +164,15 @@ class _WritingScreenState extends State<WritingScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
-    // Use LayoutBuilder to get the full height constraint initially or use MediaQuery
 
     return Stack(
       children: [
-        // 1. Static Background Image
         Positioned.fill(
           child: Image.asset(
             'assets/images/Diary_Background.png',
             fit: BoxFit.cover,
           ),
         ),
-        // 2. Scaffold with transparent background and resizing enabled
         Scaffold(
           backgroundColor: Colors.transparent,
           resizeToAvoidBottomInset: true,
@@ -166,12 +184,9 @@ class _WritingScreenState extends State<WritingScreen> {
                   ? maxWidth
                   : constraints.maxWidth;
 
-              // Estimate middle row height based on contentWidth
-              // (contentWidth - 48 (padding) - 12 (gap)) * (4/7)
               final availableRowWidth = contentWidth - 60;
               final middleRowHeight = (availableRowWidth * 4 / 7);
 
-              // Header ~ 100, Min Writing Area ~ 260
               final minContentHeight = 100 + middleRowHeight + 260;
 
               final scrollHeight = minContentHeight > screenHeight
@@ -196,23 +211,19 @@ class _WritingScreenState extends State<WritingScreen> {
                       builder: (context, controller, child) {
                         return Column(
                           children: [
-                            // Fixed Header
                             SizedBox(
                               width: contentWidth,
                               child: _buildHeader(
                                   context, colorScheme, controller),
                             ),
-                            // Scrollable Content
                             Expanded(
                               child: SingleChildScrollView(
                                 child: Center(
                                   child: SizedBox(
                                     width: contentWidth,
-                                    height:
-                                        scrollHeight - 140, // Header approx 140
+                                    height: scrollHeight - 140,
                                     child: Column(
                                       children: [
-                                        // Reduced spacing
                                         Padding(
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 24),
@@ -223,16 +234,14 @@ class _WritingScreenState extends State<WritingScreen> {
                                               Expanded(
                                                 flex: 10,
                                                 child: _buildQuestionCard(
-                                                    colorScheme),
+                                                    colorScheme, controller),
                                               ),
                                               const SizedBox(width: 12),
                                               Expanded(
                                                 flex: 9,
                                                 child: Padding(
                                                   padding: const EdgeInsets
-                                                      .only(
-                                                      top:
-                                                          12), // Slightly increased top padding
+                                                      .only(top: 12),
                                                   child: _buildMoodSelection(
                                                       colorScheme),
                                                 ),
@@ -260,6 +269,70 @@ class _WritingScreenState extends State<WritingScreen> {
             },
           ),
         ),
+        if (_showWritingTutorial)
+          Positioned.fill(
+            child: InteractiveTutorialOverlay(
+              steps: [
+                TutorialStep(
+                  targetKey: _blurKey,
+                  title: AppLocalizations.of(context)
+                          ?.get('write_tutorial_blur_title') ??
+                      "비밀 유지 모드 🤫",
+                  text: AppLocalizations.of(context)
+                          ?.get('write_tutorial_blur_text') ??
+                      "상단 버튼으로 내용을 뿌옇게 가릴 수 있어! 누구에게도 보이고 싶지 않은 비밀 이야기를 쓸 때 유용해.",
+                ),
+                TutorialStep(
+                  targetKey: _draftKey,
+                  title: AppLocalizations.of(context)
+                          ?.get('write_tutorial_draft_title') ??
+                      "잠시 멈춰도 괜찮아 📝",
+                  text: AppLocalizations.of(context)
+                          ?.get('write_tutorial_draft_text') ??
+                      "작성하던 내용을 임시저장할 수 있어. 바쁠 때는 일단 저장해두고 나중에 다시 써도 돼!",
+                ),
+                TutorialStep(
+                  targetKey: _moodKey,
+                  title: AppLocalizations.of(context)
+                          ?.get('write_tutorial_mood_title') ??
+                      "오늘의 기분은? ✨",
+                  text: AppLocalizations.of(context)
+                          ?.get('write_tutorial_mood_text') ??
+                      "오늘의 기분을 골라봐! 방꾸미기 - 이모티콘에서 선택한 이모티콘들을 여기서 사용할 수 있어.",
+                ),
+                TutorialStep(
+                  title: AppLocalizations.of(context)
+                          ?.get('write_tutorial_free_title') ??
+                      "나의 이야기 적기 ✍️",
+                  text: AppLocalizations.of(context)
+                          ?.get('write_tutorial_free_text') ??
+                      "이제 여기에 너의 소중한 이야기들을 자유롭게 적어봐!\n(튜토리얼 일기는 실제로 저장되지 않아 안심해도 돼! ✨)\n\n아 참! 내용은 10글자 이상 적어야 저장할 수 있어~ ✨",
+                ),
+                TutorialStep(
+                  targetKey: _saveKey,
+                  title: AppLocalizations.of(context)
+                          ?.get('write_tutorial_save_title') ??
+                      "일기 저장하기 💾",
+                  text: AppLocalizations.of(context)
+                          ?.get('write_tutorial_save_text') ??
+                      "이야기를 다 적었다면 이 버튼을 눌러서 완료해줘!\n너를 위한 특별한 선물이 기다리고 있을지도 몰라! 🎁",
+                  showNextButton: false,
+                ),
+              ],
+              onComplete: () {
+                context.read<AuthController>().completeWritingTutorial();
+                setState(() {
+                  _showWritingTutorial = false;
+                });
+              },
+              onSkip: () {
+                context.read<AuthController>().skipAllTutorials();
+                setState(() {
+                  _showWritingTutorial = false;
+                });
+              },
+            ),
+          ),
       ],
     );
   }
@@ -283,15 +356,13 @@ class _WritingScreenState extends State<WritingScreen> {
         '';
 
     return Padding(
-      padding:
-          const EdgeInsets.fromLTRB(8, 16, 8, 4), // Reduced horizontal padding
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Back Button
               GestureDetector(
                 onTap: () async {
                   final confirmed = await _showExitConfirmation(context);
@@ -300,11 +371,11 @@ class _WritingScreenState extends State<WritingScreen> {
                   }
                 },
                 child: SizedBox(
-                  width: 44, // 고정된 레이아웃 영역 (터치 영역)
-                  height: 44, // 아래 콘텐츠를 밀어내지 않음
+                  width: 44,
+                  height: 44,
                   child: Stack(
                     alignment: Alignment.center,
-                    clipBehavior: Clip.none, // 이미지가 영역을 벗어나도 잘리지 않게 설정
+                    clipBehavior: Clip.none,
                     children: [
                       Image.asset(
                         'assets/icons/X_Button.png',
@@ -318,19 +389,17 @@ class _WritingScreenState extends State<WritingScreen> {
                   ),
                 ),
               ),
-              // Action Buttons (Blur & Save)
               Row(
                 children: [
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(top: 0), // Align with save button
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _enableBlur = !_enableBlur;
-                          _textController.blurEnabled = _enableBlur;
-                        });
-                      },
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _enableBlur = !_enableBlur;
+                        _textController.blurEnabled = _enableBlur;
+                      });
+                    },
+                    child: Container(
+                      key: _blurKey,
                       child: Image.asset(
                         _enableBlur
                             ? 'assets/icons/Blur_ToggleOn.png'
@@ -344,92 +413,91 @@ class _WritingScreenState extends State<WritingScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // 임시 저장 버튼
-                  Padding(
-                    padding: const EdgeInsets.only(top: 0),
-                    child: GestureDetector(
-                      onTap: () => _saveDraft(context, controller),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/Cancel_Button.png',
-                            width: 80,
-                            height: 38,
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.medium,
-                            cacheHeight: 120,
+                  GestureDetector(
+                    onTap: () => _saveDraft(context, controller),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.asset(
+                          key: _draftKey,
+                          'assets/images/Cancel_Button.png',
+                          width: 80,
+                          height: 38,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.medium,
+                          cacheHeight: 120,
+                        ),
+                        Text(
+                          AppLocalizations.of(context)?.get('tempSave') ??
+                              'Draft',
+                          style: const TextStyle(
+                            fontFamily: 'BMJUA',
+                            color: Color(0xFF5D4037),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Text(
-                            AppLocalizations.of(context)?.get('tempSave') ??
-                                'Draft',
-                            style: const TextStyle(
-                              fontFamily: 'BMJUA',
-                              color: Color(0xFF5D4037),
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 0),
-                    child: GestureDetector(
-                      onTap: controller.isGoalReached()
-                          ? () =>
-                              _completeDiary(context, controller, colorScheme)
-                          : () {
-                              MemoNotification.show(
-                                  context,
-                                  AppLocalizations.of(context)
-                                          ?.get('moreWriting') ??
-                                      'Please write a bit more! ✍️');
-                            },
-                      child: Opacity(
-                        opacity: controller.isGoalReached() ? 1.0 : 0.5,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/images/Confirm_Button.png',
-                              width: 110,
-                              height: 44,
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.medium,
-                              cacheHeight: 150,
-                            ),
-                            Text(
-                              AppLocalizations.of(context)?.get('save') ??
-                                  'Save',
-                              style: const TextStyle(
-                                fontFamily: 'BMJUA',
-                                color: Color(0xFF5D4037), // Brown color
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                  Consumer<AuthController>(
+                    builder: (context, auth, _) {
+                      final isTutorial = auth.userModel?.hasSeenTutorial == false &&
+                          (auth.userModel?.mainTutorialStep == 'diary' ||
+                              auth.userModel?.mainTutorialStep == null);
+                      final isGoalReached = controller.isGoalReached();
+                      final isEnabled = isTutorial || isGoalReached;
+
+                      return GestureDetector(
+                        onTap: isEnabled
+                            ? () => _completeDiary(context, controller, colorScheme)
+                            : () {
+                                MemoNotification.show(
+                                    context,
+                                    AppLocalizations.of(context)
+                                            ?.get('moreWriting') ??
+                                        'Please write a bit more! ✍️');
+                              },
+                        child: Opacity(
+                          opacity: isEnabled ? 1.0 : 0.5,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Image.asset(
+                                key: _saveKey,
+                                'assets/images/Confirm_Button.png',
+                                width: 110,
+                                height: 44,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.medium,
+                                cacheHeight: 150,
                               ),
-                            ),
-                          ],
+                              Text(
+                                AppLocalizations.of(context)?.get('save') ?? 'Save',
+                                style: const TextStyle(
+                                  fontFamily: 'BMJUA',
+                                  color: Color(0xFF5D4037),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 12), // Spacing between back button and date
-          // Date Icon with Text Overlay
+          const SizedBox(height: 12),
           Stack(
             alignment: Alignment.center,
             children: [
               Image.asset('assets/images/Date_Icon.png',
-                  width: 200,
-                  height: 50,
-                  fit: BoxFit.fill,
-                  filterQuality: FilterQuality.medium),
+                  width: 200, height: 50, fit: BoxFit.fill),
               Positioned(
                 left: 20,
                 child: Padding(
@@ -437,11 +505,8 @@ class _WritingScreenState extends State<WritingScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 16,
-                        color: colorScheme.textPrimary,
-                      ),
+                      Icon(Icons.calendar_today_rounded,
+                          size: 16, color: colorScheme.textPrimary),
                       const SizedBox(width: 8),
                       Text(
                         AppLocalizations.of(context)
@@ -470,11 +535,14 @@ class _WritingScreenState extends State<WritingScreen> {
     );
   }
 
-  Widget _buildQuestionCard(AppColorScheme colorScheme) {
+  Widget _buildQuestionCard(
+      AppColorScheme colorScheme, MorningController controller) {
+    // widget.initialQuestion이 없으면 컨트롤러의 현재 질문을 사용합니다.
+    final displayQuestion = widget.initialQuestion ?? controller.currentQuestion;
+
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
-        // Reduced padding to align content better
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: const BoxDecoration(
           image: DecorationImage(
@@ -489,7 +557,7 @@ class _WritingScreenState extends State<WritingScreen> {
               children: [
                 Text(
                   AppLocalizations.of(context)?.get('todayQuestion') ??
-                      'Today\'s Question',
+                      '오늘의 질문',
                   style: TextStyle(
                     fontFamily: 'BMJUA',
                     color: colorScheme.textSecondary.withOpacity(0.8),
@@ -499,8 +567,10 @@ class _WritingScreenState extends State<WritingScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.initialQuestion?.getLocalizedText(
-                          Localizations.localeOf(context).languageCode) ??
+                  (displayQuestion?.getLocalizedText(
+                              Localizations.localeOf(context).languageCode) ??
+                          controller.currentQuestion?.getLocalizedText(
+                              Localizations.localeOf(context).languageCode)) ??
                       '...',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -537,14 +607,14 @@ class _WritingScreenState extends State<WritingScreen> {
     final int pageCount = (activeEmoticons.length / 4).ceil();
 
     return Column(
+      key: _moodKey,
       mainAxisSize: MainAxisSize.min,
       children: [
         AspectRatio(
           aspectRatio: 1.0,
           child: PageView.builder(
             controller: _pageController,
-            clipBehavior:
-                Clip.hardEdge, // Prevent transition bleed into other areas
+            clipBehavior: Clip.hardEdge,
             onPageChanged: (index) {
               setState(() {
                 _currentMoodPage = index;
@@ -559,8 +629,7 @@ class _WritingScreenState extends State<WritingScreen> {
               final pageEmoticons = activeEmoticons.sublist(start, end);
 
               return Padding(
-                padding: const EdgeInsets.all(
-                    12.0), // Padding to safely contain pins within the clipped PageView
+                padding: const EdgeInsets.all(12.0),
                 child: Column(
                   children: [
                     Expanded(
@@ -682,8 +751,7 @@ class _WritingScreenState extends State<WritingScreen> {
           fit: BoxFit.fill,
         ),
       ),
-      padding:
-          const EdgeInsets.fromLTRB(28, 20, 28, 40), // Added bottom padding
+      padding: const EdgeInsets.fromLTRB(28, 20, 28, 40),
       child: TextField(
         controller: _textController,
         focusNode: _focusNode,
@@ -691,7 +759,7 @@ class _WritingScreenState extends State<WritingScreen> {
         style: TextStyle(
           fontFamily: 'KyoboHandwriting2024psw',
           color: colorScheme.textPrimary,
-          fontSize: 20, // Slightly larger for handwriting font readability
+          fontSize: 20,
           height: 1.6,
         ),
         cursorColor: colorScheme.primaryButton,
@@ -702,8 +770,9 @@ class _WritingScreenState extends State<WritingScreen> {
           errorBorder: InputBorder.none,
           disabledBorder: InputBorder.none,
           filled: false,
+          fillColor: Colors.transparent,
           hintText: AppLocalizations.of(context)?.get('writingHint') ??
-              'Write down whatever comes to your mind freely.',
+              '어떤 생각이라도 좋으니 자유롭게 적어보세요.',
           hintStyle: TextStyle(
             fontFamily: 'KyoboHandwriting2024psw',
             color: colorScheme.textHint.withOpacity(0.6),
@@ -718,28 +787,37 @@ class _WritingScreenState extends State<WritingScreen> {
       MorningController controller, AppColorScheme colorScheme) async {
     final authController = context.read<AuthController>();
 
-    // 생체 인증이 활성화되어 있다면 저장 전 인증 진행
     if (authController.userModel?.biometricEnabled == true) {
-      final authenticated = await authController.authenticateWithBiometric(
-        localizedReason:
-            AppLocalizations.of(context)?.get('authRequiredForSave') ??
-                'Authentication required to save diary',
-      );
-      if (!authenticated) {
-        if (context.mounted) {
-          MemoNotification.show(
-              context,
-              AppLocalizations.of(context)?.get('authFailedForSave') ??
-                  'Authentication failed. Cannot save diary. 🔒');
-        }
-        return;
-      }
+      final authenticated = await authController.authenticateWithBiometric();
+      if (!authenticated) return;
     }
 
     final characterController = context.read<CharacterController>();
     final userId = authController.currentUser?.uid;
 
     if (userId == null) return;
+
+    // 튜토리얼 모드 확인
+    final isTutorial = authController.userModel?.hasSeenTutorial == false &&
+        (authController.userModel?.mainTutorialStep == 'diary' ||
+            authController.userModel?.mainTutorialStep == null);
+
+    if (isTutorial) {
+      // 1. 선물 지급 (실제로 일기는 저장하지 않음)
+      final gift = await characterController.grantTutorialGift(userId);
+      // 2. 글쓰기 튜토리얼 완료 처리
+      await authController.completeWritingTutorial();
+      // 3. 메인 튜토리얼 다음 단계로
+      await authController.setMainTutorialStep('decoration');
+
+      if (context.mounted && gift != null) {
+        await _showTutorialGiftDialog(context, gift, colorScheme);
+        if (context.mounted) {
+          context.go('/morning');
+        }
+      }
+      return;
+    }
 
     final success = await controller.saveDiary(
       userId: userId,
@@ -751,12 +829,7 @@ class _WritingScreenState extends State<WritingScreen> {
 
     if (success && context.mounted) {
       if (widget.isEditing) {
-        MemoNotification.show(
-          context,
-          AppLocalizations.of(context)?.get('decorationSaved') ??
-              'Settings saved! ✨',
-        );
-        context.pop(); // 상세보기 화면으로 복귀
+        context.pop();
       } else {
         unawaited(characterController.wakeUpCharacter(userId));
         await _showCompletionDialog(context, colorScheme);
@@ -768,29 +841,18 @@ class _WritingScreenState extends State<WritingScreen> {
           }
         }
       }
-    } else if (context.mounted) {
-      MemoNotification.show(
-          context,
-          AppLocalizations.of(context)?.get('saveDiaryError') ??
-              'Error saving diary. ⚠️');
     }
   }
 
-  /// 일기 완료 후 보너스 광고 오퍼를 띄운다.
-  /// 광고가 표시되면 true를 반환한다.
   Future<bool> _tryShowBonusAdOffer(
     BuildContext context,
     CharacterController characterController,
     String userId,
   ) async {
-    // 광고가 준비되지 않았으면 스킵
     if (!characterController.isBonusAdReady) return false;
-
     if (Random().nextInt(10) >= 3) return false;
-
     if (!context.mounted) return false;
 
-    // 보상형 전면 광고는 인트로가 생략되는 경우가 있으므로, 확실하게 의사를 묻는 팝업을 띄웁니다.
     final watchAd = await AppDialog.show<bool>(
       context: context,
       key: AppDialogKey.bonusAdOffer,
@@ -799,20 +861,11 @@ class _WritingScreenState extends State<WritingScreen> {
 
     if (watchAd != true || !context.mounted) return false;
 
-    // 광고 시청 → 완료 시 보너스 지급 + 보상 팝업
     characterController.showBonusRewardedAd(context, () async {
       await characterController.watchBonusAdAndGetPoints(userId);
-      final navContext = context.mounted ? context : null;
-      if (navContext != null && navContext.mounted) {
-        // 보상 확인 팝업 (상점과 동일)
-        await AppDialog.show(
-          context: navContext,
-          key: AppDialogKey.adReward,
-        );
-        // 팝업까지 닫히면 메인으로 이동
-        if (navContext.mounted) {
-          navContext.go('/morning');
-        }
+      if (context.mounted) {
+        await AppDialog.show(context: context, key: AppDialogKey.adReward);
+        if (context.mounted) context.go('/morning');
       }
     });
 
@@ -823,16 +876,7 @@ class _WritingScreenState extends State<WritingScreen> {
       BuildContext context, MorningController controller) async {
     final authController = context.read<AuthController>();
     final userId = authController.currentUser?.uid;
-
     if (userId == null) return;
-
-    if (_textController.text.trim().isEmpty) {
-      MemoNotification.show(
-          context,
-          AppLocalizations.of(context)?.get('moreWriting') ??
-              'Please write a bit more! ✍️');
-      return;
-    }
 
     final success = await controller.saveDraft(
       userId: userId,
@@ -841,15 +885,7 @@ class _WritingScreenState extends State<WritingScreen> {
     );
 
     if (success && context.mounted) {
-      MemoNotification.show(
-          context,
-          AppLocalizations.of(context)?.get('saveDraftSuccess') ??
-              'Draft saved. 📝');
-    } else if (context.mounted) {
-      MemoNotification.show(
-          context,
-          AppLocalizations.of(context)?.get('saveDraftError') ??
-              'Error saving draft. ⚠️');
+      MemoNotification.show(context, AppLocalizations.of(context)?.get('saveDraftSuccess') ?? 'Draft saved. 📝');
     }
   }
 
@@ -861,82 +897,25 @@ class _WritingScreenState extends State<WritingScreen> {
     return AppDialog.show(
       context: context,
       key: AppDialogKey.diaryCompletion,
-      content: SizedBox(
-        width: double.infinity,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center, // Center align content
-          children: [
-            _WakeUpAnimationWidget(
-              characterLevel: level,
-              equippedItems:
-                  characterController.currentUser?.equippedCharacterItems ?? {},
-            ),
-            const SizedBox(height: 4),
-            Text(
-              AppLocalizations.of(context)?.get('diaryCompletionTitle') ??
-                  'Character Woke Up!',
-              style: TextStyle(
-                fontFamily: 'BMJUA',
-                color: colorScheme.textSecondary,
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Consumer<CharacterController>(
-              builder: (context, controller, child) {
-                return Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/Item_Background.png'),
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset(
-                        'assets/images/branch.png',
-                        width: 20,
-                        height: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        AppLocalizations.of(context)
-                                ?.getFormat('branchEarned', {
-                              'amount': (context
-                                              .read<MorningController>()
-                                              .lastEarnedPoints >
-                                          0
-                                      ? context
-                                          .read<MorningController>()
-                                          .lastEarnedPoints
-                                      : (20 +
-                                          ((controller.currentUser
-                                                          ?.consecutiveDays ??
-                                                      1) -
-                                                  1) *
-                                              2))
-                                  .toString()
-                            }) ??
-                            '+${context.read<MorningController>().lastEarnedPoints > 0 ? context.read<MorningController>().lastEarnedPoints : (20 + ((controller.currentUser?.consecutiveDays ?? 1) - 1) * 2)} Branch Earned',
-                        style: TextStyle(
-                          fontFamily: 'BMJUA',
-                          color: colorScheme.twig,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _WakeUpAnimationWidget(
+            characterLevel: level,
+            equippedItems:
+                characterController.currentUser?.equippedCharacterItems ?? {},
+          ),
+          const SizedBox(height: 8),
+          Consumer<CharacterController>(
+            builder: (context, controller, child) {
+              return Text(
+                '+${context.read<MorningController>().lastEarnedPoints} ${AppLocalizations.of(context)?.get('branchEarned') ?? 'Branch Earned'}',
+                style: TextStyle(
+                    fontFamily: 'BMJUA', color: colorScheme.twig, fontSize: 16),
+              );
+            },
+          ),
+        ],
       ),
       actions: [
         AppDialogAction(
@@ -948,23 +927,87 @@ class _WritingScreenState extends State<WritingScreen> {
     );
   }
 
+  Future<void> _showTutorialGiftDialog(
+      BuildContext context, RoomAsset gift, AppColorScheme colorScheme) async {
+    final l10n = AppLocalizations.of(context);
+    return AppDialog.show(
+      context: context,
+      key: AppDialogKey.diaryCompletion,
+      title: l10n?.get('gift_popup_title') ?? "특별한 선물 🎁",
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n?.get('gift_popup_welcome') ?? "첫 방문을 축하합니다! 🎉",
+            style: const TextStyle(
+              fontFamily: 'BMJUA',
+              fontSize: 18,
+              color: Color(0xFF4E342E),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n?.get('gift_popup_desc') ?? "특별한 선물이 도착했어요.",
+            style: const TextStyle(
+              fontFamily: 'BMJUA',
+              fontSize: 14,
+              color: Colors.brown,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.brown.shade100),
+            ),
+            child: NetworkOrAssetImage(
+              imagePath: gift.imagePath ?? '',
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            gift.getLocalizedName(context),
+            style: const TextStyle(
+              fontFamily: 'BMJUA',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF4E342E),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        AppDialogAction(
+          label: l10n?.get('receive') ?? "받기",
+          isPrimary: true,
+          onPressed: (context) => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
   Future<bool?> _showExitConfirmation(BuildContext context) async {
     return AppDialog.show<bool>(
       context: context,
       key: AppDialogKey.exitWriting,
       content: Text(
-        AppLocalizations.of(context)?.get('exitConfirmationDesc') ??
-            'Unsaved content will be lost.',
+        AppLocalizations.of(context)?.get('exitWritingDesc') ??
+            '지금 중단하면 작성 중인 내용은 저장되지 않아요. (임시저장을 활용해 보세요!)',
+        textAlign: TextAlign.center,
         style: const TextStyle(fontFamily: 'BMJUA'),
       ),
       actions: [
         AppDialogAction(
-          label: AppLocalizations.of(context)?.get('keepWriting') ??
-              'Keep Writing',
+          label: AppLocalizations.of(context)?.get('keepWriting') ?? '계속 작성',
           onPressed: (context) => Navigator.of(context).pop(false),
         ),
         AppDialogAction(
-          label: AppLocalizations.of(context)?.get('stop') ?? 'Stop',
+          label: AppLocalizations.of(context)?.get('stop') ?? '중단',
           isPrimary: true,
           onPressed: (context) => Navigator.of(context).pop(true),
         ),
@@ -1001,7 +1044,6 @@ class _BlurTextEditingController extends TextEditingController {
       final beforeCursor = text.substring(0, selection.baseOffset);
       final lastBreak = beforeCursor.lastIndexOf('\n');
       start = lastBreak != -1 ? lastBreak + 1 : 0;
-
       final afterCursor = text.substring(selection.baseOffset);
       final nextBreak = afterCursor.indexOf('\n');
       end = nextBreak != -1 ? selection.baseOffset + nextBreak : text.length;
@@ -1022,21 +1064,9 @@ class _BlurTextEditingController extends TextEditingController {
     return TextSpan(
       style: style,
       children: [
-        if (beforePart.isNotEmpty)
-          TextSpan(
-            text: beforePart,
-            style: blurStyle,
-          ),
-        if (currentPart.isNotEmpty)
-          TextSpan(
-            text: currentPart,
-            style: style,
-          ),
-        if (afterPart.isNotEmpty)
-          TextSpan(
-            text: afterPart,
-            style: blurStyle,
-          ),
+        if (beforePart.isNotEmpty) TextSpan(text: beforePart, style: blurStyle),
+        if (currentPart.isNotEmpty) TextSpan(text: currentPart, style: style),
+        if (afterPart.isNotEmpty) TextSpan(text: afterPart, style: blurStyle),
       ],
     );
   }
@@ -1061,11 +1091,7 @@ class _WakeUpAnimationWidgetState extends State<_WakeUpAnimationWidget> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) {
-        setState(() {
-          _isAwake = true;
-        });
-      }
+      if (mounted) setState(() => _isAwake = true);
     });
   }
 
@@ -1076,16 +1102,12 @@ class _WakeUpAnimationWidgetState extends State<_WakeUpAnimationWidget> {
       width: 150,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 500),
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return ScaleTransition(scale: animation, child: child);
-        },
         child: _isAwake
             ? CharacterDisplay(
                 key: const ValueKey('awake'),
                 isAwake: true,
                 characterLevel: widget.characterLevel,
                 size: 150,
-                enableAnimation: true,
                 equippedItems: widget.equippedItems,
               )
             : CharacterDisplay(
@@ -1093,7 +1115,6 @@ class _WakeUpAnimationWidgetState extends State<_WakeUpAnimationWidget> {
                 isAwake: false,
                 characterLevel: widget.characterLevel,
                 size: 150,
-                enableAnimation: true,
                 equippedItems: widget.equippedItems,
               ),
       ),

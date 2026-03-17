@@ -43,6 +43,11 @@ enum AppDialogKey {
   pointHistory,
   versionUpdate,
   bonusAdOffer,
+  tutorialCompletionReward,
+  skipTutorial,
+  refreshShop,
+  refreshShopFree,
+  refreshShopLimit,
 }
 
 class AppDialogAction {
@@ -243,8 +248,23 @@ class AppDialog {
                   const SizedBox(height: 8),
                   Text(
                     AppLocalizations.of(context)?.get('continueGrowth') ??
-                        'Please continue to help them grow.',
+                        '새로운 단계로 성장했어요! 보상으로 20가지를 드립니다.',
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset('assets/images/branch.png', width: 20, height: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '+20 가지',
+                        style: TextStyle(
+                            fontFamily: 'BMJUA',
+                            color: Color(0xFF8D6E63),
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -615,6 +635,125 @@ class AppDialog {
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
               ],
+        );
+      case AppDialogKey.refreshShop:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('refreshShopTitle') ??
+              '상점 새로고침',
+          content: content ??
+              Text(
+                AppLocalizations.of(context)?.get('refreshShopDesc') ??
+                    '광고를 보고 오늘의 상점 상품을 새로고침 하시겠습니까?',
+                textAlign: TextAlign.center,
+              ),
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label:
+                      AppLocalizations.of(context)?.get('cancel') ?? '취소',
+                  onPressed: (context) => Navigator.pop(context, false),
+                ),
+                AppDialogAction(
+                  label:
+                      AppLocalizations.of(context)?.get('confirm') ?? '확인',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context, true),
+                ),
+              ],
+        );
+      case AppDialogKey.refreshShopFree:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('refreshShopFreeTitle') ??
+              '무료 새로고침',
+          content: content ??
+              Text(
+                AppLocalizations.of(context)?.get('refreshShopFreeDesc') ??
+                    '하루에 한 번 제공되는 무료 새로고침을 사용하시겠습니까?',
+                textAlign: TextAlign.center,
+              ),
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label: AppLocalizations.of(context)?.get('cancel') ?? '취소',
+                  onPressed: (context) => Navigator.pop(context, false),
+                ),
+                AppDialogAction(
+                  label: AppLocalizations.of(context)?.get('confirm') ?? '확인',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context, true),
+                ),
+              ],
+        );
+      case AppDialogKey.refreshShopLimit:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('refreshShopLimitTitle') ??
+              '제한 도달',
+          content: content ??
+              Text(
+                AppLocalizations.of(context)?.get('refreshShopLimitDesc') ??
+                    '오늘은 더 이상 새로고침할 수 없습니다. (무료 1회 + 광고 3회)',
+                textAlign: TextAlign.center,
+              ),
+          actions: actions ??
+              [
+                AppDialogAction(
+                  label: AppLocalizations.of(context)?.get('confirm') ?? '확인',
+                  isPrimary: true,
+                  onPressed: (context) => Navigator.pop(context, true),
+                ),
+              ],
+        );
+      case AppDialogKey.tutorialCompletionReward:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)
+                  ?.get('tutorial_complete_reward_title') ??
+              "튜토리얼 완료 보상",
+          showConfetti: true,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset('assets/images/branch.png', width: 80, height: 80),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context)
+                        ?.get('tutorial_complete_reward_desc') ??
+                    '튜토리얼 완료 보상으로 50가지를 선물해드려요!',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            AppDialogAction(
+              label: AppLocalizations.of(context)?.get('confirm') ?? '확인',
+              isPrimary: true,
+              isFullWidth: true,
+              onPressed: (context) => Navigator.pop(context),
+            ),
+          ],
+        );
+      case AppDialogKey.skipTutorial:
+        return AppDialogConfig(
+          title: AppLocalizations.of(context)?.get('skip_tutorial_title') ??
+              "튜토리얼 종료",
+          content: Text(
+            AppLocalizations.of(context)?.get('skip_tutorial_desc') ??
+                "튜토리얼을 종료하시겠습니까?\n종료 시 튜토리얼 완료 보상을 받으실 수 없어요.",
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontFamily: 'BMJUA', fontSize: 15),
+          ),
+          actions: [
+            AppDialogAction(
+              label: AppLocalizations.of(context)?.get('cancel') ?? "취소",
+              onPressed: (context) => Navigator.pop(context, false),
+            ),
+            AppDialogAction(
+              label: AppLocalizations.of(context)?.get('confirm') ?? "확인",
+              isPrimary: true,
+              onPressed: (context) => Navigator.pop(context, true),
+            ),
+          ],
         );
       case AppDialogKey.versionUpdate:
         return AppDialogConfig(

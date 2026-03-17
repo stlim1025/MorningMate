@@ -144,19 +144,19 @@ class AdminDashboardTab extends StatelessWidget {
                           icon: Icons.person_add_alt_1_rounded,
                           color: const Color(0xFF3B82F6),
                           onTap: () => _showUsersDialog(context,
-                              controller.getTodayNewUsers(), '오늘 신규 가입자'),
+                              controller.getTodayNewUsers(), '신규 가입자 (${DateFormat('MM/dd').format(controller.selectedDate)})'),
                         ),
                         const SizedBox(width: 24),
                         _buildDailyMetricCard(
                           context: context,
                           width: cardWidth < 160 ? 160 : cardWidth,
-                          title: '오늘 접속자',
+                          title: '일일 접속자',
                           value: controller.dailyVisitorCount,
                           unit: '명',
                           icon: Icons.login_rounded,
                           color: const Color(0xFF10B981),
                           onTap: () => _showUsersDialog(context,
-                              controller.getTodayLoginUsers(), '오늘 접속한 유저'),
+                              controller.getTodayLoginUsers(), '접속 유저 (${DateFormat('MM/dd').format(controller.selectedDate)})'),
                         ),
                         const SizedBox(width: 24),
                         _buildDailyMetricCard(
@@ -168,7 +168,7 @@ class AdminDashboardTab extends StatelessWidget {
                           icon: Icons.auto_stories_rounded,
                           color: const Color(0xFFF59E0B),
                           onTap: () => _showDiariesDialog(context,
-                              controller.getTodayDiaries(), '오늘 작성된 일기'),
+                              controller.getTodayDiaries(), '작성된 일기 (${DateFormat('MM/dd').format(controller.selectedDate)})'),
                         ),
                         const SizedBox(width: 24),
                         _buildDailyMetricCard(
@@ -182,7 +182,7 @@ class AdminDashboardTab extends StatelessWidget {
                           onTap: () => _showUsersDialog(
                               context,
                               controller.getTodayAdViewerUsers(),
-                              '오늘 광고 시청자'),
+                              '광고 시청자 (${DateFormat('MM/dd').format(controller.selectedDate)})'),
                         ),
                       ],
                     );

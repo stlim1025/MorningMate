@@ -18,6 +18,8 @@ class UserModel {
   final DateTime? lastAdRewardDate; // 마지막 광고 보상 받은 시간
   final DateTime? lastTodaySpeakDate; // 오늘 오늘의 한마디 작성 여부 체크용
   final int adRewardCount; // 오늘 광고 보상 받은 횟수
+  final DateTime? lastShopRefreshDate; // 마지막 상점 새로고침 날짜
+  final int shopRefreshCount; // 오늘 상점 새로고침 횟수
   final DateTime createdAt;
   final Map<String, dynamic>? characterCustomization;
   final List<String> friendIds;
@@ -56,6 +58,13 @@ class UserModel {
   final String? platform; // 'ios' 또는 'android'
   final String? countryCode; // 국가 코드 (예: KR, US)
   final String? fcmToken; // FCM 토큰 추가
+  final bool hasSeenTutorial;
+  final bool hasSeenWritingTutorial;
+  final bool hasSeenSocialTutorial;
+  final bool hasSeenNestTutorial;
+  final bool hasSeenArchiveTutorial;
+  final bool hasSeenShopTutorial;
+  final String? mainTutorialStep; // 'none', 'diary', 'writing', 'decoration', 'shop', 'completed'
 
   UserModel({
     required this.uid,
@@ -74,6 +83,8 @@ class UserModel {
     this.lastAdRewardDate,
     this.lastTodaySpeakDate,
     this.adRewardCount = 0,
+    this.lastShopRefreshDate,
+    this.shopRefreshCount = 0,
     required this.createdAt,
     this.characterCustomization,
     this.friendIds = const [],
@@ -121,6 +132,13 @@ class UserModel {
     this.platform,
     this.countryCode,
     this.fcmToken,
+    this.hasSeenTutorial = false,
+    this.hasSeenWritingTutorial = false,
+    this.hasSeenSocialTutorial = false,
+    this.hasSeenNestTutorial = false,
+    this.hasSeenArchiveTutorial = false,
+    this.hasSeenShopTutorial = false,
+    this.mainTutorialStep = 'none',
   }) : roomDecoration = roomDecoration ?? RoomDecorationModel();
 
   // Firestore에서 가져오기
@@ -153,6 +171,10 @@ class UserModel {
           ? (data['lastTodaySpeakDate'] as Timestamp).toDate()
           : null,
       adRewardCount: (data['adRewardCount'] as num?)?.toInt() ?? 0,
+      lastShopRefreshDate: data['lastShopRefreshDate'] != null
+          ? (data['lastShopRefreshDate'] as Timestamp).toDate()
+          : null,
+      shopRefreshCount: (data['shopRefreshCount'] as num?)?.toInt() ?? 0,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       characterCustomization: data['characterCustomization'] ?? {},
       friendIds: List<String>.from(data['friendIds'] ?? []),
@@ -207,6 +229,13 @@ class UserModel {
       platform: data['platform'],
       countryCode: data['countryCode'],
       fcmToken: data['fcmToken'],
+      hasSeenTutorial: data['hasSeenTutorial'] ?? false,
+      hasSeenWritingTutorial: data['hasSeenWritingTutorial'] ?? false,
+      hasSeenSocialTutorial: data['hasSeenSocialTutorial'] ?? false,
+      hasSeenNestTutorial: data['hasSeenNestTutorial'] ?? false,
+      hasSeenArchiveTutorial: data['hasSeenArchiveTutorial'] ?? false,
+      hasSeenShopTutorial: data['hasSeenShopTutorial'] ?? false,
+      mainTutorialStep: data['mainTutorialStep'] ?? 'none',
     );
   }
 
@@ -236,6 +265,10 @@ class UserModel {
           ? Timestamp.fromDate(lastTodaySpeakDate!)
           : null,
       'adRewardCount': adRewardCount,
+      'lastShopRefreshDate': lastShopRefreshDate != null
+          ? Timestamp.fromDate(lastShopRefreshDate!)
+          : null,
+      'shopRefreshCount': shopRefreshCount,
       'createdAt': Timestamp.fromDate(createdAt),
       'characterCustomization': characterCustomization ?? {},
       'friendIds': friendIds,
@@ -274,6 +307,13 @@ class UserModel {
       'platform': platform,
       'countryCode': countryCode,
       'fcmToken': fcmToken,
+      'hasSeenTutorial': hasSeenTutorial,
+      'hasSeenWritingTutorial': hasSeenWritingTutorial,
+      'hasSeenSocialTutorial': hasSeenSocialTutorial,
+      'hasSeenNestTutorial': hasSeenNestTutorial,
+      'hasSeenArchiveTutorial': hasSeenArchiveTutorial,
+      'hasSeenShopTutorial': hasSeenShopTutorial,
+      'mainTutorialStep': mainTutorialStep,
     };
   }
 
@@ -295,6 +335,8 @@ class UserModel {
     DateTime? lastAdRewardDate,
     DateTime? lastTodaySpeakDate,
     int? adRewardCount,
+    DateTime? lastShopRefreshDate,
+    int? shopRefreshCount,
     DateTime? createdAt,
     Map<String, dynamic>? characterCustomization,
     List<String>? friendIds,
@@ -332,6 +374,13 @@ class UserModel {
     String? platform,
     String? countryCode,
     String? fcmToken,
+    bool? hasSeenTutorial,
+    bool? hasSeenWritingTutorial,
+    bool? hasSeenSocialTutorial,
+    bool? hasSeenNestTutorial,
+    bool? hasSeenArchiveTutorial,
+    bool? hasSeenShopTutorial,
+    String? mainTutorialStep,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -350,6 +399,8 @@ class UserModel {
       lastAdRewardDate: lastAdRewardDate ?? this.lastAdRewardDate,
       lastTodaySpeakDate: lastTodaySpeakDate ?? this.lastTodaySpeakDate,
       adRewardCount: adRewardCount ?? this.adRewardCount,
+      lastShopRefreshDate: lastShopRefreshDate ?? this.lastShopRefreshDate,
+      shopRefreshCount: shopRefreshCount ?? this.shopRefreshCount,
       createdAt: createdAt ?? this.createdAt,
       characterCustomization:
           characterCustomization ?? this.characterCustomization,
@@ -392,6 +443,13 @@ class UserModel {
       platform: platform ?? this.platform,
       countryCode: countryCode ?? this.countryCode,
       fcmToken: fcmToken ?? this.fcmToken,
+      hasSeenTutorial: hasSeenTutorial ?? this.hasSeenTutorial,
+      hasSeenWritingTutorial: hasSeenWritingTutorial ?? this.hasSeenWritingTutorial,
+      hasSeenSocialTutorial: hasSeenSocialTutorial ?? this.hasSeenSocialTutorial,
+      hasSeenNestTutorial: hasSeenNestTutorial ?? this.hasSeenNestTutorial,
+      hasSeenArchiveTutorial: hasSeenArchiveTutorial ?? this.hasSeenArchiveTutorial,
+      hasSeenShopTutorial: hasSeenShopTutorial ?? this.hasSeenShopTutorial,
+      mainTutorialStep: mainTutorialStep ?? this.mainTutorialStep,
     );
   }
 

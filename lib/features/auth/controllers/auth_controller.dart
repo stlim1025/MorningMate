@@ -105,6 +105,7 @@ class AuthController extends ChangeNotifier {
       _updateFcmToken(user.uid);
       try {
         await _userService.updateLastLogin(user.uid);
+        unawaited(_userService.logLogin(user.uid)); // 통계용 로그인 히스토리 기록 (UI 블로킹 방지)
         
         // 플랫폼 및 국가 정보가 없으면 업데이트
         if (_userModel != null && (_userModel!.platform == null || _userModel!.countryCode == null)) {
@@ -535,6 +536,152 @@ class AuthController extends ChangeNotifier {
     } catch (e) {
       debugPrint('닉네임 업데이트 실패: $e');
       rethrow;
+    }
+  }
+
+  // 튜토리얼 완료 처리
+  Future<void> completeTutorial() async {
+    final user = _currentUser;
+    if (user == null) return;
+
+    try {
+      await _userService.updateUser(user.uid, {'hasSeenTutorial': true});
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(hasSeenTutorial: true);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('튜토리얼 완료 처리 중 오류: $e');
+    }
+  }
+
+  // 메인 튜토리얼 단계 업데이트
+  Future<void> setMainTutorialStep(String step) async {
+    final user = _currentUser;
+    if (user == null) return;
+
+    try {
+      await _userService.updateUser(user.uid, {'mainTutorialStep': step});
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(mainTutorialStep: step);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('메인 튜토리얼 단계 업데이트 중 오류: $e');
+    }
+  }
+
+  // 글쓰기 가이드 완료 처리
+  Future<void> completeWritingTutorial() async {
+    final user = _currentUser;
+    if (user == null) return;
+
+    try {
+      await _userService.updateUser(user.uid, {'hasSeenWritingTutorial': true});
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(hasSeenWritingTutorial: true);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('글쓰기 튜토리얼 완료 처리 중 오류: $e');
+    }
+  }
+  // 소셜 튜토리얼 완료 처리
+  Future<void> completeSocialTutorial() async {
+    final user = _currentUser;
+    if (user == null) return;
+    try {
+      await _userService.updateUser(user.uid, {'hasSeenSocialTutorial': true});
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(hasSeenSocialTutorial: true);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('소셜 튜토리얼 완료 처리 중 오류: $e');
+    }
+  }
+
+  // 둥지 튜토리얼 완료 처리
+  Future<void> completeNestTutorial() async {
+    final user = _currentUser;
+    if (user == null) return;
+    try {
+      await _userService.updateUser(user.uid, {'hasSeenNestTutorial': true});
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(hasSeenNestTutorial: true);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('둥지 튜토리얼 완료 처리 중 오류: $e');
+    }
+  }
+
+  // 아카이브(기록) 튜토리얼 완료 처리
+  Future<void> completeArchiveTutorial() async {
+    final user = _currentUser;
+    if (user == null) return;
+    try {
+      await _userService.updateUser(user.uid, {'hasSeenArchiveTutorial': true});
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(hasSeenArchiveTutorial: true);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('기록 튜토리얼 완료 처리 중 오류: $e');
+    }
+  }
+
+  // 상점 튜토리얼 완료 처리
+  Future<void> completeShopTutorial() async {
+    final user = _currentUser;
+    if (user == null) return;
+    try {
+      await _userService.updateUser(user.uid, {
+        'hasSeenShopTutorial': true,
+        'hasSeenTutorial': true,
+        'mainTutorialStep': 'completed',
+      });
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(
+          hasSeenShopTutorial: true,
+          hasSeenTutorial: true,
+          mainTutorialStep: 'completed',
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('상점 튜토리얼 완료 처리 중 오류: $e');
+    }
+  }
+
+  /// 모든 튜토리얼을 스킵하고 완료된 것으로 처리합니다.
+  Future<void> skipAllTutorials() async {
+    final user = _currentUser;
+    if (user == null) return;
+    try {
+      await _userService.updateUser(user.uid, {
+        'hasSeenTutorial': true,
+        'hasSeenWritingTutorial': true,
+        'hasSeenSocialTutorial': true,
+        'hasSeenNestTutorial': true,
+        'hasSeenArchiveTutorial': true,
+        'hasSeenShopTutorial': true,
+        'mainTutorialStep': 'completed',
+      });
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(
+          hasSeenTutorial: true,
+          hasSeenWritingTutorial: true,
+          hasSeenSocialTutorial: true,
+          hasSeenNestTutorial: true,
+          hasSeenArchiveTutorial: true,
+          hasSeenShopTutorial: true,
+          mainTutorialStep: 'completed',
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('튜토리얼 전체 스킵 처리 중 오류: $e');
     }
   }
 }

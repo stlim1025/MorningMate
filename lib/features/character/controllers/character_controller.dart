@@ -15,6 +15,8 @@ import '../../challenge/data/challenge_data.dart';
 import '../../../data/models/notification_model.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/utils/ad_helper.dart';
+import '../../../core/constants/room_assets.dart';
+
 
 // 캐릭터 상태 정의 - 6단계로 확장
 enum CharacterState {
@@ -199,28 +201,30 @@ class CharacterController extends ChangeNotifier {
   }
 
   /// 메모 작성 시 5가지를 차감하고 마지막 작성 시간을 기록합니다.
-  Future<void> useStickyNote(String userId) async {
+  Future<void> useStickyNote(String userId, {bool isFree = false}) async {
     if (_currentUser == null) return;
-    if (_currentUser!.points < 5) throw Exception('가지가 부족합니다 (5가지 필요)');
+    if (!isFree && _currentUser!.points < 5) throw Exception('가지가 부족합니다 (5가지 필요)');
 
     final now = DateTime.now();
     final updates = {
-      'points': FieldValue.increment(-5),
+      if (!isFree) 'points': FieldValue.increment(-5),
       'lastStickyNoteDate': FieldValue.serverTimestamp(),
       'memoCount': FieldValue.increment(1),
     };
 
-    await _pointHistoryService.addHistory(
-      userId: userId,
-      type: 'sticky_note',
-      description: '메모 작성',
-      amount: -5,
-    );
+    if (!isFree) {
+      await _pointHistoryService.addHistory(
+        userId: userId,
+        type: 'sticky_note',
+        description: '메모 작성',
+        amount: -5,
+      );
+    }
 
     await _userService.updateUser(userId, updates);
 
     _currentUser = _currentUser!.copyWith(
-      points: _currentUser!.points - 5,
+      points: isFree ? _currentUser!.points : _currentUser!.points - 5,
       lastStickyNoteDate: now,
       memoCount: _currentUser!.memoCount + 1,
     );
@@ -374,11 +378,20 @@ class CharacterController extends ChangeNotifier {
     await _userService.updateUser(userId, {
       'characterLevel': newLevel,
       'experience': 0, // 레벨업 후 경험치 초기화
+      'points': FieldValue.increment(20),
     });
+
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: 'reward',
+      description: '레벨업 보상 (Lv. $newLevel)',
+      amount: 20,
+    );
 
     _currentUser = _currentUser!.copyWith(
       characterLevel: newLevel,
       experience: 0,
+      points: _currentUser!.points + 20,
     );
 
     _currentAnimation = 'idle';
@@ -797,6 +810,35 @@ class CharacterController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 튜토리얼 선물 지급 (랜덤 소품 하나, 1000원 미만)
+  Future<RoomAsset?> grantTutorialGift(String userId) async {
+    if (_currentUser == null) return null;
+
+    final props = RoomAssets.props
+        .where((p) =>
+            p.price > 0 && p.price < 1000 && p.id != 'sticky_note' && p.category != 'window')
+        .toList();
+    if (props.isEmpty) return null;
+
+    final randomProp =
+        props[DateTime.now().millisecondsSinceEpoch % props.length];
+
+    final newPurchasedProps = List<String>.from(_currentUser!.purchasedPropIds);
+    if (!newPurchasedProps.contains(randomProp.id)) {
+      newPurchasedProps.add(randomProp.id);
+    }
+
+    await _userService.updateUser(userId, {
+      'purchasedPropIds': newPurchasedProps,
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      purchasedPropIds: newPurchasedProps,
+    );
+    notifyListeners();
+    return randomProp;
+  }
+
   // 광고 로그 기록 헬퍼
   Future<void> _logAdEvent({
     required String adType,
@@ -876,7 +918,7 @@ class CharacterController extends ChangeNotifier {
   }
 
   // 광고 보여주기
-  void showRewardedAd(BuildContext context) {
+  void showRewardedAd(BuildContext context, {VoidCallback? onReward}) {
     if (_rewardedAd == null) {
       if (_isAdLoading) {
         MemoNotification.show(context, '광고를 불러오고 있습니다. 잠시만 기다려주세요. 📺');
@@ -938,11 +980,15 @@ class CharacterController extends ChangeNotifier {
           adNetworkClassName: ad.responseInfo?.mediationAdapterClassName,
         );
         
-        if (_currentUser != null) {
-          await watchAdAndGetPoints(_currentUser!.uid);
-          if (context.mounted) {
-            // 팝업 표시
-            await AppDialog.show(context: context, key: AppDialogKey.adReward);
+        if (onReward != null) {
+          onReward();
+        } else {
+          if (_currentUser != null) {
+            await watchAdAndGetPoints(_currentUser!.uid);
+            if (context.mounted) {
+              // 팝업 표시
+              await AppDialog.show(context: context, key: AppDialogKey.adReward);
+            }
           }
         }
       },
@@ -1012,6 +1058,36 @@ class CharacterController extends ChangeNotifier {
     });
 
     _currentUser = _currentUser!.copyWith(points: newPoints);
+    notifyListeners();
+  }
+
+  Future<void> incrementShopRefreshCount(String userId) async {
+    if (_currentUser == null) return;
+
+    final now = DateTime.now();
+    int currentCount = _currentUser!.shopRefreshCount;
+    DateTime? lastDate = _currentUser!.lastShopRefreshDate;
+
+    // 날짜가 바뀌었는지 확인 (어제 이전에 했으면 카운트 초기화)
+    if (lastDate != null) {
+      if (lastDate.year != now.year ||
+          lastDate.month != now.month ||
+          lastDate.day != now.day) {
+        currentCount = 0;
+      }
+    }
+
+    final newCount = currentCount + 1;
+
+    await _userService.updateUser(userId, {
+      'shopRefreshCount': newCount,
+      'lastShopRefreshDate': FieldValue.serverTimestamp(),
+    });
+
+    _currentUser = _currentUser!.copyWith(
+      shopRefreshCount: newCount,
+      lastShopRefreshDate: now,
+    );
     notifyListeners();
   }
 
@@ -1251,5 +1327,32 @@ class CharacterController extends ChangeNotifier {
         );
       }
     }
+  }
+
+  /// 특정 사유로 인한 보상 포인트를 지급합니다.
+  Future<void> addRewardPoints(String userId, int points, String description,
+      String type) async {
+    if (_currentUser == null) return;
+
+    final newPoints = _currentUser!.points + points;
+
+    // 1. 포인트 내역 추가
+    await _pointHistoryService.addHistory(
+      userId: userId,
+      type: type,
+      description: description,
+      amount: points,
+    );
+
+    // 2. DB 업데이트
+    await _userService.updateUser(userId, {
+      'points': newPoints,
+    });
+
+    // 3. 로컬 상태 업데이트
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+    );
+    notifyListeners();
   }
 }

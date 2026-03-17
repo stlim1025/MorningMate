@@ -22,6 +22,7 @@ import '../widgets/decoration_button.dart';
 import '../widgets/header_image_button.dart';
 import '../widgets/character_decoration_button.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../common/widgets/tutorial_overlay.dart';
 
 class MorningScreen extends StatefulWidget {
   const MorningScreen({super.key});
@@ -34,6 +35,11 @@ class _MorningScreenState extends State<MorningScreen>
     with SingleTickerProviderStateMixin {
   Stream<List<NotificationModel>>? _notificationStream;
   String? _initializedUserId;
+  bool _showTutorial = false;
+
+  final GlobalKey _diaryKey = GlobalKey();
+  final GlobalKey _storeKey = GlobalKey();
+  final GlobalKey _decorationKey = GlobalKey();
 
   @override
   void didChangeDependencies() {
@@ -183,6 +189,22 @@ class _MorningScreenState extends State<MorningScreen>
       }
 
       if (userId != null) {
+        // [수정] 튜토리얼 체크를 데이터 로딩(Future.wait) 이전에 실행하여 더 빨리 표시되도록 함
+        final userModel = authController.userModel;
+        if (userModel != null &&
+            !userModel.hasSeenTutorial &&
+            userModel.isSetupComplete) {
+          if (userModel.mainTutorialStep == 'none' ||
+              userModel.mainTutorialStep == null) {
+            authController.setMainTutorialStep('diary');
+          }
+          if (mounted) {
+            setState(() {
+              _showTutorial = true;
+            });
+          }
+        }
+
         // 병렬로 데이터 로드
         await Future.wait([
           morningController.checkTodayDiary(userId),
@@ -337,6 +359,26 @@ class _MorningScreenState extends State<MorningScreen>
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
+    final authController = context.watch<AuthController>(); // context.read에서 watch로 변경하여 유저 정보 업데이트 감지
+    final userModel = authController.userModel;
+
+    // [추가] initState에서의 레이스 컨디션으로 인해 튜토리얼이 안 뜰 경우를 대비한 반응형 체크
+    if (!_showTutorial &&
+        userModel != null &&
+        !userModel.hasSeenTutorial &&
+        userModel.isSetupComplete) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_showTutorial) {
+          setState(() {
+            _showTutorial = true;
+          });
+          if (userModel.mainTutorialStep == 'none' ||
+              userModel.mainTutorialStep == null) {
+            authController.setMainTutorialStep('diary');
+          }
+        }
+      });
+    }
 
     return Consumer<MorningController>(
       builder: (context, morningController, child) {
@@ -396,22 +438,20 @@ class _MorningScreenState extends State<MorningScreen>
               ),
             ),
 
-            // 3. 상점/꾸미기 버튼 (왼쪽)
             Positioned(
               left: 20,
               bottom: 0,
               child: SafeArea(
                 child: Padding(
                   padding: EdgeInsets.only(
-                      bottom: isAwake
-                          ? 30
-                          : 105), // Increased significantly to avoid overlap
+                      bottom: isAwake ? 30 : 105), // 하이라이트 위치를 살짝 내림
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const DecorationButton(),
+                      StoreButton(key: _storeKey), // 상점 버튼을 위로 배치하여 하이라이트 위치 상향
                       const SizedBox(height: 8),
-                      const StoreButton(),
+                      DecorationButton(key: _decorationKey),
                     ],
                   ),
                 ),
@@ -424,9 +464,8 @@ class _MorningScreenState extends State<MorningScreen>
               bottom: 0,
               child: SafeArea(
                 child: Padding(
-                  padding: EdgeInsets.only(
-                    bottom: isAwake ? 20 : 95, // 잘 때 일기 작성 버튼 위로 올라가도록
-                  ),
+                  padding:
+                      EdgeInsets.only(bottom: isAwake ? 30 : 105), // 왼쪽과 밸런스 맞춤
                   child: const CharacterDecorationButton(),
                 ),
               ),
@@ -446,6 +485,7 @@ class _MorningScreenState extends State<MorningScreen>
                         right: 20),
                     child: Center(
                       child: DiaryButton(
+                        key: _diaryKey,
                         onTap: () async {
                           if (morningController.currentQuestion == null) {
                             await morningController.fetchRandomQuestion();
@@ -488,6 +528,12 @@ class _MorningScreenState extends State<MorningScreen>
                 ),
               ),
             ),
+
+            // 7. Tutorial Overlay
+            if (_showTutorial && authController.userModel != null)
+              Positioned.fill(
+                child: _buildMainTutorial(authController),
+              ),
           ],
         );
       },
@@ -659,5 +705,79 @@ class _MorningScreenState extends State<MorningScreen>
     }
     return AppLocalizations.of(context)?.get('greetingEvening') ??
         'Good evening!';
+  }
+
+  Widget _buildMainTutorial(AuthController authController) {
+    final step = authController.userModel?.mainTutorialStep ?? 'diary';
+
+    if (step == 'diary') {
+      return InteractiveTutorialOverlay(
+        steps: [
+          TutorialStep(
+            targetKey: _diaryKey,
+            title: AppLocalizations.of(context)
+                    ?.get('main_tutorial_diary_title') ??
+                "오늘의 첫 일기 쓰기 ✍️",
+            text: AppLocalizations.of(context)
+                    ?.get('main_tutorial_diary_text') ??
+                "안녕! Morni에 온 걸 환영해. 오늘 너의 마음은 어때? 여기를 눌러서 첫 기록을 남겨봐!",
+            showNextButton: false,
+          ),
+        ],
+        onComplete: () {
+          setState(() => _showTutorial = false);
+        },
+        onSkip: () {
+          authController.skipAllTutorials();
+          setState(() => _showTutorial = false);
+        },
+      );
+    } else if (step == 'decoration') {
+      return InteractiveTutorialOverlay(
+        steps: [
+          TutorialStep(
+            targetKey: _decorationKey,
+            title: AppLocalizations.of(context)
+                    ?.get('main_tutorial_deco_title') ??
+                "선물 확인하기 🎁",
+            text: AppLocalizations.of(context)
+                    ?.get('main_tutorial_deco_text') ??
+                "방금 받은 선물을 방에 배치해볼까?\n'방 꾸미기' 버튼을 눌러봐!",
+            showNextButton: false,
+          ),
+        ],
+        onComplete: () {
+          setState(() => _showTutorial = false);
+        },
+        onSkip: () {
+          authController.skipAllTutorials();
+          setState(() => _showTutorial = false);
+        },
+      );
+    } else if (step == 'shop') {
+      return InteractiveTutorialOverlay(
+        steps: [
+          TutorialStep(
+            targetKey: _storeKey,
+            title: AppLocalizations.of(context)
+                    ?.get('main_tutorial_shop_title') ??
+                "상점 구경하기 🛍️",
+            text: AppLocalizations.of(context)
+                    ?.get('main_tutorial_shop_text') ??
+                "방 꾸미기 실력이 대단한걸! 이제 상점에서 더 많은 아이템을 구경해보자!",
+            showNextButton: false,
+          ),
+        ],
+        onComplete: () {
+          setState(() => _showTutorial = false);
+        },
+        onSkip: () {
+          authController.skipAllTutorials();
+          setState(() => _showTutorial = false);
+        },
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }

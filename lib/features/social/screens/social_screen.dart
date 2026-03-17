@@ -17,6 +17,7 @@ import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/bouncing_character_loader.dart';
 import '../../character/widgets/character_display.dart';
+import '../../common/widgets/tutorial_overlay.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -28,6 +29,8 @@ class SocialScreen extends StatefulWidget {
 class _SocialScreenState extends State<SocialScreen> {
   Stream<List<UserModel>>? _friendsStream;
   String? _initializedUserId;
+  bool _showTutorial = false;
+  final GlobalKey _addFriendKey = GlobalKey();
 
   @override
   void initState() {
@@ -57,6 +60,18 @@ class _SocialScreenState extends State<SocialScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         // 이미 데이터가 있으면 로딩 없이 백그라운드 갱신
         socialController.initialize(userId);
+
+        // 튜토리얼 체크
+        if (authController.userModel != null &&
+            !authController.userModel!.hasSeenSocialTutorial) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              setState(() {
+                _showTutorial = true;
+              });
+            }
+          });
+        }
       });
     }
   }
@@ -65,6 +80,7 @@ class _SocialScreenState extends State<SocialScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final socialController = context.read<SocialController>();
+    final authController = context.read<AuthController>();
 
     // 이전에 초기화 안됐으면 재시도
     _loadFriends();
@@ -319,9 +335,39 @@ class _SocialScreenState extends State<SocialScreen> {
               bottom: (Platform.isIOS ? 115 : 130) +
                   bottomInset, // Increased to avoid bottom nav bar + edge-to-edge inset
               child: _AnimatedAddFriendButton(
+                key: _addFriendKey,
                 onPressed: () => _showAddFriendDialog(context, colorScheme),
               ),
             ),
+
+            if (_showTutorial)
+              Positioned.fill(
+                child: InteractiveTutorialOverlay(
+                  steps: [
+                    TutorialStep(
+                      targetKey: _addFriendKey,
+                      title: AppLocalizations.of(context)
+                              ?.get('social_tutorial_title') ??
+                          "친구와 함께 놀자! 🤝",
+                      text: AppLocalizations.of(context)
+                              ?.get('social_tutorial_text') ??
+                          "다른 친구들은 방을 어떻게 꾸몄을까? 친구를 추가해봐! 친구의 연속 일기 일수도 확인하고 방 구경도 가보자. 마음에 드는 방이 있다면 슬쩍 참고해 봐도 좋아!",
+                    ),
+                  ],
+                  onComplete: () {
+                    authController.completeSocialTutorial();
+                    setState(() {
+                      _showTutorial = false;
+                    });
+                  },
+                  onSkip: () {
+                    authController.skipAllTutorials();
+                    setState(() {
+                      _showTutorial = false;
+                    });
+                  },
+                ),
+              ),
           ],
         ),
       ),
@@ -566,6 +612,7 @@ class _AnimatedAddFriendButton extends StatefulWidget {
   final VoidCallback onPressed;
 
   const _AnimatedAddFriendButton({
+    super.key,
     required this.onPressed,
   });
 

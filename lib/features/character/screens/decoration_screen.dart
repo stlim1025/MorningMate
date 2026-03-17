@@ -16,6 +16,8 @@ import '../../../core/widgets/network_or_asset_image.dart';
 import '../../../core/widgets/memo_notification.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../services/asset_service.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../common/widgets/tutorial_overlay.dart';
 
 class DecorationScreen extends StatefulWidget {
   const DecorationScreen({super.key});
@@ -34,6 +36,17 @@ class _DecorationScreenState extends State<DecorationScreen>
   bool _isOwnedOnly = false; // 구매한 상품만 보기 필터
   bool? _previewIsAwake;
   late List<String> _selectedEmoticonIds;
+  
+  // Tutorial State
+  bool _showTutorial = false;
+  final GlobalKey _ownedOnlyKey = GlobalKey();
+  final GlobalKey _propItemKey = GlobalKey();
+  final GlobalKey _interactiveRoomAreaKey = GlobalKey();
+  final GlobalKey _memoButtonKey = GlobalKey();
+  final GlobalKey _saveButtonKey = GlobalKey();
+  final GlobalKey _placementTutorialHighlightKey = GlobalKey();
+  final GlobalKey<InteractiveTutorialOverlayState> _tutorialKey = GlobalKey();
+  bool _isSaving = false; // 저장 중 중복 클릭 방지용 가드
 
   final List<String> _categories = [
     'props',
@@ -71,7 +84,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             onPressed: (context) => Navigator.pop(context),
           ),
           AppDialogAction(
-            label: '5',
+            label: _showTutorial ? '0' : '5',
             labelWidget: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -81,19 +94,43 @@ class _DecorationScreenState extends State<DecorationScreen>
                   height: 20,
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  '5',
-                  style: TextStyle(
-                    fontFamily: 'BMJUA',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                if (_showTutorial) ...[
+                  const Text(
+                    '5',
+                    style: TextStyle(
+                      fontFamily: 'BMJUA',
+                      fontSize: 14,
+                      color: Colors.red,
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: Colors.red,
+                      decorationThickness: 2,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    '0',
+                    style: TextStyle(
+                      fontFamily: 'BMJUA',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF5D4E37),
+                    ),
+                  ),
+                ] else
+                  const Text(
+                    '5',
+                    style: TextStyle(
+                      fontFamily: 'BMJUA',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF5D4E37),
+                    ),
+                  ),
               ],
             ),
             isPrimary: true,
             isEnabled: ValueNotifier<bool>(
-                (context.read<CharacterController>().currentUser?.points ??
+                _showTutorial || (context.read<CharacterController>().currentUser?.points ??
                         0) >=
                     5),
             onPressed: (context) => Navigator.pop(context, controller.text),
@@ -143,6 +180,19 @@ class _DecorationScreenState extends State<DecorationScreen>
     _pageController = PageController(initialPage: _currentIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AssetPrecacheService().precacheCategory(context, _selectedCategory);
+      
+      // 튜토리얼 체크
+      final authController = context.read<AuthController>();
+      if (authController.userModel != null && 
+          authController.userModel!.mainTutorialStep == 'decoration') {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            setState(() {
+              _showTutorial = true;
+            });
+          }
+        });
+      }
     });
   }
 
@@ -180,16 +230,28 @@ class _DecorationScreenState extends State<DecorationScreen>
     final double visibleHeaderHeight =
         EnhancedCharacterRoomWidget.roomStandardBottomPadding;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: Image.asset(
-            'assets/icons/X_Button.png',
-            width: 40,
-            height: 40,
+    return PopScope(
+      canPop: !_showTutorial,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        // 튜토리얼 중 뒤로가기 시도 시 알림 등을 띄울 수도 있음
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+        leading: Opacity(
+          opacity: _showTutorial ? 0.3 : 1.0,
+          child: IconButton(
+            onPressed: () {
+              if (_showTutorial) return;
+              context.pop();
+            },
+            icon: Image.asset(
+              'assets/icons/X_Button.png',
+              width: 40,
+              height: 40,
+            ),
           ),
         ),
         title: Text(
@@ -208,25 +270,32 @@ class _DecorationScreenState extends State<DecorationScreen>
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
             child: GestureDetector(
+              key: _saveButtonKey,
               onTap: _handleSave,
-              child: Container(
-                width: 70,
-                height: 35,
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/Confirm_Button.png'),
-                    fit: BoxFit.fill,
+              child: Opacity(
+                opacity: (!_showTutorial ||
+                        (_tutorialKey.currentState?.currentStepIndex == 5))
+                    ? 1.0
+                    : 0.5,
+                child: Container(
+                  width: 70,
+                  height: 35,
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/Confirm_Button.png'),
+                      fit: BoxFit.fill,
+                    ),
                   ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  AppLocalizations.of(context)?.get('save') ?? 'Save',
-                  style: const TextStyle(
-                    color: Color(0xFF5D4E37),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    fontFamily: 'BMJUA',
+                  alignment: Alignment.center,
+                  child: Text(
+                    AppLocalizations.of(context)?.get('save') ?? 'Save',
+                    style: const TextStyle(
+                      color: Color(0xFF5D4E37),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontFamily: 'BMJUA',
+                    ),
                   ),
                 ),
               ),
@@ -242,6 +311,7 @@ class _DecorationScreenState extends State<DecorationScreen>
               valueListenable: _decorationNotifier,
               builder: (context, decoration, child) {
                 return EnhancedCharacterRoomWidget(
+                  key: _interactiveRoomAreaKey,
                   isAwake: isAwakePreview,
                   characterLevel:
                       characterController.currentUser?.characterLevel ?? 1,
@@ -258,6 +328,9 @@ class _DecorationScreenState extends State<DecorationScreen>
                   currentAnimation: characterController.currentAnimation,
                   isPropEditable: true,
                   selectedPropIndex: _selectedPropIndex,
+                  onPropPlace: () {
+                    // 이제 사용자가 '다음' 버튼을 눌러야 넘어가도록 변경됨 (사용자 요청)
+                  },
                   onPropChanged: (index, newProp) {
                     final currentProps = _decorationNotifier.value.props;
                     final actualIndex =
@@ -282,8 +355,6 @@ class _DecorationScreenState extends State<DecorationScreen>
                         final selectedProp = newProps.removeAt(index);
                         newProps.insert(
                             0, selectedProp); // Move to back? Or just keep it.
-                        // Usually 'move to back' logic was here.
-                        // Let's keep the existing logic:
                         _decorationNotifier.value =
                             _decorationNotifier.value.copyWith(props: newProps);
                         setState(() {
@@ -323,6 +394,27 @@ class _DecorationScreenState extends State<DecorationScreen>
               },
             ),
           ),
+
+          // 1.2. Highlight Helper for Tutorial Save Step (Removed as we now use _saveButtonKey directly)
+
+          // 1.3. Highlight Helper for Placement Steps (Step 2, 4)
+          if (_showTutorial &&
+              (_tutorialKey.currentState?.currentStepIndex == 2 ||
+                  _tutorialKey.currentState?.currentStepIndex == 4))
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 56, // 아래 저장버튼(AppBar)부터
+              left: 20,
+              right: 20,
+              bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) +
+                  bottomInset +
+                  55, // 메모 버튼 위까지
+              child: IgnorePointer(
+                child: Container(
+                  key: _placementTutorialHighlightKey,
+                  color: Colors.transparent,
+                ),
+              ),
+            ),
 
           // 1.5. Night Mode Overlay (Darken room when sleeping)
           // 이제 EnhancedCharacterRoomWidget 내부에서 광원 효과와 함께 처리됩니다.
@@ -438,10 +530,20 @@ class _DecorationScreenState extends State<DecorationScreen>
                 onTap: () {
                   setState(() {
                     _isOwnedOnly = !_isOwnedOnly;
+                    // 보유 항목만 보기 누르면 자동으로 패널 확장
+                    if (_showTutorial &&
+                        _tutorialKey.currentState?.currentStepIndex == 0) {
+                      _isPanelExpanded = true;
+                    }
                   });
+                  if (_showTutorial &&
+                      _tutorialKey.currentState?.currentStepIndex == 0) {
+                    _tutorialKey.currentState?.nextStep();
+                  }
                 },
                 behavior: HitTestBehavior.opaque,
                 child: Row(
+                  key: _ownedOnlyKey,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
@@ -559,6 +661,7 @@ class _DecorationScreenState extends State<DecorationScreen>
                 10,
             right: 20,
             child: GestureDetector(
+              key: _memoButtonKey,
               onTap: _handleStickyNoteButton,
               child: Container(
                 width: 80,
@@ -593,12 +696,105 @@ class _DecorationScreenState extends State<DecorationScreen>
               ),
             ),
           ),
-        ],
+          
+          // 6. Decoration Tutorial Overlay
+          if (_showTutorial)
+            Positioned.fill(
+              child: InteractiveTutorialOverlay(
+                key: _tutorialKey,
+                steps: [
+                  TutorialStep(
+                    targetKey: _ownedOnlyKey,
+                    title: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_filter_title') ??
+                        "내 물건만 보기 📦",
+                    text: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_filter_text') ??
+                        "방금 받은 선물이 어디 있을까? '보유중인 항목만 보기'를 누르면 내가 가진 아이템들만 모아볼 수 있어!",
+                    showNextButton: false,
+                  ),
+                  TutorialStep(
+                    targetKey: _propItemKey,
+                    title: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_select_title') ??
+                        "아이템 선택하기 🛋️",
+                    text: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_select_text') ??
+                        "아이템을 눌러서 방 안에 배치해봐!",
+                    showNextButton: false,
+                  ),
+                  TutorialStep(
+                    targetKey: _placementTutorialHighlightKey,
+                    title: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_move_title') ??
+                        "자유롭게 배치하기 🏠",
+                    text: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_move_text') ??
+                        "선택한 소품을 원하는 위치로 드래그해서 배치해봐! 내 마음대로 방을 꾸밀 수 있어.",
+                    showNextButton: true, // 사용자가 배치를 완료하고 '다음'을 눌러야 넘어감
+                    isFixedBottom: true, // 문구를 리스트(하단) 쪽에 배치
+                  ),
+                  TutorialStep(
+                    targetKey: _memoButtonKey,
+                    title: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_memo_title') ??
+                        "메모 작성하기 ✍️",
+                    text: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_memo_text') ??
+                        "이제 첫 메모를 한번 남겨볼까?",
+                    showNextButton: false, // 메모 버튼 실제 클릭 유도
+                  ),
+                  TutorialStep(
+                    targetKey: _placementTutorialHighlightKey,
+                    title: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_memo_place_title') ??
+                        "메모 배치하기 📍",
+                    text: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_memo_place_text') ??
+                        "작성한 메모도 원하는 위치로 옮겨봐!",
+                    showNextButton: true, // 사용자가 배치를 완료하고 '다음'을 눌러야 넘어감
+                    isFixedBottom: true, // 문구를 리스트(하단) 쪽에 배치
+                  ),
+                  TutorialStep(
+                    targetKey: _saveButtonKey,
+                    title: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_save_title') ??
+                        "방 완성하기 ✨",
+                    text: AppLocalizations.of(context)
+                            ?.get('deco_tutorial_save_text') ??
+                        "내 마음에 쏙 드는 방이 완성되었어! 상단의 '저장' 버튼을 눌러서 꾸미기를 마무리해봐.",
+                    showNextButton: false, // 저장 버튼 실제 클릭 유도
+                  ),
+                ],
+                onComplete: () {
+                  // 완료 시 메인 튜토리얼 단계를 shop으로 변경
+                  context.read<AuthController>().setMainTutorialStep('shop');
+                  setState(() => _showTutorial = false);
+                },
+                onStepChanged: (index) {
+                  setState(() {});
+                },
+                onSkip: () {
+                  context.read<AuthController>().skipAllTutorials();
+                  setState(() => _showTutorial = false);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Future<void> _handleSave() async {
+    if (_isSaving) return;
+
+    if (_showTutorial) {
+      final currentStep = _tutorialKey.currentState?.currentStepIndex;
+      // 인덱스 5가 '저장하기' 단계입니다.
+      if (currentStep != 5) return;
+    }
+
     final characterController = context.read<CharacterController>();
     // 최신 유저 정보를 가져오기 위해 갱신된 currentUser를 사용
     var user = characterController.currentUser;
@@ -673,22 +869,41 @@ class _DecorationScreenState extends State<DecorationScreen>
 
     // 2. 미구매 상품이 없으면 바로 저장
     if (unownedItems.isEmpty) {
+      setState(() => _isSaving = true);
       try {
         await characterController.updateActiveEmoticons(
             user.uid, _selectedEmoticonIds);
         await characterController.updateRoomDecoration(user.uid, decoration);
+        
+        final authController = context.read<AuthController>();
+        if (authController.userModel?.hasSeenTutorial == false &&
+            authController.userModel?.mainTutorialStep == 'decoration') {
+          authController.setMainTutorialStep('shop');
+        }
+
         if (mounted) {
+          if (_showTutorial) {
+            setState(() {
+              _showTutorial = false;
+            });
+          }
           MemoNotification.show(
               context,
               AppLocalizations.of(context)?.get('decorationSaved') ??
                   'Settings saved! ✨');
           // 내비게이션 안정성을 위해 미세한 지연 후 pop
-          await Future.delayed(Duration.zero);
-          if (mounted && Navigator.of(context).canPop()) {
-            context.pop();
-          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              Future.delayed(const Duration(milliseconds: 100), () {
+                if (mounted && Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              });
+            }
+          });
         }
       } catch (e) {
+        debugPrint('Decoration Save Error: $e');
         if (mounted) {
           MemoNotification.show(
             context,
@@ -697,6 +912,8 @@ class _DecorationScreenState extends State<DecorationScreen>
                 'Save failed: ${e.toString().replaceFirst('Exception: ', '')}',
           );
         }
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
       }
       return;
     }
@@ -805,8 +1022,8 @@ class _DecorationScreenState extends State<DecorationScreen>
       return;
     }
 
-    // 2. 포인트 체크 (5가지)
-    if (user.points < 5) {
+    // 2. 포인트 체크 (5가지) - 튜토리얼 중에는 무료
+    if (!_showTutorial && user.points < 5) {
       MemoNotification.show(
         context,
         AppLocalizations.of(context)?.get('notEnoughPoints') ??
@@ -821,7 +1038,7 @@ class _DecorationScreenState extends State<DecorationScreen>
 
     // 4. 포인트 차감 및 작성 처리
     try {
-      await characterController.useStickyNote(user.uid);
+      await characterController.useStickyNote(user.uid, isFree: _showTutorial);
 
       // 5. 소품 배치
       final newProp = RoomPropModel(
@@ -841,10 +1058,15 @@ class _DecorationScreenState extends State<DecorationScreen>
       );
 
       if (mounted) {
-        MemoNotification.show(
-            context,
-            AppLocalizations.of(context)?.get('stickyNoteAdded') ??
-                'Memo added! (5 points deducted) 📝');
+        if (_showTutorial && _tutorialKey.currentState?.currentStepIndex == 3) {
+          // 튜토리얼 중에는 패널을 닫지 않고 그대로 유지 (사용자 요청)
+          _tutorialKey.currentState?.nextStep();
+        } else {
+          MemoNotification.show(
+              context,
+              AppLocalizations.of(context)?.get('stickyNoteAdded') ??
+                  'Memo added! (5 points deducted) 📝');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -1154,6 +1376,7 @@ class _DecorationScreenState extends State<DecorationScreen>
             final exists = decoration.props.any((prop) => prop.type == p.id);
 
             return _buildSelectionCard(
+              key: index == 0 ? _propItemKey : null,
               label: p.getLocalizedName(context),
               imagePath: p.imagePath,
               icon: p.icon,
@@ -1184,6 +1407,12 @@ class _DecorationScreenState extends State<DecorationScreen>
                     _decorationNotifier.value = decoration.copyWith(
                       props: [...decoration.props, newProp],
                     );
+
+                    if (_showTutorial &&
+                        _tutorialKey.currentState?.currentStepIndex == 1) {
+                      // 소품 선택 시 패널을 닫지 않고 그대로 유지 (사용자 요청)
+                      _tutorialKey.currentState?.nextStep();
+                    }
                   }
                 });
               },
@@ -1244,6 +1473,7 @@ class _DecorationScreenState extends State<DecorationScreen>
   }
 
   Widget _buildSelectionCard({
+    Key? key,
     required String label,
     Color? color,
     IconData? icon,
@@ -1266,6 +1496,7 @@ class _DecorationScreenState extends State<DecorationScreen>
         EdgeInsets.only(
             left: 18.0, right: 18.0, top: 26.0, bottom: isOwned ? 26.0 : 44.0);
     return GestureDetector(
+      key: key,
       onTap: onTap,
       child: Container(
         width: double.infinity,
@@ -1502,7 +1733,6 @@ class DashedBorderPainter extends CustomPainter {
 
     canvas.drawPath(dashedPath, paint);
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

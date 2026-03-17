@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -22,6 +22,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
   final Function(RoomPropModel)? onPropTap;
   final bool isDarkMode;
   final AppColorScheme? colorScheme;
+  final VoidCallback? onPropPlace;
 
   static const double roomStandardBottomPadding = 90.0;
 
@@ -46,6 +47,7 @@ class EnhancedCharacterRoomWidget extends StatefulWidget {
     this.equippedCharacterItems,
     this.visitorCharacterLevel,
     this.visitorEquippedItems,
+    this.onPropPlace,
   });
 
   final bool isPropEditable;
@@ -674,6 +676,7 @@ class _EnhancedCharacterRoomWidgetState
         },
         onPanEnd: (_) {
           _activeDragPropId = null;
+          widget.onPropPlace?.call();
         },
         child: mainContent,
       );

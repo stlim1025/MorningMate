@@ -510,16 +510,29 @@ class AdminController extends ChangeNotifier {
       final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
       final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
 
-      // 오늘 접속자 (historical 지원을 위해 query 결과에서 국가 통계 추출)
-      final loginUsers = await _firestore
+      // 오늘 접속자 (login_history + lastLoginDate 병합하여 과도기 버전 대응)
+      // 1. login_history에서 UID 추출
+      final historySnap = await _firestore
+          .collection('login_history')
+          .where('loginDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+          .where('loginDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
+          .get();
+      final historyUids = historySnap.docs.map((d) => d['userId'] as String).toSet();
+
+      // 2. users 컬렉션의 lastLoginDate에서 UID 추출 (업데이트 전 사용자 대응)
+      final legacySnap = await _firestore
           .collection('users')
           .where('lastLoginDate',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
           .where('lastLoginDate',
               isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
           .get();
+      final legacyUids = legacySnap.docs.map((doc) => doc.id).toSet();
       
-      _dailyVisitorCount = loginUsers.docs.length;
+      // 3. 중복 제거하여 합치기
+      _dailyVisitorCount = historyUids.union(legacyUids).length;
       
       // 시간대별 접속자 통계 (읽기 비용 문제로 프론트엔드 직접 계산 제거, 추후 백엔드 어그리게이션 필요)
       _hourlyLoginStats = {};
@@ -606,14 +619,44 @@ class AdminController extends ChangeNotifier {
   Future<List<UserModel>> getTodayLoginUsers() async {
     final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
     final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
-    final snap = await _firestore
+    
+    // 1. login_history 조회
+    final historySnap = await _firestore
+        .collection('login_history')
+        .where('loginDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .where('loginDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
+        .get();
+    final historyUids = historySnap.docs.map((d) => d['userId'] as String).toSet();
+
+    // 2. users.lastLoginDate 조회
+    final legacySnap = await _firestore
         .collection('users')
         .where('lastLoginDate',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
         .where('lastLoginDate',
             isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
         .get();
-    return snap.docs.map((d) => UserModel.fromFirestore(d)).toList();
+    final legacyUids = legacySnap.docs.map((doc) => doc.id).toSet();
+        
+    final allUids = historyUids.union(legacyUids).toList();
+    if (allUids.isEmpty) return [];
+
+    // 유저 상세 정보 가져오기 (30개씩 분할 처리)
+    List<UserModel> users = [];
+    for (var i = 0; i < allUids.length; i += 30) {
+      final chunk = allUids.sublist(i, 
+          i + 30 > allUids.length ? allUids.length : i + 30);
+      final userSnap = await _firestore
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      users.addAll(userSnap.docs.map((d) => UserModel.fromFirestore(d)));
+    }
+    
+    users.sort((a, b) => a.nickname.compareTo(b.nickname));
+    return users;
   }
 
   Future<List<UserModel>> getTodayAdViewerUsers() async {
@@ -630,12 +673,14 @@ class AdminController extends ChangeNotifier {
   }
 
   Future<List<Map<String, dynamic>>> getTodayDiaries() async {
-    final now = DateTime.now();
-    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
     final snap = await _firestore
         .collection('diaries')
         .where('createdAt',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .where('createdAt',
+            isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
         .get();
 
     final diaries = snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();

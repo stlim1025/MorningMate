@@ -18,6 +18,7 @@ import '../../admin/controllers/admin_controller.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
 import '../widgets/point_history_list.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../common/widgets/tutorial_overlay.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -33,12 +34,30 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   DateTime? _selectedDay;
   CalendarFormat _calendarFormat = CalendarFormat.twoWeeks;
   bool _isSettingsPressed = false;
+  bool _showTutorial = false;
+  final GlobalKey _titleKey = GlobalKey();
+  final GlobalKey _calendarKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _selectedDay = DateTime.now();
     _loadDiaries();
+    
+    // 튜토리얼 체크
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authController = context.read<AuthController>();
+      if (authController.userModel != null &&
+          !authController.userModel!.hasSeenArchiveTutorial) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            setState(() {
+              _showTutorial = true;
+            });
+          }
+        });
+      }
+    });
   }
 
   Future<void> _loadDiaries({bool silent = false}) async {
@@ -116,38 +135,68 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             ),
           ),
           child: SafeArea(
-            bottom: false, // Allow background/content to extend lower
-            child: Column(
+            bottom: false,
+            child: Stack(
               children: [
-                // 헤더 (마이페이지 + 설정 버튼)
-                _buildHeader(context, colorScheme),
+                Column(
+                  children: [
+                    // 헤더 (기록 + 설정 버튼)
+                    _buildHeader(context, colorScheme),
 
-                // 메인 컨텐츠
-                if (_isLoading)
-                  const Expanded(
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // 프로필 섹션 (유저 정보 + 포인트)
-                          _buildProfileSection(context, colorScheme),
-                          const SizedBox(height: 20),
+                    // 메인 컨텐츠
+                    if (_isLoading)
+                      const Expanded(
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              // 프로필 섹션 (유저 정보 + 포인트)
+                              _buildProfileSection(context, colorScheme),
+                              const SizedBox(height: 20),
 
-                          // 일기 작성 정보 (캘린더)
-                          _buildCalendarSection(context, colorScheme),
-                          SizedBox(
-                              height:
-                                  150), // Adjusted for PageView + edge-to-edge
-                        ],
+                              // 일기 작성 정보 (캘린더)
+                              _buildCalendarSection(context, colorScheme),
+                              const SizedBox(height: 150),
+                            ],
+                          ),
+                        ),
                       ),
+                    SizedBox(
+                        height: (Platform.isIOS ? 50.0 : 60.0) +
+                            MediaQuery.of(context).viewPadding.bottom),
+                  ],
+                ),
+                if (_showTutorial)
+                  Positioned.fill(
+                    child: InteractiveTutorialOverlay(
+                      steps: [
+                        TutorialStep(
+                          targetKey: _calendarKey,
+                          title: AppLocalizations.of(context)
+                                  ?.get('archive_tutorial_title') ??
+                              "소중한 기록들 📅",
+                          text: AppLocalizations.of(context)
+                                  ?.get('archive_tutorial_text') ??
+                              "기록에서는 네가 쓴 소중한 기록들을 확인할 수 있어. 매일의 기분을 달력에서 한눈에 모아보자!",
+                        ),
+                      ],
+                      onComplete: () {
+                        context.read<AuthController>().completeArchiveTutorial();
+                        setState(() {
+                          _showTutorial = false;
+                        });
+                      },
+                      onSkip: () {
+                        context.read<AuthController>().skipAllTutorials();
+                        setState(() {
+                          _showTutorial = false;
+                        });
+                      },
                     ),
                   ),
-                SizedBox(
-                    height: (Platform.isIOS ? 50.0 : 60.0) +
-                        MediaQuery.of(context).viewPadding.bottom),
               ],
             ),
           ),
@@ -163,7 +212,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            AppLocalizations.of(context)?.get('myPage') ?? 'My Page',
+            AppLocalizations.of(context)?.get('myPage') ?? 'Record',
+            key: _titleKey,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: const Color(0xFF4E342E), // Dark brown color
                   fontWeight: FontWeight.bold,
@@ -437,6 +487,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   Widget _buildCalendar() {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     return Container(
+      key: _calendarKey,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
