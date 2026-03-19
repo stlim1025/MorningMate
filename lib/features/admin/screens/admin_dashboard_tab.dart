@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controllers/admin_controller.dart';
 import '../widgets/admin_dialog.dart';
 import '../widgets/admin_date_picker.dart';
+import '../../../utils/country_utils.dart';
 
 class AdminDashboardTab extends StatelessWidget {
   const AdminDashboardTab({super.key});
@@ -508,7 +509,7 @@ class AdminDashboardTab extends StatelessWidget {
                     _col('닉네임', 2),
                     _col('이메일', 3),
                     _col('가입경로', 1),
-                    _col(title.contains('신규') ? 'OS' : '접속국가', 1),
+                    _col('국가/OS', 1),
                     _col('발생 시간', 2),
                   ],
                 ),
@@ -563,22 +564,27 @@ class AdminDashboardTab extends StatelessWidget {
                             ),
                             Expanded(
                               flex: 1,
-                              child: Center(
-                                child: title.contains('신규')
-                                    ? Icon(
-                                        user.platform == 'ios'
-                                            ? Icons.apple
-                                            : (user.platform == 'android'
-                                                ? Icons.android
-                                                : Icons.device_unknown),
-                                        size: 20,
-                                        color: Colors.grey[600],
-                                      )
-                                    : Text(user.countryCode ?? '-',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.blueGrey[700],
-                                            fontWeight: FontWeight.bold)),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Tooltip(
+                                    message: CountryUtils.getCountryNameKo(user.countryCode),
+                                    child: Text(
+                                      CountryUtils.getFlagEmoji(user.countryCode),
+                                      style: const TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    user.platform == 'ios'
+                                        ? Icons.apple
+                                        : (user.platform == 'android'
+                                            ? Icons.android
+                                            : Icons.device_unknown),
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ],
                               ),
                             ),
                             Expanded(
