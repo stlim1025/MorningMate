@@ -2217,10 +2217,66 @@ class AppLocalizations {
       'refreshShopFreeDesc': '一日一回の無料更新を使用しますか？',
       'refreshShopLimitTitle': '制限到達',
       'refreshShopLimitDesc': '本日の更新回数を超えました。（無料1回 + 広告3回）',
-      'deco_tutorial_filter_text': '保有アイテムのみ表示',
-      'deco_tutorial_save_text': '保存',
-      'main_tutorial_deco_text': '模様替え',
-      'nest_tutorial_text': '今日の一言',
+      'shop_tutorial_1_title': "今日のショップ 🎁",
+      'shop_tutorial_1_text':
+          "毎晩12時、新しい宝物が届くよ！ 🎁✨\nランダムなアイテムで、自分だけの素敵な部屋とキャラクターを飾ろう！",
+      'shop_tutorial_refresh_title': "ショップ更新 🔄",
+      'shop_tutorial_refresh_text':
+          "ショップのアイテムが気に入らない？新しいアイテムを呼び出せるよ！（毎日無料1回 ＋ 広告3回）",
+      'shop_tutorial_2_title': "ブランチが足りない時は？ 📽️",
+      'shop_tutorial_2_text':
+          "欲しい家具がある？広告を見てブランチボーナスをもらい、理想の部屋を早く完成させよう！",
+      'deco_tutorial_filter_title': "プレゼントを探す 🔍",
+      'deco_tutorial_filter_text': "「保有アイテムのみ表示」をタップすると、もらったプレゼントを簡単に見つけられるよ！",
+      'deco_tutorial_select_title': "アイテムを選ぶ ✨",
+      'deco_tutorial_select_text': "もらったプレゼントをタッチして部屋に配置してみよう！",
+      'deco_tutorial_memo_title': "メモを残す 📝",
+      'deco_tutorial_memo_text':
+          "メモを書くと、友達が部屋に遊びに来たときに見ることができるよ！\n今日の気分や、友達へのメッセージを残してみようか？",
+      'deco_tutorial_save_title': "部屋を保存する 💾",
+      'deco_tutorial_save_text': "部屋が気に入ったら「保存」ボタンを押してね！",
+      'deco_tutorial_move_title': "自由に配置する ✨",
+      'deco_tutorial_move_text':
+          "選んだアイテムを好きな場所にドラッグして動かせるよ！お部屋を自由に飾ってね。",
+      'deco_tutorial_memo_place_title': "メモを配置する 📝",
+      'deco_tutorial_memo_place_text':
+          "書いたメモも好きな場所に移動できるよ！見やすい場所に配置しよう。",
+      'write_tutorial_blur_title': "シークレットモード 🤫",
+      'write_tutorial_blur_text':
+          "上のボタンで内容をぼかせるよ！誰にも見せたくない秘密の話を書く時に便利だよ。",
+      'write_tutorial_draft_title': "途中で止めても大丈夫 📝",
+      'write_tutorial_draft_text':
+          "書いている内容を一時保存できるよ。忙しい時は一旦保存して、後で続きを書けるよ！",
+      'write_tutorial_mood_title': "今日の気分は？ ✨",
+      'write_tutorial_mood_text':
+          "今日の気分を選んでね！模様替えの「絵文字」で選んだ絵文字をここで使えるよ。",
+      'write_tutorial_free_title': "自分の物語を書く ✍️",
+      'write_tutorial_free_text':
+          "ここにあなたの特別なストーリーを自由に書いてみましょう！\n（チュートリアルの日記は保存されないので安心してください！ ✨）\n\nあ、内容は10文字以上書かないと保存できないよ〜 ✨",
+      'write_tutorial_save_title': "日記を保存する 💾",
+      'write_tutorial_save_text':
+          "書き終わったら、このボタンを押して完了してね！\n特別なプレゼントが待っているかも！ 🎁",
+      'main_tutorial_diary_title': "今日の初めての日記を書く ✍️",
+      'main_tutorial_diary_text':
+          "こんにちは！Morniへようこそ。今日の気分はどう？ここを押して最初の記録を残してみよう！",
+      'main_tutorial_deco_title': "プレゼントを確認する 🎁",
+      'main_tutorial_deco_text': "さっきもらったプレゼントを部屋に飾ってみる？\n「模様替え」ボタンを押してみて！",
+      'main_tutorial_shop_title': "ショップを見る 🛍️",
+      'main_tutorial_shop_text':
+          "部屋の模様替え、すごく上手だね！次はショップでもっとたくさんのアイテムを見てみよう！",
+      'tutorial_complete_reward_title': "チュートリアル完了報酬",
+      'tutorial_complete_reward_desc': "チュートリアル完了の報酬として50ブランチをプレゼントします！",
+      'skip_tutorial_title': "チュートリアル終了",
+      'skip_tutorial_desc': "チュートリアルを終了しますか？\n終了すると完了報酬を受け取ることができません。",
+      'social_tutorial_title': "友達と一緒に遊ぼう！ 🤝",
+      'social_tutorial_text':
+          "他の友達は部屋をどう飾っているかな？友達を追加してみて！連続日記記録も確認できるし、部屋に遊びに行くこともできるよ。気に入った部屋があったら参考にしてみてもいいかも！",
+      'nest_tutorial_title': "巣でわいわい！ 🪹",
+      'nest_tutorial_text':
+          "もっと仲良くなりたい？巣で友達と日記の記録を共有したり、お互い起こしてあげたり、「今日の一言」を分けてみよう。巣が大きくなるほどブランチボーナスも増えるよ！",
+      'archive_tutorial_title': "大切な記録たち 📅",
+      'archive_tutorial_text':
+          "記録では、あなたが書いた大切な日々を確認できるよ。毎日の気分をカレンダーで一目で見てみよう！",
     },
   };
 
