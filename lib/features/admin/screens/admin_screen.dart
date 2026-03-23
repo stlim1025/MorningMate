@@ -12,6 +12,7 @@ import 'admin_report_tab.dart';
 import 'shop_management_tab.dart';
 import 'admin_version_tab.dart';
 import 'admin_ad_log_tab.dart';
+import 'admin_release_note_tab.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -44,6 +45,7 @@ class _AdminScreenState extends State<AdminScreen> {
     _MenuItem(Icons.shopping_bag_rounded, '상점 관리'),
     _MenuItem(Icons.system_update_rounded, '버전 관리'),
     _MenuItem(Icons.smart_display_rounded, '광고 로그'),
+    _MenuItem(Icons.notes_rounded, '출시노트 관리'),
   ];
 
   @override
@@ -76,6 +78,9 @@ class _AdminScreenState extends State<AdminScreen> {
       case 7:
         bodyContent = const AdminAdLogTab();
         break;
+      case 8:
+        bodyContent = const AdminReleaseNoteTab();
+        break;
       default:
         bodyContent = const AdminDashboardTab();
     }
@@ -104,6 +109,7 @@ class _AdminScreenState extends State<AdminScreen> {
             BottomNavigationBarItem(icon: Icon(Icons.send), label: '푸시'),
             BottomNavigationBarItem(
                 icon: Icon(Icons.ads_click), label: '광고'),
+            BottomNavigationBarItem(icon: Icon(Icons.notes), label: '노트'),
           ],
         ),
       );
@@ -278,6 +284,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 _buildMenuItem(5),
                 _buildMenuItem(6),
                 _buildMenuItem(7),
+                _buildMenuItem(8),
               ],
             ),
           ),

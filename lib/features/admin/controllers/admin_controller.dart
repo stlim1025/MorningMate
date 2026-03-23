@@ -1992,4 +1992,104 @@ class AdminController extends ChangeNotifier {
     notifyListeners();
     return false;
   }
+
+  // 출시노트 관리
+  List<Map<String, dynamic>> _releaseNotes = [];
+  List<Map<String, dynamic>> get releaseNotes => _releaseNotes;
+
+  Future<void> fetchReleaseNotes() async {
+    if (_isDisposed) return;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final snapshot = await _firestore
+          .collection('release_notes')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      if (_isDisposed) return;
+
+      _releaseNotes = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      debugPrint('출시노트 목록 가져오기 오류: $e');
+    }
+
+    if (_isDisposed) return;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> createReleaseNote({
+    required String version,
+    required String contentKo,
+    required String contentEn,
+    required String contentJa,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _firestore.collection('release_notes').add({
+        'version': version,
+        'contentKo': contentKo,
+        'contentEn': contentEn,
+        'contentJa': contentJa,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      await fetchReleaseNotes();
+    } catch (e) {
+      debugPrint('출시노트 생성 오류: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> updateReleaseNote({
+    required String id,
+    required String version,
+    required String contentKo,
+    required String contentEn,
+    required String contentJa,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _firestore.collection('release_notes').doc(id).update({
+        'version': version,
+        'contentKo': contentKo,
+        'contentEn': contentEn,
+        'contentJa': contentJa,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      await fetchReleaseNotes();
+    } catch (e) {
+      debugPrint('출시노트 수정 오류: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> deleteReleaseNote(String id) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _firestore.collection('release_notes').doc(id).delete();
+      await fetchReleaseNotes();
+    } catch (e) {
+      debugPrint('출시노트 삭제 오류: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
 }
+
