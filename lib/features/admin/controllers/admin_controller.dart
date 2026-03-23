@@ -562,29 +562,22 @@ class AdminController extends ChangeNotifier {
           .get();
       _todayDiaryCount = todayDiaryQuery.count ?? 0;
 
-      // 오늘 광고 횟수 (Show 액션 기준)
-      final adImpressionQuery = await _firestore
+      // 복합 인덱스 오류를 피하기 위해 날짜로만 쿼리 후 로컬 필터링
+      final adLogsSnap = await _firestore
           .collection('ad_logs')
-          .where('action', isEqualTo: 'show')
           .where('timestamp',
               isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
           .where('timestamp',
               isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
-          .count()
           .get();
-      _todayAdImpressionCount = adImpressionQuery.count ?? 0;
+          
+      final showDocs = adLogsSnap.docs.where((doc) {
+        final data = doc.data();
+        return data.containsKey('action') && data['action'] == 'show';
+      }).toList();
 
-      // 오늘 광고 시청자 (Show 액션 기준 유니크 유저)
-      final adViewerLogs = await _firestore
-          .collection('ad_logs')
-          .where('action', isEqualTo: 'show')
-          .where('timestamp',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
-          .where('timestamp',
-              isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
-          .get();
-      
-      final uniqueViewerIds = adViewerLogs.docs.map((d) => d['userId'] as String).toSet();
+      _todayAdImpressionCount = showDocs.length;
+      final uniqueViewerIds = showDocs.map((d) => d['userId'] as String).toSet();
       _todayAdViewerCount = uniqueViewerIds.length;
 
       final totalQuery = await _firestore.collection('users').count().get();
@@ -685,22 +678,26 @@ class AdminController extends ChangeNotifier {
     final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
     final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
     
-    // 1. ad_logs에서 Show 액션이 있는 로그 조회
+    // 1. ad_logs에서 오늘 로그 조회
     final logSnap = await _firestore
         .collection('ad_logs')
-        .where('action', isEqualTo: 'show')
         .where('timestamp',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
         .where('timestamp',
             isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
         .get();
+        
+    final showDocs = logSnap.docs.where((doc) {
+      final data = doc.data();
+      return data.containsKey('action') && data['action'] == 'show';
+    }).toList();
     
     // 2. 유니크 유저 ID 추출 및 마지막 시청 시간 맵핑
-    final uids = logSnap.docs.map((d) => d['userId'] as String).toSet().toList();
+    final uids = showDocs.map((d) => d['userId'] as String).toSet().toList();
     if (uids.isEmpty) return [];
 
     final lastShowTimeMap = <String, DateTime>{};
-    for (var doc in logSnap.docs) {
+    for (var doc in showDocs) {
       final uid = doc['userId'] as String;
       final time = (doc['timestamp'] as Timestamp).toDate();
       if (lastShowTimeMap[uid] == null || time.isAfter(lastShowTimeMap[uid]!)) {
