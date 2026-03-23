@@ -736,6 +736,69 @@ class AdminController extends ChangeNotifier {
     return users;
   }
 
+  Future<List<Map<String, dynamic>>> getTodayAdImpressions() async {
+    final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
+    
+    final logSnap = await _firestore
+        .collection('ad_logs')
+        .where('timestamp',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday))
+        .where('timestamp',
+            isLessThanOrEqualTo: Timestamp.fromDate(endOfToday))
+        .get();
+        
+    final showDocs = logSnap.docs.where((doc) {
+      final data = doc.data();
+      return data.containsKey('action') && data['action'] == 'show';
+    }).toList();
+    
+    final viewCountMap = <String, int>{};
+    final lastShowTimeMap = <String, DateTime>{};
+    
+    for (var doc in showDocs) {
+      final uid = doc['userId'] as String;
+      final time = (doc['timestamp'] as Timestamp).toDate();
+      viewCountMap[uid] = (viewCountMap[uid] ?? 0) + 1;
+      if (lastShowTimeMap[uid] == null || time.isAfter(lastShowTimeMap[uid]!)) {
+        lastShowTimeMap[uid] = time;
+      }
+    }
+    
+    final uids = viewCountMap.keys.toList();
+    if (uids.isEmpty) return [];
+
+    List<Map<String, dynamic>> result = [];
+    for (var i = 0; i < uids.length; i += 30) {
+      final chunk = uids.sublist(i, i + 30 > uids.length ? uids.length : i + 30);
+      final userSnap = await _firestore
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      
+      for (var doc in userSnap.docs) {
+        result.add({
+          'user': UserModel.fromFirestore(doc),
+          'count': viewCountMap[doc.id] ?? 0,
+          'lastViewTime': lastShowTimeMap[doc.id] ?? DateTime.now(),
+        });
+      }
+    }
+    
+    result.sort((a, b) {
+      final countA = a['count'] as int;
+      final countB = b['count'] as int;
+      if (countB != countA) {
+        return countB.compareTo(countA); // 횟수 내림차순 정렬
+      }
+      final dateA = a['lastViewTime'] as DateTime;
+      final dateB = b['lastViewTime'] as DateTime;
+      return dateB.compareTo(dateA); // 최근 시청순 정렬
+    });
+    
+    return result;
+  }
+
   Future<List<Map<String, dynamic>>> getTodayDiaries() async {
     final startOfToday = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
     final endOfToday = startOfToday.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));

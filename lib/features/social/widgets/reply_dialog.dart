@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../../core/widgets/app_dialog.dart';
+import '../../../core/localization/app_localizations.dart';
 
 import '../../auth/controllers/auth_controller.dart';
 import '../../notification/controllers/notification_controller.dart';
@@ -27,18 +28,18 @@ class ReplyDialog {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: PopupTextField(
           controller: messageController,
-          hintText: '$receiverNickname님께 답장하기',
+          hintText: AppLocalizations.of(context)?.getFormat('replyToHint', {'nickname': receiverNickname}) ?? '$receiverNickname님께 답장하기',
           maxLines: 3,
           fontFamily: 'KyoboHandwriting2024psw',
         ),
       ),
       actions: [
         AppDialogAction(
-          label: '취소',
+          label: AppLocalizations.of(context)?.get('cancel') ?? '취소',
           onPressed: () => Navigator.pop(context),
         ),
         AppDialogAction(
-          label: '보내기',
+          label: AppLocalizations.of(context)?.get('sendReply') ?? '보내기',
           isPrimary: true,
           onPressed: () async {
             final message = messageController.text.trim();
@@ -51,7 +52,7 @@ class ReplyDialog {
               // 1. UI 즉시 반응: 다이얼로그 닫고 알림 표시
               Navigator.pop(context);
               MemoNotification.show(
-                  context, '$receiverNickname님께 답장을 보냈습니다! 💌');
+                  context, AppLocalizations.of(context)?.getFormat('replySentSuccess', {'nickname': receiverNickname}) ?? '$receiverNickname님께 답장을 보냈습니다! 💌');
               onSuccess?.call();
 
               // 2. 실제 작업은 백그라운드에서 수행

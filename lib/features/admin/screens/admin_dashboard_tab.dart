@@ -226,6 +226,10 @@ class AdminDashboardTab extends StatelessWidget {
                           unit: '회',
                           icon: Icons.play_circle_rounded,
                           color: const Color(0xFFFF4D00),
+                          onTap: () => _showAdImpressionsDialog(
+                              context,
+                              controller.getTodayAdImpressions(),
+                              '광고 시청 횟수 및 인원 (${DateFormat('MM/dd').format(controller.selectedDate)})'),
                         ),
                       ],
                     );
@@ -667,6 +671,145 @@ class AdminDashboardTab extends StatelessWidget {
     );
   }
 
+  void _showAdImpressionsDialog(BuildContext context,
+      Future<List<Map<String, dynamic>>> futureImpressions, String title) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AdminWebDialog(
+        title: title,
+        titleIcon: Icons.play_circle_outline,
+        width: 800,
+        content: FutureBuilder<List<Map<String, dynamic>>>(
+          future: futureImpressions,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final impressions = snapshot.data ?? [];
+            if (impressions.isEmpty) {
+              return const Center(child: Text('데이터가 없습니다.'));
+            }
+
+            return Column(
+              children: [
+                _buildTableHeader(
+                  columns: [
+                    _col('닉네임', 2),
+                    _col('이메일', 3),
+                    _col('시청 횟수', 1),
+                    _col('국가/OS', 1),
+                    _col('최근 시청 시간', 2),
+                  ],
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: impressions.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final item = impressions[index];
+                      final user = item['user'] as dynamic; // UserModel
+                      final count = item['count'] as int;
+                      final lastTime = item['lastViewTime'] as DateTime;
+                      final timeStr = DateFormat('HH:mm:ss').format(lastTime);
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Text(user.nickname,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w500)),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(user.email,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      color: Colors.grey[600], fontSize: 13)),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                        color: Colors.orange.withOpacity(0.3)),
+                                  ),
+                                  child: Text('$count회',
+                                      style: const TextStyle(
+                                          color: Colors.orange,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700)),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Tooltip(
+                                    message: CountryUtils.getCountryNameKo(
+                                        user.countryCode),
+                                    child: Text(
+                                      CountryUtils.getFlagEmoji(
+                                          user.countryCode),
+                                      style: const TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    user.platform == 'ios'
+                                        ? Icons.apple
+                                        : (user.platform == 'android'
+                                            ? Icons.android
+                                            : Icons.device_unknown),
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(timeStr,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      fontFamily: 'monospace', fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('닫기'),
+          )
+        ],
+      ),
+    );
+  }
+
   void _showDiariesDialog(BuildContext context,
       Future<List<Map<String, dynamic>>> futureDiaries, String title) {
     showDialog(
@@ -815,9 +958,17 @@ class AdminDashboardTab extends StatelessWidget {
                                 fontWeight: FontWeight.w600)),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: Text(e.key,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 14)),
+                          child: Row(
+                            children: [
+                              Text(CountryUtils.getFlagEmoji(e.key), style: const TextStyle(fontSize: 18)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(CountryUtils.getCountryNameKo(e.key),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600, fontSize: 14)),
+                              ),
+                            ]
+                          ),
                         ),
                         Text('$pct%',
                             style: TextStyle(
