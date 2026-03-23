@@ -47,6 +47,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
+    // 버전 체크 시작 전 프레임이 안정화될 때까지 잠시 대기
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+
     // 버전 체크 추가
     final versionService = VersionService();
     final versionResult = await versionService.checkVersion();
@@ -188,17 +192,17 @@ class _SplashScreenState extends State<SplashScreen> {
               l10n?.get('suspensionContent') ??
                   '커뮤니티 가이드라인 위반으로 인해\n서비스 이용이 일시적으로 제한되었습니다.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
-                fontFamily: 'BMJUA',
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: const BoxDecoration(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              decoration: BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/images/Option_Area.png'),
                   fit: BoxFit.fill,
@@ -209,27 +213,27 @@ class _SplashScreenState extends State<SplashScreen> {
                 children: [
                   Text(
                     l10n?.get('remainingTimeTitle') ?? '해제까지 남은 시간',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: Colors.black54,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     remainingTime,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   ),
                 ],
               ),
             ),
             if (user.suspensionReason != null) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Builder(
                 builder: (context) {
                   String reasonStr = user.suspensionReason!;
@@ -243,10 +247,10 @@ class _SplashScreenState extends State<SplashScreen> {
                         }) ??
                         '사유: $reasonStr',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: Colors.black45,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   );
                 },
@@ -279,17 +283,45 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final l10n = AppLocalizations.of(context);
 
+    String title = info.updateTitle;
+    String body = info.updateBody;
+
+    // Use localized strings or locale-specific fields if available
+    if (l10n != null) {
+      final locale = l10n.locale;
+      final isEnglish = locale.languageCode == 'en';
+      final isJapanese = locale.languageCode == 'ja';
+      
+      if (isEnglish) {
+        // English: Firestore field -> l10n -> original (Ko)
+        title = info.updateTitleEn ?? 
+                ((title == '업데이트 안내') ? l10n.get('updateNotice') : title);
+        body = info.updateBodyEn ?? 
+               ((body == '새로운 버전이 출시되었습니다. 업데이트 후 이용해 주세요!') ? l10n.get('updateMessage') : body);
+      } else if (isJapanese) {
+        // Japanese: Firestore field -> l10n -> original (Ko)
+        title = info.updateTitleJa ?? 
+                ((title == '업데이트 안내') ? l10n.get('updateNotice') : title);
+        body = info.updateBodyJa ?? 
+               ((body == '새로운 버전이 출시되었습니다. 업데이트 후 이용해 주세요!') ? l10n.get('updateMessage') : body);
+      } else {
+        // Other (Ko): Firestore or l10n defaults
+        if (title == '업데이트 안내') title = l10n.get('updateNotice');
+        if (body == '새로운 버전이 출시되었습니다. 업데이트 후 이용해 주세요!') body = l10n.get('updateMessage');
+      }
+    }
+
     final showResult = await AppDialog.show<bool>(
       context: context,
       key: AppDialogKey.versionUpdate,
       barrierDismissible: !isForce,
-      title: info.updateTitle,
+      title: title,
       content: Text(
-        info.updateBody,
+        body,
         textAlign: TextAlign.center,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
-          fontFamily: 'BMJUA',
+          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           height: 1.5,
         ),
       ),
@@ -347,15 +379,15 @@ class _SplashScreenState extends State<SplashScreen> {
             if (_hasError)
               Column(
                 children: [
-                  const Text(
+                  Text(
                     "인증에 실패했습니다.",
                     style: TextStyle(
                       color: Colors.red,
                       fontSize: 14,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _checkInitialState,
                     style: ElevatedButton.styleFrom(
@@ -369,9 +401,11 @@ class _SplashScreenState extends State<SplashScreen> {
                         vertical: 12,
                       ),
                     ),
-                    child: const Text(
-                      "다시 시도",
-                      style: TextStyle(fontFamily: 'BMJUA'),
+                    child: Text(
+                      AppLocalizations.of(context)?.get('retry') ?? "다시 시도",
+                      style: TextStyle(
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                      ),
                     ),
                   ),
                   TextButton(
@@ -381,23 +415,26 @@ class _SplashScreenState extends State<SplashScreen> {
                       await auth.signOut();
                       router.go('/login');
                     },
-                    child: const Text(
-                      "다른 계정으로 로그인",
-                      style: TextStyle(fontFamily: 'BMJUA', color: Colors.grey),
+                    child: Text(
+                      AppLocalizations.of(context)?.get('loginWithOtherAccount') ?? "다른 계정으로 로그인",
+                      style: TextStyle(
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ],
               )
             else
-              const BouncingCharacterLoader(),
-            const SizedBox(height: 24),
-            const Text(
+              BouncingCharacterLoader(),
+            SizedBox(height: 24),
+            Text(
               "MorningMate",
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'BMJUA',
-                color: Color(0xFF4E342E),
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                color: const Color(0xFF4E342E),
               ),
             ),
           ],

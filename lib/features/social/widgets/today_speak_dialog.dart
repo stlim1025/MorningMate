@@ -145,7 +145,7 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
           child: Container(
             width: MediaQuery.of(context).size.width * 0.9,
             height: MediaQuery.of(context).size.height * 0.75,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/images/TodaySpeak_Background.png'),
                 fit: BoxFit.fill,
@@ -175,12 +175,14 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                             child: Text(
                               AppLocalizations.of(context)
                                       ?.get('todaySpeakTitle') ??
-                                  '오늘의 한마디',
+                                  'Today\'s Word',
                               style: TextStyle(
-                                fontFamily: 'KyoboHandwriting2024psw',
+                                fontFamily: AppLocalizations.of(context)
+                                        ?.handwritingFontFamily ??
+                                    'KyoboHandwriting2024psw',
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF4E342E),
+                                color: const Color(0xFF4E342E),
                               ),
                             ),
                           ),
@@ -189,10 +191,10 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                             top: 82, // Keep same relative visual position
                             child: Text(
                               dateString,
-                              style: const TextStyle(
-                                fontFamily: 'BMJUA',
+                              style: TextStyle(
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 fontSize: 14,
-                                color: Color(0xFF4E342E),
+                                color: const Color(0xFF4E342E),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -206,7 +208,7 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                               child: Container(
                                 width: 60, // 조금 더 줄이기
                                 height: 34,
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   image: DecorationImage(
                                     image: AssetImage(
                                         'assets/images/Circle_Area.png'),
@@ -217,11 +219,11 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                 child: Text(
                                   AppLocalizations.of(context)
                                           ?.get('previousDayBtn') ??
-                                      '< 이전날',
+                                      '< Prev Day',
                                   style: TextStyle(
-                                    fontFamily: 'BMJUA',
+                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                     fontSize: 13,
-                                    color: Color(0xFF4E342E),
+                                    color: const Color(0xFF4E342E),
                                   ),
                                 ),
                               ),
@@ -239,7 +241,7 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                 child: Container(
                                   width: 60, // 조금 더 줄이기
                                   height: 34,
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     image: DecorationImage(
                                       image: AssetImage(
                                           'assets/images/Circle_Area.png'),
@@ -250,11 +252,11 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                   child: Text(
                                     AppLocalizations.of(context)
                                             ?.get('nextDayBtn') ??
-                                        '다음날 >',
+                                        'Next Day >',
                                     style: TextStyle(
-                                      fontFamily: 'BMJUA',
+                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                       fontSize: 13,
-                                      color: Color(0xFF4E342E),
+                                      color: const Color(0xFF4E342E),
                                     ),
                                   ),
                                 ),
@@ -290,7 +292,7 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                   if (snapshot.hasError && messages.isEmpty) {
                                     return Center(
                                         child: Text(
-                                            '오류가 발생했습니다: ${snapshot.error}'));
+                                            'An error occurred: ${snapshot.error}'));
                                   }
 
                                   return Column(
@@ -308,9 +310,13 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                     AppLocalizations.of(context)
                                                             ?.get(
                                                                 'noTodaySpeakRecords') ??
-                                                        '작성된 한마디가 없습니다.',
+                                                        'No records for today.',
                                                     style: TextStyle(
-                                                      fontFamily: 'BMJUA',
+                                                      fontFamily:
+                                                          AppLocalizations.of(
+                                                                      context)
+                                                                  ?.mainFontFamily ??
+                                                              AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                       fontSize: 18,
                                                       color: Colors.black54,
                                                     ),
@@ -376,7 +382,7 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                                   ),
                                                                 )
                                                               else
-                                                                const SizedBox(
+                                                                SizedBox(
                                                                   width: 50,
                                                                   height: 50,
                                                                   child: Icon(
@@ -386,7 +392,7 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                                       color: Colors
                                                                           .grey),
                                                                 ),
-                                                              const SizedBox(
+                                                              SizedBox(
                                                                   height: 4),
                                                               Text(
                                                                 msg['nickname'] ??
@@ -394,16 +400,18 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                                             context)
                                                                         ?.get(
                                                                             'unknownUser') ??
-                                                                    '알 수 없음',
-                                                                style:
-                                                                    const TextStyle(
+                                                                    'Unknown',
+                                                                style: TextStyle(
                                                                   fontFamily:
-                                                                      'BMJUA',
+                                                                      AppLocalizations.of(
+                                                                                  context)
+                                                                              ?.mainFontFamily ??
+                                                                          AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                                   fontSize: 12,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .bold,
-                                                                  color: Color(
+                                                                  color: const Color(
                                                                       0xFF8B5A2B),
                                                                 ),
                                                               ),
@@ -446,13 +454,14 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                                     child: Text(
                                                                       msg['message'] ??
                                                                           '',
-                                                                      style:
-                                                                          const TextStyle(
+                                                                      style: TextStyle(
                                                                         fontFamily:
-                                                                            'KyoboHandwriting2024psw',
-                                                                        fontSize:
-                                                                            16,
-                                                                        color: Color(
+                                                                            AppLocalizations.of(
+                                                                                        context)
+                                                                                    ?.handwritingFontFamily ??
+                                                                                'KyoboHandwriting2024psw',
+                                                                        fontSize: 16,
+                                                                        color: const Color(
                                                                             0xFF4E342E),
                                                                       ),
                                                                     ),
@@ -475,11 +484,11 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                                                 AppDialogKey.deleteTodaySpeak,
                                                                             actions: [
                                                                               AppDialogAction(
-                                                                                label: AppLocalizations.of(context)?.get('cancel') ?? '취소',
+                                                                                label: AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
                                                                                 onPressed: (context) => Navigator.pop(context, false),
                                                                               ),
                                                                               AppDialogAction(
-                                                                                label: AppLocalizations.of(context)?.get('delete') ?? '삭제',
+                                                                                label: AppLocalizations.of(context)?.get('delete') ?? 'Delete',
                                                                                 isPrimary: true,
                                                                                 onPressed: (context) => Navigator.pop(context, true),
                                                                               ),
@@ -546,10 +555,13 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                     scrollPadding:
                                                         const EdgeInsets.only(
                                                             bottom: 120),
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontFamily:
-                                                          'KyoboHandwriting2024psw',
-                                                      color: Color(0xFF4E342E),
+                                                          AppLocalizations.of(
+                                                                      context)
+                                                                  ?.handwritingFontFamily ??
+                                                              'KyoboHandwriting2024psw',
+                                                      color: const Color(0xFF4E342E),
                                                     ),
                                                     decoration: InputDecoration(
                                                       filled: false,
@@ -558,11 +570,13 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                                   .of(context)
                                                               ?.get(
                                                                   'todaySpeakHint') ??
-                                                          '오늘의 한마디를 남겨보세요..',
-                                                      hintStyle:
-                                                          const TextStyle(
+                                                          'Leave a word for today..',
+                                                      hintStyle: TextStyle(
                                                         fontFamily:
-                                                            'KyoboHandwriting2024psw',
+                                                            AppLocalizations.of(
+                                                                        context)
+                                                                    ?.handwritingFontFamily ??
+                                                                'KyoboHandwriting2024psw',
                                                         color: Colors.black54,
                                                       ),
                                                       contentPadding:
@@ -595,7 +609,7 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                   ),
                                                   alignment: Alignment.center,
                                                   child: _isSubmitting
-                                                      ? const SizedBox(
+                                                      ? SizedBox(
                                                           width: 16,
                                                           height: 16,
                                                           child:
@@ -610,11 +624,14 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                                                       context)
                                                                   ?.get(
                                                                       'todaySpeakWrite') ??
-                                                              '작성',
-                                                          style:
-                                                              const TextStyle(
-                                                            fontFamily: 'BMJUA',
-                                                            color: Color(
+                                                              'Write',
+                                                          style: TextStyle(
+                                                            fontFamily:
+                                                                AppLocalizations.of(
+                                                                            context)
+                                                                        ?.mainFontFamily ??
+                                                                    AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                                                            color: const Color(
                                                                 0xFF4E342E),
                                                             fontSize: 13,
                                                             fontWeight:
@@ -629,13 +646,16 @@ class _TodaySpeakDialogState extends State<TodaySpeakDialog> {
                                       else if (isToday && alreadyPosted)
                                         Padding(
                                           padding:
-                                              const EdgeInsets.only(bottom: 88),
+                                              EdgeInsets.only(bottom: 88),
                                           child: Text(
                                             AppLocalizations.of(context)?.get(
                                                     'alreadyPostedTodaySpeak') ??
-                                                '이미 오늘의 한마디를 작성했습니다.',
-                                            style: const TextStyle(
-                                              fontFamily: 'BMJUA',
+                                                'Already posted for today.',
+                                            style: TextStyle(
+                                              fontFamily: AppLocalizations.of(
+                                                          context)
+                                                      ?.mainFontFamily ??
+                                                  AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                               color: Colors.grey,
                                               fontSize: 14,
                                             ),

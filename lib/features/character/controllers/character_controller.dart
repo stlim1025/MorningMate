@@ -1032,6 +1032,9 @@ class CharacterController extends ChangeNotifier {
       'lastAdRewardDate': FieldValue.serverTimestamp(),
     });
 
+    // 통계용 기록 (로그인 기록과 동일한 방식)
+    await _userService.logAdReward(userId);
+
     _currentUser = _currentUser!.copyWith(
       points: newPoints,
       adRewardCount: newCount,
@@ -1044,6 +1047,7 @@ class CharacterController extends ChangeNotifier {
   Future<void> watchBonusAdAndGetPoints(String userId) async {
     if (_currentUser == null) return;
 
+    final now = DateTime.now();
     final newPoints = _currentUser!.points + 20;
 
     await _pointHistoryService.addHistory(
@@ -1055,9 +1059,16 @@ class CharacterController extends ChangeNotifier {
 
     await _userService.updateUser(userId, {
       'points': newPoints,
+      'lastAdRewardDate': FieldValue.serverTimestamp(),
     });
 
-    _currentUser = _currentUser!.copyWith(points: newPoints);
+    // 통계용 기록
+    await _userService.logAdReward(userId);
+
+    _currentUser = _currentUser!.copyWith(
+      points: newPoints,
+      lastAdRewardDate: now,
+    );
     notifyListeners();
   }
 
@@ -1298,8 +1309,8 @@ class CharacterController extends ChangeNotifier {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(currentContext)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 20,
                   color: Color(0xFF4E342E),
                 ),
@@ -1315,8 +1326,8 @@ class CharacterController extends ChangeNotifier {
               const SizedBox(height: 8),
               Text(
                 '+ ${challenge.reward} $branchText',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(currentContext)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.brown,

@@ -16,6 +16,9 @@ import '../../../core/localization/language_provider.dart';
 
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -63,7 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           AppLocalizations.of(context)?.get('settings') ?? 'Settings',
           style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
                 color: colorScheme.textPrimary,
-                fontFamily: 'BMJUA',
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 fontWeight: FontWeight.bold,
               ),
         ),
@@ -83,14 +86,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 final user = authController.userModel;
 
                 return ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(20),
                   children: [
                     // 계정 설정
                     _buildSectionTitle(
                         AppLocalizations.of(context)?.get('account') ??
                             'Account',
                         colorScheme),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildOptionArea(
                       context,
                       children: [
@@ -153,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ? (AppLocalizations.of(context)
                                       ?.get('guestLogin') ??
                                   'Guest Login')
-                              : (user?.email?.startsWith('kakao_') ?? false)
+                              : (user?.email ?? '').startsWith('kakao_')
                                   ? (AppLocalizations.of(context)
                                           ?.get('kakaoLogin') ??
                                       'Kakao Login')
@@ -193,14 +196,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
 
                     // 보안 설정
                     _buildSectionTitle(
                         AppLocalizations.of(context)?.get('security') ??
                             'Security',
                         colorScheme),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildOptionArea(
                       context,
                       children: [
@@ -239,14 +242,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
 
                     // 앱 설정
                     _buildSectionTitle(
                         AppLocalizations.of(context)?.get('appSettings') ??
                             'App Settings',
                         colorScheme),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildOptionArea(
                       context,
                       children: [
@@ -261,10 +264,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               AppLocalizations.of(context)?.get('language') ??
                                   'Language',
                           subtitle:
-                              Localizations.localeOf(context).languageCode ==
-                                      'ko'
+                              Localizations.localeOf(context).languageCode == 'ko'
                                   ? '한국어'
-                                  : 'English',
+                                  : Localizations.localeOf(context).languageCode == 'ja'
+                                      ? '日本語'
+                                      : 'English',
                           onTap: () =>
                               _showLanguageDialog(context, colorScheme),
                         ),
@@ -283,13 +287,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
 
                     // 정보
                     _buildSectionTitle(
                         AppLocalizations.of(context)?.get('info') ?? 'Info',
                         colorScheme),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildOptionArea(
                       context,
                       children: [
@@ -307,24 +311,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _buildSettingsTile(
                           context,
                           colorScheme,
-                          icon: Icons.description,
-                          title: AppLocalizations.of(context)
-                                  ?.get('termsOfService') ??
-                              'Terms of Service',
-                          onTap: () {
-                            context.pushNamed('termsOfService');
-                          },
+                          icon: Icons.help_outline,
+                          title: AppLocalizations.of(context)?.get('faq') ?? 'FAQ',
+                          onTap: () => context.pushNamed('faq'),
                         ),
                         _buildDivider(colorScheme),
                         _buildSettingsTile(
                           context,
                           colorScheme,
-                          icon: Icons.privacy_tip,
-                          title: AppLocalizations.of(context)
-                                  ?.get('privacyPolicy') ??
-                              'Privacy Policy',
+                          icon: Icons.mail_outline,
+                          title: AppLocalizations.of(context)?.get('support') ?? 'Contact Us',
+                          onTap: () => _sendSupportEmail(context, authController),
+                        ),
+                        _buildDivider(colorScheme),
+                        _buildSettingsTile(
+                          context,
+                          colorScheme,
+                          icon: Icons.description,
+                          title: AppLocalizations.of(context)?.get('termsAndPrivacy') ?? 'Terms & Privacy',
                           onTap: () {
-                            context.pushNamed('privacyPolicy');
+                            context.pushNamed('termsOfService');
                           },
                         ),
                       ],
@@ -356,11 +362,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Align(
       alignment: Alignment.centerLeft,
       child: Transform.translate(
-        offset: const Offset(-10, 0),
+        offset: Offset(-10, 0),
         child: Container(
           width: 120,
           height: 32,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/icons/Store_Tab.png'),
               fit: BoxFit.fill,
@@ -368,14 +374,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           alignment: Alignment.center,
           child: Padding(
-            padding: const EdgeInsets.only(left: 20),
+            padding: EdgeInsets.only(left: 20),
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color(0xFF4E342E),
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'BMJUA',
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               ),
             ),
           ),
@@ -394,7 +400,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     VoidCallback? onTap,
   }) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -408,18 +414,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: colorScheme.textPrimary,
-              fontFamily: 'BMJUA',
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             ),
       ),
       subtitle: subtitle != null
           ? Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: EdgeInsets.only(top: 4),
               child: Text(
                 subtitle,
                 style: TextStyle(
                   color: colorScheme.textSecondary,
                   fontSize: 13,
-                  fontFamily: 'BMJUA',
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 ),
               ),
             )
@@ -485,7 +491,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final blurEnabled = user?.writingBlurEnabled ?? true;
 
     return SwitchListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       secondary: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -504,11 +510,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: colorScheme.textPrimary,
-              fontFamily: 'BMJUA',
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             ),
       ),
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
+        padding: EdgeInsets.only(top: 4),
         child: Text(
           blurEnabled
               ? (AppLocalizations.of(context)?.get('writingBlurDescEnabled') ??
@@ -518,7 +524,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             color: colorScheme.textSecondary,
             fontSize: 13,
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           ),
         ),
       ),
@@ -541,7 +547,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final biometricEnabled = user?.biometricEnabled ?? false;
 
     return SwitchListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       secondary: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -559,11 +565,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: colorScheme.textPrimary,
-              fontFamily: 'BMJUA',
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             ),
       ),
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
+        padding: EdgeInsets.only(top: 4),
         child: Text(
           biometricEnabled
               ? (AppLocalizations.of(context)
@@ -575,7 +581,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             color: colorScheme.textSecondary,
             fontSize: 13,
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           ),
         ),
       ),
@@ -599,7 +605,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         width: double.infinity,
         height: 55,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/TextBox_Background.png'),
             fit: BoxFit.fill,
@@ -610,15 +616,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.logout, size: 20, color: Color(0xFF5D4037)),
-              const SizedBox(width: 8),
+              Icon(Icons.logout, size: 20, color: Color(0xFF5D4037)),
+              SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context)?.get('logout') ?? 'Logout',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'BMJUA',
-                  color: Color(0xFF5D4037),
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                  color: const Color(0xFF5D4037),
                 ),
               ),
             ],
@@ -637,12 +643,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Text(
           AppLocalizations.of(context)?.get('deleteAccount') ??
               'Delete Account',
-          style: const TextStyle(
+          style: TextStyle(
             color: Color(0xFF5D4037),
             decoration: TextDecoration.underline,
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           ),
         ),
       ),
@@ -662,7 +668,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: PopupTextField(
               controller: controller,
               hintText: AppLocalizations.of(context)?.get('enterNewNickname') ??
@@ -846,7 +852,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/images/Memo.png'),
               fit: BoxFit.fill,
@@ -857,13 +863,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.only(
+                padding: EdgeInsets.only(
                     top: 36, left: 16, right: 16, bottom: 16),
                 child: Text(
                   AppLocalizations.of(context)?.get('selectLanguage') ??
                       'Select Language',
                   style: TextStyle(
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: colorScheme.textPrimary,
@@ -871,7 +877,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               ListTile(
-                title: const Text('한국어', style: TextStyle(fontFamily: 'BMJUA')),
+                title: Text(
+                  AppLocalizations.of(context)?.get('korean') ?? '한국어',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.textPrimary,
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                      ),
+                ),
                 trailing: Localizations.localeOf(context).languageCode == 'ko'
                     ? Icon(Icons.check, color: colorScheme.primaryButton)
                     : null,
@@ -883,8 +896,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               ListTile(
-                title: const Text('English',
-                    style: TextStyle(fontFamily: 'BMJUA')),
+                title: Text(
+                  AppLocalizations.of(context)?.get('english') ?? 'English',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.textPrimary,
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                      ),
+                ),
                 trailing: Localizations.localeOf(context).languageCode == 'en'
                     ? Icon(Icons.check, color: colorScheme.primaryButton)
                     : null,
@@ -895,7 +914,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Navigator.pop(context);
                 },
               ),
-              SizedBox(height: 20 + MediaQuery.of(context).viewPadding.bottom),
+              ListTile(
+                title: Text(
+                  '日本語',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.textPrimary,
+                        fontFamily: 'KiwiMaru',
+                      ),
+                ),
+                trailing: Localizations.localeOf(context).languageCode == 'ja'
+                    ? Icon(Icons.check, color: colorScheme.primaryButton)
+                    : null,
+                onTap: () {
+                  context
+                      .read<LanguageProvider>()
+                      .setLocale(const Locale('ja'));
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 20),
+              SizedBox(height: MediaQuery.of(context).viewPadding.bottom),
             ],
           ),
         );
@@ -919,7 +958,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: PopupTextField(
                 controller: currentPasswordController,
                 obscureText: true,
@@ -936,9 +975,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: PopupTextField(
                 controller: newPasswordController,
                 obscureText: true,
@@ -960,9 +999,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: PopupTextField(
                 controller: confirmPasswordController,
                 obscureText: true,
@@ -1097,7 +1136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 '정말로 탈퇴하시겠습니까?\n모든 데이터가 영구적으로 삭제됩니다.',
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           if (authController.userModel?.provider != 'kakao' &&
               authController.userModel?.provider != 'google' &&
               authController.userModel?.provider != 'apple' &&
@@ -1146,7 +1185,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             : null,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context)
@@ -1234,5 +1273,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       duration: const Duration(seconds: 2),
     );
+  }
+
+  Future<void> _sendSupportEmail(BuildContext context, AuthController authController) async {
+    final user = authController.userModel;
+    final packageInfo = await PackageInfo.fromPlatform();
+    final deviceInfo = DeviceInfoPlugin();
+    
+    String os = '';
+    String model = '';
+    
+    if (Platform.isAndroid) {
+      final androidInfo = await deviceInfo.androidInfo;
+      os = 'Android ${androidInfo.version.release}';
+      model = androidInfo.model;
+    } else if (Platform.isIOS) {
+      final iosInfo = await deviceInfo.iosInfo;
+      os = 'iOS ${iosInfo.systemVersion}';
+      model = iosInfo.utsname.machine;
+    }
+
+    final email = 'stlim1026@gmail.com';
+    final subject = '[Morni 문의사항]';
+    final body = '''
+닉네임: ${user?.nickname ?? 'Guest'}
+OS: $os
+앱 버전: ${packageInfo.version}
+핸드폰 기기: $model
+
+-----------------------------------
+내용:
+''';
+
+    final Uri uri = Uri(
+      scheme: 'mailto',
+      path: email,
+      query: 'subject=${Uri.encodeComponent(subject)}&body=${Uri.encodeComponent(body)}',
+    );
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('메일 앱을 열 수 없습니다.')),
+        );
+      }
+    }
   }
 }

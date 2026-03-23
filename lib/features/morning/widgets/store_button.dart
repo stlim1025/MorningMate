@@ -4,7 +4,7 @@ import '../../common/widgets/room_action_button.dart';
 import '../../../core/localization/app_localizations.dart';
 
 class StoreButton extends StatelessWidget {
-  const StoreButton({super.key});
+  StoreButton({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -93,12 +93,12 @@ class _DecorationScreenState extends State<DecorationScreen>
                   width: 20,
                   height: 20,
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 if (_showTutorial) ...[
-                  const Text(
+                  Text(
                     '5',
                     style: TextStyle(
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       fontSize: 14,
                       color: Colors.red,
                       decoration: TextDecoration.lineThrough,
@@ -106,21 +106,21 @@ class _DecorationScreenState extends State<DecorationScreen>
                       decorationThickness: 2,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  const Text(
+                  SizedBox(width: 4),
+                  Text(
                     '0',
                     style: TextStyle(
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: Color(0xFF5D4E37),
+                      color: const Color(0xFF5D4E37),
                     ),
                   ),
                 ] else
-                  const Text(
+                  Text(
                     '5',
                     style: TextStyle(
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: Color(0xFF5D4E37),
@@ -256,10 +256,10 @@ class _DecorationScreenState extends State<DecorationScreen>
         ),
         title: Text(
           AppLocalizations.of(context)?.get('decorateRoom') ?? 'Decorate Room',
-          style: const TextStyle(
+          style: TextStyle(
             color: Color(0xFF4E342E),
             fontWeight: FontWeight.bold,
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             fontSize: 20,
           ),
         ),
@@ -268,7 +268,7 @@ class _DecorationScreenState extends State<DecorationScreen>
         backgroundColor: Colors.transparent,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12.0),
+            padding: EdgeInsets.only(right: 12.0),
             child: GestureDetector(
               key: _saveButtonKey,
               onTap: _handleSave,
@@ -280,8 +280,8 @@ class _DecorationScreenState extends State<DecorationScreen>
                 child: Container(
                   width: 70,
                   height: 35,
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: const BoxDecoration(
+                  margin: EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage('assets/images/Confirm_Button.png'),
                       fit: BoxFit.fill,
@@ -290,11 +290,11 @@ class _DecorationScreenState extends State<DecorationScreen>
                   alignment: Alignment.center,
                   child: Text(
                     AppLocalizations.of(context)?.get('save') ?? 'Save',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Color(0xFF5D4E37),
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   ),
                 ),
@@ -569,12 +569,12 @@ class _DecorationScreenState extends State<DecorationScreen>
                               ),
                             ),
                     ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text(
                       AppLocalizations.of(context)?.get('showOwnedOnly') ??
                           'Show Owned Only',
                       style: TextStyle(
-                        fontFamily: 'BMJUA',
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 12,
                         color: isAwakePreview
                             ? const Color(0xFF5D4037)
@@ -631,7 +631,7 @@ class _DecorationScreenState extends State<DecorationScreen>
                   width: 80,
                   height: 35,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage('assets/images/Message_Button.png'),
                       fit: BoxFit.fill,
@@ -640,8 +640,8 @@ class _DecorationScreenState extends State<DecorationScreen>
                   child: Text(
                     AppLocalizations.of(context)?.get('removeAllProps') ??
                         'Remove All',
-                    style: const TextStyle(
-                      fontFamily: 'BMJUA',
+                    style: TextStyle(
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       fontSize: 14,
                       color: Color(0xFF5D4037),
                       fontWeight: FontWeight.bold,
@@ -654,7 +654,7 @@ class _DecorationScreenState extends State<DecorationScreen>
 
           // 5. Sticky Note Button (Fixed Position)
           AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
+            duration: Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             bottom: (_isPanelExpanded ? panelHeight : visibleHeaderHeight) +
                 bottomInset +
@@ -667,7 +667,7 @@ class _DecorationScreenState extends State<DecorationScreen>
                 width: 80,
                 height: 35,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage('assets/images/Message_Button.png'),
                     fit: BoxFit.fill,
@@ -681,13 +681,13 @@ class _DecorationScreenState extends State<DecorationScreen>
                       width: 18,
                       height: 18,
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       AppLocalizations.of(context)?.get('memo') ?? 'Memo',
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                      style: TextStyle(
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 14,
-                        color: Color(0xFF5D4037),
+                        color: const Color(0xFF5D4037),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -928,7 +928,7 @@ class _DecorationScreenState extends State<DecorationScreen>
         AppLocalizations.of(context)?.get('unownedItemsWarning') ??
             '배치된 항목 중 아직 보유하지 않은 아이템이 있어요!\n미보유 아이템은 상점에서 획득할 수 있습니다.\n뺀 상태로 저장할까요?',
         textAlign: TextAlign.center,
-        style: const TextStyle(fontFamily: 'BMJUA', fontSize: 14),
+        style: TextStyle(fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA', fontSize: 14),
       ),
       actions: [
         AppDialogAction(
@@ -1077,10 +1077,10 @@ class _DecorationScreenState extends State<DecorationScreen>
 
   Widget _buildCategoryTabs(AppColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(
+        padding: EdgeInsets.only(
             top: 5, bottom: 10), // Reduced top padding to move tabs up
         clipBehavior: Clip.antiAlias,
         child: Row(
@@ -1090,31 +1090,31 @@ class _DecorationScreenState extends State<DecorationScreen>
                 AppLocalizations.of(context)?.get('prop') ?? 'Prop',
                 Icons.chair,
                 colorScheme),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _buildTabItem(
                 'wallpaper',
                 AppLocalizations.of(context)?.get('wallpaper') ?? 'Wallpaper',
                 Icons.wallpaper,
                 colorScheme),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _buildTabItem(
                 'floor',
                 AppLocalizations.of(context)?.get('floor') ?? 'Floor',
                 Icons.grid_on_outlined,
                 colorScheme),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _buildTabItem(
                 'background',
                 AppLocalizations.of(context)?.get('background') ?? 'Background',
                 Icons.landscape_outlined,
                 colorScheme),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _buildTabItem(
                 'window',
                 AppLocalizations.of(context)?.get('window') ?? 'Window',
                 Icons.window,
                 colorScheme),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _buildTabItem(
                 'emoticon',
                 AppLocalizations.of(context)?.get('emoticon') ?? 'Emoticon',
@@ -1148,8 +1148,8 @@ class _DecorationScreenState extends State<DecorationScreen>
         );
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+        duration: Duration(milliseconds: 250),
+        padding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage(isSelected
@@ -1169,11 +1169,11 @@ class _DecorationScreenState extends State<DecorationScreen>
                   ? const Color(0xFF8B7355)
                   : const Color(0xFF5D4E37),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
             Text(
               label,
-              style: const TextStyle(
-                fontFamily: 'BMJUA',
+              style: TextStyle(
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 fontSize: 12,
               ),
             ),
@@ -1552,11 +1552,11 @@ class _DecorationScreenState extends State<DecorationScreen>
                   child: Center(
                     child: Text(
                       badgeText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'BMJUA',
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       ),
                     ),
                   ),
@@ -1571,7 +1571,7 @@ class _DecorationScreenState extends State<DecorationScreen>
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     fontSize: fontSize,
                     height: 1.1, // 줄 간격 좁게
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
@@ -1609,11 +1609,11 @@ class _DecorationScreenState extends State<DecorationScreen>
                       child: Text(
                         AppLocalizations.of(context)?.get('stampEquipped') ??
                             'Equipped',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Color(0xFFE57373),
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          fontFamily: 'BMJUA',
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         ),
                       ),
                     ),

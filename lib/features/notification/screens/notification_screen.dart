@@ -77,7 +77,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         title: Text(
           AppLocalizations.of(context)?.get('notifications') ?? 'Notifications',
           style: TextStyle(
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily,
             color: colorScheme.textPrimary,
             fontWeight: FontWeight.bold,
           ),
@@ -116,9 +116,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   await notificationController.markAllAsRead(userId);
                 },
                 child: Container(
-                  margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                  margin: EdgeInsets.only(right: 16, top: 8, bottom: 8),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     image: const DecorationImage(
                       image: AssetImage('assets/images/Cancel_Button.png'),
@@ -129,8 +129,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     child: Text(
                       AppLocalizations.of(context)?.get('markAllAsRead') ??
                           'Mark all as read',
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                      style: TextStyle(
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         color: Color(0xFF4E342E),
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -265,7 +265,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 20),
                             decoration: BoxDecoration(
                               image: DecorationImage(
@@ -283,7 +283,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   child: _buildNotificationIcon(
                                       notification, colorScheme),
                                 ),
-                                const SizedBox(width: 16),
+                                SizedBox(width: 16),
                                 Expanded(
                                   child: Opacity(
                                     opacity: notification.isRead ? 0.7 : 1.0,
@@ -318,18 +318,18 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                                       ? (AppLocalizations.of(context)?.get('referralReward') ?? '추천인 보상')
                                                                       : (AppLocalizations.of(context)?.get('notifications') ?? 'Notifications'))))))),
                                           style: TextStyle(
-                                            fontFamily: 'BMJUA',
+                                            fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                             color: colorScheme.textSecondary,
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
+                                        SizedBox(height: 4),
                                         Text(
                                           notification
                                               .getLocalizedMessage(context),
                                           style: TextStyle(
-                                            fontFamily: 'BMJUA',
+                                            fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                             color: colorScheme.textPrimary,
                                             fontSize: 14,
                                             fontWeight: notification.isRead
@@ -337,12 +337,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                 : FontWeight.bold,
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
+                                        SizedBox(height: 8),
                                         Text(
                                           DateFormat('MM/dd HH:mm')
                                               .format(notification.createdAt),
                                           style: TextStyle(
-                                            fontFamily: 'BMJUA',
+                                            fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                             color: colorScheme.textSecondary,
                                             fontSize: 12,
                                           ),
@@ -352,7 +352,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   ),
                                 ),
                                 if (isFriendRequest) ...[
-                                  const SizedBox(width: 16),
+                                  SizedBox(width: 16),
                                   Opacity(
                                     opacity: notification.isRead ? 0.9 : 1.0,
                                     child: Column(
@@ -367,7 +367,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                               userId,
                                               authController
                                                       .userModel?.nickname ??
-                                                  '알 수 없음',
+                                                  (AppLocalizations.of(context)?.get('unknown') ?? 'Unknown'),
                                               notification.senderId,
                                               notification.senderNickname,
                                             );
@@ -375,7 +375,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                           child: Container(
                                             width: 70,
                                             height: 36,
-                                            decoration: const BoxDecoration(
+                                            decoration: BoxDecoration(
                                               image: DecorationImage(
                                                 image: AssetImage(
                                                     'assets/images/Confirm_Button.png'),
@@ -387,22 +387,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                 AppLocalizations.of(context)
                                                         ?.get('accept') ??
                                                     'Accept',
-                                                style: const TextStyle(
-                                                  fontFamily: 'BMJUA',
+                                                style: TextStyle(
+                                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                                   fontSize: 12,
-                                                  color: Color(0xFF4E342E),
+                                                  color: const Color(0xFF4E342E),
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
+                                        SizedBox(height: 8),
                                         GestureDetector(
                                           onTap: () async {
                                             final userNickname = authController
                                                     .userModel?.nickname ??
-                                                '알 수 없음';
+                                                (AppLocalizations.of(context)?.get('unknown') ?? 'Unknown');
                                             await socialController
                                                 .rejectFriendRequest(
                                               requestId,
@@ -415,7 +415,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                           child: Container(
                                             width: 70,
                                             height: 36,
-                                            decoration: const BoxDecoration(
+                                            decoration: BoxDecoration(
                                               image: DecorationImage(
                                                 image: AssetImage(
                                                     'assets/images/Cancel_Button.png'),
@@ -427,10 +427,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                 AppLocalizations.of(context)
                                                         ?.get('reject') ??
                                                     'Reject',
-                                                style: const TextStyle(
-                                                  fontFamily: 'BMJUA',
+                                                style: TextStyle(
+                                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                                   fontSize: 12,
-                                                  color: Color(0xFF4E342E),
+                                                  color: const Color(0xFF4E342E),
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
@@ -475,8 +475,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                           ?.get(
                                                               'nestFullError') ??
                                                       '10명이 꽉차서 더 이상 입장할 수 없습니다.',
-                                                  style: const TextStyle(
-                                                      fontFamily: 'BMJUA',
+                                                  style: TextStyle(
+                                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                                       fontSize: 16),
                                                   textAlign: TextAlign.center,
                                                 ),
@@ -497,7 +497,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                         child: Container(
                                           width: 70,
                                           height: 36,
-                                          decoration: const BoxDecoration(
+                                          decoration: BoxDecoration(
                                             image: DecorationImage(
                                               image: AssetImage(
                                                   'assets/images/Confirm_Button.png'),
@@ -509,17 +509,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                               AppLocalizations.of(context)
                                                       ?.get('accept') ??
                                                   'Accept',
-                                              style: const TextStyle(
-                                                fontFamily: 'BMJUA',
+                                              style: TextStyle(
+                                                fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                                 fontSize: 12,
-                                                color: Color(0xFF4E342E),
+                                                color: const Color(0xFF4E342E),
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      SizedBox(height: 8),
                                       GestureDetector(
                                         onTap: () async {
                                           final inviteId = notification
@@ -534,7 +534,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                         child: Container(
                                           width: 70,
                                           height: 36,
-                                          decoration: const BoxDecoration(
+                                          decoration: BoxDecoration(
                                             image: DecorationImage(
                                               image: AssetImage(
                                                   'assets/images/Cancel_Button.png'),
@@ -546,10 +546,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                               AppLocalizations.of(context)
                                                       ?.get('reject') ??
                                                   'Reject',
-                                              style: const TextStyle(
-                                                fontFamily: 'BMJUA',
+                                              style: TextStyle(
+                                                fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                                 fontSize: 12,
-                                                color: Color(0xFF4E342E),
+                                                color: const Color(0xFF4E342E),
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -561,14 +561,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 ] else if (notification.type ==
                                     NotificationType.cheerMessage)
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 12),
+                                    padding: EdgeInsets.only(left: 12),
                                     child: notification.isReplied
                                         ? Opacity(
                                             opacity: 0.3,
                                             child: Container(
                                               width: 70,
                                               height: 36,
-                                              decoration: const BoxDecoration(
+                                              decoration: BoxDecoration(
                                                 image: DecorationImage(
                                                   image: AssetImage(
                                                       'assets/images/Cancel_Button.png'),
@@ -581,10 +581,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                           ?.get(
                                                               'replyCompleted') ??
                                                       'Replied',
-                                                  style: const TextStyle(
-                                                    fontFamily: 'BMJUA',
+                                                  style: TextStyle(
+                                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                                     fontSize: 11,
-                                                    color: Color(0xFF4E342E),
+                                                    color: const Color(0xFF4E342E),
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
@@ -602,7 +602,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                             child: Container(
                                               width: 70,
                                               height: 36,
-                                              decoration: const BoxDecoration(
+                                              decoration: BoxDecoration(
                                                 image: DecorationImage(
                                                   image: AssetImage(
                                                       'assets/images/Cancel_Button.png'),
@@ -615,9 +615,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                                           ?.get('reply') ??
                                                       'Reply',
                                                   style: TextStyle(
-                                                    fontFamily: 'BMJUA',
+                                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily,
                                                     fontSize: 12,
-                                                    color: Color(0xFF4E342E),
+                                                    color: const Color(0xFF4E342E),
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
@@ -714,21 +714,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
               color: colorScheme.primaryButton.withOpacity(0.5),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Text(
             title,
             style: TextStyle(
-              fontFamily: 'BMJUA',
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily,
               color: colorScheme.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             subtitle,
             style: TextStyle(
-              fontFamily: 'BMJUA',
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily,
               color: colorScheme.textSecondary,
               fontSize: 14,
             ),

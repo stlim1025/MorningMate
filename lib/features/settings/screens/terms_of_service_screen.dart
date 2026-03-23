@@ -6,7 +6,9 @@ class TermsOfServiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isKorean = Localizations.localeOf(context).languageCode == 'ko';
+    final langCode = Localizations.localeOf(context).languageCode;
+    final isKorean = langCode == 'ko';
+    final isJapanese = langCode == 'ja';
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
     return Scaffold(
@@ -19,7 +21,7 @@ class TermsOfServiceScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isKorean ? '이용약관' : 'Terms of Service',
+          isKorean ? '서비스 이용약관' : (isJapanese ? 'サービス利用規約' : 'Service Terms'),
           style: TextStyle(
             color: colorScheme.textPrimary,
             fontWeight: FontWeight.bold,
@@ -62,6 +64,39 @@ class TermsOfServiceScreen extends StatelessWidget {
               Center(
                 child: Text(
                   '시행일자: 2026년 2월 1일',
+                  style: TextStyle(color: colorScheme.textHint, fontSize: 12),
+                ),
+              ),
+            ] else if (isJapanese) ...[
+              _buildSection(
+                colorScheme,
+                '第1条（目的）',
+                '本規約は、「Morni」（以下「サービス」）が提供するすべてのサービスの利用条件および手続き、利用者とサービス運営者の権利、義務、および責任事項を規定することを目的とします。',
+              ),
+              _buildSection(
+                colorScheme,
+                '第2条（規約の明示と改定）',
+                '1. サービスは、本規約の内容をサービス画面に掲示し、利用者が容易に確認できるようにします。\n2. サービスは、関連法令に違反しない範囲で本規約を改定することができます。',
+              ),
+              _buildSection(
+                colorScheme,
+                '第3条（サービスの提供および変更）',
+                '1. サービスは、利用者に以下のサービスを提供します。\n  - 朝の日記作成および記録サービス\n  - キャラクターの成長およびブランチシステム\n  - 友達間の応援メッセージ送信機能\n2. サービスは、技術的仕様の変更などの場合、将来締結される契約に基づいて提供するサービスの内容を変更することができます。',
+              ),
+              _buildSection(
+                colorScheme,
+                '第4条（利用者の義務）',
+                '利用者は以下の行為をしてはなりません。\n1. 申込または変更時の虚偽内容の登録\n2. 他人の情報の盗用\n3. サービスに掲示された情報の変更\n4. サービスが定めた情報以外の情報（コンピュータープログラムなど）の送信または掲示',
+              ),
+              _buildSection(
+                colorScheme,
+                '第5条（契約解除および利用制限）',
+                '利用者が利用契約を解除しようとする場合、利用者本人がサービス内のアカウント退会機能を使用して解除する必要があります。',
+              ),
+              const SizedBox(height: 40),
+              Center(
+                child: Text(
+                  '施行日：2026年2月1日',
                   style: TextStyle(color: colorScheme.textHint, fontSize: 12),
                 ),
               ),

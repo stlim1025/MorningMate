@@ -132,7 +132,7 @@ class _FriendCardState extends State<FriendCard> {
               onTap: onTap,
               child: Center(
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
+                  duration: Duration(milliseconds: 200),
                   child: Text(
                     isCooldown
                         ? AppLocalizations.of(context)?.getFormat(
@@ -141,7 +141,7 @@ class _FriendCardState extends State<FriendCard> {
                         : AppLocalizations.of(context)?.get('wakeUp') ?? '깨우기',
                     key: ValueKey(isCooldown ? seconds : -1),
                     style: TextStyle(
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       fontSize: fontSize,
                       fontWeight: FontWeight.bold,
                       color: isCooldown ? Colors.grey : Colors.brown,
@@ -249,7 +249,7 @@ class _FriendCardState extends State<FriendCard> {
                                           : Text(
                                               currentFriend.nickname[0],
                                               style: TextStyle(
-                                                fontFamily: 'BMJUA',
+                                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                 color: Colors.brown,
                                                 fontSize: fontSizeLarge * 0.7,
                                                 fontWeight: FontWeight.bold,
@@ -295,7 +295,7 @@ class _FriendCardState extends State<FriendCard> {
                             Text(
                               currentFriend.nickname,
                               style: TextStyle(
-                                fontFamily: 'BMJUA',
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 color: Colors.brown,
                                 fontSize: fontSizeMedium,
                                 fontWeight: FontWeight.bold,
@@ -312,11 +312,11 @@ class _FriendCardState extends State<FriendCard> {
                                   Text('🔥',
                                       style:
                                           TextStyle(fontSize: fontSizeSmall)),
-                                  const SizedBox(width: 2),
+                                  SizedBox(width: 2),
                                   Text(
                                     '${currentFriend.displayConsecutiveDays}${AppLocalizations.of(context)?.get('days') ?? '일'}',
                                     style: TextStyle(
-                                      fontFamily: 'BMJUA',
+                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                       color: Colors.brown,
                                       fontSize: fontSizeSmall,
                                       fontWeight: FontWeight.bold,
@@ -325,24 +325,24 @@ class _FriendCardState extends State<FriendCard> {
                                 ],
                               ),
                             ),
-                            const Spacer(),
+                            Spacer(),
                             if (isAwakeRequested)
                               Container(
                                 width: double.infinity,
                                 padding:
-                                    const EdgeInsets.only(top: 4, bottom: 8),
+                                    EdgeInsets.only(top: 4, bottom: 8),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.check_circle,
                                         color: Colors.brown, size: iconSize),
-                                    const SizedBox(width: 2),
+                                    SizedBox(width: 2),
                                     Text(
                                       AppLocalizations.of(context)
                                               ?.get('written') ??
                                           '작성 완료',
                                       style: TextStyle(
-                                        fontFamily: 'BMJUA',
+                                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                         color: Colors.brown,
                                         fontSize: fontSizeTiny,
                                         fontWeight: FontWeight.bold,

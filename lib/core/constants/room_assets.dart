@@ -8,6 +8,7 @@ class RoomAsset {
   final String name;
   final String? nameKo;
   final String? nameEn;
+  final String? nameJa;
   final int price;
   final IconData icon;
   final Color? color;
@@ -31,6 +32,7 @@ class RoomAsset {
     required this.name,
     this.nameKo,
     this.nameEn,
+    this.nameJa,
     required this.price,
     required this.icon,
     this.color,
@@ -70,10 +72,12 @@ class RoomAsset {
   String getLocalizedName(BuildContext context) {
     final lang = AppLocalizations.of(context)?.locale.languageCode ?? 'en';
     if (lang == 'ko' && nameKo != null && nameKo!.isNotEmpty) return nameKo!;
+    if (lang == 'ja' && nameJa != null && nameJa!.isNotEmpty) return nameJa!;
     if (lang == 'en' && nameEn != null && nameEn!.isNotEmpty) return nameEn!;
 
-    final l10nName = AppLocalizations.of(context)?.get('item_name_$id');
-    if (l10nName != null && l10nName != 'item_name_$id') {
+    final l10nKey = 'item_name_$id';
+    final l10nName = AppLocalizations.of(context)?.get(l10nKey);
+    if (l10nName != null && l10nName != l10nKey) {
       return l10nName;
     }
     return name;
@@ -86,6 +90,7 @@ class RoomAsset {
       name: name,
       nameKo: nameKo,
       nameEn: nameEn,
+      nameJa: nameJa,
       price: price,
       icon: icon,
       color: color,

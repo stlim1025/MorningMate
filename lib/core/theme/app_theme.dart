@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_color_scheme.dart';
 import 'app_colors.dart';
 import 'app_theme_type.dart';
+import 'package:morni/core/localization/app_localizations.dart';
 
 class AppThemePalette {
   const AppThemePalette({
@@ -55,18 +56,20 @@ class AppTheme {
     AppThemeType.light: _lightPalette,
   };
 
-  static ThemeData themeFor(AppThemeType type) {
-    return _buildTheme(_palettes[type] ?? _lightPalette);
+  static ThemeData themeFor(AppThemeType type, {String? fontFamily}) {
+    return _buildTheme(_palettes[type] ?? _lightPalette, fontFamily: fontFamily);
   }
 
   static ThemeData get lightTheme => themeFor(AppThemeType.light);
 
-  static ThemeData _buildTheme(AppThemePalette palette) {
+  static ThemeData _buildTheme(AppThemePalette palette, {String? fontFamily}) {
     final isDark = palette.brightness == Brightness.dark;
+    final family = fontFamily ?? 'Pretendard';
     return ThemeData(
       useMaterial3: true,
       brightness: palette.brightness,
-      fontFamily: 'Pretendard',
+      fontFamily: family,
+      fontFamilyFallback: const ['KiwiMaru', 'Pretendard', 'BMJUA'],
       colorScheme: ColorScheme(
         brightness: palette.brightness,
         primary: palette.primary,
@@ -83,14 +86,15 @@ class AppTheme {
       scaffoldBackgroundColor: palette.background,
       cardColor: palette.card,
       dialogBackgroundColor: palette.card,
-      textTheme: _textTheme(palette.textPrimary),
+      textTheme: _textTheme(palette.textPrimary, fontFamily: family),
       appBarTheme: AppBarTheme(
         backgroundColor: palette.background,
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: palette.iconColor),
         titleTextStyle: TextStyle(
-          fontFamily: 'Pretendard',
+          fontFamily: family,
+          fontFamilyFallback: const ['KiwiMaru', 'Pretendard', 'BMJUA'],
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: palette.textPrimary,
@@ -154,40 +158,46 @@ class AppTheme {
     );
   }
 
-  static TextTheme _textTheme(Color baseColor) {
+  static TextTheme _textTheme(Color baseColor, {required String fontFamily}) {
     return TextTheme(
       displayLarge: TextStyle(
-        fontFamily: 'Pretendard',
+        fontFamily: fontFamily,
+        fontFamilyFallback: const ['KiwiMaru', 'Pretendard', 'BMJUA'],
         fontSize: 32,
         fontWeight: FontWeight.bold,
         color: baseColor,
       ),
       displayMedium: TextStyle(
-        fontFamily: 'Pretendard',
+        fontFamily: fontFamily,
+        fontFamilyFallback: const ['KiwiMaru', 'Pretendard', 'BMJUA'],
         fontSize: 28,
         fontWeight: FontWeight.bold,
         color: baseColor,
       ),
       titleLarge: TextStyle(
-        fontFamily: 'Pretendard',
+        fontFamily: fontFamily,
+        fontFamilyFallback: const ['KiwiMaru', 'Pretendard', 'BMJUA'],
         fontSize: 22,
         fontWeight: FontWeight.w600,
         color: baseColor,
       ),
       titleMedium: TextStyle(
-        fontFamily: 'Pretendard',
+        fontFamily: fontFamily,
+        fontFamilyFallback: const ['KiwiMaru', 'Pretendard', 'BMJUA'],
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: baseColor,
       ),
       bodyLarge: TextStyle(
-        fontFamily: 'Pretendard',
+        fontFamily: fontFamily,
+        fontFamilyFallback: const ['KiwiMaru', 'Pretendard', 'BMJUA'],
         fontSize: 16,
         fontWeight: FontWeight.normal,
         color: baseColor,
       ),
       bodyMedium: TextStyle(
-        fontFamily: 'Pretendard',
+        fontFamily: fontFamily,
+        fontFamilyFallback: const ['KiwiMaru', 'Pretendard', 'BMJUA'],
         fontSize: 14,
         fontWeight: FontWeight.normal,
         color: baseColor,

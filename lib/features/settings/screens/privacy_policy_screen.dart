@@ -6,7 +6,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isKorean = Localizations.localeOf(context).languageCode == 'ko';
+    final langCode = Localizations.localeOf(context).languageCode;
+    final isKorean = langCode == 'ko';
+    final isJapanese = langCode == 'ja';
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
     return Scaffold(
@@ -19,7 +21,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isKorean ? '개인정보 처리방침' : 'Privacy Policy',
+          isKorean ? '개인정보 처리방침' : (isJapanese ? 'プライバシーポリシー' : 'Privacy Policy'),
           style: TextStyle(
             color: colorScheme.textPrimary,
             fontWeight: FontWeight.bold,
@@ -111,6 +113,86 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 colorScheme,
                 '커뮤니티 가이드라인',
                 'Morni는 안전하고 긍정적인 커뮤니티 환경을 지향합니다.\n- 타인을 비방, 괴롭힘, 위협하는 행위를 금지합니다.\n- 혐오 표현, 차별적 발언, 음란물, 불법 콘텐츠 게시를 금지합니다.\n- 타인의 개인정보를 무단으로 공개하는 행위를 금지합니다.\n- 스팸, 광고성 콘텐츠 게시를 금지합니다.\n위 가이드라인을 위반하는 경우 콘텐츠 삭제, 기능 제한, 계정 제한 등의 조치가 이루어질 수 있습니다.\n이용자는 부적절한 콘텐츠를 신고할 수 있으며, 서비스 제공자는 합리적인 기간 내에 검토합니다.',
+              ),
+            ] else if (isJapanese) ...[
+              Text(
+                "LemoNary（以下「サービス提供者」）は、Morni利用者の個人情報を重要に考え、「個人情報保護法」および関連法令を遵守します。",
+                style: TextStyle(
+                  color: colorScheme.textSecondary,
+                  fontSize: 14,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildSection(
+                colorScheme,
+                '1. 個人情報の処理目的',
+                'サービス提供者は、以下の目的のために個人情報を処理します。\n- 会員の識別およびアカウント管理\n- Morniサービス（日記の作成、部屋の装飾、友達機能）の提供\n- サービスの改善および統計分析\n- エラー分析および安定性の確保\n- 顧客の問い合わせ対応\n- パーソナライズされた広告の提供',
+              ),
+              _buildSection(
+                colorScheme,
+                '2. 処理する個人情報の項目',
+                '- 必須項目：メールアドレス、ニックネーム（ソーシャルログイン時に提供）\n- ユーザー生成コンテンツ：利用者が作成した日記の内容および部屋の装飾データ\n- 自動収集項目：デバイス情報（OS、デバイスモデル）、IPアドレス、アプリ利用記録、広告識別子（AAID/IDFA）\n- 問い合わせ時：利用者が自発的に提供するメールアドレスおよび問い合わせ内容',
+              ),
+              _buildSection(
+                colorScheme,
+                '3. 個人情報の処理および保有期間',
+                'サービス提供者は、会員退会時に遅滞なく個人情報を削除します。\nただし、関連法令により保存が必要な場合、該当期間中は保管した後で破棄します。\nFirebase Analytics および Crashlytics のデータは、Googleのポリシーに基づく保管期間中保存されます。',
+              ),
+              _buildSection(
+                colorScheme,
+                '4. 個人情報の第三者提供および処理委託',
+                'サービス提供者は、円滑なサービス提供のため以下の業者に個人情報の処理を委託します。\n- Google LLC – Firebase Analytics, Crashlytics, Authentication, Cloud Firestore, AdMob\n- Apple Inc. – Appleログイン\n- Kakao Corp. – Kakaoログイン',
+              ),
+              _buildSection(
+                colorScheme,
+                '5. 個人情報の国外移転',
+                'サービス提供者は、Google Firebase および AdMob の使用に伴い、個人情報を国外に移転する場合があります。\n- 移転先：米国などGoogleデータセンターが所在する国\n- 移転項目：デバイス情報、利用記録、広告識別子、ユーザー生成コンテンツ\n- 移転目的：サービスの提供、データ保存、分析、広告提供\n- 保管期間：サービス利用期間または関連法令に基づく期間',
+              ),
+              _buildSection(
+                colorScheme,
+                '6. パーソナライズされた広告',
+                '本サービスは、Google AdMobを通じて広告を提供し、広告識別子を活用してパーソナライズされた広告を提供することがあります。\nユーザーはデバイスの設定を通じて広告のパーソナライズを制限することができます。',
+              ),
+              _buildSection(
+                colorScheme,
+                '7. ユーザーコンテンツの保護',
+                '利用者が作成した日記の内容および関連データはFirebaseサーバーに保存され、保存時に暗号化されて保護されます。\nまた、送信過程でもセキュリティプロトコル（HTTPS）を通じて安全に処理されます。',
+              ),
+              _buildSection(
+                colorScheme,
+                '8. 情報主体の権利とその行使方法',
+                '利用者はいつでも自身の個人情報の照会、修正、削除を要請することができます。\nアプリ内の「アカウント削除」機能を通じて即時に退会することができ、退会時にはすべての個人情報（日記および部屋データを含む）は遅滞なく削除されます。\nお問い合わせ：stlim1026@gmail.com',
+              ),
+              _buildSection(
+                colorScheme,
+                '9. 児童の個人情報保護',
+                '本サービスは、13歳未満の児童の個人情報を意図的に収集しません。該当する情報が発見された場合は直ちに削除します。',
+              ),
+              _buildSection(
+                colorScheme,
+                '10. 個人情報の安全性確保措置',
+                'サービス提供者は、個人情報の暗号化保存、アクセス制御、セキュリティサーバーの運営などの技術的・管理的な保護措置を実施します。',
+              ),
+              _buildSection(
+                colorScheme,
+                '11. 個人情報保護責任者',
+                '氏名：Lim Seung Taek\nメールアドレス：stlim1026@gmail.com',
+              ),
+              _buildSection(
+                colorScheme,
+                '12. 個人情報処理方針の変更',
+                '本方針は2026年2月19日より施行されます。',
+              ),
+              _buildSection(
+                colorScheme,
+                '13. ユーザー生成コンテンツおよび運営ポリシー',
+                'Morniは、利用者が部屋にメモを作成し、友達がそれを閲覧したり反応（ハートなど）を残すことができる機能を提供します。\n利用者が作成したメモは友達に公開される可能性があり、サービス運営ポリシーに従って管理されます。\n利用者は不適切なコンテンツやサービスポリシーに違反するコンテンツを報告することができます。報告されたコンテンツは検討後、運営ポリシーに違反する場合、削除されることがあります。\n運営者が削除したコンテンツは復旧されない場合があります。\n利用者はいつでも友達を削除またはブロックすることができ、友達関係が解除されると該当利用者のアクセスが制限されます。',
+              ),
+              _buildSection(
+                colorScheme,
+                'コミュニティガイドライン',
+                'Morniは安全で肯定的なコミュニティ環境を目指しています。\n- 他人を誹謗中傷、嫌がらせ、脅迫する行為を禁止します。\n- ヘイトスピーチ、差別的な発言、ポルノ、違法コンテンツの掲示を禁止します。\n- 他人の個人情報を無断で公開する行為を禁止します。\n- スパム、広告目的のコンテンツ掲示を禁止します。\n上記のガイドラインに違反した場合、コンテンツの削除、機能制限、アカウント制限などの措置が行われる場合があります。\n利用者は不適切なコンテンツを報告することができ、サービス提供者は合理的な期間内に検討します。',
               ),
             ] else ...[
               Text(

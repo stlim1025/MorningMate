@@ -105,7 +105,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 children: [
                   // Custom AppBar replacement
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
                     child: StreamBuilder<List<UserModel>>(
                       stream: friendsStream,
                       initialData: socialController.friends,
@@ -120,7 +120,7 @@ class _SocialScreenState extends State<SocialScreen> {
                         return Container(
                           width: 150,
                           height: 40,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             image: DecorationImage(
                               image: AssetImage(
                                   'assets/icons/TopFriend_Label.png'),
@@ -128,7 +128,7 @@ class _SocialScreenState extends State<SocialScreen> {
                             ),
                           ),
                           alignment: Alignment.center,
-                          padding: const EdgeInsets.only(top: 4, left: 10),
+                          padding: EdgeInsets.only(top: 4, left: 10),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -139,11 +139,11 @@ class _SocialScreenState extends State<SocialScreen> {
                                 style: TextStyle(
                                   color: colorScheme.textPrimary,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'BMJUA',
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   fontSize: 16,
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 AppLocalizations.of(context)?.getFormat(
                                         'friendsCount',
@@ -152,7 +152,7 @@ class _SocialScreenState extends State<SocialScreen> {
                                 style: TextStyle(
                                   color: colorScheme.textPrimary,
                                   fontWeight: FontWeight.normal,
-                                  fontFamily: 'BMJUA',
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   fontSize: 16,
                                 ),
                               ),
@@ -202,10 +202,10 @@ class _SocialScreenState extends State<SocialScreen> {
                                                       ?.get('addFriendEmpty') ??
                                                   'Add a friend',
                                               textAlign: TextAlign.center,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color: Colors.brown,
                                                 fontSize: 18,
-                                                fontFamily: 'BMJUA',
+                                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                 height: 1.2,
                                               ),
                                             ),
@@ -218,7 +218,7 @@ class _SocialScreenState extends State<SocialScreen> {
                                 // Content Layer
                                 Column(
                                   children: [
-                                    const SizedBox(height: 8),
+                                    SizedBox(height: 8),
                                     // Friend Requests
                                     Consumer<SocialController>(
                                       builder: (context, controller, child) {
@@ -226,10 +226,10 @@ class _SocialScreenState extends State<SocialScreen> {
                                           return const SizedBox.shrink();
                                         }
                                         return Container(
-                                          margin: const EdgeInsets.symmetric(
+                                          margin: EdgeInsets.symmetric(
                                               horizontal: 16, vertical: 8),
-                                          padding: const EdgeInsets.all(20),
-                                          decoration: const BoxDecoration(
+                                          padding: EdgeInsets.all(20),
+                                          decoration: BoxDecoration(
                                             image: DecorationImage(
                                               image: AssetImage(
                                                   'assets/images/FriendRequest_Background.png'),
@@ -245,7 +245,7 @@ class _SocialScreenState extends State<SocialScreen> {
                                                   Icon(Icons.person_add_rounded,
                                                       color: Colors.brown,
                                                       size: 24),
-                                                  const SizedBox(width: 12),
+                                                  SizedBox(width: 12),
                                                   Text(
                                                     AppLocalizations.of(context)
                                                             ?.get(
@@ -257,18 +257,18 @@ class _SocialScreenState extends State<SocialScreen> {
                                                       fontSize: 16,
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontFamily: 'BMJUA',
+                                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                     ),
                                                   ),
-                                                  const Spacer(),
+                                                  Spacer(),
                                                   Text(
                                                     '${controller.friendRequests.length}',
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       color: Colors.brown,
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       fontSize: 18,
-                                                      fontFamily: 'BMJUA',
+                                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                     ),
                                                   ),
                                                   const SizedBox(width: 20),
@@ -348,10 +348,10 @@ class _SocialScreenState extends State<SocialScreen> {
                       targetKey: _addFriendKey,
                       title: AppLocalizations.of(context)
                               ?.get('social_tutorial_title') ??
-                          "친구와 함께 놀자! 🤝",
+                          "Let's play together! 🤝",
                       text: AppLocalizations.of(context)
                               ?.get('social_tutorial_text') ??
-                          "다른 친구들은 방을 어떻게 꾸몄을까? 친구를 추가해봐! 친구의 연속 일기 일수도 확인하고 방 구경도 가보자. 마음에 드는 방이 있다면 슬쩍 참고해 봐도 좋아!",
+                          "How do other friends decorate their rooms? Add a friend! You can see their consecutive diary streak and visit their rooms. If you like a room, feel free to take inspiration!",
                     ),
                   ],
                   onComplete: () {
@@ -401,7 +401,7 @@ class _SocialScreenState extends State<SocialScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               user.nickname,
@@ -409,11 +409,11 @@ class _SocialScreenState extends State<SocialScreen> {
                 color: colorScheme.textPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
-                fontFamily: 'BMJUA',
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           // 거절 버튼
           GestureDetector(
             onTap: () =>
@@ -421,7 +421,7 @@ class _SocialScreenState extends State<SocialScreen> {
             child: Container(
               width: 50,
               height: 32,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/images/Cancel_Button.png'),
                   fit: BoxFit.fill,
@@ -433,14 +433,14 @@ class _SocialScreenState extends State<SocialScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     color: colorScheme.textSecondary,
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           // 수락 버튼
           GestureDetector(
             onTap: () =>
@@ -448,7 +448,7 @@ class _SocialScreenState extends State<SocialScreen> {
             child: Container(
               width: 50,
               height: 32,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/images/Confirm_Button.png'),
                   fit: BoxFit.fill,
@@ -457,10 +457,10 @@ class _SocialScreenState extends State<SocialScreen> {
               child: Center(
                 child: Text(
                   AppLocalizations.of(context)?.get('accept') ?? 'Accept',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     color: Colors.brown,
                   ),
                 ),
@@ -534,7 +534,7 @@ class _SocialScreenState extends State<SocialScreen> {
         context: context,
         key: AppDialogKey.guestMigration,
         title: AppLocalizations.of(context)?.get('friendSocialLoginTitle') ??
-            '친구와 함께 하려면 로그인을 해주세요',
+            'Please login to play with friends',
       );
 
       if (provider != null && context.mounted) {
@@ -542,7 +542,7 @@ class _SocialScreenState extends State<SocialScreen> {
           await authController.linkWithSocialProvider(provider);
           if (context.mounted) {
             MemoNotification.show(context,
-                AppLocalizations.of(context)?.get('signupSuccess') ?? '성공적으로 계정이 연결되었습니다!');
+                AppLocalizations.of(context)?.get('signupSuccess') ?? 'Account linked successfully!');
           }
         } catch (e) {
           if (context.mounted) {
@@ -560,7 +560,7 @@ class _SocialScreenState extends State<SocialScreen> {
       context: context,
       key: AppDialogKey.addFriend,
       content: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: 16),
         child: PopupTextField(
           controller: controller,
           hintText: AppLocalizations.of(context)?.get('enterFriendNickname') ??
@@ -694,15 +694,15 @@ class _AnimatedAddFriendButtonState extends State<_AnimatedAddFriendButton>
             ),
             Positioned.fill(
               child: Align(
-                alignment: const Alignment(0, 0.2),
+                alignment: Alignment(0, 0.2),
                 child: Text(
                   AppLocalizations.of(context)?.get('addFriendButton') ??
                       '+ Add Friend',
-                  style: const TextStyle(
-                    fontFamily: 'BMJUA',
+                  style: TextStyle(
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF4E342E),
+                    color: const Color(0xFF4E342E),
                   ),
                   textAlign: TextAlign.center,
                 ),

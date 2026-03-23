@@ -42,7 +42,7 @@ class ChallengeScreen extends StatelessWidget {
     final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/images/Challenge_Background.png'),
           fit: BoxFit.cover,
@@ -52,11 +52,11 @@ class ChallengeScreen extends StatelessWidget {
         bottom: false,
         child: Column(
           children: [
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Expanded(
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: const BoxDecoration(
+                margin: EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage('assets/images/Challenge_Note.png'),
                     fit: BoxFit.fill,
@@ -64,15 +64,15 @@ class ChallengeScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const SizedBox(height: 15),
+                    SizedBox(height: 15),
                     // Title
                     Text(
                       AppLocalizations.of(context)?.get('challengesTitle') ??
                           'Challenges',
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                      style: TextStyle(
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 18,
-                        color: Color(0xFF4E342E),
+                        color: const Color(0xFF4E342E),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -117,40 +117,40 @@ class ChallengeScreen extends StatelessWidget {
     final double constrainedRatio = progressRatio * 0.94;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 35),
+      padding: EdgeInsets.symmetric(horizontal: 35),
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.bottomRight,
         children: [
           // 1. 텍스트와 게이지 바 커테이너
           Padding(
-            padding: const EdgeInsets.only(right: 25), // 상자와 겹칠 공간 확보
+            padding: EdgeInsets.only(right: 25), // 상자와 겹칠 공간 확보
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(left: 20, top: 4),
+                      padding: EdgeInsets.only(left: 20, top: 4),
                       child: Text(
                         AppLocalizations.of(context)
                                 ?.get('challengesProgress') ??
                             'Challenges Completed',
-                        style: const TextStyle(
-                          fontFamily: 'BMJUA',
+                        style: TextStyle(
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                           fontSize: 14,
-                          color: Color(0xFF4E342E),
+                          color: const Color(0xFF4E342E),
                         ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(right: 20, top: 4),
+                      padding: EdgeInsets.only(right: 20, top: 4),
                       child: Text(
                         '$completed / $total',
-                        style: const TextStyle(
-                          fontFamily: 'BMJUA',
+                        style: TextStyle(
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                           fontSize: 14,
-                          color: Color(0xFF4E342E),
+                          color: const Color(0xFF4E342E),
                         ),
                       ),
                     ),
@@ -222,7 +222,7 @@ class ChallengeScreen extends StatelessWidget {
             context.push('/challenge-detail/${challenge['id']}');
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: 16),
             child: Row(
               children: [
                 Expanded(
@@ -231,14 +231,14 @@ class ChallengeScreen extends StatelessWidget {
                     children: [
                       Text(
                         challenge['title'],
-                        style: const TextStyle(
-                          fontFamily: 'BMJUA',
+                        style: TextStyle(
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                           fontSize: 16,
-                          color: Color(0xFF4E342E),
+                          color: const Color(0xFF4E342E),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Row(
                         children: [
                           Image.asset(
@@ -249,8 +249,8 @@ class ChallengeScreen extends StatelessWidget {
                           ),
                           Text(
                             ' ${challenge['reward']} ',
-                            style: const TextStyle(
-                              fontFamily: 'BMJUA',
+                            style: TextStyle(
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               fontSize: 12,
                               color: Colors.brown,
                             ),
@@ -270,12 +270,12 @@ class ChallengeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 if (isCompleted)
                   Transform.rotate(
                     angle: -0.1,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         border: Border.all(
@@ -290,7 +290,7 @@ class ChallengeScreen extends StatelessWidget {
                           color: Colors.redAccent.withOpacity(0.6),
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'BMJUA',
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         ),
                       ),
                     ),

@@ -77,12 +77,12 @@ class _LoginScreenState extends State<LoginScreen> {
           fit: BoxFit.contain,
         ),
 
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
 
         Text(
           l10n?.get('introTitle') ?? 'Morni',
           style: Theme.of(context).textTheme.displayMedium?.copyWith(
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             color: Colors.white,
             fontWeight: FontWeight.bold,
             shadows: [
@@ -94,11 +94,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           l10n?.get('introSubtitle') ?? 'Your mate for the morning',
           style: TextStyle(
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             color: Colors.white,
             fontSize: 16,
             shadows: [
@@ -145,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
           colorScheme: colorScheme,
         ),
 
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
 
         // ID로 로그인 & 임시 로그인 버튼들
         Row(
@@ -166,15 +166,15 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: Text(
                 l10n?.get('loginWithID') ?? 'Login with ID',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   color: Colors.white,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             TextButton(
               onPressed: _isLoading ? null : _handleGuestLogin,
               style: TextButton.styleFrom(
@@ -186,8 +186,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: Text(
                 l10n?.get('guestLogin') ?? 'Guest Login',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   color: Colors.white,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
 
         if (kIsWeb) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           TextButton(
             onPressed: _isLoading ? null : _handleAdminWebLogin,
             style: TextButton.styleFrom(
@@ -208,10 +208,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
+            child: Text(
               '관리자로 바로 로그인 (Web Test)',
               style: TextStyle(
-                fontFamily: 'BMJUA',
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -271,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // 로고
           Image.asset(
@@ -281,12 +281,12 @@ class _LoginScreenState extends State<LoginScreen> {
             fit: BoxFit.contain,
           ),
 
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           Text(
             l10n?.get('idLogin') ?? 'ID Login',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontFamily: 'BMJUA',
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               color: Colors.white,
               fontWeight: FontWeight.bold,
               shadows: [
@@ -372,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
 
                 // 로그인 버튼
                 GestureDetector(
@@ -389,7 +389,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fit: BoxFit.fill,
                         ),
                         _isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 24,
                                 width: 24,
                                 child: CircularProgressIndicator(
@@ -400,8 +400,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             : Text(
                                 l10n?.get('login') ?? 'Login',
-                                style: const TextStyle(
-                                  fontFamily: 'BMJUA',
+                                style: TextStyle(
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF4E342E),
@@ -436,11 +436,11 @@ class _LoginScreenState extends State<LoginScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 8, bottom: 8),
+          padding: EdgeInsets.only(left: 8, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
+            style: TextStyle(
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 16,
               color: Color(0xFF4E342E),
               fontWeight: FontWeight.bold,
@@ -477,7 +477,7 @@ class _LoginScreenState extends State<LoginScreen> {
         label: Text(
           label,
           style: TextStyle(
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: textColor,
@@ -741,17 +741,17 @@ class _LoginScreenState extends State<LoginScreen> {
               l10n?.get('suspensionContent') ??
                   '커뮤니티 가이드라인 위반으로 인해\n서비스 이용이 일시적으로 제한되었습니다.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
-                fontFamily: 'BMJUA',
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: const BoxDecoration(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              decoration: BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/images/Option_Area.png'),
                   fit: BoxFit.fill,
@@ -762,27 +762,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(
                     l10n?.get('remainingTimeTitle') ?? '해제까지 남은 시간',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: Colors.black54,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     remainingTime,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   ),
                 ],
               ),
             ),
             if (user.suspensionReason != null) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Builder(
                 builder: (context) {
                   String reasonStr = user.suspensionReason!;
@@ -796,10 +796,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         }) ??
                         '사유: $reasonStr',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: Colors.black45,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   );
                 },

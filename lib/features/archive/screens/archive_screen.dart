@@ -177,10 +177,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                           targetKey: _calendarKey,
                           title: AppLocalizations.of(context)
                                   ?.get('archive_tutorial_title') ??
-                              "소중한 기록들 📅",
+                              "Precious Records 📅",
                           text: AppLocalizations.of(context)
                                   ?.get('archive_tutorial_text') ??
-                              "기록에서는 네가 쓴 소중한 기록들을 확인할 수 있어. 매일의 기분을 달력에서 한눈에 모아보자!",
+                              "Here you can check the precious records you've written. Let's see your daily moods at a glance on the calendar!",
                         ),
                       ],
                       onComplete: () {
@@ -207,7 +207,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
   Widget _buildHeader(BuildContext context, AppColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -215,9 +215,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             AppLocalizations.of(context)?.get('myPage') ?? 'Record',
             key: _titleKey,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: const Color(0xFF4E342E), // Dark brown color
+                  color: Color(0xFF4E342E), // Dark brown color
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'BMJUA',
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 24,
                 ),
           ),
@@ -278,7 +278,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       equippedItems: user?.equippedCharacterItems ?? {},
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
 
                   // User Info
                   Expanded(
@@ -287,22 +287,22 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                       children: [
                         // Nickname (avoid overlapping with point box)
                         Padding(
-                          padding: const EdgeInsets.only(right: 125),
+                          padding: EdgeInsets.only(right: 125),
                           child: Text(
-                            user?.nickname ?? '사용자',
-                            style: const TextStyle(
+                            user?.nickname ?? 'User',
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'BMJUA',
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               color: Color(0xFF4E342E),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         // Level Tag
                         Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 6,
                             vertical: 2,
                           ),
@@ -312,11 +312,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                           ),
                           child: Text(
                             'Lv. ${user?.characterLevel ?? 1}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Color(0xFF8D6E63),
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'BMJUA',
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             ),
                           ),
                         ),
@@ -362,8 +362,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                                                 ?.get('maxLevel') ??
                                             'Max Level')
                                         : '${user.experience} / ${user.requiredExpForNextLevel}',
-                                    style: const TextStyle(
-                                      fontFamily: 'BMJUA',
+                                    style: TextStyle(
+                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                       fontSize: 10,
                                       color: Color(0xFF5D4037),
                                       fontWeight: FontWeight.bold,
@@ -394,8 +394,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   child: Container(
                     width: 120,
                     height: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: const BoxDecoration(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
                       image: DecorationImage(
                         image:
                             AssetImage('assets/images/TextBox_Background.png'),
@@ -415,23 +415,23 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                             cacheWidth: 72,
                             filterQuality: FilterQuality.medium,
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             '${user?.points ?? 0}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Color(0xFF5D4037),
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'BMJUA',
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               fontSize: 14,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             AppLocalizations.of(context)?.get('branch') ??
                                 'Branch',
                             style: TextStyle(
                               color: Color(0xFF8D6E63),
-                              fontFamily: 'BMJUA',
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -455,7 +455,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     return Column(
       children: [
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          margin: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           alignment: Alignment.centerLeft,
           child: Text(
             AppLocalizations.of(context)?.get('diaryWritingInfo') ??
@@ -463,7 +463,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              fontFamily: 'BMJUA',
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               color: colorScheme.textPrimary,
             ),
           ),
@@ -522,17 +522,17 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         // 스타일링
         calendarStyle: CalendarStyle(
           defaultTextStyle: TextStyle(
-            fontFamily: 'NanumPenScript-Regular',
+            fontFamily: AppLocalizations.of(context)?.handwritingFontFamily ?? 'NanumPenScript-Regular',
             fontSize: 20,
             color: colorScheme.textPrimary,
           ),
           weekendTextStyle: TextStyle(
-            fontFamily: 'NanumPenScript-Regular',
+            fontFamily: AppLocalizations.of(context)?.handwritingFontFamily ?? 'NanumPenScript-Regular',
             fontSize: 20,
             color: colorScheme.secondary,
           ),
           outsideTextStyle: TextStyle(
-            fontFamily: 'NanumPenScript-Regular',
+            fontFamily: AppLocalizations.of(context)?.handwritingFontFamily ?? 'NanumPenScript-Regular',
             fontSize: 20,
             color: colorScheme.textHint.withOpacity(0.5),
           ),
@@ -543,7 +543,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           formatButtonVisible: false,
           titleCentered: true,
           titleTextStyle: TextStyle(
-            fontFamily: 'NanumPenScript-Regular',
+            fontFamily: AppLocalizations.of(context)?.handwritingFontFamily ?? 'NanumPenScript-Regular',
             color: colorScheme.textPrimary,
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -556,13 +556,13 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         daysOfWeekHeight: 28, // 요일 라벨 높이 상향
         daysOfWeekStyle: DaysOfWeekStyle(
           weekdayStyle: TextStyle(
-            fontFamily: 'NanumPenScript-Regular',
+            fontFamily: AppLocalizations.of(context)?.handwritingFontFamily ?? 'NanumPenScript-Regular',
             color: colorScheme.textSecondary,
             fontSize: 18,
             height: 1.2, // 줄 높이 설정으로 잘림 방지
           ),
           weekendStyle: TextStyle(
-            fontFamily: 'NanumPenScript-Regular',
+            fontFamily: AppLocalizations.of(context)?.handwritingFontFamily ?? 'NanumPenScript-Regular',
             color: colorScheme.secondary,
             fontSize: 18,
             height: 1.2, // 줄 높이 설정으로 잘림 방지
@@ -581,7 +581,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               child: Text(
                 '${day.day}',
                 style: TextStyle(
-                  fontFamily: 'NanumPenScript-Regular',
+                  fontFamily: AppLocalizations.of(context)?.handwritingFontFamily ?? 'NanumPenScript-Regular',
                   fontSize: 20,
                   color: colorScheme.textPrimary,
                 ),
@@ -592,7 +592,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           selectedBuilder: (context, day, focusedDay) {
             final diary = _getDiaryForDay(day);
             return Container(
-              margin: const EdgeInsets.all(6),
+              margin: EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.5),
                 shape: BoxShape.circle,
@@ -608,7 +608,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     : Text(
                         '${day.day}',
                         style: TextStyle(
-                          fontFamily: 'NanumPenScript-Regular',
+                          fontFamily: AppLocalizations.of(context)?.handwritingFontFamily ?? 'NanumPenScript-Regular',
                           color: const Color(0xFF4E342E),
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -622,7 +622,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             final diary = _getDiaryForDay(day);
             // 선택된 날짜와 같으면 selectedBuilder가 우선하므로 여기선 선택 안 된 오늘만 처리
             return Container(
-              margin: const EdgeInsets.all(6),
+              margin: EdgeInsets.all(6),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: colorScheme.primaryButton.withOpacity(0.5),
@@ -637,7 +637,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                     : Text(
                         '${day.day}',
                         style: TextStyle(
-                          fontFamily: 'NanumPenScript-Regular',
+                          fontFamily: AppLocalizations.of(context)?.handwritingFontFamily ?? 'NanumPenScript-Regular',
                           color: colorScheme.textPrimary, // Fixed color
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -670,7 +670,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     if (diary == null) {
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.symmetric(horizontal: 16),
+        margin: EdgeInsets.symmetric(horizontal: 16),
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -682,34 +682,34 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+              padding: EdgeInsets.symmetric(vertical: 40, horizontal: 20),
               child: Column(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.event_busy,
                     size: 48,
                     color: Color(0xFF8D6E63),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(
                     AppLocalizations.of(context)?.getFormat('monthDayFormat', {
                           'month': _selectedDay!.month.toString(),
                           'day': _selectedDay!.day.toString(),
                         }) ??
-                        DateFormat('M월 d일').format(_selectedDay!),
-                    style: const TextStyle(
-                      fontFamily: 'BMJUA',
+                        DateFormat('MMM d').format(_selectedDay!),
+                    style: TextStyle(
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       color: Color(0xFF4E342E),
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     AppLocalizations.of(context)?.get('noDiaryForDay') ??
-                        '이 날은 일기를 작성하지 않았습니다',
-                    style: const TextStyle(
-                      fontFamily: 'BMJUA',
+                        'No diary written for this day',
+                    style: TextStyle(
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       color: Color(0xFF8D6E63),
                       fontSize: 16,
                     ),
@@ -732,7 +732,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 }) ??
                 DateFormat('M월 d일').format(diary.dateOnly)
           }) ??
-          DateFormat('M월 d일 기록').format(diary.dateOnly),
+          DateFormat('MMM d record').format(diary.dateOnly),
       moodWidget: _buildMoodWidget(
           diary.moods.isNotEmpty ? diary.moods.first : '',
           64), // Increased size from 48 to 64
@@ -749,14 +749,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       final authenticated = await authController.authenticateWithBiometric(
         localizedReason: AppLocalizations.of(context)
                 ?.get('biometricAuthReasonPastRecords') ??
-            '과거 기록을 확인하기 위해 인증이 필요합니다',
+            'Authentication required to view past records',
       );
       if (!authenticated) {
         if (mounted) {
           MemoNotification.show(
               context,
               AppLocalizations.of(context)?.get('biometricAuthFailed') ??
-                  '생체 인증에 실패했습니다. 🔒');
+                  'Biometric authentication failed. 🔒');
         }
         return;
       }
@@ -800,7 +800,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   Widget _buildMyMemosButton() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: EdgeInsets.symmetric(horizontal: 20),
       child: _AnimatedImageButton(
         onTap: _showMyMemosBottomSheet,
         imagePath: 'assets/images/MemoView_Button.png',
@@ -874,14 +874,14 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                         SliverToBoxAdapter(
                           child: Column(
                             children: [
-                              const SizedBox(
+                              SizedBox(
                                   height:
                                       10), // Reduced since Positioned adds 45
                               Text(
                                 AppLocalizations.of(context)?.get('myMemos') ??
                                     '내 메모',
-                                style: const TextStyle(
-                                  fontFamily: 'BMJUA',
+                                style: TextStyle(
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF4E342E),
@@ -924,13 +924,13 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                                 snapshot.data!.docs.isEmpty) {
                               return SliverToBoxAdapter(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(top: 100),
+                                  padding: EdgeInsets.only(top: 100),
                                   child: Column(
                                     children: [
                                       Icon(Icons.note_alt_outlined,
                                           size: 48,
                                           color: Colors.grey.shade300),
-                                      const SizedBox(height: 16),
+                                      SizedBox(height: 16),
                                       Text(
                                         AppLocalizations.of(context)
                                                 ?.get('noMemos') ??
@@ -1179,7 +1179,7 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
+          margin: EdgeInsets.symmetric(horizontal: 16),
           child: Stack(
             children: [
               // Background Image
@@ -1193,7 +1193,7 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
               // Content
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                    EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1201,11 +1201,11 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                     Row(
                       children: [
                         widget.moodWidget,
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Text(
                           widget.dateText,
-                          style: const TextStyle(
-                            fontFamily: 'BMJUA',
+                          style: TextStyle(
+                            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             fontSize: 20,
                             color: Color(0xFF4E342E),
                             fontWeight: FontWeight.bold,
@@ -1225,9 +1225,9 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                       Builder(builder: (context) {
                         String displayQuestion = widget.diary.promptQuestion!;
 
-                        // 영어 모드일 경우 번역 시도
-                        if (Localizations.localeOf(context).languageCode ==
-                            'en') {
+                        // 다국어 번역 시도 (영어, 일본어)
+                        final langCode = Localizations.localeOf(context).languageCode;
+                        if (langCode == 'en' || langCode == 'ja') {
                           // 정규화 함수 (공백, 문장부호 제거)
                           String normalize(String text) {
                             return text.replaceAll(RegExp(r'[\s\?\!.,]'), '');
@@ -1240,7 +1240,10 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                           for (var entry in AdminController
                               .questionTranslationMap.entries) {
                             if (normalize(entry.key) == normalizedOriginal) {
-                              displayQuestion = entry.value;
+                              final translated = entry.value[langCode];
+                              if (translated != null && translated.isNotEmpty) {
+                                displayQuestion = translated;
+                              }
                               break;
                             }
                           }
@@ -1249,7 +1252,7 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(top: 2),
                               child: Icon(
                                 Icons.lightbulb_outline,
@@ -1257,12 +1260,12 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                                 size: 20,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 displayQuestion,
-                                style: const TextStyle(
-                                  fontFamily: 'BMJUA',
+                                style: TextStyle(
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   fontSize: 16,
                                   color: Color(0xFF4E342E),
                                   height: 1.4,
@@ -1272,21 +1275,21 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                           ],
                         );
                       }),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                     ],
                     // Divider 2
                     CustomPaint(
                       size: const Size(double.infinity, 1),
                       painter: _DottedLinePainter(),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     // Bottom: View Content
                     Center(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               border: Border(
                                 bottom: BorderSide(
                                   color: Color(0xFF4E342E),
@@ -1294,13 +1297,13 @@ class _AnimatedDiaryCardState extends State<_AnimatedDiaryCard>
                                 ),
                               ),
                             ),
-                            padding: const EdgeInsets.only(bottom: 1),
+                            padding: EdgeInsets.only(bottom: 1),
                             child: Text(
                               AppLocalizations.of(context)
                                       ?.get('viewDiaryContent') ??
                                   '일기 내용 보기',
-                              style: const TextStyle(
-                                fontFamily: 'BMJUA',
+                              style: TextStyle(
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 fontSize: 18,
                                 color: Color(0xFF4E342E),
                                 fontWeight: FontWeight.bold,

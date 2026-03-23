@@ -6,7 +6,7 @@ import '../data/challenge_data.dart';
 
 class ChallengeDetailScreen extends StatelessWidget {
   final String challengeId;
-  const ChallengeDetailScreen({super.key, required this.challengeId});
+  ChallengeDetailScreen({super.key, required this.challengeId});
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +51,11 @@ class ChallengeDetailScreen extends StatelessWidget {
             bottom: false,
             child: Column(
               children: [
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Expanded(
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: const BoxDecoration(
+                    margin: EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/images/Challenge_Note.png'),
                         fit: BoxFit.fill,
@@ -63,20 +63,20 @@ class ChallengeDetailScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        const SizedBox(height: 10),
+                        SizedBox(height: 10),
                         // 뒤로가기 버튼 + 타이틀
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: EdgeInsets.symmetric(horizontal: 20),
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
                               // 타이틀 (중앙)
                               Text(
                                 loc?.get(challenge.titleKey) ?? challenge.id,
-                                style: const TextStyle(
-                                  fontFamily: 'BMJUA',
+                                style: TextStyle(
+                                  fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   fontSize: 18,
-                                  color: Color(0xFF4E342E),
+                                  color: const Color(0xFF4E342E),
                                 ),
                               ),
                               // Cancel 버튼 (왼쪽)
@@ -174,7 +174,7 @@ class ChallengeDetailScreen extends StatelessWidget {
         targetValue > 0 ? (currentValue / targetValue).clamp(0.0, 1.0) : 0.0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: 4),
       child: Column(
         children: [
           // 현재 / 목표 텍스트
@@ -183,23 +183,23 @@ class ChallengeDetailScreen extends StatelessWidget {
             children: [
               Text(
                 loc?.get('challengeDetailCurrent') ?? 'Current',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 13,
-                  color: Color(0xFF8D6E63),
+                  color: const Color(0xFF8D6E63),
                 ),
               ),
               Text(
                 loc?.get('challengeDetailTarget') ?? 'Target',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 13,
-                  color: Color(0xFF8D6E63),
+                  color: const Color(0xFF8D6E63),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -208,7 +208,7 @@ class ChallengeDetailScreen extends StatelessWidget {
                     ? '$currentValue${loc?.get('days') ?? ' Days'}'
                     : '$currentValue',
                 style: TextStyle(
-                  fontFamily: 'BMJUA',
+                  fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 24,
                   color: isCompleted
                       ? const Color(0xFF4CAF50)
@@ -220,10 +220,10 @@ class ChallengeDetailScreen extends StatelessWidget {
                 isStreakCategory
                     ? '$targetValue${loc?.get('days') ?? ' Days'}'
                     : '$targetValue',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 24,
-                  color: Color(0xFF4E342E),
+                  color: const Color(0xFF4E342E),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -259,10 +259,10 @@ class ChallengeDetailScreen extends StatelessWidget {
               Center(
                 child: Text(
                   '${(progress * 100).toInt()}%',
-                  style: const TextStyle(
-                    fontFamily: 'BMJUA',
+                  style: TextStyle(
+                    fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     fontSize: 11,
-                    color: Color(0xFF5D4037),
+                    color: const Color(0xFF5D4037),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -270,19 +270,19 @@ class ChallengeDetailScreen extends StatelessWidget {
             ],
           ),
           if (isCompleted) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.check_circle,
+                Icon(Icons.check_circle,
                     color: Color(0xFF4CAF50), size: 18),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   loc?.get('completed') ?? 'Completed',
-                  style: const TextStyle(
-                    fontFamily: 'BMJUA',
+                  style: TextStyle(
+                    fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     fontSize: 14,
-                    color: Color(0xFF4CAF50),
+                    color: const Color(0xFF4CAF50),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -301,14 +301,14 @@ class ChallengeDetailScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.info_outline, color: Color(0xFF8D6E63), size: 18),
-            const SizedBox(width: 8),
+            Icon(Icons.info_outline, color: Color(0xFF8D6E63), size: 18),
+            SizedBox(width: 8),
             Text(
               loc?.get('challengeDetailInfo') ?? 'Challenge Details',
-              style: const TextStyle(
-                fontFamily: 'BMJUA',
+              style: TextStyle(
+                fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 fontSize: 15,
-                color: Color(0xFF4E342E),
+                color: const Color(0xFF4E342E),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -317,10 +317,10 @@ class ChallengeDetailScreen extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           loc?.get(challenge.descKey) ?? '',
-          style: const TextStyle(
-            fontFamily: 'KyoboHandwriting2024psw',
+          style: TextStyle(
+            fontFamily: loc?.handwritingFontFamily ?? 'KyoboHandwriting2024psw',
             fontSize: 15,
-            color: Color(0xFF5D4037),
+            color: const Color(0xFF5D4037),
             height: 1.5,
           ),
         ),
@@ -332,19 +332,19 @@ class ChallengeDetailScreen extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.warning_amber_rounded,
+        Icon(Icons.warning_amber_rounded,
             color: Color(0xFFE65100), size: 20),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 loc?.get('challengeDetailWarningTitle') ?? 'Caution',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 14,
-                  color: Color(0xFFE65100),
+                  color: const Color(0xFFE65100),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -352,10 +352,10 @@ class ChallengeDetailScreen extends StatelessWidget {
               Text(
                 loc?.get('challengeDetailWarningDesc') ??
                     'If you miss even one day, the streak resets to 0!',
-                style: const TextStyle(
-                  fontFamily: 'KyoboHandwriting2024psw',
+                style: TextStyle(
+                  fontFamily: loc?.handwritingFontFamily ?? 'KyoboHandwriting2024psw',
                   fontSize: 14,
-                  color: Color(0xFFBF360C),
+                  color: const Color(0xFFBF360C),
                   height: 1.4,
                 ),
               ),
@@ -378,46 +378,46 @@ class ChallengeDetailScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.format_list_numbered,
+            Icon(Icons.format_list_numbered,
                 color: Color(0xFF8D6E63), size: 18),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
               child: Text(
                 loc?.get('challengeDetailRemaining') ??
                     'Remaining challenges in this series',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 14,
-                  color: Color(0xFF4E342E),
+                  color: const Color(0xFF4E342E),
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: Colors.brown.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 '$remainingCount',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 14,
-                  color: Color(0xFF4E342E),
+                  color: const Color(0xFF4E342E),
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         // 같은 계열 도전과제 리스트
         ...sameSeries.map((c) {
           final done = user != null ? c.isCompleted(user) : false;
           final isCurrent = c.id == challengeId;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.only(bottom: 8),
             child: Row(
               children: [
                 Icon(
@@ -426,12 +426,12 @@ class ChallengeDetailScreen extends StatelessWidget {
                       done ? const Color(0xFF4CAF50) : const Color(0xFF8D6E63),
                   size: 16,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     loc?.get(c.titleKey) ?? c.id,
                     style: TextStyle(
-                      fontFamily: 'BMJUA',
+                      fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       fontSize: 13,
                       color: isCurrent
                           ? const Color(0xFF4E342E)
@@ -444,17 +444,17 @@ class ChallengeDetailScreen extends StatelessWidget {
                 if (isCurrent)
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: const Color(0xFF8D6E63).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       loc?.get('challengeDetailCurrentLabel') ?? 'Current',
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                      style: TextStyle(
+                        fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 10,
-                        color: Color(0xFF5D4037),
+                        color: const Color(0xFF5D4037),
                       ),
                     ),
                   ),
@@ -475,26 +475,26 @@ class ChallengeDetailScreen extends StatelessWidget {
           width: 28,
           height: 28,
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               loc?.get('challengeDetailReward') ?? 'Reward',
-              style: const TextStyle(
-                fontFamily: 'BMJUA',
+              style: TextStyle(
+                fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 fontSize: 14,
-                color: Color(0xFF4E342E),
+                color: const Color(0xFF4E342E),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(
               '${challenge.reward} ${loc?.get('branch') ?? 'Branch'}',
-              style: const TextStyle(
-                fontFamily: 'BMJUA',
+              style: TextStyle(
+                fontFamily: loc?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 fontSize: 18,
-                color: Color(0xFFE65100),
+                color: const Color(0xFFE65100),
                 fontWeight: FontWeight.bold,
               ),
             ),

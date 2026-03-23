@@ -18,7 +18,7 @@ class PointHistoryList extends StatelessWidget {
     final authController = context.read<AuthController>();
     final userId = authController.currentUser?.uid;
 
-    if (userId == null) return const Center(child: Text('로그인이 필요합니다.'));
+    if (userId == null) return Center(child: Text('로그인이 필요합니다.'));
 
     return StreamBuilder<List<PointHistoryModel>>(
       stream: pointHistoryService.getUserHistoryStream(userId),
@@ -46,8 +46,8 @@ class PointHistoryList extends StatelessWidget {
               child: Text(
                 AppLocalizations.of(context)?.get('noPointHistory') ??
                     '포인트 내역이 없습니다.',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   color: Color(0xFF8D6E63),
                 ),
               ),
@@ -87,19 +87,19 @@ class PointHistoryList extends StatelessWidget {
     final dateStr = DateFormat('MM.dd HH:mm').format(item.createdAt);
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       leading: _buildTypeIcon(context, item),
       title: Text(
         _getLocalizedDescription(context, item),
-        style: const TextStyle(
-          fontFamily: 'BMJUA',
+        style: TextStyle(
+          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           fontSize: 14,
           color: Color(0xFF4E342E),
         ),
       ),
       subtitle: Text(
         dateStr,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           color: Color(0xFF8D6E63),
         ),
@@ -113,11 +113,11 @@ class PointHistoryList extends StatelessWidget {
             height: 16,
             cacheWidth: 64,
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
           Text(
             amountText,
             style: TextStyle(
-              fontFamily: 'BMJUA',
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: amountColor,
@@ -155,72 +155,82 @@ class PointHistoryList extends StatelessWidget {
 
     String desc = item.description;
 
-    // 1. 유형별 처리
-    if (item.type == 'purchase' && desc.contains(': ')) {
-      final parts = desc.split(': ');
-      if (parts.length == 2) {
-        String category = parts[0];
-        String itemId = parts[1];
-
-        String key = '';
-        if (category.contains('테마'))
-          key = 'historyPurchaseTheme';
-        else if (category.contains('배경'))
-          key = 'historyPurchaseBackground';
-        else if (category.contains('벽지'))
-          key = 'historyPurchaseWallpaper';
-        else if (category.contains('소품'))
-          key = 'historyPurchaseProp';
-        else if (category.contains('이모티콘'))
-          key = 'historyPurchaseEmoticon';
-        else if (category.contains('바닥'))
-          key = 'historyPurchaseFloor';
-        else if (category.contains('창문'))
-          key = 'historyPurchaseWindow';
-        else if (category.contains('캐릭터 아이템'))
-          key = 'historyPurchaseCharacterItem';
-
-        String prefix = key.isNotEmpty ? localizations.get(key) : category;
-
-        // RoomAssets에서 이름 가져오기 시도
-        final asset = _getAssetById(itemId);
-        String name = asset?.getLocalizedName(context) ??
-            localizations.get('item_name_$itemId');
-
-        return '$prefix: $name';
-      }
-    } else if (item.type == 'challenge' && desc.contains(': ')) {
-      final parts = desc.split(': ');
-      if (parts.length == 2) {
-        String challengeId = parts[1];
-        String prefix = localizations.get('historyChallengeReward');
-        String title = localizations.get('challenge_${challengeId}_title');
-        return '$prefix: $title';
-      }
-    } else if (item.type == 'diary') {
+    // 1. type 기반 처리 (언어 독립적)
+    if (item.type == 'diary') {
       return localizations.get('historyDiaryReward');
     } else if (item.type == 'ad') {
       return localizations.get('historyAdReward');
     } else if (item.type == 'sticky_note') {
       return localizations.get('historyStickyNote');
+    } else if (item.type == 'challenge' && desc.contains(': ')) {
+      // description 형식: '도전과제 달성: {challengeId}'
+      final colonIdx = desc.indexOf(': ');
+      if (colonIdx != -1) {
+        final challengeId = desc.substring(colonIdx + 2).trim();
+        final prefix = localizations.get('historyChallengeReward');
+        final title = localizations.get('challenge_${challengeId}_title');
+        return '$prefix: $title';
+      }
     } else if (item.type == 'donation' && desc.contains(': ')) {
-      final parts = desc.split(': ');
-      if (parts.length == 2) {
-        String nestName = parts[1];
-        String prefix = localizations.get('historyDonation');
+      // description 형식: '둥지 기부: {nestName}'
+      final colonIdx = desc.indexOf(': ');
+      if (colonIdx != -1) {
+        final nestName = desc.substring(colonIdx + 2).trim();
+        final prefix = localizations.get('historyDonation');
         return '$prefix: $nestName';
       }
     } else if (item.type == 'reward') {
-      if (desc.contains('오늘의 한마디')) {
+      // description에 한국어 키워드로 분기 (서버에 한국어로 저장되어 있음)
+      if (desc.contains('오늘의 한마디') || desc == '오늘의 한마디 보상') {
         return localizations.get('historyNestReward');
-      } else if (desc.contains('상점 튜토리얼')) {
+      } else if (desc.contains('상점 튜토리얼') || desc == '상점 튜토리얼 완료 보상') {
         return localizations.get('historyShopTutorialReward');
+      }
+      // 기타 reward (레벨업 등)는 원본 표시
+      return localizations.get('historyAdReward'); // fallback
+    } else if (item.type == 'purchase' && desc.contains(': ')) {
+      // description 형식: '{카테고리한국어} 구매: {itemId}'
+      // ': ' 기준으로 마지막 부분이 아이템 ID
+      final colonIdx = desc.indexOf(': ');
+      if (colonIdx != -1) {
+        final category = desc.substring(0, colonIdx).trim();
+        final itemId = desc.substring(colonIdx + 2).trim();
+
+        // 카테고리 한국어 → localization key 매핑
+        String key = '';
+        if (category.contains('테마')) {
+          key = 'historyPurchaseTheme';
+        } else if (category.contains('벽지')) {
+          key = 'historyPurchaseWallpaper';
+        } else if (category.contains('배경')) {
+          key = 'historyPurchaseBackground';
+        } else if (category.contains('이모티콘')) {
+          key = 'historyPurchaseEmoticon';
+        } else if (category.contains('소품')) {
+          key = 'historyPurchaseProp';
+        } else if (category.contains('바닥')) {
+          key = 'historyPurchaseFloor';
+        } else if (category.contains('창문')) {
+          key = 'historyPurchaseWindow';
+        } else if (category.contains('캐릭터 아이템')) {
+          key = 'historyPurchaseCharacterItem';
+        }
+
+        final prefix = key.isNotEmpty ? localizations.get(key) : localizations.get('historyPurchaseProp');
+
+        // 아이템 이름 번역 (RoomAssets → localization 순서로 시도)
+        final asset = _getAssetById(itemId);
+        final name = asset?.getLocalizedName(context) ??
+            localizations.get('item_name_$itemId');
+
+        return '$prefix: $name';
       }
     }
 
-    // 기본 번역 시도 (정확히 일치하는 경우)
+    // 기본 번역 시도 (정확히 일치하는 경우 - 이전 데이터 호환)
     if (desc == '메모 작성') return localizations.get('historyStickyNote');
     if (desc == '광고 보상') return localizations.get('historyAdReward');
+    if (desc == '광고 시청 보상') return localizations.get('historyAdReward');
     if (desc == '오늘의 한마디 보상') return localizations.get('historyNestReward');
     if (desc == '상점 튜토리얼 완료 보상') return localizations.get('historyShopTutorialReward');
 

@@ -97,7 +97,7 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 44, 24, 28),
+                          padding: EdgeInsets.fromLTRB(24, 44, 24, 28),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -106,22 +106,22 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
                                 AppLocalizations.of(context)
                                         ?.get('notificationTime') ??
                                     '알림 시간 설정',
-                                style: const TextStyle(
-                                  fontFamily: 'BMJUA',
+                                style: TextStyle(
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF4E342E),
                                 ),
                               ),
-                              const SizedBox(height: 24),
+                              SizedBox(height: 24),
 
                               // ── 시간 디스플레이 ──
                               _buildTimeDisplay(),
-                              const SizedBox(height: 20),
+                              SizedBox(height: 20),
 
                               // ── AM / PM 토글 ──
                               _buildAmPmToggle(),
-                              const SizedBox(height: 24),
+                              SizedBox(height: 24),
 
                               // ── 시 스와이퍼 ──
                               _NumberSwiper(
@@ -133,7 +133,7 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
                                 max: 12,
                                 onChanged: (v) => setState(() => _hour12 = v),
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12),
 
                               // ── 분 스와이퍼 ──
                               _NumberSwiper(
@@ -145,7 +145,7 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
                                 max: 59,
                                 onChanged: (v) => setState(() => _minute = v),
                               ),
-                              const SizedBox(height: 28),
+                              SizedBox(height: 28),
 
                               // ── 버튼 ──
                               Row(
@@ -160,7 +160,7 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
                                       onTap: () => Navigator.pop(context),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: 12),
                                   Expanded(
                                     child: _ActionBtn(
                                       imagePath:
@@ -216,7 +216,7 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
         ),
         // 시간 텍스트 — 아래로 살짝 내림
         Padding(
-          padding: const EdgeInsets.only(top: 10),
+          padding: EdgeInsets.only(top: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -226,12 +226,12 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
                 max: 12,
                 onChanged: (v) => setState(() => _hour12 = v),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
                 child: Text(
                   ':',
                   style: TextStyle(
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF4E342E),
@@ -244,11 +244,11 @@ class _TimePickerPopupState extends State<_TimePickerPopup>
                 max: 59,
                 onChanged: (v) => setState(() => _minute = v),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 _isAm ? 'AM' : 'PM',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF8D6E63),
@@ -361,10 +361,10 @@ class _NumberSwiperState extends State<_NumberSwiper> {
           width: 28,
           child: Text(
             widget.label,
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
+            style: TextStyle(
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 15,
-              color: Color(0xFF4E342E),
+              color: const Color(0xFF4E342E),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -397,9 +397,9 @@ class _NumberSwiperState extends State<_NumberSwiper> {
                     final isSelected = val == widget.value;
                     return Center(
                       child: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 150),
+                        duration: Duration(milliseconds: 150),
                         style: TextStyle(
-                          fontFamily: 'BMJUA',
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                           fontSize: isSelected ? 24 : 16,
                           fontWeight:
                               isSelected ? FontWeight.bold : FontWeight.normal,
@@ -497,12 +497,12 @@ class _TimeBoxState extends State<_TimeBox> {
             FilteringTextInputFormatter.digitsOnly,
             LengthLimitingTextInputFormatter(2),
           ],
-          cursorColor: const Color(0xFF4E342E),
-          style: const TextStyle(
-            fontFamily: 'BMJUA',
+          cursorColor: Color(0xFF4E342E),
+          style: TextStyle(
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             fontSize: 42,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF4E342E),
+            color: const Color(0xFF4E342E),
             letterSpacing: 2,
           ),
           decoration: const InputDecoration(
@@ -527,15 +527,15 @@ class _TimeBoxState extends State<_TimeBox> {
         _focusNode.requestFocus();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: EdgeInsets.symmetric(horizontal: 4),
         color: Colors.transparent, // 터치 영역 확대
         child: Text(
           widget.value,
-          style: const TextStyle(
-            fontFamily: 'BMJUA',
+          style: TextStyle(
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             fontSize: 42,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF4E342E),
+            color: const Color(0xFF4E342E),
             letterSpacing: 2,
           ),
         ),
@@ -589,7 +589,7 @@ class _ToggleBtnState extends State<_ToggleBtn> {
             Text(
               widget.label,
               style: TextStyle(
-                fontFamily: 'BMJUA',
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
                 color: widget.selected
@@ -643,8 +643,8 @@ class _ActionBtnState extends State<_ActionBtn> {
             ),
             Text(
               widget.label,
-              style: const TextStyle(
-                fontFamily: 'BMJUA',
+              style: TextStyle(
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF4E342E),
@@ -691,7 +691,7 @@ class NotificationSettingsScreen extends StatelessWidget {
           style: TextStyle(
             color: colorScheme.textPrimary,
             fontWeight: FontWeight.bold,
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           ),
         ),
         centerTitle: true,
@@ -708,7 +708,7 @@ class NotificationSettingsScreen extends StatelessWidget {
           Consumer<AuthController>(
             builder: (context, authController, child) {
               final user = authController.userModel;
-              if (user == null) return const SizedBox.shrink();
+              if (user == null) return SizedBox.shrink();
 
               return ListView(
                 padding: EdgeInsets.fromLTRB(
@@ -719,11 +719,12 @@ class NotificationSettingsScreen extends StatelessWidget {
                 ),
                 children: [
                   _buildSectionTitle(
+                      context,
                       AppLocalizations.of(context)
                               ?.get('serviceNotification') ??
                           'Service Notifications',
                       colorScheme),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildOptionArea(
                     context,
                     children: [
@@ -754,13 +755,14 @@ class NotificationSettingsScreen extends StatelessWidget {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSectionTitle(
+                      context,
                       AppLocalizations.of(context)
                               ?.get('activityNotification') ??
                           'Activity Notifications',
                       colorScheme),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildOptionArea(
                     context,
                     children: [
@@ -790,12 +792,13 @@ class NotificationSettingsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSectionTitle(
+                      context,
                       AppLocalizations.of(context)?.get('friendNotification') ??
                           'Friend Notifications',
                       colorScheme),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildOptionArea(
                     context,
                     children: [
@@ -840,12 +843,13 @@ class NotificationSettingsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   _buildSectionTitle(
+                      context,
                       AppLocalizations.of(context)?.get('nestNotification') ??
                           'Nest Notifications',
                       colorScheme),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _buildOptionArea(
                     context,
                     children: [
@@ -885,15 +889,15 @@ class NotificationSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title, AppColorScheme colorScheme) {
+  Widget _buildSectionTitle(BuildContext context, String title, AppColorScheme colorScheme) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Transform.translate(
-        offset: const Offset(-10, 0),
+        offset: Offset(-10, 0),
         child: Container(
           width: 140, // Increased from 120
           height: 42, // Increased from 32 to prevent clipping
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/icons/Store_Tab.png'),
               fit: BoxFit.fill,
@@ -901,15 +905,15 @@ class NotificationSettingsScreen extends StatelessWidget {
           ),
           alignment: Alignment.centerLeft,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
                 45, 2, 16, 0), // Increased left padding from 20 to 32
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color(0xFF4E342E),
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                fontFamily: 'BMJUA',
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 height: 1.1, // Adjusted line height
               ),
               maxLines: 2,
@@ -930,24 +934,24 @@ class NotificationSettingsScreen extends StatelessWidget {
     AppColorScheme colorScheme,
   ) {
     return SwitchListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       title: Text(
         title,
         style: TextStyle(
           fontWeight: FontWeight.w600,
           color: colorScheme.textPrimary,
           fontSize: 16,
-          fontFamily: 'BMJUA',
+          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
         ),
       ),
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
+        padding: EdgeInsets.only(top: 4),
         child: Text(
           subtitle,
           style: TextStyle(
             color: colorScheme.textSecondary,
             fontSize: 13,
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           ),
         ),
       ),
@@ -965,18 +969,18 @@ class NotificationSettingsScreen extends StatelessWidget {
     AppColorScheme colorScheme,
   ) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       title: Text(
         title,
         style: TextStyle(
           fontWeight: FontWeight.w600,
           color: colorScheme.textPrimary,
           fontSize: 16,
-          fontFamily: 'BMJUA',
+          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
         ),
       ),
       trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: colorScheme.primaryButton.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
@@ -987,7 +991,7 @@ class NotificationSettingsScreen extends StatelessWidget {
             color: colorScheme.primaryButton,
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           ),
         ),
       ),

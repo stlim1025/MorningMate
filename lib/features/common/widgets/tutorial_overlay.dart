@@ -106,7 +106,7 @@ class InteractiveTutorialOverlayState
                   onTap: _handleSkip,
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(20),
@@ -117,9 +117,9 @@ class InteractiveTutorialOverlayState
                       children: [
                         Text(
                           AppLocalizations.of(context)?.get('skip') ?? '스킵',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontFamily: 'BMJUA',
+                            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             fontSize: 14,
                           ),
                         ),
@@ -212,9 +212,9 @@ class InteractiveTutorialOverlayState
       mainAxisSize: MainAxisSize.min,
       children: [
         if (!isBelow) _buildBirdAndButton(step),
-        const SizedBox(height: 5),
+        SizedBox(height: 5),
         Container(
-          padding: const EdgeInsets.fromLTRB(25, 20, 25, 20),
+          padding: EdgeInsets.fromLTRB(25, 20, 25, 20),
           decoration: BoxDecoration(
             image: const DecorationImage(
               image: AssetImage('assets/images/Archive_Background.png'),
@@ -234,8 +234,8 @@ class InteractiveTutorialOverlayState
               if (step.title != null) ...[
                 Text(
                   step.title!,
-                  style: const TextStyle(
-                    fontFamily: 'BMJUA',
+                  style: TextStyle(
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     fontSize: 18,
                     color: Color(0xFF5D4037),
                   ),
@@ -285,7 +285,7 @@ class InteractiveTutorialOverlayState
   Widget _buildPopupCard(TutorialStep step) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.85,
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(32),
       decoration: BoxDecoration(
         image: const DecorationImage(
           image: AssetImage('assets/images/Archive_Background.png'),
@@ -310,8 +310,8 @@ class InteractiveTutorialOverlayState
             ),
           Text(
             step.title ?? '',
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
+            style: TextStyle(
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 22,
               color: Color(0xFF5D4037),
             ),
@@ -483,8 +483,8 @@ class _TutorialImageButtonState extends State<_TutorialImageButton> {
             ),
             Text(
               widget.label,
-              style: const TextStyle(
-                fontFamily: 'BMJUA',
+              style: TextStyle(
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 color: Color(0xFF4E342E),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

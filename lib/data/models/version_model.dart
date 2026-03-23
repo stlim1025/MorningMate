@@ -5,6 +5,10 @@ class VersionModel {
   final String minimumVersion;
   final String updateTitle;
   final String updateBody;
+  final String? updateTitleEn;
+  final String? updateBodyEn;
+  final String? updateTitleJa;
+  final String? updateBodyJa;
   final bool isForceUpdate;
 
   VersionModel({
@@ -12,6 +16,10 @@ class VersionModel {
     required this.minimumVersion,
     required this.updateTitle,
     required this.updateBody,
+    this.updateTitleEn,
+    this.updateBodyEn,
+    this.updateTitleJa,
+    this.updateBodyJa,
     required this.isForceUpdate,
   });
 
@@ -26,6 +34,10 @@ class VersionModel {
       minimumVersion: data?['minimumVersion'] ?? '1.0.0',
       updateTitle: data?['updateTitle'] ?? '업데이트 안내',
       updateBody: data?['updateBody'] ?? '새로운 버전이 출시되었습니다. 업데이트 후 이용해 주세요!',
+      updateTitleEn: data?['updateTitleEn'],
+      updateBodyEn: data?['updateBodyEn'],
+      updateTitleJa: data?['updateTitleJa'],
+      updateBodyJa: data?['updateBodyJa'],
       isForceUpdate: data?['isForceUpdate'] ?? false,
     );
   }
@@ -36,6 +48,10 @@ class VersionModel {
       'minimumVersion': minimumVersion,
       'updateTitle': updateTitle,
       'updateBody': updateBody,
+      'updateTitleEn': updateTitleEn,
+      'updateBodyEn': updateBodyEn,
+      'updateTitleJa': updateTitleJa,
+      'updateBodyJa': updateBodyJa,
       'isForceUpdate': isForceUpdate,
     };
   }

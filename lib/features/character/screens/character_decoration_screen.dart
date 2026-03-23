@@ -101,7 +101,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
     final paddingBottom = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0E8),
+      backgroundColor: Color(0xFFF5F0E8),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -117,24 +117,24 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
         title: Text(
           AppLocalizations.of(context)?.get('decorateCharacter') ??
               'Decorate Character',
-          style: const TextStyle(
+          style: TextStyle(
             color: Color(0xFF4E342E),
             fontWeight: FontWeight.bold,
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             fontSize: 20,
           ),
         ),
         centerTitle: true,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12.0),
+            padding: EdgeInsets.only(right: 12.0),
             child: GestureDetector(
               onTap: _handleSave,
               child: Container(
                 width: 70,
                 height: 35,
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                decoration: const BoxDecoration(
+                margin: EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage('assets/images/Confirm_Button.png'),
                     fit: BoxFit.fill,
@@ -143,11 +143,11 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                 alignment: Alignment.center,
                 child: Text(
                   AppLocalizations.of(context)?.get('save') ?? 'Save',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFF5D4E37),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   ),
                 ),
               ),
@@ -199,7 +199,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                           width: 80,
                           height: 35,
                           alignment: Alignment.center,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             image: DecorationImage(
                               image: AssetImage(
                                   'assets/images/Message_Button.png'),
@@ -209,10 +209,10 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                           child: Text(
                             AppLocalizations.of(context)?.get('unequipAll') ??
                                 'Unequip All',
-                            style: const TextStyle(
-                              fontFamily: 'BMJUA',
+                            style: TextStyle(
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               fontSize: 14,
-                              color: Color(0xFF5D4037),
+                              color: const Color(0xFF5D4037),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -255,16 +255,16 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                                     ),
                                   ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             AppLocalizations.of(context)
                                     ?.get('showOwnedOnly') ??
                                 'Show Owned Only',
-                            style: const TextStyle(
-                              fontFamily: 'BMJUA',
+                            style: TextStyle(
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               fontSize: 14,
-                              color: Color(0xFF5D4037),
-                              shadows: [
+                              color: const Color(0xFF5D4037),
+                              shadows: const [
                                 Shadow(
                                   offset: Offset(1, 1),
                                   blurRadius: 2,
@@ -461,8 +461,8 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
         AppLocalizations.of(context)?.get('unownedItemsWarning') ??
             '배치된 항목 중 아직 보유하지 않은 아이템이 있어요!\n미보유 아이템은 상점에서 획득할 수 있습니다.\n뺀 상태로 저장할까요?',
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontFamily: 'BMJUA',
+        style: TextStyle(
+          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           fontSize: 16,
           height: 1.5,
         ),
@@ -522,8 +522,8 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        duration: Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage(isSelected
@@ -535,10 +535,10 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
         ),
         child: Text(
           label,
-          style: const TextStyle(
-            fontFamily: 'BMJUA',
+          style: TextStyle(
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             fontSize: 14,
-            color: Color(0xFF5D4E37),
+            color: const Color(0xFF5D4E37),
           ),
         ),
       ),
@@ -605,11 +605,11 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
               right: 4,
               child: Text(
                 item.getLocalizedName(context),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'BMJUA',
-                  color: Color(0xFF5D4037),
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                  color: const Color(0xFF5D4037),
                   overflow: TextOverflow.ellipsis,
                 ),
                 textAlign: TextAlign.center,
@@ -653,7 +653,7 @@ class _CharacterDecorationScreenState extends State<CharacterDecorationScreen>
                         color: Color(0xFFE57373),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        fontFamily: 'BMJUA',
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       ),
                     ),
                   ),

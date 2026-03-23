@@ -274,7 +274,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/Diary_Background.png'),
             fit: BoxFit.fill,
@@ -284,28 +284,28 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
           child: Stack(
             children: [
               SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                     horizontal: 24.0, vertical: 40.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40),
                     Image.asset(
                       'assets/icons/Charactor_Icon.png',
                       width: 120,
                       height: 120,
                       fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 16),
-                    const SizedBox(height: 60),
+                    SizedBox(height: 16),
+                    SizedBox(height: 60),
                     Text(
                       AppLocalizations.of(context)?.get('welcomeTitle') ??
                           '환영합니다!',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFFF5F5F0),
-                        fontFamily: 'BMJUA',
+                        color: Color(0xFFF5F5F0),
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         shadows: [
                           Shadow(
                             color: Colors.black.withOpacity(0.3),
@@ -316,14 +316,14 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       AppLocalizations.of(context)?.get('welcomeDesc') ??
                           '사용하실 닉네임과 추천인 코드를 입력해주세요.',
                       style: TextStyle(
                         fontSize: 16,
-                        color: const Color(0xFFF5F5F0),
-                        fontFamily: 'BMJUA',
+                        color: Color(0xFFF5F5F0),
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         shadows: [
                           Shadow(
                             color: Colors.black.withOpacity(0.3),
@@ -335,9 +335,9 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                       textAlign: TextAlign.center,
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                           horizontal: 20, vertical: 28),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         image: DecorationImage(
                           image:
                               AssetImage('assets/images/Popup_Background.png'),
@@ -354,11 +354,11 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF4E342E),
-                              fontFamily: 'BMJUA',
+                              color: Color(0xFF4E342E),
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           PopupTextField(
                             controller: _nicknameController,
                             maxLength: 15,
@@ -367,7 +367,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                                 '닉네임을 입력하세요',
                             fontFamily: 'KyoboHandwriting2024psw',
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           Text(
                             AppLocalizations.of(context)
                                     ?.get('referralLabel') ??
@@ -375,11 +375,11 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF4E342E),
-                              fontFamily: 'BMJUA',
+                              color: Color(0xFF4E342E),
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           PopupTextField(
                             controller: _referralController,
                             hintText: AppLocalizations.of(context)
@@ -390,8 +390,8 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                           if (_referralError != null)
                             Container(
                               width: double.infinity,
-                              margin: const EdgeInsets.only(top: 8.0),
-                              padding: const EdgeInsets.symmetric(
+                              margin: EdgeInsets.only(top: 8.0),
+                              padding: EdgeInsets.symmetric(
                                   vertical: 8, horizontal: 12),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFDD8D8),
@@ -404,15 +404,15 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                               child: Text(
                                 _referralError!,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Color(0xFFD32F2F),
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'BMJUA',
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 ),
                               ),
                             ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -422,8 +422,8 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                                     '나와 친구가 같이 ',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: const Color(0xFF4E342E),
-                                  fontFamily: 'BMJUA',
+                                  color: Color(0xFF4E342E),
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 ),
                               ),
                               Image.asset(
@@ -431,7 +431,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                                 width: 18,
                                 height: 18,
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4),
                               Text(
                                 AppLocalizations.of(context)
                                         ?.get('referralReward2') ??
@@ -439,13 +439,13 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF4E342E),
-                                  fontFamily: 'BMJUA',
+                                  color: Color(0xFF4E342E),
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           GestureDetector(
                             onTap: _isLoading ? null : _submit,
                             child: Opacity(
@@ -460,7 +460,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                                     fit: BoxFit.fill,
                                   ),
                                   _isLoading
-                                      ? const SizedBox(
+                                      ? SizedBox(
                                           height: 24,
                                           width: 24,
                                           child: CircularProgressIndicator(
@@ -474,8 +474,8 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                                           AppLocalizations.of(context)
                                                   ?.get('start') ??
                                               '시작하기',
-                                          style: const TextStyle(
-                                            fontFamily: 'BMJUA',
+                                          style: TextStyle(
+                                            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
                                             color: Color(0xFF4E342E),

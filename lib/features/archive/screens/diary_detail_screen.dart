@@ -259,7 +259,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
         '';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 16, 8, 4),
+      padding: EdgeInsets.fromLTRB(8, 16, 8, 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -275,7 +275,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
               Positioned(
                 left: 10,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 2.0),
+                  padding: EdgeInsets.only(top: 2.0),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -284,7 +284,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                         size: 16,
                         color: colorScheme.textPrimary,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text(
                         AppLocalizations.of(context)
                                 ?.getFormat('fullDateFormat', {
@@ -295,7 +295,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                             }) ??
                             '${_currentDate.year}.${_currentDate.month.toString().padLeft(2, '0')}.${_currentDate.day.toString().padLeft(2, '0')} ($weekday)',
                         style: TextStyle(
-                          fontFamily: 'BMJUA',
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                           color: colorScheme.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -344,8 +344,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                         ),
                         Text(
                           AppLocalizations.of(context)?.get('edit') ?? 'Edit',
-                          style: const TextStyle(
-                            fontFamily: 'BMJUA',
+                          style: TextStyle(
+                            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             color: Color(0xFF5D4037),
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -357,7 +357,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                 ),
               // Close Button
               Padding(
-                padding: const EdgeInsets.only(top: 5),
+                padding: EdgeInsets.only(top: 5),
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
                   child: Stack(
@@ -373,8 +373,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                       ),
                       Text(
                         AppLocalizations.of(context)?.get('close') ?? 'Close',
-                        style: const TextStyle(
-                          fontFamily: 'BMJUA',
+                        style: TextStyle(
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                           color: Color(0xFF5D4037),
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -396,8 +396,9 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     String questionText = _currentDiary?.promptQuestion ??
         (AppLocalizations.of(context)?.get('noQuestion') ?? 'No Question');
 
-    // 2. 언어 설정 확인 (영어 모드일 때만 번역 시도)
-    if (Localizations.localeOf(context).languageCode == 'en' &&
+    // 2. 언어 설정 확인 (다국어 번역 시도: 영어, 일본어)
+    final langCode = Localizations.localeOf(context).languageCode;
+    if ((langCode == 'en' || langCode == 'ja') &&
         _currentDiary?.promptQuestion != null) {
       final String originalText = _currentDiary!.promptQuestion!;
 
@@ -411,7 +412,10 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
       // 번역 맵에서 검색
       for (var entry in AdminController.questionTranslationMap.entries) {
         if (normalize(entry.key) == normalizedOriginal) {
-          questionText = entry.value;
+          final translated = entry.value[langCode];
+          if (translated != null && translated.isNotEmpty) {
+            questionText = translated;
+          }
           break;
         }
       }
@@ -420,8 +424,8 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: const BoxDecoration(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/Today_Question.png'),
             fit: BoxFit.contain,
@@ -436,21 +440,21 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                   AppLocalizations.of(context)?.get('todayQuestion') ??
                       'Today\'s Question',
                   style: TextStyle(
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     color: colorScheme.textSecondary.withOpacity(0.8),
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 // Padding 추가로 텍스트가 너무 가장자리에 붙지 않게 함
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  padding: EdgeInsets.symmetric(horizontal: 4.0),
                   child: Text(
                     questionText,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontFamily: 'BMJUA', // 한글 원문일 경우 BMJUA
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA', // 한글 원문일 경우 BMJUA
                       // 영어일 경우 가독성을 위해 다른 폰트를 고려할 수도 있으나 통일성 유지
                       color: colorScheme.textPrimary,
                       fontSize: 15,
@@ -544,13 +548,13 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   Widget _buildWritingArea(BuildContext context, AppColorScheme colorScheme) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/images/Note_Background.png'),
           fit: BoxFit.fill,
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(55, 40, 28, 20),
+      padding: EdgeInsets.fromLTRB(55, 40, 28, 20),
       child: _isLoading
           ? Center(
               child: CircularProgressIndicator(
@@ -563,7 +567,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                     AppLocalizations.of(context)?.get('noDiaryContent') ??
                         'No content.',
                     style: TextStyle(
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       color: colorScheme.textHint,
                       fontSize: 18,
                     ),
@@ -585,7 +589,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
 
   Widget _buildBottomNavigation(bool hasNext, AppColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 14),
+      padding: EdgeInsets.fromLTRB(24, 0, 24, 14),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -621,7 +625,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
         child: Container(
           width: 80,
           height: 40,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/images/Item_Background.png'),
               fit: BoxFit.fill,
@@ -633,23 +637,23 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                 ? [
                     Text(
                       label,
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                      style: TextStyle(
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         color: Color(0xFF5D4037),
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(icon, size: 14, color: const Color(0xFF5D4037)),
+                    SizedBox(width: 4),
+                    Icon(icon, size: 14, color: Color(0xFF5D4037)),
                   ]
                 : [
-                    Icon(icon, size: 14, color: const Color(0xFF5D4037)),
-                    const SizedBox(width: 4),
+                    Icon(icon, size: 14, color: Color(0xFF5D4037)),
+                    SizedBox(width: 4),
                     Text(
                       label,
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                      style: TextStyle(
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         color: Color(0xFF5D4037),
                         fontSize: 14,
                         fontWeight: FontWeight.bold,

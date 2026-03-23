@@ -237,6 +237,19 @@ class UserService {
     }, SetOptions(merge: true));
   }
 
+  // 광고 시청 기록 저장 (역사적 통계용, 중복 시청해도 하루 1개 문서 유지)
+  Future<void> logAdReward(String uid) async {
+    final now = DateTime.now();
+    final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final docId = "${uid}_$todayStr";
+    
+    await _db.collection('ad_history').doc(docId).set({
+      'userId': uid,
+      'rewardDate': FieldValue.serverTimestamp(),
+      'dateStr': todayStr,
+    }, SetOptions(merge: true));
+  }
+
   // 닉네임 업데이트
   Future<void> updateNickname(String uid, String nickname) async {
     await _usersCollection.doc(uid).update({

@@ -111,7 +111,39 @@ class AdminDashboardTab extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        IconButton(
+                          onPressed: () {
+                            final prevDate = controller.selectedDate.subtract(const Duration(days: 1));
+                            controller.setSelectedDate(prevDate);
+                          },
+                          icon: const Icon(Icons.chevron_left_rounded),
+                          tooltip: '이전날',
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF6366F1),
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.all(10),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         _buildDatePicker(context, controller),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () {
+                            final nextDate = controller.selectedDate.add(const Duration(days: 1));
+                            controller.setSelectedDate(nextDate);
+                          },
+                          icon: const Icon(Icons.chevron_right_rounded),
+                          tooltip: '다음날',
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF6366F1),
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.all(10),
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         IconButton(
                           onPressed: () => controller.fetchStats(),
@@ -133,12 +165,12 @@ class AdminDashboardTab extends StatelessWidget {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final cardWidth =
-                        (constraints.maxWidth - 72) / 4; // 4 cards
+                        (constraints.maxWidth - 96) / 5; // 5 cards
                     return Row(
                       children: [
                         _buildDailyMetricCard(
                           context: context,
-                          width: cardWidth < 160 ? 160 : cardWidth,
+                          width: cardWidth < 140 ? 140 : cardWidth,
                           title: '신규 가입자',
                           value: controller.todayNewUserCount,
                           unit: '명',
@@ -150,7 +182,7 @@ class AdminDashboardTab extends StatelessWidget {
                         const SizedBox(width: 24),
                         _buildDailyMetricCard(
                           context: context,
-                          width: cardWidth < 160 ? 160 : cardWidth,
+                          width: cardWidth < 140 ? 140 : cardWidth,
                           title: '일일 접속자',
                           value: controller.dailyVisitorCount,
                           unit: '명',
@@ -162,7 +194,7 @@ class AdminDashboardTab extends StatelessWidget {
                         const SizedBox(width: 24),
                         _buildDailyMetricCard(
                           context: context,
-                          width: cardWidth < 160 ? 160 : cardWidth,
+                          width: cardWidth < 140 ? 140 : cardWidth,
                           title: '일기 작성',
                           value: controller.todayDiaryCount,
                           unit: '개',
@@ -174,16 +206,26 @@ class AdminDashboardTab extends StatelessWidget {
                         const SizedBox(width: 24),
                         _buildDailyMetricCard(
                           context: context,
-                          width: cardWidth < 160 ? 160 : cardWidth,
-                          title: '광고 시청',
+                          width: cardWidth < 140 ? 140 : cardWidth,
+                          title: '광고 인원',
                           value: controller.todayAdViewerCount,
                           unit: '명',
-                          icon: Icons.play_circle_rounded,
+                          icon: Icons.group_outlined,
                           color: const Color(0xFFEF4444),
                           onTap: () => _showUsersDialog(
                               context,
                               controller.getTodayAdViewerUsers(),
                               '광고 시청자 (${DateFormat('MM/dd').format(controller.selectedDate)})'),
+                        ),
+                        const SizedBox(width: 24),
+                        _buildDailyMetricCard(
+                          context: context,
+                          width: cardWidth < 140 ? 140 : cardWidth,
+                          title: '광고 횟수',
+                          value: controller.todayAdImpressionCount,
+                          unit: '회',
+                          icon: Icons.play_circle_rounded,
+                          color: const Color(0xFFFF4D00),
                         ),
                       ],
                     );
@@ -229,6 +271,13 @@ class AdminDashboardTab extends StatelessWidget {
                         icon: Icons.cloud_upload_rounded,
                         isLoading: controller.isLoading,
                         onPressed: () => controller.syncShopAssets(),
+                      ),
+                      _buildSystemButton(
+                        label: '일본어 데이터 추가',
+                        icon: Icons.translate_rounded,
+                        isLoading: controller.isLoading,
+                        onPressed: () => controller.updateJapaneseAssetNames(),
+                        color: const Color(0xFF10B981),
                       ),
                       _buildSystemButton(
                         label: '추천인 코드 부여',
@@ -311,7 +360,7 @@ class AdminDashboardTab extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -402,7 +451,7 @@ class AdminDashboardTab extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(icon, color: color, size: 20),
@@ -468,7 +517,7 @@ class AdminDashboardTab extends StatelessWidget {
               color: btnColor, fontSize: 13, fontWeight: FontWeight.w600)),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        side: BorderSide(color: btnColor.withOpacity(0.3)),
+        side: BorderSide(color: btnColor.withValues(alpha: 0.3)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
@@ -736,7 +785,7 @@ class AdminDashboardTab extends StatelessWidget {
   void _showCountryStatsDialog(BuildContext context, Map<String, int> stats) {
     final sortedEntries = stats.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final total = sortedEntries.fold<int>(0, (sum, e) => sum + e.value);
+    final total = sortedEntries.fold<int>(0, (currentSum, e) => currentSum + e.value);
 
     showDialog(
       context: context,
@@ -825,7 +874,7 @@ class AdminDashboardTab extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(label,

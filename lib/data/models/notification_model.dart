@@ -86,7 +86,7 @@ class NotificationModel {
     if (loc == null) return message;
 
     final name = senderNickname;
-    final String nestName = data?['nestName']?.toString() ?? '둥지';
+    final String nestName = data?['nestName']?.toString() ?? loc.get('nest');
     final String amount = data?['amount']?.toString() ?? '0';
     final String level = data?['level']?.toString() ?? '1';
     final String duration = data?['duration']?.toString() ?? '';

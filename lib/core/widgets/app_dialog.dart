@@ -98,7 +98,7 @@ class AppDialogConfig {
 }
 
 class AppDialog {
-  const AppDialog._();
+  AppDialog._();
 
   static void showError(BuildContext context, String? message) {
     final scope = context.findAncestorWidgetOfExactType<_AppDialogErrorScope>();
@@ -242,29 +242,29 @@ class AppDialog {
                   Text(
                     AppLocalizations.of(context)?.get('levelUpDesc') ??
                         'Your character has grown to a new level!',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     AppLocalizations.of(context)?.get('continueGrowth') ??
-                        '새로운 단계로 성장했어요! 보상으로 20가지를 드립니다.',
+                        'Congratulations! You have received 20 branches as a reward.',
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset('assets/images/branch.png', width: 20, height: 20),
-                      const SizedBox(width: 8),
-                      const Text(
-                        '+20 가지',
-                        style: TextStyle(
-                            fontFamily: 'BMJUA',
-                            color: Color(0xFF8D6E63),
-                            fontWeight: FontWeight.bold),
-                      ),
+                      SizedBox(width: 8),
+                        Text(
+                          '+20 ${AppLocalizations.of(context)?.get('branch') ?? 'Branch'}',
+                          style: TextStyle(
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                              color: const Color(0xFF8D6E63),
+                              fontWeight: FontWeight.bold),
+                        ),
                     ],
                   ),
                 ],
@@ -332,7 +332,7 @@ class AppDialog {
                       height: 80,
                       fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       AppLocalizations.of(context)?.get('adRewardDesc') ??
                           'You earned 20 branches for watching the ad!',
@@ -417,7 +417,8 @@ class AppDialog {
         );
       case AppDialogKey.editPoints:
         return AppDialogConfig(
-          title: '가지 수량 수정',
+          title: AppLocalizations.of(context)?.get('gajiModificationTitle') ??
+              'Modify Branch Quantity',
           content: content,
           actions: actions ?? const [],
         );
@@ -448,21 +449,21 @@ class AppDialog {
       case AppDialogKey.inviteToNest:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('nestInvitePopupTitle') ??
-              '둥지 초대',
+              'Invite to Nest',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.collectGaji:
         return AppDialogConfig(
           title:
-              AppLocalizations.of(context)?.get('collectGajiTitle') ?? '가지 모으기',
+              AppLocalizations.of(context)?.get('collectGajiTitle') ?? 'Collect Branch',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.nestCollectSuccess:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('nestCollectSuccessTitle') ??
-              '모으기 완료',
+              'Collection Complete',
           content: content,
           actions: actions ??
               [
@@ -478,7 +479,7 @@ class AppDialog {
         );
       case AppDialogKey.editNest:
         return AppDialogConfig(
-          title: AppLocalizations.of(context)?.get('nestEditTitle') ?? '둥지 수정',
+          title: AppLocalizations.of(context)?.get('nestEditTitle') ?? 'Edit Nest',
           trailing: trailing,
           content: content,
           actions: actions ?? const [],
@@ -486,28 +487,28 @@ class AppDialog {
       case AppDialogKey.leaveNest:
         return AppDialogConfig(
           title:
-              AppLocalizations.of(context)?.get('nestLeaveTitle') ?? '둥지 나가기',
+              AppLocalizations.of(context)?.get('nestLeaveTitle') ?? 'Leave Nest',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.deleteNest:
         return AppDialogConfig(
           title:
-              AppLocalizations.of(context)?.get('nestDeleteTitle') ?? '둥지 삭제',
+              AppLocalizations.of(context)?.get('nestDeleteTitle') ?? 'Delete Nest',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.nestUpgrade:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('nestUpgradeTitle') ??
-              '둥지 업그레이드',
+              'Upgrade Nest',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.nestUpgradeSuccess:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('nestUpgradeSuccess') ??
-              '업그레이드 완료!',
+              'Upgrade Complete!',
           content: content,
           actions: actions ??
               [
@@ -524,31 +525,31 @@ class AppDialog {
       case AppDialogKey.deleteTodaySpeak:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('deleteTodaySpeakTitle') ??
-              '삭제하시겠습니까?',
+              'Do you want to delete?',
           content: content,
           actions: actions ?? const [],
         );
       case AppDialogKey.todaySpeakReward:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('todaySpeakRewardTitle') ??
-              '보상 획득!',
+              'Reward Earned!',
           content: content ??
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset('assets/images/branch.png',
                       width: 60, height: 60),
-                  const SizedBox(height: 16),
-                  Text(
-                    AppLocalizations.of(context)?.get('todaySpeakRewardDesc') ??
-                        '오늘의 한마디 보상으로 10가지를 획득했습니다!',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'BMJUA',
-                      fontSize: 16,
-                      color: Color(0xFF4E342E),
+                  SizedBox(height: 16),
+                    Text(
+                      AppLocalizations.of(context)?.get('todaySpeakRewardDesc') ??
+                          'You have earned 10 branches as a reward for Today\'s Word!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                        fontSize: 16,
+                        color: const Color(0xFF4E342E),
+                      ),
                     ),
-                  ),
                 ],
               ),
           actions: actions ??
@@ -566,7 +567,7 @@ class AppDialog {
       case AppDialogKey.pointHistory:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('pointHistoryTitle') ??
-              '가지 상세 내역',
+              'Branch History Details',
           content: content,
           showCloseButton: true,
           actions: actions ??
@@ -583,7 +584,7 @@ class AppDialog {
       case AppDialogKey.bonusAdOffer:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('bonusAdOfferTitle') ??
-              '🎁 보너스 가지 획득!',
+              '🎁 Bonus Branch Earned!',
           content: content ??
               SizedBox(
                 width: double.infinity,
@@ -596,24 +597,24 @@ class AppDialog {
                       height: 70,
                       fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Text(
                       AppLocalizations.of(context)?.get('bonusAdOfferDesc') ??
-                          '광고를 시청하면 보너스 가지 20개를 드려요!',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
-                        fontSize: 15,
-                        color: Color(0xFF4E342E),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      AppLocalizations.of(context)?.get('bonusAdOfferWarning') ??
-                          '※ 광고를 끝까지 시청하지 않고 닫으면 보상이 지급되지 않습니다.',
+                          'Watch an ad to get 20 bonus branches!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontFamily: 'BMJUA',
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                        fontSize: 15,
+                        color: const Color(0xFF4E342E),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      AppLocalizations.of(context)?.get('bonusAdOfferWarning') ??
+                          '※ If you close the ad before it ends, the reward will not be given.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 11,
                         color: Colors.red.shade700,
                         fontWeight: FontWeight.normal,
@@ -631,7 +632,7 @@ class AppDialog {
                 ),
                 AppDialogAction(
                   label: AppLocalizations.of(context)?.get('watchAd') ??
-                      '광고 보기',
+                      'Watch Ad',
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
@@ -640,23 +641,23 @@ class AppDialog {
       case AppDialogKey.refreshShop:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('refreshShopTitle') ??
-              '상점 새로고침',
+              'Refresh Shop',
           content: content ??
               Text(
                 AppLocalizations.of(context)?.get('refreshShopDesc') ??
-                    '광고를 보고 오늘의 상점 상품을 새로고침 하시겠습니까?',
+                    'Would you like to watch an ad and refresh today\'s shop items?',
                 textAlign: TextAlign.center,
               ),
           actions: actions ??
               [
                 AppDialogAction(
                   label:
-                      AppLocalizations.of(context)?.get('cancel') ?? '취소',
+                      AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
                   onPressed: (context) => Navigator.pop(context, false),
                 ),
                 AppDialogAction(
                   label:
-                      AppLocalizations.of(context)?.get('confirm') ?? '확인',
+                      AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
@@ -665,21 +666,21 @@ class AppDialog {
       case AppDialogKey.refreshShopFree:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('refreshShopFreeTitle') ??
-              '무료 새로고침',
+              'Free Refresh',
           content: content ??
               Text(
                 AppLocalizations.of(context)?.get('refreshShopFreeDesc') ??
-                    '하루에 한 번 제공되는 무료 새로고침을 사용하시겠습니까?',
+                    'Would you like to use your daily free refresh?',
                 textAlign: TextAlign.center,
               ),
           actions: actions ??
               [
                 AppDialogAction(
-                  label: AppLocalizations.of(context)?.get('cancel') ?? '취소',
+                  label: AppLocalizations.of(context)?.get('cancel') ?? 'Cancel',
                   onPressed: (context) => Navigator.pop(context, false),
                 ),
                 AppDialogAction(
-                  label: AppLocalizations.of(context)?.get('confirm') ?? '확인',
+                  label: AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
@@ -688,17 +689,17 @@ class AppDialog {
       case AppDialogKey.refreshShopLimit:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('refreshShopLimitTitle') ??
-              '제한 도달',
+              'Limit Reached',
           content: content ??
               Text(
                 AppLocalizations.of(context)?.get('refreshShopLimitDesc') ??
-                    '오늘은 더 이상 새로고침할 수 없습니다. (무료 1회 + 광고 3회)',
+                    'No more refreshes available today. (1 Free + 3 Ads)',
                 textAlign: TextAlign.center,
               ),
           actions: actions ??
               [
                 AppDialogAction(
-                  label: AppLocalizations.of(context)?.get('confirm') ?? '확인',
+                  label: AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
                   isPrimary: true,
                   onPressed: (context) => Navigator.pop(context, true),
                 ),
@@ -708,26 +709,29 @@ class AppDialog {
         return AppDialogConfig(
           title: AppLocalizations.of(context)
                   ?.get('tutorial_complete_reward_title') ??
-              "튜토리얼 완료 보상",
+              "Tutorial Completion Reward",
           showConfetti: true,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Image.asset('assets/images/branch.png', width: 80, height: 80),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context)
                         ?.get('tutorial_complete_reward_desc') ??
-                    '튜토리얼 완료 보상으로 50가지를 선물해드려요!',
+                    'We gift you 50 branches as a reward for completing the tutorial!',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                  fontSize: 16,
+                ),
               ),
             ],
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             AppDialogAction(
-              label: AppLocalizations.of(context)?.get('confirm') ?? '확인',
+              label: AppLocalizations.of(context)?.get('confirm') ?? 'Confirm',
               isPrimary: true,
               isFullWidth: true,
               onPressed: (context) => Navigator.pop(context),
@@ -737,20 +741,23 @@ class AppDialog {
       case AppDialogKey.skipTutorial:
         return AppDialogConfig(
           title: AppLocalizations.of(context)?.get('skip_tutorial_title') ??
-              "튜토리얼 종료",
+              "Finish Tutorial",
           content: Text(
             AppLocalizations.of(context)?.get('skip_tutorial_desc') ??
-                "튜토리얼을 종료하시겠습니까?\n종료 시 튜토리얼 완료 보상을 받으실 수 없어요.",
+                "Would you like to finish the tutorial?\nIf you finish, you cannot receive the completion reward.",
             textAlign: TextAlign.center,
-            style: const TextStyle(fontFamily: 'BMJUA', fontSize: 15),
+            style: TextStyle(
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+              fontSize: 15,
+            ),
           ),
           actions: [
             AppDialogAction(
-              label: AppLocalizations.of(context)?.get('cancel') ?? "취소",
+              label: AppLocalizations.of(context)?.get('cancel') ?? "Cancel",
               onPressed: (context) => Navigator.pop(context, false),
             ),
             AppDialogAction(
-              label: AppLocalizations.of(context)?.get('confirm') ?? "확인",
+              label: AppLocalizations.of(context)?.get('confirm') ?? "Confirm",
               isPrimary: true,
               onPressed: (context) => Navigator.pop(context, true),
             ),
@@ -778,64 +785,64 @@ class AppDialog {
                   children: [
                     Text(
                       l10n?.get('guestLoginMigrationDesc') ?? '로그인하면',
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                      style: TextStyle(
+                        fontFamily: l10n?.mainFontFamily ?? AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 16,
-                        color: Color(0xFF4E342E),
+                        color: const Color(0xFF4E342E),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Row(
                       children: [
-                        const Text('• ',
+                        Text('• ',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                         Expanded(
                           child: Text(
                             l10n?.get('guestLoginBullet1') ?? '기록이 사라지지 않아요',
-                            style: const TextStyle(
-                                fontFamily: 'BMJUA', fontSize: 14),
+                            style: TextStyle(
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA', fontSize: 14),
                           ),
                         ),
                       ],
                     ),
                     Row(
                       children: [
-                        const Text('• ',
+                        Text('• ',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                         Expanded(
                           child: Text(
                             l10n?.get('guestLoginBullet2') ??
                                 '다른 기기에서도 이어서 사용 가능',
-                            style: const TextStyle(
-                                fontFamily: 'BMJUA', fontSize: 14),
+                            style: TextStyle(
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA', fontSize: 14),
                           ),
                         ),
                       ],
                     ),
                     Row(
                       children: [
-                        const Text('• ',
+                        Text('• ',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                         Expanded(
                           child: Text(
                             l10n?.get('guestLoginBullet3') ??
                                 '친구와 함께 하루를 공유할 수 있어요',
-                            style: const TextStyle(
-                                fontFamily: 'BMJUA', fontSize: 14),
+                            style: TextStyle(
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA', fontSize: 14),
                           ),
                         ),
                       ],
                     ),
                     Row(
                       children: [
-                        const Text('• ',
+                        Text('• ',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                         Expanded(
                           child: Text(
                             l10n?.get('guestLoginBullet4') ??
                                 '둥지를 성장시키고 꾸밀 수 있어요',
-                            style: const TextStyle(
-                                fontFamily: 'BMJUA', fontSize: 14),
+                            style: TextStyle(
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA', fontSize: 14),
                           ),
                         ),
                       ],
@@ -849,7 +856,7 @@ class AppDialog {
                       textColor: Colors.black87,
                       onPressed: () => Navigator.pop(dialogContext, 'google'),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildSocialLoginButton(
                       context: dialogContext,
                       label: l10n?.get('loginWithKakao') ?? '카카오로 계속하기',
@@ -858,7 +865,7 @@ class AppDialog {
                       textColor: Colors.black87,
                       onPressed: () => Navigator.pop(dialogContext, 'kakao'),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildSocialLoginButton(
                       context: dialogContext,
                       label: l10n?.get('loginWithApple') ?? '애플로 계속하기',
@@ -867,7 +874,7 @@ class AppDialog {
                       textColor: Colors.white,
                       onPressed: () => Navigator.pop(dialogContext, 'apple'),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: TextButton(
@@ -875,7 +882,7 @@ class AppDialog {
                         child: Text(
                           l10n?.get('later') ?? '나중에 할게요',
                           style: TextStyle(
-                            fontFamily: 'BMJUA',
+                            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             color: Colors.grey.shade600,
                             fontSize: 14,
                           ),
@@ -906,7 +913,7 @@ class AppDialog {
         label: Text(
           label,
           style: TextStyle(
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             fontSize: 15,
             fontWeight: FontWeight.w600,
             color: textColor,
@@ -996,11 +1003,26 @@ class AppDialog {
           'Delete Account',
           '중단',
           'Stop',
-          '5',
           '업데이트',
           'Update',
           '광고 보기',
           'Watch Ad',
+          '変更',
+          '購入',
+          '送信',
+          '承諾',
+          '登録',
+          '申請',
+          'リトライ',
+          'はい',
+          '保存',
+          '削除',
+          '退会',
+          '中止',
+          'アップデート',
+          '広告を見る',
+          '作成',
+          '만들기',
         ].contains(action.label.trim());
 
     // 'Cancel' or 'Close' style buttons. Includes '계속 작성'
@@ -1027,6 +1049,14 @@ class AppDialog {
           'Later',
           'Not now',
           'Maybe later',
+          'キャンセル',
+          '閉じる',
+          '拒否',
+          'いいえ',
+          '作成を続ける',
+          '続ける',
+          '後で',
+          '模様替え',
         ].contains(action.label.trim());
 
     if (isConfirmStyle || isCancelStyle) {
@@ -1282,7 +1312,7 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper>
                                 // Content
                                 Padding(
                                   padding:
-                                      const EdgeInsets.fromLTRB(24, 40, 24, 28),
+                                      EdgeInsets.fromLTRB(24, 40, 24, 28),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment:
@@ -1302,16 +1332,16 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper>
                                                 ),
                                               Padding(
                                                 padding:
-                                                    const EdgeInsets.symmetric(
+                                                    EdgeInsets.symmetric(
                                                         horizontal: 40),
                                                 child: Text(
                                                   config.title,
                                                   textAlign: TextAlign.center,
-                                                  style: const TextStyle(
-                                                    fontFamily: 'BMJUA',
+                                                  style: TextStyle(
+                                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                     fontSize: 23,
                                                     fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF4E342E),
+                                                    color: const Color(0xFF4E342E),
                                                   ),
                                                 ),
                                               ),
@@ -1323,7 +1353,7 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper>
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 20),
+                                        SizedBox(height: 20),
                                       ],
                                       // Content
                                       if (config.content != null)
@@ -1336,7 +1366,7 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper>
                                                       .textTheme
                                                       .bodyMedium
                                                       ?.color,
-                                              fontFamily: 'BMJUA',
+                                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                               fontSize: 18,
                                             ),
                                             child: config.content!,
@@ -1345,9 +1375,9 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper>
                                       if (_errorMessage != null)
                                         Container(
                                           width: double.infinity,
-                                          margin: const EdgeInsets.fromLTRB(
+                                          margin: EdgeInsets.fromLTRB(
                                               16, 12, 16, 0),
-                                          padding: const EdgeInsets.symmetric(
+                                          padding: EdgeInsets.symmetric(
                                               vertical: 8, horizontal: 12),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFFDD8D8),
@@ -1360,11 +1390,11 @@ class _AppDialogWrapperState extends State<_AppDialogWrapper>
                                           child: Text(
                                             _errorMessage!,
                                             textAlign: TextAlign.center,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               color: Color(0xFFD32F2F),
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
-                                              fontFamily: 'BMJUA',
+                                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                             ),
                                           ),
                                         ),
@@ -1524,12 +1554,12 @@ class _ImageActionButtonState extends State<_ImageActionButton> {
                   widget.child ??
                       Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
                             widget.label,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontFamily: 'BMJUA',
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               color:
                                   widget.textColor ?? const Color(0xFF4E342E),
                               fontSize: 18,
@@ -1561,12 +1591,12 @@ class PopupTextField extends StatelessWidget {
   final FocusNode? focusNode;
 
   final String? errorText;
-  final String fontFamily;
+  final String? fontFamily;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
   final TextCapitalization textCapitalization;
 
-  const PopupTextField({
+  PopupTextField({
     super.key,
     required this.controller,
     required this.hintText,
@@ -1578,7 +1608,7 @@ class PopupTextField extends StatelessWidget {
     this.maxLength,
     this.autofocus = false,
     this.errorText,
-    this.fontFamily = 'BMJUA',
+    this.fontFamily,
     this.textInputAction,
     this.onFieldSubmitted,
     this.textCapitalization = TextCapitalization.none,
@@ -1587,6 +1617,9 @@ class PopupTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String effectiveFontFamily =
+        fontFamily ?? (AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA');
+
     // Determine height based on maxLines
     final double height = (maxLines ?? 1) == 1 ? 60.0 : 120.0;
 
@@ -1610,7 +1643,7 @@ class PopupTextField extends StatelessWidget {
               keyboardType: keyboardType,
               style: TextStyle(
                 color: const Color(0xFF4E342E),
-                fontFamily: fontFamily,
+                fontFamily: effectiveFontFamily,
                 fontSize: 18,
               ),
               onChanged: onChanged,

@@ -4,7 +4,7 @@ import '../../common/widgets/room_action_button.dart';
 import '../../../core/localization/app_localizations.dart';
 
 class DecorationButton extends StatelessWidget {
-  const DecorationButton({super.key});
+  DecorationButton({super.key});
 
 
   @override

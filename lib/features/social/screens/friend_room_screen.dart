@@ -173,7 +173,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                             fit: BoxFit.contain,
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
+                                        SizedBox(width: 8),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
@@ -188,12 +188,12 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                       color: textColor,
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      fontFamily: 'BMJUA',
+                                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                     ),
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                               if (!isSmallScreen) ...[
-                                                const SizedBox(height: 4),
+                                                SizedBox(height: 4),
                                                 Text(
                                                   AppLocalizations.of(context)!
                                                       .getFormat(
@@ -208,7 +208,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                       ?.copyWith(
                                                         color: textColor
                                                             .withOpacity(0.8),
-                                                        fontFamily: 'BMJUA',
+                                                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                       ),
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -217,7 +217,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
+                                        SizedBox(width: 8),
                                         // 레벨 표시 버튼
                                         Stack(
                                           alignment: Alignment.center,
@@ -231,11 +231,11 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                             ),
                                             Padding(
                                               padding:
-                                                  const EdgeInsets.only(top: 2),
+                                                  EdgeInsets.only(top: 2),
                                               child: Text(
                                                 'Lv.${_friend!.characterLevel}',
-                                                style: const TextStyle(
-                                                  fontFamily: 'BMJUA',
+                                                style: TextStyle(
+                                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.bold,
                                                   color: Color(0xFF4E342E),
@@ -316,7 +316,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                             width: 24,
                                                             height: 24,
                                                           ),
-                                                          const SizedBox(
+                                                          SizedBox(
                                                               width: 8),
                                                           Text(
                                                               AppLocalizations.of(
@@ -324,16 +324,16 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                                   .get(
                                                                       'report'),
                                                               style:
-                                                                  const TextStyle(
+                                                                  TextStyle(
                                                                 fontFamily:
-                                                                    'BMJUA',
+                                                                    AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                                 color: Colors
                                                                     .redAccent,
                                                               )),
                                                         ],
                                                       ),
                                                     ),
-                                                    const SizedBox(height: 12),
+                                                    SizedBox(height: 12),
                                                     GestureDetector(
                                                       behavior: HitTestBehavior
                                                           .opaque,
@@ -348,7 +348,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                             width: 24,
                                                             height: 24,
                                                           ),
-                                                          const SizedBox(
+                                                          SizedBox(
                                                               width: 8),
                                                           Text(
                                                               AppLocalizations.of(
@@ -356,9 +356,9 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                                   .get(
                                                                       'deleteFriendTitle'),
                                                               style:
-                                                                  const TextStyle(
+                                                                  TextStyle(
                                                                 fontFamily:
-                                                                    'BMJUA',
+                                                                    AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                                 color:
                                                                     Colors.red,
                                                               )),
@@ -435,7 +435,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                             ),
                                             Padding(
                                               padding:
-                                                  const EdgeInsets.only(top: 6),
+                                                  EdgeInsets.only(top: 6),
                                               child: Text(
                                                 isCooldown
                                                     ? AppLocalizations.of(
@@ -451,7 +451,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                                         .get(
                                                             'sendCheerMessage'),
                                                 style: TextStyle(
-                                                  fontFamily: 'BMJUA',
+                                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                   fontSize: 23,
                                                   fontWeight: FontWeight.bold,
                                                   color: isCooldown
@@ -470,7 +470,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                               ),
                               // 보낸 기록 버튼 (오른쪽)
                               Padding(
-                                padding: const EdgeInsets.only(right: 20),
+                                padding: EdgeInsets.only(right: 20),
                                 child: RoomActionButton(
                                   iconPath: 'assets/icons/SendRecord_Icon.png',
                                   label: AppLocalizations.of(context)!
@@ -507,23 +507,24 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
             size: 80,
             color: Colors.white54,
           ),
-          const SizedBox(height: 16),
-          const Text(
-            '친구를 찾을 수 없습니다',
+          SizedBox(height: 16),
+          Text(
+            AppLocalizations.of(context)?.get('friendNotFound') ?? '친구를 찾을 수 없습니다',
             style: TextStyle(
               color: Colors.white70,
               fontSize: 18,
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('돌아가기'),
+            child: Text(AppLocalizations.of(context)?.get('back') ?? '돌아가기'),
           ),
         ],
       ),
@@ -666,7 +667,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                   children: [
                     Icon(Icons.chat_bubble_outline,
                         size: 48, color: colorScheme.textHint.withOpacity(0.5)),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Text(
                       AppLocalizations.of(context)!.get('noSentMessages'),
                       style: TextStyle(color: colorScheme.textSecondary),
@@ -733,7 +734,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                               ],
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -741,15 +742,15 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                   size: 12,
                                   color:
                                       const Color(0xFF4E342E).withOpacity(0.6)),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4),
                               Text(
                                 DateFormat('yyyy.MM.dd HH:mm')
                                     .format(msg.createdAt),
                                 style: TextStyle(
                                   color:
-                                      const Color(0xFF4E342E).withOpacity(0.6),
+                                      Color(0xFF4E342E).withOpacity(0.6),
                                   fontSize: 12,
-                                  fontFamily: 'BMJUA',
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 ),
                               ),
                             ],
@@ -946,7 +947,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                 },
                 behavior: HitTestBehavior.opaque,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                       vertical: 8.0, horizontal: 4.0),
                   child: Row(
                     children: [
@@ -968,11 +969,11 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                                 ),
                               ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Text(
                         reason,
-                        style: const TextStyle(
-                          fontFamily: 'BMJUA',
+                        style: TextStyle(
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                           fontSize: 16,
                           color: Color(0xFF4E342E),
                         ),
@@ -1046,10 +1047,10 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
             'nickname':
                 _friend?.nickname ?? AppLocalizations.of(context)!.get('friend')
           }),
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black87,
             fontSize: 16,
-            fontFamily: 'BMJUA',
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           ),
           textAlign: TextAlign.center,
         ),

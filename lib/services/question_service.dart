@@ -36,10 +36,11 @@ class QuestionService {
 
   // 질문 추가 (초기 설정용)
   Future<void> addQuestion(String question, String category,
-      {String? engText}) async {
+      {String? engText, String? jaText}) async {
     await _questionsCollection.add({
       'text': question,
       'engText': engText,
+      'jaText': jaText,
       'category': category,
       'createdAt': FieldValue.serverTimestamp(),
     });
@@ -51,11 +52,16 @@ class QuestionService {
     return query.docs.map((doc) => QuestionModel.fromFirestore(doc)).toList();
   }
 
-  // 특정 질문의 영문 번역 업데이트
-  Future<void> updateQuestionTranslation(String id, String engText) async {
-    await _questionsCollection.doc(id).update({
-      'engText': engText,
-    });
+  // 특정 질문의 외국어 번역 업데이트 (영어/일본어 공용)
+  Future<void> updateQuestionTranslation(String id,
+      {String? engText, String? jaText}) async {
+    final Map<String, dynamic> updates = {};
+    if (engText != null) updates['engText'] = engText;
+    if (jaText != null) updates['jaText'] = jaText;
+
+    if (updates.isNotEmpty) {
+      await _questionsCollection.doc(id).update(updates);
+    }
   }
 
   // 질문이 있으면 업데이트, 없으면 추가
@@ -63,21 +69,26 @@ class QuestionService {
     required String text,
     required String category,
     required String engText,
+    String? jaText,
   }) async {
     final query =
         await _questionsCollection.where('text', isEqualTo: text).get();
 
     if (query.docs.isNotEmpty) {
       // 이미 존재하면 번역만 업데이트
-      await query.docs.first.reference.update({
+      final Map<String, dynamic> updates = {
         'engText': engText,
-        'category': category, // 카테고리도 최신화
-      });
+        'category': category,
+      };
+      if (jaText != null) updates['jaText'] = jaText;
+
+      await query.docs.first.reference.update(updates);
     } else {
       // 없으면 신규 추가
       await _questionsCollection.add({
         'text': text,
         'engText': engText,
+        'jaText': jaText,
         'category': category,
         'createdAt': FieldValue.serverTimestamp(),
       });

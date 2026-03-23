@@ -1,7 +1,7 @@
 name: morni
 description: A morning diary app with character growth and social features
 publish_to: 'none'
-version: 0.2.9+21
+version: 0.2.9+22
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -71,6 +71,7 @@ dependencies:
   timezone: ^0.11.0
   flutter_timezone: ^5.0.1
   url_launcher: ^6.3.2
+  translator: ^1.0.4+1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -121,3 +122,6 @@ flutter:
     - family: KyoboHandwriting2024psw
       fonts:
         - asset: assets/fonts/KyoboHandwriting2024psw.ttf
+    - family: KiwiMaru
+      fonts:
+        - asset: assets/fonts/KiwiMaru-Regular.ttf

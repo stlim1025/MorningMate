@@ -417,7 +417,7 @@ class _ShopScreenState extends State<ShopScreen> {
         if (didPop) return;
       },
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Color(0xFFFDF7E2),
           image: DecorationImage(
             image: ResizeImage(AssetImage('assets/images/Store_Background.png'),
@@ -426,8 +426,8 @@ class _ShopScreenState extends State<ShopScreen> {
           ),
         ),
         child: DefaultTextStyle(
-          style: const TextStyle(
-            fontFamily: 'BMJUA',
+          style: TextStyle(
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
             color: Colors.black87,
           ),
           child: Stack(
@@ -437,9 +437,9 @@ class _ShopScreenState extends State<ShopScreen> {
                 appBar: AppBar(
                   title: Text(
                     AppLocalizations.of(context)?.get('shop') ?? 'Shop',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       color: Color(0xFF4E342E),
                     ),
                   ),
@@ -468,10 +468,10 @@ class _ShopScreenState extends State<ShopScreen> {
                   leadingWidth: 72,
                   actions: [
                     Container(
-                      margin: const EdgeInsets.only(right: 16, top: 6, bottom: 6),
+                      margin: EdgeInsets.only(right: 16, top: 6, bottom: 6),
                       padding:
-                          const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                      decoration: const BoxDecoration(
+                          EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      decoration: BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage('assets/images/Item_Background.png'),
                           fit: BoxFit.fill,
@@ -485,24 +485,24 @@ class _ShopScreenState extends State<ShopScreen> {
                             height: 20,
                             cacheWidth: 80,
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             '${user.points}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'BMJUA',
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               color: Colors.black87,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             AppLocalizations.of(context)?.get('branch') ??
                                 'Branch',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
                               fontWeight: FontWeight.w500,
-                              fontFamily: 'BMJUA',
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             ),
                           ),
                         ],
@@ -528,10 +528,10 @@ class _ShopScreenState extends State<ShopScreen> {
                       // 오늘의 상점 섹션
                       if (todayItems.isNotEmpty) ...[
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          padding: EdgeInsets.symmetric(vertical: 8.0),
                           child: Container(
                             key: _todayShopKey,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: EdgeInsets.symmetric(vertical: 12),
                             child: Column(
                               children: [
                                 _buildSectionHeader(
@@ -549,20 +549,20 @@ class _ShopScreenState extends State<ShopScreen> {
                                         height: 48,
                                         fit: BoxFit.contain,
                                       ),
-                                      const SizedBox(height: 6),
+                                      SizedBox(height: 6),
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          const Icon(Icons.access_time,
+                                          Icon(Icons.access_time,
                                               size: 14, color: Color(0xFF8D6E63)),
-                                          const SizedBox(width: 4),
+                                          SizedBox(width: 4),
                                           Text(
                                             _formatCountdown(_timeUntilReset),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
-                                              fontFamily: 'BMJUA',
+                                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                               color: Color(0xFF8D6E63),
                                             ),
                                           ),
@@ -586,12 +586,12 @@ class _ShopScreenState extends State<ShopScreen> {
 
                       // 세일 중인 상품 섹션
                       if (saleItems.isNotEmpty) ...[
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         _buildSectionHeader(
                           title:
                               '🔥 ${AppLocalizations.of(context)?.get('sale') ?? 'SALE'}',
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         _buildItemGrid(
                           items: saleItems,
                           user: user,
@@ -602,7 +602,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
                       // 최근 출시 상품 섹션
                       if (recentItems.isNotEmpty) ...[
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         _buildSectionHeader(
                           titleWidget: Image.asset(
                             AppLocalizations.of(context)?.locale.languageCode ==
@@ -721,7 +721,7 @@ class _ShopScreenState extends State<ShopScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
+      padding: EdgeInsets.only(right: 8.0),
       child: GestureDetector(
         key: _refreshButtonKey,
         onTap: _onRefreshPress,
@@ -734,12 +734,12 @@ class _ShopScreenState extends State<ShopScreen> {
               height: 40,
               fit: BoxFit.contain,
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
-                fontFamily: 'BMJUA',
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                 color: Color(0xFF8D6E63),
               ),
             ),
@@ -753,7 +753,7 @@ class _ShopScreenState extends State<ShopScreen> {
       {Key? key, String? title, Widget? titleWidget, Widget? trailing}) {
     return Padding(
       key: key,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: 20),
       child: SizedBox(
         width: double.infinity,
         child: Stack(
@@ -764,10 +764,10 @@ class _ShopScreenState extends State<ShopScreen> {
             else if (title != null)
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'BMJUA',
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   color: Color(0xFF4E342E),
                 ),
               ),
@@ -833,8 +833,8 @@ class _ShopScreenState extends State<ShopScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      decoration: const BoxDecoration(
+      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/images/Memo.png'),
           fit: BoxFit.fill,
@@ -848,7 +848,7 @@ class _ShopScreenState extends State<ShopScreen> {
             height: 40,
             fit: BoxFit.contain,
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -856,35 +856,35 @@ class _ShopScreenState extends State<ShopScreen> {
                 Text(
                   AppLocalizations.of(context)?.get('watchAdGetBranch') ??
                       'Watch Ad Get 20 Branches',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFF5D4037),
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Row(
                   children: [
                     Image.asset('assets/images/branch.png',
                         width: 14, height: 14, cacheWidth: 56),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       '+20 ${AppLocalizations.of(context)?.get('branch') ?? 'Branches'}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFF8D6E63),
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'BMJUA',
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       '($currentCount/5)',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFF8D6E63),
                         fontSize: 12,
-                        fontFamily: 'BMJUA',
+                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       ),
                     ),
                   ],
@@ -913,11 +913,11 @@ class _ShopScreenState extends State<ShopScreen> {
                             'Completed')
                         : (AppLocalizations.of(context)?.get('watch') ??
                             'Watch'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Color(0xFF5D4037),
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   ),
                 ],
@@ -992,23 +992,23 @@ class _ShopScreenState extends State<ShopScreen> {
                         color: item.color ?? colorScheme.primaryButton,
                       ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 '[$categoryStr]',
                 style: TextStyle(
-                  fontFamily: 'BMJUA',
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 14,
                   color: colorScheme.textHint,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 l10n?.getFormat('purchaseConfirm', {'item': localizedName}) ??
                     'Do you want to purchase $localizedName?',
-                style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+                style: TextStyle(fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA', fontSize: 16),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               if (isDiscounted)
                 Text(
                   l10n?.getFormat('salePrice', {
@@ -1016,21 +1016,21 @@ class _ShopScreenState extends State<ShopScreen> {
                         'discounted': discountedPrice.toString()
                       }) ??
                       'SALE! ${item.price} -> $discountedPrice 가지',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.red,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   ),
                 ),
               if (!canAfford) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(
                   l10n?.get('notEnoughBranch') ?? 'Not enough branches.',
                   style: TextStyle(
                     color: colorScheme.error,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   ),
                 ),
               ],
@@ -1048,14 +1048,14 @@ class _ShopScreenState extends State<ShopScreen> {
                     height: 18,
                     cacheWidth: 72,
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
                     '$discountedPrice',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       height: 1.1,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       color: isDiscounted ? Colors.red : null,
                     ),
                   ),
@@ -1080,7 +1080,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Center(
                       child: item.imagePath != null
                           ? SizedBox(
@@ -1097,13 +1097,13 @@ class _ShopScreenState extends State<ShopScreen> {
                               color: item.color ?? colorScheme.primaryButton,
                             ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     Text(
                       l10n?.getFormat(
                               'purchaseSuccess', {'item': localizedName}) ??
                           '$localizedName을(를) 구매했습니다.',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16, fontFamily: 'BMJUA'),
+                      style: TextStyle(fontSize: 16, fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA'),
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -1167,7 +1167,7 @@ class _ShopScreenState extends State<ShopScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Spacer(),
+                  Spacer(),
                   Container(
                     width: 40,
                     height: 40,
@@ -1181,13 +1181,13 @@ class _ShopScreenState extends State<ShopScreen> {
                             color: item.color ?? colorScheme.primaryButton,
                             size: 24),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     item.getLocalizedName(context),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'BMJUA',
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       color: Color(0xFF5D4037),
                       height: 1.1,
                     ),
@@ -1195,7 +1195,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const Spacer(),
+                  Spacer(),
                   isPurchased
                       ? SizedBox(
                           width: double.infinity,
@@ -1214,11 +1214,11 @@ class _ShopScreenState extends State<ShopScreen> {
                                 AppLocalizations.of(itemContext)
                                         ?.get('owned') ??
                                     'Owned',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   color: Color(0xFF5D4037),
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'BMJUA',
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 ),
                               ),
                             ],
@@ -1246,7 +1246,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                     height: 12,
                                     cacheWidth: 48,
                                   ),
-                                  const SizedBox(width: 4),
+                                  SizedBox(width: 4),
                                   Text(
                                     '$discountedPrice',
                                     style: TextStyle(
@@ -1254,8 +1254,8 @@ class _ShopScreenState extends State<ShopScreen> {
                                       fontWeight: FontWeight.bold,
                                       color: isDiscounted
                                           ? Colors.red
-                                          : const Color(0xFF5D4037),
-                                      fontFamily: 'BMJUA',
+                                          : Color(0xFF5D4037),
+                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                     ),
                                   ),
                                 ],
@@ -1280,7 +1280,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   ),
                   child: Text(
                     AppLocalizations.of(itemContext)?.get('sale') ?? 'SALE',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 10,

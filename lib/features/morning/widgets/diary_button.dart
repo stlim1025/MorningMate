@@ -54,12 +54,12 @@ class _DiaryButtonState extends State<DiaryButton>
               cacheHeight: 200, // Optimize memory for fixed height
             ),
             Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: EdgeInsets.only(top: 6),
               child: Text(
                 AppLocalizations.of(context)?.get('writeDiary') ??
                     'Write Diary',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 23,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF4E342E), // Dark Brown

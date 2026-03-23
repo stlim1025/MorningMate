@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../core/localization/app_localizations.dart';
 import 'dart:async';
 
 import '../features/auth/screens/auth_wrapper.dart';
@@ -23,6 +24,8 @@ import '../features/archive/screens/archive_screen.dart';
 import '../features/archive/screens/diary_detail_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../features/settings/screens/notification_settings_screen.dart';
+import '../features/settings/screens/terms_selection_screen.dart';
+import '../features/settings/screens/faq_screen.dart';
 import '../features/settings/screens/terms_of_service_screen.dart';
 import '../features/settings/screens/privacy_policy_screen.dart';
 import '../features/auth/controllers/auth_controller.dart';
@@ -317,14 +320,26 @@ class AppRouter {
         ),
         GoRoute(
           parentNavigatorKey: navigatorKey,
-          path: '/settings/terms',
+          path: '/settings/faq',
+          name: 'faq',
+          builder: (context, state) => const FAQScreen(),
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/settings/terms-selection',
           name: 'termsOfService',
+          builder: (context, state) => const TermsSelectionScreen(),
+        ),
+        GoRoute(
+          parentNavigatorKey: navigatorKey,
+          path: '/settings/terms-detail',
+          name: 'termsOfServiceDetail',
           builder: (context, state) => const TermsOfServiceScreen(),
         ),
         GoRoute(
           parentNavigatorKey: navigatorKey,
-          path: '/settings/privacy',
-          name: 'privacyPolicy',
+          path: '/settings/privacy-detail',
+          name: 'privacyPolicyDetail',
           builder: (context, state) => const PrivacyPolicyScreen(),
         ),
 
@@ -337,7 +352,12 @@ class AppRouter {
       ],
       errorBuilder: (context, state) => Scaffold(
         body: Center(
-          child: Text('페이지를 찾을 수 없습니다: ${state.uri}'),
+          child: Text(
+            AppLocalizations.of(context)?.get('pageNotFound') ?? 'Page not found: ${state.uri}',
+            style: TextStyle(
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+            ),
+          ),
         ),
       ),
     );

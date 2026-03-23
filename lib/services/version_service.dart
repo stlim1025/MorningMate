@@ -12,22 +12,27 @@ class VersionService {
       // 1. Get current app version
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
+      debugPrint('DEBUG: Version Check - currentVersion: $currentVersion');
 
       // 2. Get version info from Firestore
       final doc = await _firestore.collection('settings').doc('version').get();
       if (!doc.exists) {
+        debugPrint('DEBUG: Version Check - Firestore doc does not exist');
         return VersionCheckResult(type: VersionUpdateType.none);
       }
 
       final data = doc.data();
       final platformKey = defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
+      debugPrint('DEBUG: Version Check - platformKey: $platformKey');
       
       VersionModel info;
       if (data != null && data.containsKey(platformKey)) {
         info = VersionModel.fromMap(data[platformKey]);
+        debugPrint('DEBUG: Version Check - latestVersion: ${info.latestVersion}, minimumVersion: ${info.minimumVersion}');
       } else {
         // Fallback to legacy structure
         info = VersionModel.fromFirestore(doc);
+        debugPrint('DEBUG: Version Check - Fallback to legacy structure');
       }
 
       // 3. Compare versions

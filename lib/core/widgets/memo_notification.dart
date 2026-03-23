@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:morni/core/localization/app_localizations.dart';
 
 class MemoNotification {
   static void show(BuildContext context, String message, {Duration? duration}) {
@@ -23,12 +24,12 @@ class MemoNotification {
           ),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(40, 20, 40, 10), // 상단 패딩 조정
+              padding: EdgeInsets.fromLTRB(40, 20, 40, 10), // 상단 패딩 조정
               child: Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 16, // 폰트 사이즈를 약간 줄여서 가독성 확보
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF5D4037),

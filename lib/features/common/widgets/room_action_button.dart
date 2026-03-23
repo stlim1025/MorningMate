@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 
 /// 마이룸과 친구 상세 페이지에서 사용하는 공통 액션 버튼
 ///
@@ -115,7 +116,7 @@ class _RoomActionButtonState extends State<RoomActionButton>
                         cacheWidth: 150, // Optimize memory
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     // 버튼 텍스트 - Flexible로 감싸서 잘리지 않도록
                     Flexible(
                       flex: 1,
@@ -123,14 +124,14 @@ class _RoomActionButtonState extends State<RoomActionButton>
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.center,
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(
+                          constraints: BoxConstraints(
                             maxWidth:
                                 60, // 'Decorate' 단어가 잘리지 않도록 폭을 약간 넓힘 (60 정도면 Decorate가 한 줄에 들어감)
                           ),
                           child: Text(
                             widget.label,
-                            style: const TextStyle(
-                              fontFamily: 'BMJUA',
+                            style: TextStyle(
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF4E342E), // Dark Brown

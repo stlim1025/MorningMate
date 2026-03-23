@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../controllers/admin_controller.dart';
 import '../../../data/models/version_model.dart';
+import 'package:translator/translator.dart';
 
 class AdminVersionTab extends StatefulWidget {
   const AdminVersionTab({super.key});
@@ -18,9 +19,15 @@ class _AdminVersionTabState extends State<AdminVersionTab>
   final _minimumController = TextEditingController();
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
+  final _titleEnController = TextEditingController();
+  final _bodyEnController = TextEditingController();
+  final _titleJaController = TextEditingController();
+  final _bodyJaController = TextEditingController();
   bool _isForceUpdate = false;
+  bool _isTranslating = false;
   String _currentAppVersion = '';
   String _currentBuildNumber = '';
+  final _translator = GoogleTranslator();
 
   @override
   void initState() {
@@ -51,9 +58,10 @@ class _AdminVersionTabState extends State<AdminVersionTab>
     _updateFieldsFromController();
   }
 
-  void _updateFieldsFromController() {
+  void _updateFieldsFromController({int? index}) {
     final adminController = context.read<AdminController>();
-    final info = _tabController.index == 0
+    final targetIndex = index ?? _tabController.index;
+    final info = targetIndex == 0
         ? adminController.androidVersionInfo
         : adminController.iosVersionInfo;
 
@@ -63,6 +71,10 @@ class _AdminVersionTabState extends State<AdminVersionTab>
         _minimumController.text = info.minimumVersion;
         _titleController.text = info.updateTitle;
         _bodyController.text = info.updateBody;
+        _titleEnController.text = info.updateTitleEn ?? '';
+        _bodyEnController.text = info.updateBodyEn ?? '';
+        _titleJaController.text = info.updateTitleJa ?? '';
+        _bodyJaController.text = info.updateBodyJa ?? '';
         _isForceUpdate = info.isForceUpdate;
       });
     }
@@ -76,6 +88,10 @@ class _AdminVersionTabState extends State<AdminVersionTab>
     _minimumController.dispose();
     _titleController.dispose();
     _bodyController.dispose();
+    _titleEnController.dispose();
+    _bodyEnController.dispose();
+    _titleJaController.dispose();
+    _bodyJaController.dispose();
     super.dispose();
   }
 
@@ -220,6 +236,87 @@ class _AdminVersionTabState extends State<AdminVersionTab>
                           controller: _bodyController,
                           maxLines: 3,
                         ),
+                        const SizedBox(height: 20),
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            const Text(
+                              'Global Localization',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF6366F1),
+                              ),
+                            ),
+                            const Spacer(),
+                            if (_isTranslating)
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF6366F1),
+                                ),
+                              )
+                            else
+                              TextButton.icon(
+                                onPressed: _autoTranslate,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.translate_rounded,
+                                    size: 14, color: Color(0xFF6366F1)),
+                                label: const Text(
+                                  '일괄 자동 번역 (EN/JA)',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Color(0xFF6366F1)),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInputField(
+                          label: 'Update Popup Title (EN)',
+                          hint: 'e.g. New Version Available!',
+                          controller: _titleEnController,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildInputField(
+                          label: 'Update Popup Body (EN)',
+                          hint: 'e.g. Please update for new features and bug fixes.',
+                          controller: _bodyEnController,
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 20),
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Japanese Localization',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFFF5252),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInputField(
+                          label: 'Update Popup Title (JA)',
+                          hint: '例: 新しいバージョンが利用可能です！',
+                          controller: _titleJaController,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildInputField(
+                          label: 'Update Popup Body (JA)',
+                          hint: '例: 新しい機能と安定性の向上のためにアップデートをお願いします。',
+                          controller: _bodyJaController,
+                          maxLines: 3,
+                        ),
                         const SizedBox(height: 24),
 
                         // Force Update Toggle + Save
@@ -261,7 +358,7 @@ class _AdminVersionTabState extends State<AdminVersionTab>
                                 value: _isForceUpdate,
                                 onChanged: (val) =>
                                     setState(() => _isForceUpdate = val),
-                                activeColor: const Color(0xFF6366F1),
+                                activeThumbColor: const Color(0xFF6366F1),
                               ),
                             ],
                           ),
@@ -369,6 +466,7 @@ class _AdminVersionTabState extends State<AdminVersionTab>
     return InkWell(
       onTap: () {
         _tabController.animateTo(index);
+        _updateFieldsFromController(index: index); // 전달받은 인덱스로 즉시 업데이트
         setState(() {});
       },
       borderRadius: BorderRadius.circular(8),
@@ -377,11 +475,11 @@ class _AdminVersionTabState extends State<AdminVersionTab>
             const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? color.withOpacity(0.08)
+              ? color.withValues(alpha: 0.08)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: isSelected
-              ? Border.all(color: color.withOpacity(0.3))
+              ? Border.all(color: color.withValues(alpha: 0.3))
               : null,
         ),
         child: Row(
@@ -461,6 +559,63 @@ class _AdminVersionTabState extends State<AdminVersionTab>
     );
   }
 
+  Future<void> _autoTranslate() async {
+    final title = _titleController.text.trim();
+    final body = _bodyController.text.trim();
+
+    if (title.isEmpty && body.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('번역할 한글 내용이 없습니다.')),
+      );
+      return;
+    }
+
+    setState(() => _isTranslating = true);
+
+    try {
+      // Translate to English
+      if (title.isNotEmpty) {
+        final translatedTitleEn =
+            await _translator.translate(title, from: 'ko', to: 'en');
+        _titleEnController.text = translatedTitleEn.text;
+      }
+      if (body.isNotEmpty) {
+        final translatedBodyEn =
+            await _translator.translate(body, from: 'ko', to: 'en');
+        _bodyEnController.text = translatedBodyEn.text;
+      }
+
+      // Translate to Japanese
+      if (title.isNotEmpty) {
+        final translatedTitleJa =
+            await _translator.translate(title, from: 'ko', to: 'ja');
+        _titleJaController.text = translatedTitleJa.text;
+      }
+      if (body.isNotEmpty) {
+        final translatedBodyJa =
+            await _translator.translate(body, from: 'ko', to: 'ja');
+        _bodyJaController.text = translatedBodyJa.text;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('영어 및 일본어 번역이 완료되었습니다.')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Translation error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('번역 중 오류가 발생했습니다.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isTranslating = false);
+      }
+    }
+  }
+
   Widget _buildGuideItem(String title, String desc, IconData icon) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,6 +661,10 @@ class _AdminVersionTabState extends State<AdminVersionTab>
       minimumVersion: _minimumController.text.trim(),
       updateTitle: _titleController.text.trim(),
       updateBody: _bodyController.text.trim(),
+      updateTitleEn: _titleEnController.text.trim().isEmpty ? null : _titleEnController.text.trim(),
+      updateBodyEn: _bodyEnController.text.trim().isEmpty ? null : _bodyEnController.text.trim(),
+      updateTitleJa: _titleJaController.text.trim().isEmpty ? null : _titleJaController.text.trim(),
+      updateBodyJa: _bodyJaController.text.trim().isEmpty ? null : _bodyJaController.text.trim(),
       isForceUpdate: _isForceUpdate,
     );
 

@@ -165,8 +165,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
         key: AppDialogKey.inviteToNest,
         content: Text(
           AppLocalizations.of(context)?.get('nestFullError') ??
-              '정원이 꽉차서 더 이상 입장할 수 없습니다.',
-          style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+              'The nest is full. No more members can join.',
+          style: TextStyle(
+              fontFamily:
+                  AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+              fontSize: 16),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -218,8 +221,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 key: AppDialogKey.inviteToNest,
                 content: Text(
                   AppLocalizations.of(context)?.get('nestSelfInviteError') ??
-                      '자신을 초대할 수 없습니다.',
-                  style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+                      'You cannot invite yourself.',
+                  style: TextStyle(
+                      fontFamily:
+                          AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                      fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
                 actions: [
@@ -244,8 +250,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                   content: Text(
                     AppLocalizations.of(context)
                             ?.get('nestUserNotFoundError') ??
-                        '존재하지 않는 닉네임입니다.',
-                    style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+                        'Nickname does not exist.',
+                    style: TextStyle(
+                        fontFamily:
+                            AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                        fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
                   actions: [
@@ -266,8 +275,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                   content: Text(
                     AppLocalizations.of(context)
                             ?.get('nestAlreadyMemberError') ??
-                        '이미 둥지에 있는 사용자입니다.',
-                    style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+                        'User is already in the nest.',
+                    style: TextStyle(
+                        fontFamily:
+                            AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                        fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
                   actions: [
@@ -296,7 +308,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                   context,
                   AppLocalizations.of(context)?.getFormat(
                           'nestInviteSent', {'nickname': nickname}) ??
-                      '$nickname님에게 초대 요청을 보냈습니다.');
+                      'Sent an invite request to $nickname.');
             } catch (e) {
               if (ctx.mounted) {
                 if (e.toString().contains('nestFullError')) {
@@ -305,8 +317,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                     key: AppDialogKey.inviteToNest,
                     content: Text(
                       AppLocalizations.of(context)?.get('nestFullError') ??
-                          '정원이 꽉차서 더 이상 입장할 수 없습니다.',
-                      style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+                          'The nest is full. No more members can join.',
+                      style: TextStyle(
+                          fontFamily:
+                              AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                          fontSize: 16),
                       textAlign: TextAlign.center,
                     ),
                     actions: [
@@ -322,7 +337,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                       ctx,
                       AppLocalizations.of(context)?.getFormat(
                               'nestInviteFailed', {'error': e.toString()}) ??
-                          '초대 실패: ${e.toString()}');
+                          'Invite failed: ${e.toString()}');
                 }
               }
             }
@@ -349,23 +364,24 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset('assets/images/branch.png', width: 24, height: 24),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 '$userGaji',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily:
+                      AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 20,
-                  color: Color(0xFF4E342E),
+                  color: const Color(0xFF4E342E),
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           PopupTextField(
             controller: amountController,
             hintText: AppLocalizations.of(context)?.get('nestCollectHint') ??
-                '모을 수량을 입력하세요',
+                'Enter amount to collect',
             keyboardType: TextInputType.number,
             maxLength: 5,
           ),
@@ -378,7 +394,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
         ),
         AppDialogAction(
           label:
-              AppLocalizations.of(context)?.get('nestCollectButton') ?? '모으기',
+              AppLocalizations.of(context)?.get('nestCollectButton') ?? 'Collect',
           isPrimary: true,
           onPressed: (ctx) async {
             final amountStr = amountController.text.trim();
@@ -389,7 +405,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 SnackBar(
                     content: Text(AppLocalizations.of(context)
                             ?.get('nestInvalidAmount') ??
-                        '올바른 숫자를 입력해주세요.')),
+                        'Please enter a valid number.')),
               );
               return;
             }
@@ -399,7 +415,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 SnackBar(
                     content: Text(AppLocalizations.of(context)
                             ?.get('nestNotEnoughGaji') ??
-                        '보유한 가지보다 많이 모을 수 없습니다.')),
+                        'You cannot collect more than the branches you own.')),
               );
               return;
             }
@@ -411,7 +427,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 widget.nest.id,
                 authController.currentUser!.uid,
                 authController.userModel?.nickname ??
-                    (AppLocalizations.of(context)?.get('unknown') ?? '알 수 없음'),
+                    (AppLocalizations.of(context)?.get('unknown') ?? 'Unknown'),
                 widget.nest.name,
                 amount,
                 userGaji,
@@ -428,23 +444,24 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Image.asset(
                       'assets/images/branch.png',
                       width: 80,
                       height: 80,
                       fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       AppLocalizations.of(context)?.getFormat(
                               'nestCollectSuccessDesc',
                               {'amount': amount.toString()}) ??
-                          '가지 $amount개 모으기 성공!',
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                          'Successfully collected $amount branches!',
+                      style: TextStyle(
+                        fontFamily:
+                            AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 18,
-                        color: Color(0xFF4E342E),
+                        color: const Color(0xFF4E342E),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -486,14 +503,14 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           PopupTextField(
             controller: nameController,
             hintText: AppLocalizations.of(context)?.get('nestNameHint') ??
-                '둥지 이름을 입력하세요',
+                'Enter nest name',
             maxLength: 15,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           PopupTextField(
             controller: descController,
             hintText: AppLocalizations.of(context)?.get('nestDescHint') ??
-                '둥지 설명을 입력하세요 (최대 15자)',
+                'Enter nest description (max 15 chars)',
             maxLength: 15,
           ),
         ],
@@ -504,7 +521,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           onPressed: (ctx) => Navigator.pop(ctx),
         ),
         AppDialogAction(
-          label: AppLocalizations.of(context)?.get('edit') ?? '수정하기',
+          label: AppLocalizations.of(context)?.get('edit') ?? 'Edit',
           isPrimary: true,
           onPressed: (ctx) async {
             final name = nameController.text.trim();
@@ -520,7 +537,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
               MemoNotification.show(
                   context,
                   AppLocalizations.of(context)?.get('nestUpdateSuccess') ??
-                      '둥지 정보를 수정했습니다!');
+                      'Nest info updated!');
             } catch (e) {
               if (ctx.mounted) {
                 MemoNotification.show(ctx, e.toString());
@@ -539,9 +556,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
       content: Text(
         AppLocalizations.of(context)
                 ?.getFormat('nestDeleteConfirm', {'name': nest.name}) ??
-            '\'${nest.name}\' 둥지를 정말 삭제하시겠습니까?\n모든 멤버가 탈퇴 처리되며 복구할 수 없습니다.',
+            'Do you really want to delete the \'${nest.name}\' nest?\nAll members will be withdrawn and this cannot be undone.',
         textAlign: TextAlign.center,
-        style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+        style: TextStyle(
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+            fontSize: 16),
       ),
       actions: [
         AppDialogAction(
@@ -549,7 +568,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           onPressed: (ctx) => Navigator.pop(ctx),
         ),
         AppDialogAction(
-          label: AppLocalizations.of(context)?.get('delete') ?? '삭제',
+          label: AppLocalizations.of(context)?.get('delete') ?? 'Delete',
           isPrimary: true,
           onPressed: (ctx) async {
             final nestController =
@@ -573,7 +592,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 MemoNotification.show(
                     ctx,
                     AppLocalizations.of(ctx)?.get('nestDeleteSuccess') ??
-                        '둥지가 삭제되었습니다.');
+                        'Nest deleted.');
               }
             } catch (e) {
               if (ctx.mounted) {
@@ -593,9 +612,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
       content: Text(
         AppLocalizations.of(context)
                 ?.getFormat('nestLeaveConfirm', {'name': nest.name}) ??
-            '\'${nest.name}\' 둥지에서 정말 나가시겠습니까?',
+            'Do you really want to leave the \'${nest.name}\' nest?',
         textAlign: TextAlign.center,
-        style: const TextStyle(fontFamily: 'BMJUA', fontSize: 16),
+        style: TextStyle(
+            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+            fontSize: 16),
       ),
       actions: [
         AppDialogAction(
@@ -603,7 +624,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           onPressed: (ctx) => Navigator.pop(ctx),
         ),
         AppDialogAction(
-          label: AppLocalizations.of(context)?.get('nestWithdraw') ?? '나가기',
+          label: AppLocalizations.of(context)?.get('nestWithdraw') ?? 'Leave',
           isPrimary: true,
           onPressed: (ctx) async {
             final authController =
@@ -622,7 +643,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
               MemoNotification.show(
                   context,
                   AppLocalizations.of(context)?.get('nestLeaveSuccess') ??
-                      '둥지에서 퇴장했습니다.');
+                      'Left the nest.');
             } catch (e) {
               if (ctx.mounted) {
                 MemoNotification.show(ctx, e.toString());
@@ -643,7 +664,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           context,
           AppLocalizations.of(context)?.getFormat('nestMyStreak',
                   {'days': member.displayConsecutiveDays.toString()}) ??
-              '나의 연속 기록: ${member.displayConsecutiveDays}일! 찌를 수 없습니다.');
+              'My streak: ${member.displayConsecutiveDays} days! Cannot poke.');
       return;
     }
 
@@ -657,7 +678,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
           context,
           AppLocalizations.of(context)?.getFormat(
                   'nestPokeCooldown', {'seconds': remaining.toString()}) ??
-              '앗! ${remaining}초 뒤에 다시 찌를 수 있어요!');
+              'Oops! You can poke again in ${remaining}s!');
       return;
     }
 
@@ -665,7 +686,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
         context,
         AppLocalizations.of(context)
                 ?.getFormat('nestPokeSuccess', {'nickname': member.nickname}) ??
-            '${member.nickname}님을 찔렀어요!');
+            'Poked ${member.nickname}!');
 
     setState(() {
       _jumpingMemberIds.add(member.uid);
@@ -708,23 +729,24 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Image.asset(
             nestImage,
             width: 150,
             height: 150,
             fit: BoxFit.contain,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset('assets/images/branch.png', width: 24, height: 24),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 '$requiredGaji',
                 style: TextStyle(
-                  fontFamily: 'BMJUA',
+                  fontFamily:
+                      AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: totalGaji >= requiredGaji
@@ -734,7 +756,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             nextLevel == 4
                 ? (AppLocalizations.of(context)
@@ -750,10 +772,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                       'bonusPercent': bonusPercent,
                     }) ??
                     '둥지를 레벨 $nextLevel로 업그레이드 하시겠습니까?\n배경이 바뀌고 정원이 ${maxCapacity}명으로 늘어납니다.\n(일기 작성 시 가지 +$bonusPercent% 버프 획득)'),
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
+            style: TextStyle(
+              fontFamily:
+                  AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 16,
-              color: Color(0xFF4E342E),
+              color: const Color(0xFF4E342E),
             ),
             textAlign: TextAlign.center,
           ),
@@ -782,24 +805,25 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Image.asset(
                       nestImage,
                       width: 150,
                       height: 150,
                       fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       AppLocalizations.of(context)
                               ?.getFormat('nestUpgradeSuccess', {
                             'level': nextLevel.toString(),
                           }) ??
-                          '둥지가 레벨 $nextLevel로 업그레이드 되었습니다!',
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                          'Nest upgraded to level $nextLevel!',
+                      style: TextStyle(
+                        fontFamily:
+                            AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 16,
-                        color: Color(0xFF4E342E),
+                        color: const Color(0xFF4E342E),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -836,7 +860,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
             return Container(
               width: 260,
               height: 64,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/images/NestTitle_Area.png'),
                   fit: BoxFit.contain,
@@ -847,12 +871,13 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                 alignment: Alignment.center,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    padding: EdgeInsets.symmetric(horizontal: 40),
                     child: Text(
                       nestData.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFF4E342E),
-                        fontFamily: 'BMJUA',
+                        fontFamily:
+                            AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 20,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -884,9 +909,9 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                   Positioned(
                     right: -55, // Container 오른쪽 바깥으로 조금 더 이동
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                           horizontal: 6, vertical: 4),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage('assets/images/Circle_Area.png'),
                           fit: BoxFit.fill,
@@ -896,9 +921,9 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.person,
+                          Icon(Icons.person,
                               size: 12, color: Color(0xFF4E342E)),
-                          const SizedBox(width: 2),
+                          SizedBox(width: 2),
                           Text(
                             AppLocalizations.of(context)
                                     ?.getFormat('nestPeopleCount', {
@@ -910,9 +935,10 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                       .toString()
                                 }) ??
                                 '${nestData.memberIds.length}/${nestData.level == 1 ? 10 : (nestData.level == 2 ? 15 : 20)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Color(0xFF4E342E),
-                              fontFamily: 'BMJUA',
+                              fontFamily:
+                                  AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -1003,13 +1029,13 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
               ),
             ),
             Transform.translate(
-              offset: const Offset(0, -10),
+              offset: Offset(0, -10),
               child: _ScaleTapButton(
                 onTap: _showInviteDialog,
                 child: Container(
                   width: 140,
                   height: 48,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage('assets/icons/AddFriend_Button.png'),
                       fit: BoxFit.contain,
@@ -1018,14 +1044,15 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                   alignment: Alignment.center,
                   child: Padding(
                     padding:
-                        const EdgeInsets.only(top: 5), // 시각적 중앙 보정 (텍스트 아래로)
+                        EdgeInsets.only(top: 5), // 시각적 중앙 보정 (텍스트 아래로)
                     child: Text(
                       AppLocalizations.of(context)?.get('nestInviteButton') ??
-                          '+  둥지 초대',
-                      style: const TextStyle(
+                          '+  Invite To Nest',
+                      style: TextStyle(
                         color: Color(0xFF4E342E),
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'BMJUA',
+                        fontFamily:
+                            AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 15,
                       ),
                     ),
@@ -1071,12 +1098,12 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                   // 둥지 상단: 공통 가지 수량 및 기부 버튼
                   if (nestData.level >= 2)
                     Transform.translate(
-                      offset: const Offset(0, -10),
+                      offset: Offset(0, -10),
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                        padding: const EdgeInsets.symmetric(
+                        margin: EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           image: DecorationImage(
                             image:
                                 AssetImage('assets/images/Buff_Background.png'),
@@ -1086,8 +1113,8 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('✨', style: TextStyle(fontSize: 12)),
-                            const SizedBox(width: 4),
+                            Text('✨', style: TextStyle(fontSize: 12)),
+                            SizedBox(width: 4),
                             Text(
                               AppLocalizations.of(context)?.getFormat(
                                       'nestBuffActive', {
@@ -1095,10 +1122,11 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                         ? '20'
                                         : (nestData.level == 3 ? '10' : '5')
                                   }) ??
-                                  '일기 작성 가지 +${nestData.level >= 4 ? 20 : (nestData.level == 3 ? 10 : 5)}% 버프 적용중!',
-                              style: const TextStyle(
+                                  'Diary branches +${nestData.level >= 4 ? 20 : (nestData.level == 3 ? 10 : 5)}% buff active!',
+                              style: TextStyle(
                                 color: Color(0xFF4E342E),
-                                fontFamily: 'BMJUA',
+                                fontFamily:
+                                    AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -1108,7 +1136,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 8.0),
                     child: Wrap(
                       alignment: WrapAlignment.center,
@@ -1119,7 +1147,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                         Container(
                           width: 100,
                           height: 44,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             image: DecorationImage(
                               image:
                                   AssetImage('assets/images/Circle_Area.png'),
@@ -1131,12 +1159,13 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                             children: [
                               Image.asset('assets/images/branch.png',
                                   width: 24, height: 24),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 '${nestData.totalGaji}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Color(0xFF4E342E),
-                                  fontFamily: 'BMJUA',
+                                  fontFamily:
+                                      AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -1150,7 +1179,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                           child: Container(
                             width: 75,
                             height: 32,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               image: DecorationImage(
                                 image:
                                     AssetImage('assets/images/Add_Button.png'),
@@ -1161,10 +1190,10 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                             child: Text(
                               AppLocalizations.of(context)
                                       ?.get('nestCollectButton') ??
-                                  '+ 모으기',
-                              style: const TextStyle(
+                                  '+ Collect',
+                              style: TextStyle(
                                 color: Color(0xFF4E342E),
-                                fontFamily: 'BMJUA',
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -1185,7 +1214,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                               child: Container(
                                 width: 90,
                                 height: 32,
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   image: DecorationImage(
                                     image: AssetImage(
                                         'assets/images/Add_Button.png'),
@@ -1196,10 +1225,10 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                 child: Text(
                                   AppLocalizations.of(context)
                                           ?.get('nestUpgrade') ??
-                                      '업그레이드',
-                                  style: const TextStyle(
+                                      'Upgrade',
+                                  style: TextStyle(
                                     color: Color(0xFF4E342E),
-                                    fontFamily: 'BMJUA',
+                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1223,7 +1252,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                           return Center(
                               child: Text(AppLocalizations.of(context)
                                       ?.get('errorOccurred') ??
-                                  '오류가 발생했습니다.'));
+                                  'An error occurred.'));
                         }
                         final members = memberSnapshot.data ?? [];
 
@@ -1232,8 +1261,9 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                               child: Text(
                                   AppLocalizations.of(context)
                                           ?.get('nestNoMembers') ??
-                                      '아직 멤버가 없습니다.',
-                                  style: const TextStyle(fontFamily: 'BMJUA')));
+                                      'No members yet.',
+                                  style: TextStyle(
+                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA')));
                         }
 
                         return LayoutBuilder(builder: (context, constraints) {
@@ -1253,7 +1283,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
 
                               final posOffset = index < positions.length
                                   ? positions[index]
-                                  : const Offset(0.5, 0.5);
+                                  : Offset(0.5, 0.5);
 
                               final left =
                                   constraints.maxWidth * posOffset.dx - 50;
@@ -1275,7 +1305,7 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                                   .displayConsecutiveDays
                                                   .toString()
                                             }) ??
-                                            '${member.nickname}: 연속 ${member.displayConsecutiveDays}일! (더블탭해서 찌르기)');
+                                            '${member.nickname}: streak ${member.displayConsecutiveDays} days! (Double tap to poke)');
                                   },
                                   child: Builder(
                                     builder: (context) {
@@ -1410,13 +1440,13 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                                   ],
                                                 ),
                                               ),
-                                              const SizedBox(height: 4),
+                                              SizedBox(height: 4),
                                               Container(
                                                 padding:
-                                                    const EdgeInsets.symmetric(
+                                                    EdgeInsets.symmetric(
                                                         horizontal: 10,
                                                         vertical: 4),
-                                                decoration: const BoxDecoration(
+                                                decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
                                                         'assets/images/Circle_Area.png'),
@@ -1426,20 +1456,20 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                                 ),
                                                 child: Text(
                                                   member.nickname,
-                                                  style: const TextStyle(
-                                                    fontFamily: 'BMJUA',
+                                                  style: TextStyle(
+                                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                     fontSize: 12,
                                                     color: Color(0xFF4E342E),
                                                   ),
                                                 ),
                                               ),
-                                              const SizedBox(height: 2),
+                                              SizedBox(height: 2),
                                               Container(
                                                 padding:
-                                                    const EdgeInsets.symmetric(
+                                                    EdgeInsets.symmetric(
                                                         horizontal: 8,
                                                         vertical: 2),
-                                                decoration: const BoxDecoration(
+                                                decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
                                                         'assets/images/Circle_Area.png'),
@@ -1451,16 +1481,20 @@ class _NestRoomScreenState extends State<NestRoomScreen> {
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   children: [
-                                                    const Text('🔥',
+                                                    Text('🔥',
                                                         style: TextStyle(
                                                             fontSize: 10)),
-                                                    const SizedBox(width: 2),
+                                                    SizedBox(width: 2),
                                                     Text(
-                                                      '${member.displayConsecutiveDays}${AppLocalizations.of(context)?.get('dayUnit') ?? '일'}',
-                                                      style: const TextStyle(
-                                                        fontFamily: 'BMJUA',
-                                                        color:
-                                                            Color(0xFF4E342E),
+                                                      '${member.displayConsecutiveDays}${AppLocalizations.of(context)?.get('dayUnit') ?? 'd'}',
+                                                      style: TextStyle(
+                                                        fontFamily:
+                                                            AppLocalizations.of(
+                                                                        context)
+                                                                    ?.mainFontFamily ??
+                                                                AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                                                        color: const Color(
+                                                            0xFF4E342E),
                                                         fontSize: 10,
                                                         fontWeight:
                                                             FontWeight.bold,

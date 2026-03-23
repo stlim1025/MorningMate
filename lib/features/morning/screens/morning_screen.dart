@@ -259,15 +259,15 @@ class _MorningScreenState extends State<MorningScreen>
           Text(
             AppLocalizations.of(context)?.get('nicknameIntro') ??
                 'Nice to meet you! Please enter your nickname.',
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
+            style: TextStyle(
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 16,
-              color: Color(0xFF4E342E),
+              color: const Color(0xFF4E342E),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: PopupTextField(
               controller: controller,
               hintText:
@@ -554,13 +554,13 @@ class _MorningScreenState extends State<MorningScreen>
         (isAwake && !isDarkMode) || backgroundId == 'golden_sun';
 
     final textColor =
-        isBrightBackground ? const Color(0xFF1A1A1A) : Colors.white;
+        isBrightBackground ? Color(0xFF1A1A1A) : Colors.white;
     final shadowColor = isBrightBackground
         ? Colors.white.withOpacity(0.9)
         : Colors.black.withOpacity(0.85);
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -573,7 +573,7 @@ class _MorningScreenState extends State<MorningScreen>
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: textColor,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     shadows: [
                       Shadow(
                         color: shadowColor,
@@ -587,7 +587,7 @@ class _MorningScreenState extends State<MorningScreen>
                     ],
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   AppLocalizations.of(context)?.getFormat(
                         'consecutiveDays',
@@ -600,7 +600,7 @@ class _MorningScreenState extends State<MorningScreen>
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: textColor.withOpacity(0.9),
                     fontWeight: FontWeight.w600,
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     shadows: [
                       Shadow(
                         color: shadowColor,

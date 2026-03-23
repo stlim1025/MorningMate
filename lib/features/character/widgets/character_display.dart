@@ -87,8 +87,8 @@ class _CharacterDisplayState extends State<CharacterDisplay>
 
                 return Transform.scale(
                   scale: wingScale,
-                  child: Image.asset(
-                    widget.characterLevel >= 6
+                  child: NetworkOrAssetImage(
+                    imagePath: widget.characterLevel >= 6
                         ? 'assets/images/Egg_Wing5.png'
                         : widget.characterLevel >= 5
                             ? 'assets/images/Egg_Wing4.png'
@@ -100,22 +100,18 @@ class _CharacterDisplayState extends State<CharacterDisplay>
                     width: charWidth,
                     height: charHeight,
                     fit: BoxFit.contain,
-                    cacheWidth: 400,
-                    filterQuality: FilterQuality.medium,
                   ),
                 );
               }),
 
             // 2. Base Body - Static layer
-            Image.asset(
-              widget.isAwake
+            NetworkOrAssetImage(
+              imagePath: widget.isAwake
                   ? 'assets/images/Body.png'
                   : 'assets/images/Sleep_Body.png',
               width: charWidth,
               height: charHeight,
               fit: BoxFit.contain,
-              cacheWidth: 500,
-              filterQuality: FilterQuality.medium,
             ),
 
             // 3. Expression Layer - Position face
@@ -134,34 +130,31 @@ class _CharacterDisplayState extends State<CharacterDisplay>
                           crossFadeState: widget.isTapped
                               ? CrossFadeState.showSecond
                               : CrossFadeState.showFirst,
-                          firstChild: Image.asset(
-                            widget.isAwake
+                          firstChild: NetworkOrAssetImage(
+                            imagePath: widget.isAwake
                                 ? 'assets/images/Face_Default.png'
                                 : 'assets/images/Face_Sleep.png',
                             fit: BoxFit.contain,
                             key: const ValueKey('face_normal'),
-                            cacheWidth: 300,
                           ),
                           secondChild: Padding(
                             padding: EdgeInsets.only(
                               top: widget.isAwake ? charHeight * 0.06 : 0,
                             ),
-                            child: Image.asset(
-                              widget.isAwake
+                            child: NetworkOrAssetImage(
+                              imagePath: widget.isAwake
                                   ? 'assets/images/Face_Wink.png'
                                   : 'assets/images/Face_Drool.png',
                               fit: BoxFit.contain,
                               key: const ValueKey('face_tapped'),
-                              cacheWidth: 300,
                             ),
                           ),
                         )
-                      : Image.asset(
-                          widget.isAwake
+                      : NetworkOrAssetImage(
+                          imagePath: widget.isAwake
                               ? 'assets/images/Face_Default.png'
                               : 'assets/images/Face_Sleep.png',
                           fit: BoxFit.contain,
-                          cacheWidth: 300,
                         ),
                 ),
               ),

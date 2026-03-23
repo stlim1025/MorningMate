@@ -27,6 +27,8 @@ import 'features/notification/controllers/notification_controller.dart';
 import 'features/admin/controllers/admin_controller.dart';
 import 'features/social/controllers/nest_controller.dart';
 import 'core/theme/theme_controller.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/app_theme_type.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
@@ -411,7 +413,12 @@ class _MorniAppState extends State<MorniApp> with WidgetsBindingObserver {
               return MaterialApp.router(
                 title: 'Morni',
                 debugShowCheckedModeBanner: false,
-                theme: themeController.themeData,
+                theme: AppTheme.themeFor(
+                  AppThemeType.light,
+                  fontFamily: languageProvider.locale.languageCode == 'ja'
+                      ? 'KiwiMaru'
+                      : 'Pretendard',
+                ),
                 scaffoldMessengerKey: MorniApp.scaffoldMessengerKey,
                 routerConfig: _router, // 생성된 라우터 사용
                 // Localization
@@ -422,7 +429,11 @@ class _MorniAppState extends State<MorniApp> with WidgetsBindingObserver {
                   GlobalWidgetsLocalizations.delegate,
                   GlobalCupertinoLocalizations.delegate,
                 ],
-                supportedLocales: const [Locale('ko', ''), Locale('en', '')],
+                supportedLocales: const [
+                  Locale('ko', ''),
+                  Locale('en', ''),
+                  Locale('ja', ''),
+                ],
                 builder: (context, child) {
                   return MediaQuery(
                     data: MediaQuery.of(context)

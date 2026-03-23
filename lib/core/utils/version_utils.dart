@@ -1,8 +1,12 @@
 class VersionUtils {
   /// Returns negative if v1 < v2, zero if v1 == v2, positive if v1 > v2
   static int compareVersions(String v1, String v2) {
-    List<int> v1Components = v1.split('.').map(int.parse).toList();
-    List<int> v2Components = v2.split('.').map(int.parse).toList();
+    // Remove build number (+22) or suffix (-beta) if present
+    String cleanV1 = v1.split('+')[0].split('-')[0];
+    String cleanV2 = v2.split('+')[0].split('-')[0];
+
+    List<int> v1Components = cleanV1.split('.').map(int.parse).toList();
+    List<int> v2Components = cleanV2.split('.').map(int.parse).toList();
 
     int len = v1Components.length > v2Components.length
         ? v1Components.length

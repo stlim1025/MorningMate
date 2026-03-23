@@ -55,7 +55,7 @@ class _NestListScreenState extends State<NestListScreen> {
         context: context,
         key: AppDialogKey.guestMigration,
         title: AppLocalizations.of(context)?.get('nestSocialLoginTitle') ??
-            '둥지를 만들려면 로그인을 해주세요',
+            'Please login to create a nest',
       );
 
       if (provider != null && context.mounted) {
@@ -87,7 +87,7 @@ class _NestListScreenState extends State<NestListScreen> {
         MemoNotification.show(
             context,
             AppLocalizations.of(context)?.get('nestMaxCountError') ??
-                '둥지는 최대 2개까지만 생성할 수 있습니다.');
+                'You can create up to 2 nests.');
         return;
       }
     }
@@ -100,7 +100,7 @@ class _NestListScreenState extends State<NestListScreen> {
       content: PopupTextField(
         controller: nameController,
         hintText: AppLocalizations.of(context)?.get('nestNameHint') ??
-            '둥지 이름을 입력하세요 (최대 15자)',
+            'Enter nest name (max 15 chars)',
         maxLength: 15,
         fontFamily: 'KyoboHandwriting2024psw',
       ),
@@ -137,7 +137,7 @@ class _NestListScreenState extends State<NestListScreen> {
                 MemoNotification.show(
                     context,
                     AppLocalizations.of(context)?.get('nestCreateSuccess') ??
-                        '둥지가 생성되었습니다! ✨');
+                        'Nest created! ✨');
               } catch (e) {
                 if (ctx.mounted) {
                   MemoNotification.show(ctx, e.toString());
@@ -179,7 +179,7 @@ class _NestListScreenState extends State<NestListScreen> {
                     Container(
                       width: Platform.isIOS ? 220 : 260,
                       height: Platform.isIOS ? 54 : 64,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage('assets/images/NestTitle_Area.png'),
                           fit: BoxFit.contain,
@@ -192,14 +192,15 @@ class _NestListScreenState extends State<NestListScreen> {
                           Image.asset('assets/icons/Nest_Icon.png',
                               width: Platform.isIOS ? 28 : 32,
                               height: Platform.isIOS ? 28 : 32),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             AppLocalizations.of(context)?.get('nestList') ??
                                 'Nest List',
                             style: TextStyle(
-                              color: const Color(0xFF4E342E),
+                              color: Color(0xFF4E342E),
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'BMJUA',
+                              fontFamily:
+                                  AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                               fontSize: Platform.isIOS ? 18 : 20,
                             ),
                           ),
@@ -215,10 +216,10 @@ class _NestListScreenState extends State<NestListScreen> {
                         return const SizedBox.shrink();
                       }
                       return Container(
-                        margin: const EdgeInsets.symmetric(
+                        margin: EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                        decoration: const BoxDecoration(
+                        padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
+                        decoration: BoxDecoration(
                           image: DecorationImage(
                             image: AssetImage(
                                 'assets/images/FriendRequest_Background.png'),
@@ -230,30 +231,30 @@ class _NestListScreenState extends State<NestListScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.mail_outline,
+                                Icon(Icons.mail_outline,
                                     color: Color(0xFF4E342E), size: 24),
-                                const SizedBox(width: 12),
+                                SizedBox(width: 12),
                                 Text(
                                   AppLocalizations.of(context)
                                           ?.get('nestInviteTitle') ??
-                                      '새로운 둥지 초대',
-                                  style: const TextStyle(
+                                      'New Nest Invite',
+                                  style: TextStyle(
                                     color: Color(0xFF4E342E),
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    fontFamily: 'BMJUA',
+                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   ),
                                 ),
-                                const Spacer(),
+                                Spacer(),
                                 Transform.translate(
-                                  offset: const Offset(0, -2),
+                                  offset: Offset(0, -2),
                                   child: Text(
                                     '${nestController.nestRequests.length}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Color(0xFF8B7355),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
-                                      fontFamily: 'BMJUA',
+                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                     ),
                                   ),
                                 ),
@@ -295,7 +296,7 @@ class _NestListScreenState extends State<NestListScreen> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -303,11 +304,14 @@ class _NestListScreenState extends State<NestListScreen> {
                                         children: [
                                           Text(
                                             sender.nickname,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               color: Color(0xFF4E342E),
                                               fontWeight: FontWeight.bold,
                                               fontSize: 14,
-                                              fontFamily: 'BMJUA',
+                                              fontFamily: AppLocalizations.of(
+                                                          context)
+                                                      ?.mainFontFamily ??
+                                                  AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                             ),
                                           ),
                                           Text(
@@ -315,17 +319,20 @@ class _NestListScreenState extends State<NestListScreen> {
                                                     ?.getFormat('nestLabel', {
                                                   'name': nestName
                                                 }) ??
-                                                '둥지: $nestName',
-                                            style: const TextStyle(
+                                                'Nest: $nestName',
+                                            style: TextStyle(
                                               color: Color(0xFF8B7355),
                                               fontSize: 11,
-                                              fontFamily: 'BMJUA',
+                                              fontFamily: AppLocalizations.of(
+                                                          context)
+                                                      ?.mainFontFamily ??
+                                                  AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: 8),
                                     // 거절 버튼
                                     GestureDetector(
                                       onTap: () async {
@@ -335,7 +342,7 @@ class _NestListScreenState extends State<NestListScreen> {
                                       child: Container(
                                         width: 50,
                                         height: 32,
-                                        decoration: const BoxDecoration(
+                                        decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
                                                 'assets/images/Cancel_Button.png'),
@@ -347,17 +354,17 @@ class _NestListScreenState extends State<NestListScreen> {
                                             AppLocalizations.of(context)
                                                     ?.get('reject') ??
                                                 'Reject',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
-                                              fontFamily: 'BMJUA',
+                                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                               color: Color(0xFF8B7355),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
+                                    SizedBox(width: 6),
                                     // 수락 버튼
                                     GestureDetector(
                                       onTap: () async {
@@ -383,9 +390,13 @@ class _NestListScreenState extends State<NestListScreen> {
                                                   AppLocalizations.of(context)
                                                           ?.get(
                                                               'nestFullError') ??
-                                                      '10명이 꽉차서 더 이상 입장할 수 없습니다.',
-                                                  style: const TextStyle(
-                                                      fontFamily: 'BMJUA',
+                                                      'The nest is full. No more members can join.',
+                                                  style: TextStyle(
+                                                      fontFamily:
+                                                          AppLocalizations.of(
+                                                                      context)
+                                                                  ?.mainFontFamily ??
+                                                              AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                                       fontSize: 16),
                                                   textAlign: TextAlign.center,
                                                 ),
@@ -407,7 +418,7 @@ class _NestListScreenState extends State<NestListScreen> {
                                       child: Container(
                                         width: 50,
                                         height: 32,
-                                        decoration: const BoxDecoration(
+                                        decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
                                                 'assets/images/Confirm_Button.png'),
@@ -419,10 +430,10 @@ class _NestListScreenState extends State<NestListScreen> {
                                             AppLocalizations.of(context)
                                                     ?.get('accept') ??
                                                 'Accept',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
-                                              fontFamily: 'BMJUA',
+                                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                               color: Color(0xFF4E342E),
                                             ),
                                           ),
@@ -444,15 +455,15 @@ class _NestListScreenState extends State<NestListScreen> {
                             ? 8
                             : 12), // Participating Nests Section
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
                             width: 200,
                             height: 40,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: const BoxDecoration(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
                               image: DecorationImage(
                                 image: AssetImage(
                                     'assets/images/SubTitle_Area.png'),
@@ -464,22 +475,22 @@ class _NestListScreenState extends State<NestListScreen> {
                               AppLocalizations.of(context)
                                       ?.get('participatingNests') ??
                                   'Participating Nests',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Color(0xFF4E342E),
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'BMJUA',
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 fontSize: 16,
                               ),
                             ),
                           ),
                           Transform.translate(
-                            offset: const Offset(0, -5), // 조금 위로 이동
+                            offset: Offset(0, -5), // 조금 위로 이동
                             child: _ScaleTapButton(
                               onTap: _showCreateNestDialog,
                               child: Container(
                                 width: 120,
                                 height: 44,
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   image: DecorationImage(
                                     image: AssetImage(
                                         'assets/icons/AddFriend_Button.png'),
@@ -491,10 +502,10 @@ class _NestListScreenState extends State<NestListScreen> {
                                   AppLocalizations.of(context)
                                           ?.get('createNest') ??
                                       'Create Nest',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Color(0xFF4E342E),
                                     fontWeight: FontWeight.bold,
-                                    fontFamily: 'BMJUA',
+                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                     fontSize: 14,
                                   ),
                                 ),
@@ -521,9 +532,9 @@ class _NestListScreenState extends State<NestListScreen> {
                           return Container(
                             width: double.infinity,
                             height: 100,
-                            margin: const EdgeInsets.symmetric(
+                            margin: EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               image: DecorationImage(
                                 image:
                                     AssetImage('assets/images/NoNest_Area.png'),
@@ -536,10 +547,10 @@ class _NestListScreenState extends State<NestListScreen> {
                                 Text(
                                   AppLocalizations.of(context)
                                           ?.get('nestNoParticipating') ??
-                                      '참여중인 둥지가 없어요',
-                                  style: const TextStyle(
+                                      'No participating nests',
+                                  style: TextStyle(
                                     color: Color(0xFF4E342E),
-                                    fontFamily: 'BMJUA',
+                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                     fontSize: 16,
                                   ),
                                 ),
@@ -572,14 +583,14 @@ class _NestListScreenState extends State<NestListScreen> {
 
                     // My Nests Section
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
                         children: [
                           Container(
                             width: 200,
                             height: 40,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: const BoxDecoration(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
                               image: DecorationImage(
                                 image: AssetImage(
                                     'assets/images/SubTitle_Area.png'),
@@ -590,10 +601,10 @@ class _NestListScreenState extends State<NestListScreen> {
                             child: Text(
                               AppLocalizations.of(context)?.get('myNests') ??
                                   'My Nests',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Color(0xFF4E342E),
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'BMJUA',
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 fontSize: 16,
                               ),
                             ),
@@ -618,10 +629,10 @@ class _NestListScreenState extends State<NestListScreen> {
                           onTap: _showCreateNestDialog,
                           child: Container(
                             height: 220,
-                            margin: const EdgeInsets.symmetric(
+                            margin: EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
-                            padding: const EdgeInsets.fromLTRB(0, 95, 0, 0),
-                            decoration: const BoxDecoration(
+                            padding: EdgeInsets.fromLTRB(0, 95, 0, 0),
+                            decoration: BoxDecoration(
                               image: DecorationImage(
                                 image: AssetImage(
                                     'assets/images/NoMyNest_Area.png'),
@@ -634,28 +645,28 @@ class _NestListScreenState extends State<NestListScreen> {
                                 Text(
                                   AppLocalizations.of(context)
                                           ?.get('nestNoMyNests') ??
-                                      '내가 만든 둥지가 없어요',
-                                  style: const TextStyle(
+                                      'No nests you created',
+                                  style: TextStyle(
                                     color: Color(0xFF4E342E),
-                                    fontFamily: 'BMJUA',
+                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
                                 Text(
                                   AppLocalizations.of(context)
                                           ?.get('nestCreateNew') ??
-                                      '새로운 둥지를 만들어 보세요!',
-                                  style: const TextStyle(
+                                      'Try creating a new nest!',
+                                  style: TextStyle(
                                     color: Color(0xFF8B7355),
-                                    fontFamily: 'BMJUA',
+                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                     fontSize: 13,
                                   ),
                                 ),
-                                const SizedBox(height: 19),
+                                SizedBox(height: 19),
                                 Padding(
-                                  padding: const EdgeInsets.only(right: 15),
+                                  padding: EdgeInsets.only(right: 15),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -665,10 +676,13 @@ class _NestListScreenState extends State<NestListScreen> {
                                       Text(
                                         AppLocalizations.of(context)
                                                 ?.get('createNestTitle') ??
-                                            '둥지 만들기',
-                                        style: const TextStyle(
+                                            'Create Nest',
+                                        style: TextStyle(
                                           color: Color(0xFF4E342E),
-                                          fontFamily: 'BMJUA',
+                                          fontFamily: AppLocalizations.of(
+                                                      context)
+                                                  ?.mainFontFamily ??
+                                              AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                           fontSize: 15,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -723,10 +737,10 @@ class _NestListScreenState extends State<NestListScreen> {
                         isPopupCard: true,
                         title: AppLocalizations.of(context)
                                 ?.get('nest_tutorial_title') ??
-                            "둥지에서 복작복작! 🪹",
+                            "Bustling in the Nest! 🪹",
                         text: AppLocalizations.of(context)
                                 ?.get('nest_tutorial_text') ??
-                            "더 끈끈한 사이를 원해? 둥지에서 친구들과 일기 일수를 공유하고, 서로 깨워주며 '오늘의 한마디'를 나눠봐. 둥지가 커질수록 가지 보너스도 커져!",
+                            "Want a closer relationship? Share your diary streaks with friends in the nest, wake each other up, and share 'Today\'s Word'. As the nest grows, so does the branch bonus!",
                         imagePath: 'assets/images/Nest_Level1.png',
                       ),
                     ],
@@ -818,7 +832,7 @@ class _NestListScreenState extends State<NestListScreen> {
     );
 
     final Widget peopleCountWidget = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: const Color(0xFFEFE5D8),
         borderRadius: BorderRadius.circular(12),
@@ -829,9 +843,9 @@ class _NestListScreenState extends State<NestListScreen> {
               'max': maxPeople.toString()
             }) ??
             '$currentPeople/$maxPeople',
-        style: const TextStyle(
+        style: TextStyle(
           color: Color(0xFF4E342E),
-          fontFamily: 'BMJUA',
+          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
           fontSize: 12,
         ),
       ),
@@ -856,14 +870,14 @@ class _NestListScreenState extends State<NestListScreen> {
             width: 46,
             height: 46,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/images/Circle_Area.png'),
                 fit: BoxFit.contain,
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 2),
+              padding: EdgeInsets.only(bottom: 2),
               child: Text(
                 AppLocalizations.of(context)
                         ?.getFormat('nestLevel', {'level': level.toString()}) ??
@@ -901,7 +915,7 @@ class _NestListScreenState extends State<NestListScreen> {
         child: isMyNest
             ? Column(
                 children: [
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -911,7 +925,7 @@ class _NestListScreenState extends State<NestListScreen> {
                         height: 60,
                         child: myNestIcon,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       // 우측 정보 (이름, 참여인원)
                       Expanded(
                         child: Column(
@@ -920,44 +934,44 @@ class _NestListScreenState extends State<NestListScreen> {
                           children: [
                             Text(
                               name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Color(0xFF4E342E),
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'BMJUA',
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 fontSize: 13,
                                 height: 1.1,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.visible,
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.person,
+                                Icon(Icons.person,
                                     size: 14, color: Color(0xFF7A6B5D)),
-                                const SizedBox(width: 4),
+                                SizedBox(width: 4),
                                 Text(
                                   '$currentPeople/$maxPeople',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Color(0xFF7A6B5D),
-                                    fontFamily: 'BMJUA',
+                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                     fontSize: 13,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: 2),
                             Row(
                               children: [
-                                const Icon(Icons.access_time,
+                                Icon(Icons.access_time,
                                     size: 14, color: Color(0xFF7A6B5D)),
-                                const SizedBox(width: 4),
+                                SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
                                     activityTime,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Color(0xFF7A6B5D),
-                                      fontFamily: 'BMJUA',
+                                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                       fontSize: 11,
                                     ),
                                     maxLines: 1,
@@ -972,32 +986,34 @@ class _NestListScreenState extends State<NestListScreen> {
                     ],
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       desc,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFF7A6B5D),
-                        fontFamily: 'BMJUA',
+                        fontFamily:
+                            AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 10,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
+                  Spacer(),
                   // 하단 입장하기 버튼
                   Container(
                     width: double.infinity,
                     height: 32,
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    margin: EdgeInsets.symmetric(horizontal: 10),
                     alignment: Alignment.center,
                     child: Text(
                       AppLocalizations.of(context)?.get('nestEnter') ??
-                          '입장하기 >',
-                      style: const TextStyle(
-                        fontFamily: 'BMJUA',
+                          'Enter >',
+                      style: TextStyle(
+                        fontFamily:
+                            AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                         fontSize: 14,
-                        color: Color(0xFF4E342E),
+                        color: const Color(0xFF4E342E),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1009,7 +1025,7 @@ class _NestListScreenState extends State<NestListScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   nestIcon,
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1020,10 +1036,10 @@ class _NestListScreenState extends State<NestListScreen> {
                             Expanded(
                               child: Text(
                                 name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Color(0xFF4E342E),
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'BMJUA',
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   fontSize: 18,
                                 ),
                                 maxLines: 1,
@@ -1033,26 +1049,29 @@ class _NestListScreenState extends State<NestListScreen> {
                             peopleCountWidget,
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           desc,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Color(0xFF7A6B5D),
+                            fontFamily:
+                                AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             fontSize: 14,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(Icons.access_time,
+                            Icon(Icons.access_time,
                                 size: 14, color: Color(0xFFA18B75)),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               activityTime,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Color(0xFFA18B75),
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                 fontSize: 12,
                               ),
                             ),

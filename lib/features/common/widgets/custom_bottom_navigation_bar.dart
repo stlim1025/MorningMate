@@ -239,13 +239,13 @@ class _TabItemState extends State<_TabItem>
                   ],
                 ),
               ),
-              const SizedBox(height: 0),
+              SizedBox(height: 0),
               Transform.translate(
                 offset: Offset(0, widget.labelOffset),
                 child: Text(
                   widget.label,
                   style: TextStyle(
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: widget.isSelected

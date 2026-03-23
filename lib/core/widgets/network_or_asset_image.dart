@@ -42,6 +42,7 @@ class NetworkOrAssetImage extends StatelessWidget {
         color: color,
         colorBlendMode: colorBlendMode,
         errorBuilder: errorBuilder,
+        gaplessPlayback: true,
       );
     }
 

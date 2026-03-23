@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:morni/core/localization/app_localizations.dart';
 
 class AnimatedDiaryButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -62,8 +63,8 @@ class _AnimatedDiaryButtonState extends State<AnimatedDiaryButton>
               ),
               Text(
                 widget.label,
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
+                style: TextStyle(
+                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                   color: Color(0xFF4E342E),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

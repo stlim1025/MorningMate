@@ -7,6 +7,7 @@ import '../widgets/admin_dialog.dart';
 import '../../../../core/widgets/network_or_asset_image.dart';
 import '../../../../core/constants/room_assets.dart';
 import '../../character/widgets/character_display.dart';
+import 'package:translator/translator.dart';
 
 class AssetUploadDialog extends StatefulWidget {
   final dynamic itemToEdit;
@@ -27,7 +28,11 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
   late TextEditingController _nameController;
   late TextEditingController _nameKoController;
   late TextEditingController _nameEnController;
+  late TextEditingController _nameJaController;
   late TextEditingController _priceController;
+
+  final _translator = GoogleTranslator();
+  bool _isTranslating = false;
 
   bool _isLoading = false;
   Uint8List? _selectedImageBytes;
@@ -77,6 +82,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
     _nameController = TextEditingController();
     _nameKoController = TextEditingController();
     _nameEnController = TextEditingController();
+    _nameJaController = TextEditingController();
     _priceController = TextEditingController(text: '100');
 
     if (widget.itemToEdit != null) {
@@ -85,6 +91,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
       _nameController.text = item.name;
       _nameKoController.text = item.nameKo ?? '';
       _nameEnController.text = item.nameEn ?? '';
+      _nameJaController.text = item.nameJa ?? '';
       _priceController.text = item.price.toString();
       _category = item.category ?? 'prop';
       _sizeMultiplier = item.sizeMultiplier;
@@ -113,6 +120,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
     _nameController.dispose();
     _nameKoController.dispose();
     _nameEnController.dispose();
+    _nameJaController.dispose();
     _priceController.dispose();
     super.dispose();
   }
@@ -163,6 +171,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           name: _nameController.text.trim(),
           nameKo: _nameKoController.text.trim(),
           nameEn: _nameEnController.text.trim(),
+          nameJa: _nameJaController.text.trim(),
           price: int.parse(_priceController.text.trim()),
           category: _category,
           imageBytes: _selectedImageBytes!,
@@ -190,6 +199,7 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
           name: _nameController.text.trim(),
           nameKo: _nameKoController.text.trim(),
           nameEn: _nameEnController.text.trim(),
+          nameJa: _nameJaController.text.trim(),
           price: int.parse(_priceController.text.trim()),
           category: _category,
           imageBytes: _selectedImageBytes,
@@ -229,6 +239,39 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _translateToJa() async {
+    final name = _nameKoController.text.trim().isNotEmpty 
+        ? _nameKoController.text.trim() 
+        : _nameController.text.trim();
+    
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('번역할 이름이 없습니다. (한국어 이름 또는 기본 이름을 입력하세요)')),
+      );
+      return;
+    }
+
+    setState(() => _isTranslating = true);
+
+    try {
+      final translated = await _translator.translate(name, from: 'ko', to: 'ja');
+      setState(() {
+        _nameJaController.text = translated.text;
+      });
+    } catch (e) {
+      debugPrint('Translation error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('번역 중 오류가 발생했습니다: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isTranslating = false);
       }
     }
   }
@@ -387,6 +430,40 @@ class _AssetUploadDialogState extends State<AssetUploadDialog> {
                           decoration: const InputDecoration(
                               labelText: '🇺🇸 영어 이름 (선택)',
                               border: OutlineInputBorder()),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _nameJaController,
+                          decoration: const InputDecoration(
+                              labelText: '🇯🇵 일본어 이름 (선택)',
+                              border: OutlineInputBorder()),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        height: 56,
+                        child: IconButton.filledTonal(
+                          onPressed: _isTranslating ? null : _translateToJa,
+                          icon: _isTranslating
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.blue))
+                              : const Icon(Icons.translate, size: 20),
+                          tooltip: '자동 번역 (한국어 -> 일본어)',
+                          style: IconButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
                         ),
                       ),
                     ],

@@ -24,7 +24,7 @@ class _CharacterDecorationButtonState extends State<CharacterDecorationButton> {
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(
         scale: _isPressed ? 0.9 : 1.0,
-        duration: const Duration(milliseconds: 100),
+        duration: Duration(milliseconds: 100),
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
@@ -48,24 +48,30 @@ class _CharacterDecorationButtonState extends State<CharacterDecorationButton> {
                         ? 18
                         : 17, // 한국어일 때 글자를 조금 더 위로 (기존 12)
               ),
-              child: Text(
-                AppLocalizations.of(context)?.get('decorate') ?? 'Decorate',
-                style: const TextStyle(
-                  fontFamily: 'BMJUA',
-                  fontSize: 12,
-                  color: Color(0xFF5D4E37),
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                      color: Colors.white,
-                      blurRadius: 4,
+              child: SizedBox(
+                width: 76,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    AppLocalizations.of(context)?.get('decorateCharacter') ??
+                        'Decorate Character',
+                    style: TextStyle(
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                      fontSize: AppLocalizations.of(context)?.locale.languageCode == 'ja' ? 10 : 12, // 일본어일 때 폰트 크기 축소
+                      color: Color(0xFF5D4E37),
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          color: Colors.white,
+                          blurRadius: 4,
+                        ),
+                      ],
+                      height: 1.0,
                     ),
-                  ],
-                  height: 1.0,
+                    maxLines: 1, // 가로 폭을 위해 한 줄로 제한
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-                maxLines: 2,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.visible,
               ),
             ),
           ],

@@ -260,8 +260,9 @@ class NotificationService {
 
   void _showInAppNotificationFromData(Map<String, dynamic> data) {
     if (data.isEmpty) return;
-    final context = AppRouter.navigatorKey.currentContext;
-    if (context == null) return;
+    final BuildContext? navContext = AppRouter.navigatorKey.currentContext;
+    if (navContext == null) return;
+    final BuildContext context = navContext;
 
     final String? typeStr = data['type'];
     NotificationType type;

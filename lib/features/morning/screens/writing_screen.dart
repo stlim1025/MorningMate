@@ -412,7 +412,7 @@ class _WritingScreenState extends State<WritingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => _saveDraft(context, controller),
                     child: Stack(
@@ -430,8 +430,8 @@ class _WritingScreenState extends State<WritingScreen> {
                         Text(
                           AppLocalizations.of(context)?.get('tempSave') ??
                               'Draft',
-                          style: const TextStyle(
-                            fontFamily: 'BMJUA',
+                          style: TextStyle(
+                            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                             color: Color(0xFF5D4037),
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -440,7 +440,7 @@ class _WritingScreenState extends State<WritingScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Consumer<AuthController>(
                     builder: (context, auth, _) {
                       final isTutorial = auth.userModel?.hasSeenTutorial == false &&
@@ -475,8 +475,8 @@ class _WritingScreenState extends State<WritingScreen> {
                               ),
                               Text(
                                 AppLocalizations.of(context)?.get('save') ?? 'Save',
-                                style: const TextStyle(
-                                  fontFamily: 'BMJUA',
+                                style: TextStyle(
+                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                                   color: Color(0xFF5D4037),
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -492,22 +492,24 @@ class _WritingScreenState extends State<WritingScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Stack(
             alignment: Alignment.center,
             children: [
               Image.asset('assets/images/Date_Icon.png',
-                  width: 200, height: 50, fit: BoxFit.fill),
+                  width: AppLocalizations.of(context)?.locale.languageCode == 'ja' ? 260 : 210, 
+                  height: 50, 
+                  fit: BoxFit.fill),
               Positioned(
                 left: 20,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
+                  padding: EdgeInsets.only(top: 4.0),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.calendar_today_rounded,
                           size: 16, color: colorScheme.textPrimary),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text(
                         AppLocalizations.of(context)
                                 ?.getFormat('fullDateFormat', {
@@ -518,7 +520,7 @@ class _WritingScreenState extends State<WritingScreen> {
                             }) ??
                             '${displayDate.year}.${displayDate.month}.${displayDate.day} ($weekday)',
                         style: TextStyle(
-                          fontFamily: 'BMJUA',
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                           color: colorScheme.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -543,8 +545,8 @@ class _WritingScreenState extends State<WritingScreen> {
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: const BoxDecoration(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/Today_Question.png'),
             fit: BoxFit.contain,
@@ -559,13 +561,13 @@ class _WritingScreenState extends State<WritingScreen> {
                   AppLocalizations.of(context)?.get('todayQuestion') ??
                       '오늘의 질문',
                   style: TextStyle(
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     color: colorScheme.textSecondary.withOpacity(0.8),
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   (displayQuestion?.getLocalizedText(
                               Localizations.localeOf(context).languageCode) ??
@@ -574,7 +576,7 @@ class _WritingScreenState extends State<WritingScreen> {
                       '...',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'BMJUA',
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     color: colorScheme.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -745,13 +747,13 @@ class _WritingScreenState extends State<WritingScreen> {
   Widget _buildWritingArea(BuildContext context, AppColorScheme colorScheme) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/images/Note_Background.png'),
           fit: BoxFit.fill,
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(28, 20, 28, 40),
+      padding: EdgeInsets.fromLTRB(28, 20, 28, 40),
       child: TextField(
         controller: _textController,
         focusNode: _focusNode,
@@ -947,7 +949,7 @@ class _WritingScreenState extends State<WritingScreen> {
             equippedItems:
                 characterController.currentUser?.equippedCharacterItems ?? {},
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Stack(
             alignment: Alignment.center,
             children: [
@@ -965,15 +967,15 @@ class _WritingScreenState extends State<WritingScreen> {
                     width: 22,
                     height: 22,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     AppLocalizations.of(context)?.getFormat('branchEarned', {
                           'amount':
                               morningController.lastEarnedPoints.toString()
                         }) ??
                         '+${morningController.lastEarnedPoints} Branch Earned',
-                    style: const TextStyle(
-                      fontFamily: 'BMJUA',
+                    style: TextStyle(
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                       color: Color(0xFF5D4037),
                       fontSize: 16,
                     ),
@@ -982,11 +984,11 @@ class _WritingScreenState extends State<WritingScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             AppLocalizations.of(context)?.get('diaryCompletionDesc') ??
                 'Your character has started the day!',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               color: Colors.grey,
             ),
@@ -1016,22 +1018,22 @@ class _WritingScreenState extends State<WritingScreen> {
         children: [
           Text(
             l10n?.get('gift_popup_welcome') ?? "첫 방문을 축하합니다! 🎉",
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
+            style: TextStyle(
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 18,
               color: Color(0xFF4E342E),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             l10n?.get('gift_popup_desc') ?? "특별한 선물이 도착했어요.",
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
+            style: TextStyle(
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 14,
               color: Colors.brown,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1046,11 +1048,11 @@ class _WritingScreenState extends State<WritingScreen> {
               fit: BoxFit.contain,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             gift.getLocalizedName(context),
-            style: const TextStyle(
-              fontFamily: 'BMJUA',
+            style: TextStyle(
+              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Color(0xFF4E342E),
@@ -1076,7 +1078,7 @@ class _WritingScreenState extends State<WritingScreen> {
         AppLocalizations.of(context)?.get('exitWritingDesc') ??
             '지금 중단하면 작성 중인 내용은 저장되지 않아요. (임시저장을 활용해 보세요!)',
         textAlign: TextAlign.center,
-        style: const TextStyle(fontFamily: 'BMJUA'),
+        style: TextStyle(fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA'),
       ),
       actions: [
         AppDialogAction(
