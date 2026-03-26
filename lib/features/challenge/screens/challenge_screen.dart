@@ -284,7 +284,7 @@ class ChallengeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        AppLocalizations.of(context)?.get('completed') ??
+                        AppLocalizations.of(context)?.get('challengeStatusCompleted') ??
                             'Completed',
                         style: TextStyle(
                           color: Colors.redAccent.withOpacity(0.6),

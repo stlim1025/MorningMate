@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:io';
 import 'dart:ui';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -42,14 +45,25 @@ class _WritingScreenState extends State<WritingScreen> {
   bool _enableBlur = false;
   bool _didLoadSettings = false;
   final List<String> _selectedMoods = [];
-  final PageController _pageController = PageController();
-  int _currentMoodPage = 0;
 
+  File? _selectedImage;
+  String? _existingPhotoUrl;
+  String _selectedWeather = 'sunny';
   final GlobalKey _blurKey = GlobalKey();
   final GlobalKey _draftKey = GlobalKey();
-  final GlobalKey _moodKey = GlobalKey();
+  final GlobalKey _photoKey = GlobalKey();
   final GlobalKey _saveKey = GlobalKey();
+  final GlobalKey _weatherMoodKey = GlobalKey();
   bool _showWritingTutorial = false;
+  bool _isSaving = false;
+
+  // 인라인 다이얼 Overlay
+  final GlobalKey _weatherDialKey = GlobalKey();
+  final GlobalKey _moodDialKey = GlobalKey();
+  OverlayEntry? _weatherOverlay;
+  OverlayEntry? _moodOverlay;
+  FixedExtentScrollController? _weatherDialController;
+  FixedExtentScrollController? _moodDialController;
 
   @override
   void initState() {
@@ -67,6 +81,8 @@ class _WritingScreenState extends State<WritingScreen> {
       _textController.text = widget.existingContent ?? '';
       _selectedMoods.clear();
       _selectedMoods.addAll(widget.existingDiary!.moods);
+      _selectedWeather = widget.existingDiary!.weather ?? 'sunny';
+      _existingPhotoUrl = widget.existingDiary!.photoUrl;
 
       morningController.updateCharCount(_textController.text);
     } else {
@@ -78,6 +94,7 @@ class _WritingScreenState extends State<WritingScreen> {
       } else {
         _selectedMoods.add('normal');
       }
+      _selectedWeather = 'sunny';
 
       _loadDraft();
     }
@@ -128,6 +145,8 @@ class _WritingScreenState extends State<WritingScreen> {
               _selectedMoods.clear();
               _selectedMoods.addAll(morningController.todayDiary!.moods);
             }
+            _selectedWeather = morningController.todayDiary!.weather ?? 'sunny';
+            _existingPhotoUrl = morningController.todayDiary!.photoUrl;
           });
           morningController.updateCharCount(content);
         }
@@ -155,9 +174,18 @@ class _WritingScreenState extends State<WritingScreen> {
 
   @override
   void dispose() {
+    if (_weatherOverlay != null) {
+      _weatherOverlay!.remove();
+      _weatherOverlay = null;
+    }
+    if (_moodOverlay != null) {
+      _moodOverlay!.remove();
+      _moodOverlay = null;
+    }
+    _weatherDialController?.dispose();
+    _moodDialController?.dispose();
     _textController.dispose();
     _focusNode.dispose();
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -242,8 +270,8 @@ class _WritingScreenState extends State<WritingScreen> {
                                                 child: Padding(
                                                   padding: const EdgeInsets
                                                       .only(top: 12),
-                                                  child: _buildMoodSelection(
-                                                      colorScheme),
+                                                  child: _buildPhotoSelection(
+                                                      context, colorScheme),
                                                 ),
                                               ),
                                             ],
@@ -292,13 +320,22 @@ class _WritingScreenState extends State<WritingScreen> {
                       "작성하던 내용을 임시저장할 수 있어. 바쁠 때는 일단 저장해두고 나중에 다시 써도 돼!",
                 ),
                 TutorialStep(
-                  targetKey: _moodKey,
+                  targetKey: _photoKey,
+                  title: AppLocalizations.of(context)
+                          ?.get('write_tutorial_photo_title') ??
+                      "오늘의 순간 간직하기 📸",
+                  text: AppLocalizations.of(context)
+                          ?.get('write_tutorial_photo_text') ??
+                      "오늘의 특별한 순간을 사진으로 남겨봐! 사진을 추가하면 일기가 더 다채로워질 거야.",
+                ),
+                TutorialStep(
+                  targetKey: _weatherMoodKey,
                   title: AppLocalizations.of(context)
                           ?.get('write_tutorial_mood_title') ??
-                      "오늘의 기분은? ✨",
+                      "오늘의 날씨와 기분 ✨",
                   text: AppLocalizations.of(context)
                           ?.get('write_tutorial_mood_text') ??
-                      "오늘의 기분을 골라봐! 방꾸미기 - 이모티콘에서 선택한 이모티콘들을 여기서 사용할 수 있어.",
+                      "오늘의 날씨와 기분을 자유롭게 골라봐! 선택한 아이콘들이 일기에 예쁘게 기록될 거야.",
                 ),
                 TutorialStep(
                   title: AppLocalizations.of(context)
@@ -591,12 +628,241 @@ class _WritingScreenState extends State<WritingScreen> {
     );
   }
 
-  Widget _buildMoodSelection(AppColorScheme colorScheme) {
-    final characterController = context.read<CharacterController>();
-    final user = characterController.currentUser;
-    if (user == null) return const SizedBox();
+  Widget _buildPhotoSelection(BuildContext context, AppColorScheme colorScheme) {
+    return AspectRatio(
+      aspectRatio: 1.0,
+      child: GestureDetector(
+        onTap: () async {
+          final picker = ImagePicker();
+          final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+          if (pickedFile != null) {
+            setState(() {
+              _selectedImage = File(pickedFile.path);
+              _existingPhotoUrl = null;
+            });
+          }
+        },
+        child: Container(
+          key: _photoKey,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/Popup_Background.png'),
+              fit: BoxFit.fill,
+            ),
+          ),
+          child: _selectedImage != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.file(_selectedImage!, fit: BoxFit.contain),
+                )
+              : _existingPhotoUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: NetworkOrAssetImage(
+                        imagePath: _existingPhotoUrl!,
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_photo_alternate,
+                            size: 40, color: colorScheme.textHint),
+                        const SizedBox(height: 8),
+                        Text(
+                          AppLocalizations.of(context)?.get('addPhoto') ?? '사진 추가',
+                          style: TextStyle(
+                            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                            color: colorScheme.textHint,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+        ),
+      ),
+    );
+  }
 
-    final activeIds = user.activeEmoticonIds;
+  // GlobalKey 위젯의 화면 상 절대 위치(Rect)를 반환
+  Rect? _getWidgetRect(GlobalKey key) {
+    final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return null;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    return offset & renderBox.size;
+  }
+
+  void _closeAllDials() {
+    if (_weatherOverlay != null) {
+      _weatherOverlay!.remove();
+      _weatherOverlay = null;
+    }
+    if (_moodOverlay != null) {
+      _moodOverlay!.remove();
+      _moodOverlay = null;
+    }
+    _weatherDialController?.dispose();
+    _weatherDialController = null;
+    _moodDialController?.dispose();
+    _moodDialController = null;
+  }
+
+  void _showWeatherDial(BuildContext context, AppColorScheme colorScheme) {
+    // 기분 다이얼이 열려 있으면 닫기
+    _moodOverlay?.remove();
+    _moodOverlay = null;
+    _moodDialController?.dispose();
+    _moodDialController = null;
+
+    // 이미 날씨 다이얼이 열려 있으면 닫기
+    if (_weatherOverlay != null) {
+      _weatherOverlay!.remove();
+      _weatherOverlay = null;
+      _weatherDialController?.dispose();
+      _weatherDialController = null;
+      return;
+    }
+
+    final rect = _getWidgetRect(_weatherDialKey);
+    if (rect == null) return;
+
+    final weathers = ['sunny', 'partlyCloudy', 'cloudy', 'rainy', 'snowy'];
+    final initialIndex = weathers.indexOf(_selectedWeather).clamp(0, weathers.length - 1);
+    _weatherDialController = FixedExtentScrollController(initialItem: initialIndex);
+
+    final overlayState = Overlay.of(context);
+    const dialHeight = 170.0;
+    const dialWidth = 170.0;
+    final screenSize = MediaQuery.of(context).size;
+
+    // 위젯 중앙 기준 x 위치 계산 (화면 밖으로 나가지 않게 clamp)
+    double left = rect.center.dx - dialWidth / 2;
+    left = left.clamp(8.0, screenSize.width - dialWidth - 8);
+
+    // 기본적으로 위젯 위에 표시, 위 공간이 부족하면 아래에 표시
+    double top = rect.top - dialHeight - 6;
+    if (top < 60) top = rect.bottom + 6;
+
+    _weatherOverlay = OverlayEntry(
+      builder: (ctx) {
+        final Map<String, String> weatherNames = {
+          'sunny': '☀️',
+          'partlyCloudy': '🌤',
+          'cloudy': '☁️',
+          'rainy': '🌧',
+          'snowy': '❄️',
+        };
+        return Stack(
+          children: [
+            // 투명 배경 - 탭하면 닫힘
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _closeAllDials,
+                behavior: HitTestBehavior.translucent,
+                child: const SizedBox.expand(),
+              ),
+            ),
+            Positioned(
+              left: left,
+              top: top,
+              width: dialWidth,
+              height: dialHeight,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/Popup_Background.png'),
+                      fit: BoxFit.fill,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // 가운데 하이라이트 바
+                        Center(
+                          child: Container(
+                            height: 55,
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryButton.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        StatefulBuilder(
+                          builder: (ctx2, setInnerState) {
+                            return ListWheelScrollView.useDelegate(
+                              controller: _weatherDialController,
+                              itemExtent: 55,
+                              perspective: 0.003,
+                              diameterRatio: 1.5,
+                              physics: const FixedExtentScrollPhysics(),
+                              onSelectedItemChanged: (index) {
+                                setState(() {
+                                  _selectedWeather = weathers[index];
+                                });
+                                setInnerState(() {});
+                                // Overlay 자체도 리빌드
+                                _weatherOverlay?.markNeedsBuild();
+                              },
+                              childDelegate: ListWheelChildBuilderDelegate(
+                                childCount: weathers.length,
+                                builder: (context, index) {
+                                  final isSelected = weathers[index] == _selectedWeather;
+                                  return Center(
+                                    child: Text(
+                                      weatherNames[weathers[index]]!,
+                                      style: TextStyle(
+                                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                                        fontSize: isSelected ? 30 : 20,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: isSelected
+                                            ? colorScheme.textPrimary
+                                            : colorScheme.textHint.withOpacity(0.4),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    overlayState.insert(_weatherOverlay!);
+  }
+
+  void _showMoodDial(BuildContext context, AppColorScheme colorScheme) {
+    // 날씨 다이얼이 열려 있으면 닫기
+    _weatherOverlay?.remove();
+    _weatherOverlay = null;
+    _weatherDialController?.dispose();
+    _weatherDialController = null;
+
+    // 이미 기분 다이얼이 열려 있으면 닫기
+    if (_moodOverlay != null) {
+      _moodOverlay!.remove();
+      _moodOverlay = null;
+      _moodDialController?.dispose();
+      _moodDialController = null;
+      return;
+    }
+
+    final characterController = context.read<CharacterController>();
+    final activeIds = characterController.currentUser?.activeEmoticonIds ?? [];
     final activeEmoticons = activeIds.map((id) {
       return RoomAssets.emoticons.firstWhere(
         (e) => e.id == id,
@@ -604,147 +870,155 @@ class _WritingScreenState extends State<WritingScreen> {
       );
     }).toList();
 
-    if (activeEmoticons.isEmpty) return const SizedBox();
+    if (activeEmoticons.isEmpty) return;
 
-    final int pageCount = (activeEmoticons.length / 4).ceil();
+    final currentMoodId = _selectedMoods.isNotEmpty ? _selectedMoods.first : '';
+    final idx = activeEmoticons.indexWhere((e) => e.id == currentMoodId);
+    final initialIndex = idx >= 0 ? idx : 0;
+    _moodDialController = FixedExtentScrollController(initialItem: initialIndex);
 
-    return Column(
-      key: _moodKey,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AspectRatio(
-          aspectRatio: 1.0,
-          child: PageView.builder(
-            controller: _pageController,
-            clipBehavior: Clip.hardEdge,
-            onPageChanged: (index) {
-              setState(() {
-                _currentMoodPage = index;
-              });
-            },
-            itemCount: pageCount,
-            itemBuilder: (context, pageIndex) {
-              final start = pageIndex * 4;
-              final end = (start + 4 > activeEmoticons.length)
-                  ? activeEmoticons.length
-                  : start + 4;
-              final pageEmoticons = activeEmoticons.sublist(start, end);
+    final rect = _getWidgetRect(_moodDialKey);
+    if (rect == null) return;
 
-              return Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildMoodButton(pageEmoticons[0].imagePath!,
-                              pageEmoticons[0].id, colorScheme),
-                          const SizedBox(width: 8),
-                          if (pageEmoticons.length > 1)
-                            _buildMoodButton(pageEmoticons[1].imagePath!,
-                                pageEmoticons[1].id, colorScheme)
-                          else
-                            const Expanded(child: SizedBox()),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (pageEmoticons.length > 2)
-                            _buildMoodButton(pageEmoticons[2].imagePath!,
-                                pageEmoticons[2].id, colorScheme)
-                          else
-                            const Expanded(child: SizedBox()),
-                          const SizedBox(width: 8),
-                          if (pageEmoticons.length > 3)
-                            _buildMoodButton(pageEmoticons[3].imagePath!,
-                                pageEmoticons[3].id, colorScheme)
-                          else
-                            const Expanded(child: SizedBox()),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        if (pageCount > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(pageCount, (index) {
-                return Container(
-                  width: 6,
-                  height: 6,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
+    final overlayState = Overlay.of(context);
+    const dialHeight = 170.0;
+    const dialWidth = 170.0;
+    final screenSize = MediaQuery.of(context).size;
+
+    double left = rect.center.dx - dialWidth / 2;
+    left = left.clamp(8.0, screenSize.width - dialWidth - 8);
+
+    double top = rect.top - dialHeight - 6;
+    if (top < 60) top = rect.bottom + 6;
+
+    _moodOverlay = OverlayEntry(
+      builder: (ctx) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _closeAllDials,
+                behavior: HitTestBehavior.translucent,
+                child: const SizedBox.expand(),
+              ),
+            ),
+            Positioned(
+              left: left,
+              top: top,
+              width: dialWidth,
+              height: dialHeight,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _currentMoodPage == index
-                        ? const Color(0xFF5D4037)
-                        : const Color(0xFF5D4037).withOpacity(0.3),
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/Popup_Background.png'),
+                      fit: BoxFit.fill,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                );
-              }),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildMoodButton(
-      String assetPath, String moodId, AppColorScheme colorScheme) {
-    final isSelected = _selectedMoods.contains(moodId);
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedMoods.clear();
-            _selectedMoods.add(moodId);
-          });
-        },
-        child: Opacity(
-          opacity: isSelected ? 1.0 : 0.6,
-          child: AspectRatio(
-            aspectRatio: 1.0,
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                Image.asset(
-                  'assets/images/Popup_Background.png',
-                  fit: BoxFit.fill,
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: NetworkOrAssetImage(
-                      imagePath: assetPath, fit: BoxFit.contain),
-                ),
-                if (isSelected)
-                  Positioned(
-                    top: -8,
-                    right: -8,
-                    child: Image.asset(
-                      'assets/images/Red_Pin.png',
-                      width: 30,
-                      height: 30,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // 가운데 하이라이트 바
+                        Center(
+                          child: Container(
+                            height: 70,
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryButton.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+                        StatefulBuilder(
+                          builder: (ctx2, setInnerState) {
+                            return ListWheelScrollView.useDelegate(
+                              controller: _moodDialController,
+                              itemExtent: 75,
+                              perspective: 0.003,
+                              diameterRatio: 1.5,
+                              physics: const FixedExtentScrollPhysics(),
+                              onSelectedItemChanged: (index) {
+                                if (activeEmoticons.isEmpty) return;
+                                setState(() {
+                                  _selectedMoods.clear();
+                                  _selectedMoods.add(activeEmoticons[index].id);
+                                });
+                                setInnerState(() {});
+                                _moodOverlay?.markNeedsBuild();
+                              },
+                              childDelegate: ListWheelChildBuilderDelegate(
+                                childCount: activeEmoticons.length,
+                                builder: (context, index) {
+                                  final emoticon = activeEmoticons[index];
+                                  final isSelected = _selectedMoods.contains(emoticon.id);
+                                  return Center(
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      padding: EdgeInsets.all(isSelected ? 6 : 4),
+                                      decoration: isSelected
+                                          ? BoxDecoration(
+                                              color: colorScheme.primaryButton.withOpacity(0.15),
+                                              shape: BoxShape.circle,
+                                            )
+                                          : null,
+                                      child: NetworkOrAssetImage(
+                                        imagePath: emoticon.imagePath ?? '',
+                                        width: isSelected ? 64 : 50,
+                                        height: isSelected ? 64 : 50,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
-              ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
+          ],
+        );
+      },
     );
+    overlayState.insert(_moodOverlay!);
   }
 
   Widget _buildWritingArea(BuildContext context, AppColorScheme colorScheme) {
+    final langCode = Localizations.localeOf(context).languageCode;
+
+    final Map<String, String> weatherEmojis = {
+      'sunny': '☀️', 'partlyCloudy': '🌤', 'cloudy': '☁️', 'rainy': '🌧', 'snowy': '❄️',
+    };
+    final weatherEmoji = weatherEmojis[_selectedWeather] ?? '☀️';
+
+
+
+    final activeMoodModel = RoomAssets.emoticons.firstWhere(
+      (e) => _selectedMoods.isNotEmpty && e.id == _selectedMoods.first,
+      orElse: () => RoomAssets.emoticons[0],
+    );
+
+    final weatherTitle = {
+      'ko': '날씨',
+      'en': 'Weather',
+      'ja': '天気',
+    }[langCode] ?? '날씨';
+
+    final moodTitle = {
+      'ko': '기분',
+      'en': 'Mood',
+      'ja': '気分',
+    }[langCode] ?? '기분';
+
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -754,40 +1028,147 @@ class _WritingScreenState extends State<WritingScreen> {
         ),
       ),
       padding: EdgeInsets.fromLTRB(28, 20, 28, 40),
-      child: TextField(
-        controller: _textController,
-        focusNode: _focusNode,
-        maxLines: null,
-        style: TextStyle(
-          fontFamily: 'KyoboHandwriting2024psw',
-          color: colorScheme.textPrimary,
-          fontSize: 20,
-          height: 1.6,
-        ),
-        cursorColor: colorScheme.primaryButton,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          errorBorder: InputBorder.none,
-          disabledBorder: InputBorder.none,
-          filled: false,
-          fillColor: Colors.transparent,
-          hintText: AppLocalizations.of(context)?.get('writingHint') ??
-              '어떤 생각이라도 좋으니 자유롭게 적어보세요.',
-          hintStyle: TextStyle(
-            fontFamily: 'KyoboHandwriting2024psw',
-            color: colorScheme.textHint.withOpacity(0.6),
-            fontSize: 20,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            key: _weatherMoodKey,
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 0,
+            runSpacing: 4,
+            children: [
+              // 날씨 선택 버튼
+              GestureDetector(
+                key: _weatherDialKey,
+                onTap: () => _showWeatherDial(context, colorScheme),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _weatherOverlay != null
+                        ? colorScheme.primaryButton.withOpacity(0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$weatherTitle: $weatherEmoji',
+                        style: TextStyle(
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                          fontSize: 20,
+                          color: colorScheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        _weatherOverlay != null ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                        color: colorScheme.textPrimary,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Text(
+                  '/',
+                  style: TextStyle(
+                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                    fontSize: 20,
+                    color: colorScheme.textHint,
+                  ),
+                ),
+              ),
+              // 기분 선택 버튼
+              GestureDetector(
+                key: _moodDialKey,
+                onTap: () => _showMoodDial(context, colorScheme),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _moodOverlay != null
+                        ? colorScheme.primaryButton.withOpacity(0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$moodTitle: ',
+                        style: TextStyle(
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                          fontSize: 20,
+                          color: colorScheme.textPrimary,
+                        ),
+                      ),
+                      NetworkOrAssetImage(
+                        imagePath: activeMoodModel.imagePath ?? '',
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        _moodOverlay != null ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                        color: colorScheme.textPrimary,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
+          Expanded(
+            child: TextField(
+              controller: _textController,
+              focusNode: _focusNode,
+              maxLines: null,
+              style: TextStyle(
+                fontFamily: 'KyoboHandwriting2024psw',
+                color: colorScheme.textPrimary,
+                fontSize: 20,
+                height: 1.6,
+              ),
+              cursorColor: colorScheme.primaryButton,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                filled: false,
+                fillColor: Colors.transparent,
+                hintText: AppLocalizations.of(context)?.get('writingHint') ??
+                    '어떤 생각이라도 좋으니 자유롭게 적어보세요.',
+                hintStyle: TextStyle(
+                  fontFamily: 'KyoboHandwriting2024psw',
+                  color: colorScheme.textHint.withOpacity(0.6),
+                  fontSize: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+
+
+
+
   Future<void> _completeDiary(BuildContext context,
       MorningController controller, AppColorScheme colorScheme) async {
-    final authController = context.read<AuthController>();
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final authController = context.read<AuthController>();
 
     if (authController.userModel?.biometricEnabled == true) {
       final authenticated = await authController.authenticateWithBiometric();
@@ -797,9 +1178,9 @@ class _WritingScreenState extends State<WritingScreen> {
     final characterController = context.read<CharacterController>();
     final userId = authController.currentUser?.uid;
 
-    if (userId == null) return;
+      if (userId == null) return;
 
-    // 튜토리얼 모드 확인
+      // 튜토리얼 모드 확인
     final isTutorial = authController.userModel?.hasSeenTutorial == false &&
         (authController.userModel?.mainTutorialStep == 'diary' ||
             authController.userModel?.mainTutorialStep == null);
@@ -812,27 +1193,57 @@ class _WritingScreenState extends State<WritingScreen> {
       // 3. 메인 튜토리얼 다음 단계로
       await authController.setMainTutorialStep('decoration');
 
-      if (context.mounted && gift != null) {
-        await _showTutorialGiftDialog(context, gift, colorScheme);
-        if (context.mounted) {
-          context.go('/morning');
+        if (context.mounted && gift != null) {
+          await _showTutorialGiftDialog(context, gift, colorScheme);
+          if (context.mounted) {
+            context.go('/morning');
+          }
         }
+        return;
       }
-      return;
+
+    // Removed _isUploadingPhoto updates
+
+    String? photoUrl = _existingPhotoUrl;
+    if (_selectedImage != null) {
+      try {
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('diary_photos')
+            .child(userId)
+            .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await ref.putFile(_selectedImage!);
+        photoUrl = await ref.getDownloadURL();
+      } catch (e) {
+        debugPrint('Photo upload error: $e');
+      }
     }
+
+    // Removed _isUploadingPhoto updates
 
     final success = await controller.saveDiary(
       userId: userId,
       content: _textController.text,
       moods: _selectedMoods,
+      weather: _selectedWeather,
+      photoUrl: photoUrl,
+      characterLevel: widget.isEditing ? widget.existingDiary?.characterLevel : characterController.currentUser?.characterLevel,
+      equippedCharacterItems: widget.isEditing ? widget.existingDiary?.equippedCharacterItems : characterController.currentUser?.equippedCharacterItems,
       customDate: widget.isEditing ? widget.existingDiary?.date : null,
       existingId: widget.isEditing ? widget.existingDiary?.id : null,
+      createdAt: widget.isEditing ? widget.existingDiary?.createdAt : (widget.existingDiary != null ? widget.existingDiary?.createdAt : null),
     );
 
-    if (success && context.mounted) {
-      if (widget.isEditing) {
-        context.pop();
+      if (success && context.mounted) {
+      // 1. 수정 모드이거나 이미 완료된 일기를 수정하는 경우 팝업 건너뜀
+      final bool isActuallyEditing = widget.isEditing || (widget.existingDiary?.isCompleted == true);
+      
+      if (isActuallyEditing) {
+        if (context.mounted && GoRouter.of(context).canPop()) {
+          context.pop();
+        }
       } else {
+        // 2. 처음 완성하거나 미완성 드래프트를 완성하는 경우에만 팝업 표시
         unawaited(characterController.wakeUpCharacter(userId));
         await _showCompletionDialog(context, colorScheme);
         
@@ -883,6 +1294,11 @@ class _WritingScreenState extends State<WritingScreen> {
         }
       }
     }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 
   Future<bool> _tryShowBonusAdOffer(
@@ -915,18 +1331,48 @@ class _WritingScreenState extends State<WritingScreen> {
 
   Future<void> _saveDraft(
       BuildContext context, MorningController controller) async {
-    final authController = context.read<AuthController>();
-    final userId = authController.currentUser?.uid;
-    if (userId == null) return;
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final authController = context.read<AuthController>();
+      final userId = authController.currentUser?.uid;
+      if (userId == null) return;
+
+    // Removed _isUploadingPhoto state updates
+
+    String? photoUrl = _existingPhotoUrl;
+    if (_selectedImage != null) {
+      try {
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('diary_photos')
+            .child(userId)
+            .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+        await ref.putFile(_selectedImage!);
+        photoUrl = await ref.getDownloadURL();
+      } catch (e) {
+        debugPrint('Photo upload error: $e');
+      }
+    }
+
+    // Removed _isUploadingPhoto state updates
 
     final success = await controller.saveDraft(
       userId: userId,
       content: _textController.text,
       moods: _selectedMoods,
+      weather: _selectedWeather,
+      photoUrl: photoUrl,
     );
 
-    if (success && context.mounted) {
-      MemoNotification.show(context, AppLocalizations.of(context)?.get('saveDraftSuccess') ?? 'Draft saved. 📝');
+      if (success && context.mounted) {
+        MemoNotification.show(context, AppLocalizations.of(context)?.get('saveDraftSuccess') ?? 'Draft saved. 📝');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 

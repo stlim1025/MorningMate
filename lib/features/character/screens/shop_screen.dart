@@ -39,7 +39,9 @@ class _ShopScreenState extends State<ShopScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CharacterController>().loadRewardedAd();
+      final controller = context.read<CharacterController>();
+      controller.loadRewardedAd();
+      controller.refreshShopDiscounts(); // 할인 정보 강제 갱신
       _loadTodayShopItems();
     });
     AssetService().fetchDynamicAssets().then((_) {
@@ -588,8 +590,14 @@ class _ShopScreenState extends State<ShopScreen> {
                       if (saleItems.isNotEmpty) ...[
                         SizedBox(height: 24),
                         _buildSectionHeader(
-                          title:
-                              '🔥 ${AppLocalizations.of(context)?.get('sale') ?? 'SALE'}',
+                          titleWidget: Image.asset(
+                            AppLocalizations.of(context)?.locale.languageCode ==
+                                    'ko'
+                                ? 'assets/images/Sale_Kor.png'
+                                : 'assets/images/Sale_Eng.png',
+                            height: 60,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                         SizedBox(height: 8),
                         _buildItemGrid(
@@ -1284,6 +1292,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 10,
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     ),
                   ),
                 ),

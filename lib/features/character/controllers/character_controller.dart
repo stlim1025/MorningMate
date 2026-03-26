@@ -44,15 +44,36 @@ class CharacterController extends ChangeNotifier {
   StreamSubscription? _shopDiscountSubscription;
 
   void _startShopDiscountListener() {
-    _shopDiscountSubscription = FirebaseFirestore.instance
-        .collection('settings')
-        .doc('shop')
-        .snapshots()
-        .listen((snapshot) {
+    final docRef = FirebaseFirestore.instance.collection('settings').doc('shop');
+
+    // 1. 초기 데이터 수동 로드 (Snapshots이 느리거나AppCheck 이슈로 실패할 경우 대비)
+    docRef.get().then((doc) {
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        if (data['discounts'] is Map<String, dynamic>) {
+          final Map<String, dynamic> discountsField = data['discounts'];
+          _shopDiscounts = discountsField.map(
+            (key, value) => MapEntry(key, (value as num).toInt()),
+          );
+          notifyListeners();
+        }
+      }
+    }).catchError((e) {
+      debugPrint('상점 할인 수동 로드 에러: $e');
+    });
+
+    // 2. 실시간 엔진 리스너
+    _shopDiscountSubscription = docRef.snapshots().listen((snapshot) {
       if (snapshot.exists && snapshot.data() != null) {
         final data = snapshot.data()!;
-        if (data['discounts'] != null) {
-          _shopDiscounts = Map<String, int>.from(data['discounts']);
+        if (data['discounts'] is Map<String, dynamic>) {
+          final Map<String, dynamic> discountsField = data['discounts'];
+          _shopDiscounts = discountsField.map(
+            (key, value) => MapEntry(key, (value as num).toInt()),
+          );
+          notifyListeners();
+        } else {
+          _shopDiscounts = {}; // discounts 필드가 없거나 올바른 형식이 아니면 초기화
           notifyListeners();
         }
       } else {
@@ -1365,5 +1386,24 @@ class CharacterController extends ChangeNotifier {
       points: newPoints,
     );
     notifyListeners();
+  }
+
+  /// 상점 할인 정보를 강제로 다시 불러옵니다.
+  Future<void> refreshShopDiscounts() async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('settings').doc('shop').get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        if (data['discounts'] is Map<String, dynamic>) {
+          final Map<String, dynamic> discountsField = data['discounts'];
+          _shopDiscounts = discountsField.map(
+            (key, value) => MapEntry(key, (value as num).toInt()),
+          );
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('상점 할인 강제 새로고침 에러: $e');
+    }
   }
 }

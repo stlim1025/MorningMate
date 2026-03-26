@@ -12,6 +12,7 @@ import '../../admin/controllers/admin_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../services/diary_service.dart';
 import '../../../core/widgets/network_or_asset_image.dart';
+import '../../character/widgets/character_display.dart';
 
 class DiaryDetailScreen extends StatefulWidget {
   final List<DiaryModel> diaries;
@@ -220,7 +221,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: _buildMoodSelection(colorScheme),
+                                  child: _buildPhotoArea(colorScheme),
                                 ),
                               ],
                             ),
@@ -471,81 +472,78 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     );
   }
 
-  Widget _buildMoodSelection(AppColorScheme colorScheme) {
-    final moods = _currentDiary?.moods ?? [];
-    if (moods.isEmpty) return const SizedBox.shrink();
-
+  Widget _buildPhotoArea(AppColorScheme colorScheme) {
     return AspectRatio(
       aspectRatio: 1.0,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0), // 외부 여백을 주어 배경 이미지 자체의 크기를 줄임
-        child: moods.length == 1
-            ? _buildSingleMood(moods.first)
-            : _buildMultipleMoods(moods),
-      ),
-    );
-  }
-
-  Widget _buildSingleMood(String moodId) {
-    final emoticon = RoomAssets.emoticons.firstWhere(
-      (e) => e.id == moodId,
-      orElse: () => RoomAssets.emoticons[1],
-    );
-
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Image.asset(
-          'assets/images/Popup_Background.png',
-          width: double.infinity,
-          height: double.infinity,
-          fit: BoxFit.fill,
-        ),
-        Padding(
-          padding: const EdgeInsets.all(12.0), // 배경이 작아졌으므로 내부 여백은 다시 줄임
-          child: NetworkOrAssetImage(
-            imagePath: emoticon.imagePath!,
-            fit: BoxFit.contain,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/Popup_Background.png'),
+            fit: BoxFit.fill,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildMultipleMoods(List<String> moods) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/Popup_Background.png'),
-          fit: BoxFit.fill,
-        ),
-      ),
-      child: Center(
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          runAlignment: WrapAlignment.center,
-          spacing: 4,
-          runSpacing: 4,
-          children: moods.map((moodId) {
-            final emoticon = RoomAssets.emoticons.firstWhere(
-              (e) => e.id == moodId,
-              orElse: () => RoomAssets.emoticons[1],
-            );
-
-            return SizedBox(
-              width: moods.length <= 2 ? 60 : 45,
-              height: moods.length <= 2 ? 60 : 45,
-              child: NetworkOrAssetImage(
-                  imagePath: emoticon.imagePath!, fit: BoxFit.contain),
-            );
-          }).toList(),
-        ),
+        child: _currentDiary?.photoUrl != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: NetworkOrAssetImage(
+                  imagePath: _currentDiary!.photoUrl!,
+                  fit: BoxFit.contain,
+                ),
+              )
+            : Center(
+                child: CharacterDisplay(
+                  key: ValueKey('detail_fallback_${_currentDiary?.id ?? _currentDate.millisecondsSinceEpoch}'),
+                  characterLevel: _currentDiary?.characterLevel ?? 1,
+                  equippedItems: _currentDiary?.equippedCharacterItems ?? {},
+                  size: 150,
+                  isAwake: true,
+                  enableAnimation: false,
+                ),
+              ),
       ),
     );
   }
+
+  // Removed _buildMoodSelection, _buildSingleMood, _buildMultipleMoods as they are no longer used.
 
   Widget _buildWritingArea(BuildContext context, AppColorScheme colorScheme) {
+    final langCode = Localizations.localeOf(context).languageCode;
+
+    // 날씨 텍스트 다국어 처리 (날씨 없는 이전 일기는 ❓)
+    String weatherEmoji = '❓';
+    if (_currentDiary?.weather != null) {
+      final Map<String, String> weatherEmojis = {
+        'sunny': '☀️', 'partlyCloudy': '🌤', 'cloudy': '☁️', 'rainy': '🌧', 'snowy': '❄️',
+      };
+      final key = _currentDiary!.weather!;
+      weatherEmoji = weatherEmojis[key] ?? '';
+    }
+
+    // 기분 이모티콘
+    final moodId = _currentDiary?.moods.isNotEmpty == true
+        ? _currentDiary!.moods.first
+        : null;
+    final moodEmoticon = moodId != null
+        ? RoomAssets.emoticons.firstWhere(
+            (e) => e.id == moodId,
+            orElse: () => RoomAssets.emoticons[0],
+          )
+        : null;
+
+    // 날씨 레이블 (다국어)
+    final weatherTitle = {
+      'ko': '오늘의 날씨',
+      'en': 'Weather',
+      'ja': '今日の天気',
+    }[langCode] ?? '오늘의 날씨';
+
+    final moodTitle = {
+      'ko': '오늘의 기분',
+      'en': 'Mood',
+      'ja': '今日の気分',
+    }[langCode] ?? '오늘의 기분';
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -554,36 +552,117 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
           fit: BoxFit.fill,
         ),
       ),
-      padding: EdgeInsets.fromLTRB(55, 40, 28, 20),
+      padding: EdgeInsets.fromLTRB(48, 20, 28, 20),
       child: _isLoading
           ? Center(
               child: CircularProgressIndicator(
                 color: colorScheme.primaryButton,
               ),
             )
-          : _currentDiary == null
-              ? Center(
-                  child: Text(
-                    AppLocalizations.of(context)?.get('noDiaryContent') ??
-                        'No content.',
-                    style: TextStyle(
-                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
-                      color: colorScheme.textHint,
-                      fontSize: 18,
-                    ),
-                  ),
-                )
-              : SingleChildScrollView(
-                  child: Text(
-                    _decryptedContent,
-                    style: TextStyle(
-                      fontFamily: 'KyoboHandwriting2024psw',
-                      color: colorScheme.textPrimary,
-                      fontSize: 20,
-                      height: 1.6,
-                    ),
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 날씨 & 기분 표시 행 (Wrap으로 overflow 방지)
+                SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 0,
+                    runSpacing: 4,
+                    children: [
+                      // 날씨
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$weatherTitle: $weatherEmoji',
+                              style: TextStyle(
+                                fontFamily: 'BMJUA',
+                                fontSize: 22,
+                                color: colorScheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Text(
+                          '/',
+                          style: TextStyle(
+                            fontFamily: 'BMJUA',
+                            fontSize: 22,
+                            color: colorScheme.textHint,
+                          ),
+                        ),
+                      ),
+                      // 기분
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$moodTitle: ',
+                              style: TextStyle(
+                                fontFamily: 'BMJUA',
+                                fontSize: 22,
+                                color: colorScheme.textPrimary,
+                              ),
+                            ),
+                            if (moodEmoticon != null)
+                              NetworkOrAssetImage(
+                                imagePath: moodEmoticon.imagePath ?? '',
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.contain,
+                              )
+                            else
+                              Text(
+                                '❓',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: _currentDiary == null
+                      ? Center(
+                          child: Text(
+                            AppLocalizations.of(context)?.get('noDiaryContent') ??
+                                'No content.',
+                            style: TextStyle(
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                              color: colorScheme.textHint,
+                              fontSize: 18,
+                            ),
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Text(
+                              _decryptedContent,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                fontFamily: 'KyoboHandwriting2024psw',
+                                color: colorScheme.textPrimary,
+                                fontSize: 20,
+                                height: 1.6,
+                              ),
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
     );
   }
 

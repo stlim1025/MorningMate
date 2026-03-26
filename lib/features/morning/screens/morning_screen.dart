@@ -261,7 +261,8 @@ class _MorningScreenState extends State<MorningScreen>
             AppLocalizations.of(context)?.get('nicknameIntro') ??
                 'Nice to meet you! Please enter your nickname.',
             style: TextStyle(
-              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+              fontFamily:
+                  AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
               fontSize: 16,
               color: const Color(0xFF4E342E),
             ),
@@ -360,7 +361,8 @@ class _MorningScreenState extends State<MorningScreen>
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
     final isDarkMode = Provider.of<ThemeController>(context).isDarkMode;
-    final authController = context.watch<AuthController>(); // context.read에서 watch로 변경하여 유저 정보 업데이트 감지
+    final authController = context
+        .watch<AuthController>(); // context.read에서 watch로 변경하여 유저 정보 업데이트 감지
     final userModel = authController.userModel;
 
     // [추가] initState에서의 레이스 컨디션으로 인해 튜토리얼이 안 뜰 경우를 대비한 반응형 체크
@@ -381,7 +383,9 @@ class _MorningScreenState extends State<MorningScreen>
       });
     }
 
-    return Consumer<MorningController>(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Consumer<MorningController>(
       builder: (context, morningController, child) {
         // 데이터가 로드되지 않았을 때는(초기 상태) 깨어있는 것으로 간주하여 "뿌연" 오버레이 방지
         final isAwake = !morningController.hasInitialized ||
@@ -445,7 +449,9 @@ class _MorningScreenState extends State<MorningScreen>
               child: SafeArea(
                 child: Padding(
                   padding: EdgeInsets.only(
-                      bottom: isAwake ? 20 : 95), // 하이라이트 위치를 살짝 내림
+                      bottom: isAwake
+                          ? 20
+                          : 105), // 하이라이트 위치를 살짝 내림 (일기 미작성 시 위치 복구)
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -464,8 +470,10 @@ class _MorningScreenState extends State<MorningScreen>
               bottom: 0,
               child: SafeArea(
                 child: Padding(
-                  padding:
-                      EdgeInsets.only(bottom: isAwake ? 8 : 83), // 왼쪽(20/95)과 라인 맞춤 (80px vs 56px 차이 보정)
+                  padding: EdgeInsets.only(
+                      bottom: isAwake
+                          ? 8
+                          : 103), // 왼쪽(20/95)과 라인 맞춤 (80px vs 56px 차이 보정)
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -475,7 +483,8 @@ class _MorningScreenState extends State<MorningScreen>
                           onTap: () {
                             context.push('/diary-detail', extra: {
                               'diaries': [morningController.todayDiary!],
-                              'initialDate': morningController.todayDiary!.createdAt,
+                              'initialDate':
+                                  morningController.todayDiary!.createdAt,
                             });
                           },
                         ),
@@ -554,7 +563,8 @@ class _MorningScreenState extends State<MorningScreen>
           ],
         );
       },
-    );
+    ),
+   );
   }
 
   // 생체 인증 로직은 SplashScreen으로 이동됨
@@ -570,8 +580,7 @@ class _MorningScreenState extends State<MorningScreen>
     final bool isBrightBackground =
         (isAwake && !isDarkMode) || backgroundId == 'golden_sun';
 
-    final textColor =
-        isBrightBackground ? Color(0xFF1A1A1A) : Colors.white;
+    final textColor = isBrightBackground ? Color(0xFF1A1A1A) : Colors.white;
     final shadowColor = isBrightBackground
         ? Colors.white.withOpacity(0.9)
         : Colors.black.withOpacity(0.85);
@@ -590,7 +599,8 @@ class _MorningScreenState extends State<MorningScreen>
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: textColor,
                     fontWeight: FontWeight.bold,
-                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                    fontFamily:
+                        AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     shadows: [
                       Shadow(
                         color: shadowColor,
@@ -617,7 +627,8 @@ class _MorningScreenState extends State<MorningScreen>
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: textColor.withOpacity(0.9),
                     fontWeight: FontWeight.w600,
-                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                    fontFamily:
+                        AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                     shadows: [
                       Shadow(
                         color: shadowColor,
@@ -735,9 +746,9 @@ class _MorningScreenState extends State<MorningScreen>
             title: AppLocalizations.of(context)
                     ?.get('main_tutorial_diary_title') ??
                 "오늘의 첫 일기 쓰기 ✍️",
-            text: AppLocalizations.of(context)
-                    ?.get('main_tutorial_diary_text') ??
-                "안녕! Morni에 온 걸 환영해. 오늘 너의 마음은 어때? 여기를 눌러서 첫 기록을 남겨봐!",
+            text:
+                AppLocalizations.of(context)?.get('main_tutorial_diary_text') ??
+                    "안녕! Morni에 온 걸 환영해. 오늘 너의 마음은 어때? 여기를 눌러서 첫 기록을 남겨봐!",
             showNextButton: false,
           ),
         ],
@@ -754,12 +765,12 @@ class _MorningScreenState extends State<MorningScreen>
         steps: [
           TutorialStep(
             targetKey: _decorationKey,
-            title: AppLocalizations.of(context)
-                    ?.get('main_tutorial_deco_title') ??
-                "선물 확인하기 🎁",
-            text: AppLocalizations.of(context)
-                    ?.get('main_tutorial_deco_text') ??
-                "방금 받은 선물을 방에 배치해볼까?\n'방 꾸미기' 버튼을 눌러봐!",
+            title:
+                AppLocalizations.of(context)?.get('main_tutorial_deco_title') ??
+                    "선물 확인하기 🎁",
+            text:
+                AppLocalizations.of(context)?.get('main_tutorial_deco_text') ??
+                    "방금 받은 선물을 방에 배치해볼까?\n'방 꾸미기' 버튼을 눌러봐!",
             showNextButton: false,
           ),
         ],
@@ -776,12 +787,12 @@ class _MorningScreenState extends State<MorningScreen>
         steps: [
           TutorialStep(
             targetKey: _storeKey,
-            title: AppLocalizations.of(context)
-                    ?.get('main_tutorial_shop_title') ??
-                "상점 구경하기 🛍️",
-            text: AppLocalizations.of(context)
-                    ?.get('main_tutorial_shop_text') ??
-                "방 꾸미기 실력이 대단한걸! 이제 상점에서 더 많은 아이템을 구경해보자!",
+            title:
+                AppLocalizations.of(context)?.get('main_tutorial_shop_title') ??
+                    "상점 구경하기 🛍️",
+            text:
+                AppLocalizations.of(context)?.get('main_tutorial_shop_text') ??
+                    "방 꾸미기 실력이 대단한걸! 이제 상점에서 더 많은 아이템을 구경해보자!",
             showNextButton: false,
           ),
         ],

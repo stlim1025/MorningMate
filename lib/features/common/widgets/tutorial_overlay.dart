@@ -232,14 +232,18 @@ class InteractiveTutorialOverlayState
           child: Column(
             children: [
               if (step.title != null) ...[
-                Text(
-                  step.title!,
-                  style: TextStyle(
-                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
-                    fontSize: 18,
-                    color: Color(0xFF5D4037),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Text(
+                    step.title!,
+                    style: TextStyle(
+                      fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                      fontSize: 18,
+                      color: Color(0xFF5D4037),
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
               ],
@@ -308,14 +312,18 @@ class InteractiveTutorialOverlayState
                 ),
               ),
             ),
-          Text(
-            step.title ?? '',
-            style: TextStyle(
-              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
-              fontSize: 22,
-              color: Color(0xFF5D4037),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: Text(
+              step.title ?? '',
+              style: TextStyle(
+                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                fontSize: 22,
+                color: Color(0xFF5D4037),
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Text(

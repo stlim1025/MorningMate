@@ -13,6 +13,10 @@ class DiaryModel {
   final DateTime createdAt;
   final String? promptQuestion; // 사용한 랜덤 질문 (기본/한국어)
   final String? promptQuestionEng; // 사용한 랜덤 질문 (영어)
+  final String? weather;
+  final String? photoUrl;
+  final int? characterLevel;
+  final Map<String, dynamic>? equippedCharacterItems;
 
   DiaryModel({
     required this.id,
@@ -27,6 +31,10 @@ class DiaryModel {
     required this.createdAt,
     this.promptQuestion,
     this.promptQuestionEng,
+    this.weather,
+    this.photoUrl,
+    this.characterLevel,
+    this.equippedCharacterItems,
   });
 
   // Firestore에서 가져오기
@@ -55,6 +63,10 @@ class DiaryModel {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       promptQuestion: data['promptQuestion'],
       promptQuestionEng: data['promptQuestionEng'],
+      weather: data['weather'],
+      photoUrl: data['photoUrl'],
+      characterLevel: data['characterLevel'],
+      equippedCharacterItems: data['equippedCharacterItems'],
     );
   }
 
@@ -72,6 +84,10 @@ class DiaryModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'promptQuestion': promptQuestion,
       'promptQuestionEng': promptQuestionEng,
+      'weather': weather,
+      'photoUrl': photoUrl,
+      'characterLevel': characterLevel,
+      'equippedCharacterItems': equippedCharacterItems,
     };
   }
 
@@ -88,6 +104,10 @@ class DiaryModel {
     DateTime? createdAt,
     String? promptQuestion,
     String? promptQuestionEng,
+    String? weather,
+    String? photoUrl,
+    int? characterLevel,
+    Map<String, dynamic>? equippedCharacterItems,
   }) {
     return DiaryModel(
       id: id ?? this.id,
@@ -102,6 +122,10 @@ class DiaryModel {
       createdAt: createdAt ?? this.createdAt,
       promptQuestion: promptQuestion ?? this.promptQuestion,
       promptQuestionEng: promptQuestionEng ?? this.promptQuestionEng,
+      weather: weather ?? this.weather,
+      photoUrl: photoUrl ?? this.photoUrl,
+      characterLevel: characterLevel ?? this.characterLevel,
+      equippedCharacterItems: equippedCharacterItems ?? this.equippedCharacterItems,
     );
   }
 

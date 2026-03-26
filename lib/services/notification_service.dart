@@ -9,6 +9,7 @@ import '../router/app_router.dart';
 import '../core/localization/app_localizations.dart';
 import '../data/models/notification_model.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   FirebaseMessaging get _fcm {
@@ -149,10 +150,79 @@ class NotificationService {
     }
   }
 
+  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
+  }
+
+  Map<String, String> _getNotificationText(String key) {
+    final locale = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+    final Map<String, Map<String, String>> localizedValues = {
+      'ko': {
+        'nightlyTitle': '오늘의 일기를 작성해주세요!',
+        'nightlyBody': '아직 일기를 작성하지 않았어요. 작성하지 않으면 연속 기록이 날아가요!',
+        'morningTitle': '굿모닝! 아침 일기를 작성할 시간이에요 ☀️',
+        'morningBody': '상쾌한 하루를 시작하며 일기를 남겨보세요!',
+      },
+      'en': {
+        'nightlyTitle': "Please write today's diary!",
+        'nightlyBody': "You haven't written your diary yet. If you don't write it, your consecutive record will be lost!",
+        'morningTitle': "Good morning! It's time to write your morning diary ☀️",
+        'morningBody': "Start your day fresh by leaving a diary!",
+      },
+      'ja': {
+        'nightlyTitle': '今日の日記を書いてください！',
+        'nightlyBody': 'まだ日記が書かれていません。記録を途絶えさせないようにしましょう！',
+        'morningTitle': 'グッドモーニング！朝の日記を書く時間です ☀️',
+        'morningBody': '清々しい一日の始まりに日記を残しましょう！',
+      },
+    };
+
+    final lang = localizedValues.containsKey(locale) ? locale : 'ko';
+    return {
+      'title': localizedValues[lang]![key + 'Title']!,
+      'body': localizedValues[lang]![key + 'Body']!,
+    };
+  }
+
   Future<void> scheduleNightlyReminder() async {
-    // 이제 야간 알림은 Firebase Cloud Functions에서 처리하므로 클라이언트 스케줄링을 제거합니다.
-    // 이전 버전에 예약된 알림이 있을 수 있으므로 취소만 수행합니다.
-    await cancelNightlyReminder();
+    const hour = 23;
+    const minute = 0;
+    final texts = _getNotificationText('nightly');
+
+    try {
+      await _localPlugin.zonedSchedule(
+        id: 1123,
+        title: texts['title'],
+        body: texts['body'],
+        scheduledDate: _nextInstanceOfTime(hour, minute),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'nightly_reminder_channel',
+            '야간 일기 알림',
+            channelDescription: '밤 11시 일기 작성 권장 알림',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: true,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      print('밤 11시 푸시 알림 스케줄링 완료');
+    } catch (e) {
+      print('밤 11시 푸시 알림 스케줄링 실패: $e');
+    }
   }
 
   Future<void> cancelNightlyReminder() async {
@@ -165,9 +235,39 @@ class NotificationService {
   }
 
   Future<void> scheduleMorningReminder(String time) async {
-    // 이제 아침 알림은 Firebase Cloud Functions에서 처리하므로 클라이언트 스케줄링을 제거합니다.
-    // 이전 버전에 예약된 알림이 있을 수 있으므로 취소만 수행합니다.
-    await cancelMorningReminder();
+    final parts = time.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    final texts = _getNotificationText('morning');
+
+    try {
+      await _localPlugin.zonedSchedule(
+        id: 1124,
+        title: texts['title'],
+        body: texts['body'],
+        scheduledDate: _nextInstanceOfTime(hour, minute),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'morning_reminder_channel',
+            '아침 일기 알림',
+            channelDescription: '설정한 시간에 아침 일기 작성을 알립니다.',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: true,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      print('아침 알림 스케줄링 완료 ($time)');
+    } catch (e) {
+      print('아침 알림 스케줄링 실패: $e');
+    }
   }
 
   Future<void> cancelMorningReminder() async {

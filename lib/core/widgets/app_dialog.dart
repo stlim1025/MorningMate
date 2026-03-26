@@ -309,7 +309,7 @@ class AppDialog {
         );
       case AppDialogKey.diaryCompletion:
         return AppDialogConfig(
-          title: AppLocalizations.of(context)?.get('completed') ?? 'Completed!',
+          title: title ?? AppLocalizations.of(context)?.get('completed') ?? 'Completed!',
           showConfetti: true,
           content: content,
           actionsAlignment: MainAxisAlignment.center,

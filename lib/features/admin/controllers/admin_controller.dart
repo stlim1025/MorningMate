@@ -151,8 +151,11 @@ class AdminController extends ChangeNotifier {
       final doc = await _firestore.collection('settings').doc('shop').get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
-        if (data['discounts'] != null) {
-          _shopDiscounts = Map<String, int>.from(data['discounts']);
+        if (data['discounts'] is Map<String, dynamic>) {
+          final Map<String, dynamic> discountsField = data['discounts'];
+          _shopDiscounts = discountsField.map(
+            (key, value) => MapEntry(key, (value as num).toInt()),
+          );
         }
       } else {
         _shopDiscounts = {};
@@ -168,10 +171,21 @@ class AdminController extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
+      final docRef = _firestore.collection('settings').doc('shop');
+      final doc = await docRef.get();
+      
+      if (!doc.exists) {
+        // 문서가 없으면 생성하면서 초기화
+        await docRef.set({
+          'discounts': { itemId: price }
+        });
+      } else {
+        // 문서가 있으면 해당 필드만 병합(Update)
+        await docRef.update({
+          'discounts.$itemId': price,
+        });
+      }
       _shopDiscounts[itemId] = price;
-      await _firestore.collection('settings').doc('shop').set({
-        'discounts': _shopDiscounts,
-      }, SetOptions(merge: true));
     } catch (e) {
       debugPrint('할인 설정 오류: $e');
     }
@@ -183,10 +197,11 @@ class AdminController extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
+      final docRef = _firestore.collection('settings').doc('shop');
+      await docRef.update({
+        'discounts.$itemId': FieldValue.delete(),
+      });
       _shopDiscounts.remove(itemId);
-      await _firestore.collection('settings').doc('shop').set({
-        'discounts': _shopDiscounts,
-      }, SetOptions(merge: true));
     } catch (e) {
       debugPrint('할인 해제 오류: $e');
     }

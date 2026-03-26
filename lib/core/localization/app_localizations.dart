@@ -82,6 +82,7 @@ class AppLocalizations {
       'emoticon': 'Emoticon',
       'watchAdGetBranch': 'Watch Ad Get 20 Branches',
       'completed': 'Diary Completed',
+      'challengeStatusCompleted': 'Completed',
       'watch': 'Watch',
       'unowned': 'Unowned',
       'purchaseConfirm': 'Do you want to purchase {item}?',
@@ -493,6 +494,7 @@ class AppLocalizations {
       'writingHint': 'Write down whatever comes to your mind freely.',
       'todayQuestion': 'Today\'s Question',
       'moreWriting': 'Please write a bit more! ✍️',
+      'addPhoto': 'Add Photo',
       'authRequiredForSave': 'Authentication required to save diary',
       'authFailedForSave': 'Authentication failed. Cannot save diary. 🔒',
       // Archive & Diary Detail
@@ -769,9 +771,12 @@ class AppLocalizations {
       'write_tutorial_draft_title': "It's Okay to Pause 📝",
       'write_tutorial_draft_text':
           "You can save what you're writing as a draft. If you're busy, save it for now and come back to it later!",
-      'write_tutorial_mood_title': "How's Your Mood Today? ✨",
+      'write_tutorial_photo_title': "Capture Today's Moment 📸",
+      'write_tutorial_photo_text':
+          "Capture today's special moment with a photo! Adding photos will make your diary more colorful.",
+      'write_tutorial_mood_title': "Today's Weather & Mood ✨",
       'write_tutorial_mood_text':
-          "Pick today's mood! You can use the emoticons you selected in Room Decor - Emoticons here.",
+          "Freely choose today's weather and mood! Your chosen icons will be beautifully recorded in your diary.",
       'write_tutorial_free_title': "Write Your Story ✍️",
       'write_tutorial_free_text':
           "Now, freely write your precious stories here!\n(Don't worry, tutorial diaries aren't actually saved! ✨)\n\nOh! You need to write at least 10 characters to save~ ✨",
@@ -882,6 +887,7 @@ class AppLocalizations {
       'emoticon': '이모티콘',
       'watchAdGetBranch': '광고 보고 가지 받기',
       'completed': '일기 작성 완료',
+      'challengeStatusCompleted': '완료',
       'watch': '보기',
       'unowned': '미보유',
       'purchaseConfirm': '{item}을(를) 구매하시겠습니까?',
@@ -1266,6 +1272,7 @@ class AppLocalizations {
       'writingHint': '지금 머릿속에 떠오르는 생각을 자유롭게 적어보세요.',
       'todayQuestion': '오늘의 질문',
       'moreWriting': '조금만 더 작성해주세요! ✍️',
+      'addPhoto': '사진 추가',
       'authRequiredForSave': '일기를 안전하게 저장하기 위해 인증이 필요합니다',
       'authFailedForSave': '인증에 실패하여 일기를 저장할 수 없습니다. 🔒',
       // Archive & Diary Detail
@@ -1523,9 +1530,12 @@ class AppLocalizations {
       'write_tutorial_draft_title': "잠시 멈춰도 괜찮아 📝",
       'write_tutorial_draft_text':
           "작성하던 내용을 임시저장할 수 있어. 바쁠 때는 일단 저장해두고 나중에 다시 써도 돼!",
-      'write_tutorial_mood_title': "오늘의 기분은? ✨",
+      'write_tutorial_photo_title': "오늘의 순간 간직하기 📸",
+      'write_tutorial_photo_text':
+          "오늘의 특별한 순간을 사진으로 남겨봐! 사진을 추가하면 일기가 더 다채로워질 거야.",
+      'write_tutorial_mood_title': "오늘의 날씨와 기분 ✨",
       'write_tutorial_mood_text':
-          "오늘의 기분을 골라봐! 방꾸미기 - 이모티콘에서 선택한 이모티콘들을 여기서 사용할 수 있어.",
+          "오늘의 날씨와 기분을 자유롭게 골라봐! 선택한 아이콘들이 일기에 예쁘게 기록될 거야.",
       'write_tutorial_free_title': "나의 이야기 적기 ✍️",
       'write_tutorial_free_text':
           "이제 여기에 너의 소중한 이야기들을 자유롭게 적어봐!\n(튜토리얼 일기는 실제로 저장되지 않아 안심해도 돼! ✨)\n\n아 참! 내용은 10글자 이상 적어야 저장할 수 있어~ ✨",
@@ -1632,6 +1642,7 @@ class AppLocalizations {
       'emoticon': '絵文字',
       'watchAdGetBranch': '広告を見てブランチを獲得',
       'completed': '日記作成完了',
+      'challengeStatusCompleted': '完了',
       'watch': '見る',
       'unowned': '未保有',
       'purchaseConfirm': '{item}を購入しますか？',
@@ -2006,6 +2017,7 @@ class AppLocalizations {
       'writingHint': 'いま おもいついたことを じゆうにかいてみてください。',
       'todayQuestion': 'きょうのしつもん',
       'moreWriting': 'もう少しだけ かいてみてください！ ✍️',
+      'addPhoto': '写真追加',
       'authRequiredForSave': 'あんぜんに ほぞんするため、にんしょうが必要です',
       'authFailedForSave': 'にんしょうにしっぱいしたため ほぞんできません。 🔒',
       'diaryContent': 'にっきの内容',
@@ -2227,8 +2239,7 @@ class AppLocalizations {
       'shop_tutorial_refresh_text':
           "ショップのアイテムが気に入らない？新しいアイテムを呼び出せるよ！（毎日無料1回 ＋ 広告3回）",
       'shop_tutorial_2_title': "ブランチが足りない時は？ 📽️",
-      'shop_tutorial_2_text':
-          "欲しい家具がある？広告を見てブランチボーナスをもらい、理想の部屋を早く完成させよう！",
+      'shop_tutorial_2_text': "欲しい家具がある？広告を見てブランチボーナスをもらい、理想の部屋を早く完成させよう！",
       'deco_tutorial_filter_title': "プレゼントを探す 🔍",
       'deco_tutorial_filter_text': "「保有アイテムのみ表示」をタップすると、もらったプレゼントを簡単に見つけられるよ！",
       'deco_tutorial_select_title': "アイテムを選ぶ ✨",
@@ -2239,20 +2250,17 @@ class AppLocalizations {
       'deco_tutorial_save_title': "部屋を保存する 💾",
       'deco_tutorial_save_text': "部屋が気に入ったら「保存」ボタンを押してね！",
       'deco_tutorial_move_title': "自由に配置する ✨",
-      'deco_tutorial_move_text':
-          "選んだアイテムを好きな場所にドラッグして動かせるよ！お部屋を自由に飾ってね。",
+      'deco_tutorial_move_text': "選んだアイテムを好きな場所にドラッグして動かせるよ！お部屋を自由に飾ってね。",
       'deco_tutorial_memo_place_title': "メモを配置する 📝",
-      'deco_tutorial_memo_place_text':
-          "書いたメモも好きな場所に移動できるよ！見やすい場所に配置しよう。",
+      'deco_tutorial_memo_place_text': "書いたメモも好きな場所に移動できるよ！見やすい場所に配置しよう。",
       'write_tutorial_blur_title': "シークレットモード 🤫",
-      'write_tutorial_blur_text':
-          "上のボタンで内容をぼかせるよ！誰にも見せたくない秘密の話を書く時に便利だよ。",
+      'write_tutorial_blur_text': "上のボタンで内容をぼかせるよ！誰にも見せたくない秘密の話を書く時に便利だよ。",
       'write_tutorial_draft_title': "途中で止めても大丈夫 📝",
-      'write_tutorial_draft_text':
-          "書いている内容を一時保存できるよ。忙しい時は一旦保存して、後で続きを書けるよ！",
+      'write_tutorial_draft_text': "書いている内容を一時保存できるよ。忙しい時は一旦保存して、後で続きを書けるよ！",
+      'write_tutorial_photo_title': "今日の瞬間を残そう 📸",
+      'write_tutorial_photo_text': "今日の特別な瞬間を写真で残してみましょう！写真を追加すると日記がもっと豊かになるよ。",
       'write_tutorial_mood_title': "今日の気分は？ ✨",
-      'write_tutorial_mood_text':
-          "今日の気分を選んでね！模様替えの「絵文字」で選んだ絵文字をここで使えるよ。",
+      'write_tutorial_mood_text': "今日の気分を選んでね！模様替えの「絵文字」で選んだ絵文字をここで使えるよ。",
       'write_tutorial_free_title': "自分の物語を書く ✍️",
       'write_tutorial_free_text':
           "ここにあなたの特別なストーリーを自由に書いてみましょう！\n（チュートリアルの日記は保存されないので安心してください！ ✨）\n\nあ、内容は10文字以上書かないと保存できないよ〜 ✨",
@@ -2265,8 +2273,7 @@ class AppLocalizations {
       'main_tutorial_deco_title': "プレゼントを確認する 🎁",
       'main_tutorial_deco_text': "さっきもらったプレゼントを部屋に飾ってみる？\n「模様替え」ボタンを押してみて！",
       'main_tutorial_shop_title': "ショップを見る 🛍️",
-      'main_tutorial_shop_text':
-          "部屋の模様替え、すごく上手だね！次はショップでもっとたくさんのアイテムを見てみよう！",
+      'main_tutorial_shop_text': "部屋の模様替え、すごく上手だね！次はショップでもっとたくさんのアイテムを見てみよう！",
       'tutorial_complete_reward_title': "チュートリアル完了報酬",
       'tutorial_complete_reward_desc': "チュートリアル完了の報酬として50ブランチをプレゼントします！",
       'skip_tutorial_title': "チュートリアル終了",
@@ -2278,8 +2285,7 @@ class AppLocalizations {
       'nest_tutorial_text':
           "もっと仲良くなりたい？巣で友達と日記の記録を共有したり、お互い起こしてあげたり、「今日の一言」を分けてみよう。巣が大きくなるほどブランチボーナスも増えるよ！",
       'archive_tutorial_title': "大切な記録たち 📅",
-      'archive_tutorial_text':
-          "記録では、あなたが書いた大切な日々を確認できるよ。毎日の気分をカレンダーで一目で見てみよう！",
+      'archive_tutorial_text': "記録では、あなたが書いた大切な日々を確認できるよ。毎日の気分をカレンダーで一目で見てみよう！",
     },
   };
 

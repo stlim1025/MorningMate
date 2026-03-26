@@ -115,25 +115,27 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).extension<AppColorScheme>()!;
 
-    return Consumer<MorningController>(
-      builder: (context, morningController, child) {
-        // 오늘 일기가 완료되었는데 리스트에 없다면 자동 새로고침 (작성 후 이동 시 대응)
-        if (morningController.hasDiaryToday &&
-            !_hasTodayDiaryInList() &&
-            !_isLoading) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _loadDiaries(silent: true);
-          });
-        }
-
-        return Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: ResizeImage(AssetImage('assets/images/Ceiling.png'),
-                  width: 1080),
-              fit: BoxFit.cover,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Consumer<MorningController>(
+        builder: (context, morningController, child) {
+          // 오늘 일기가 완료되었는데 리스트에 없다면 자동 새로고침 (작성 후 이동 시 대응)
+          if (morningController.hasDiaryToday &&
+              !_hasTodayDiaryInList() &&
+              !_isLoading) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _loadDiaries(silent: true);
+            });
+          }
+  
+          return Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: ResizeImage(AssetImage('assets/images/Ceiling.png'),
+                    width: 1080),
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
           child: SafeArea(
             bottom: false,
             child: Stack(
@@ -201,7 +203,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             ),
           ),
         );
-      },
+        },
+      ),
     );
   }
 

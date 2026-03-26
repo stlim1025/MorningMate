@@ -154,7 +154,6 @@ class MorningController extends ChangeNotifier {
         _todayDiary = diary;
         if (diary.isCompleted) {
           _notificationService.cancelNightlyReminder();
-          _notificationService.cancelMorningReminder();
         } else {
           _notificationService.scheduleNightlyReminder();
         }
@@ -241,50 +240,72 @@ class MorningController extends ChangeNotifier {
     });
   }
 
-  // 일기 저장 (완료)
   Future<bool> saveDiary({
     required String userId,
     required String content,
     List<String>? moods,
+    String? weather,
+    String? photoUrl,
+    int? characterLevel,
+    Map<String, dynamic>? equippedCharacterItems,
     DateTime? customDate,
     String? existingId,
+    DateTime? createdAt,
   }) async {
     return _saveDiaryInternal(
       userId: userId,
       content: content,
       moods: moods,
+      weather: weather,
+      photoUrl: photoUrl,
+      characterLevel: characterLevel,
+      equippedCharacterItems: equippedCharacterItems,
       isDraft: false,
       customDate: customDate,
       existingId: existingId,
+      createdAt: createdAt,
     );
   }
 
-  // 임시 저장
   Future<bool> saveDraft({
     required String userId,
     required String content,
     List<String>? moods,
+    String? weather,
+    String? photoUrl,
+    int? characterLevel,
+    Map<String, dynamic>? equippedCharacterItems,
     DateTime? customDate,
     String? existingId,
+    DateTime? createdAt,
   }) async {
     return _saveDiaryInternal(
       userId: userId,
       content: content,
       moods: moods,
+      weather: weather,
+      photoUrl: photoUrl,
+      characterLevel: characterLevel,
+      equippedCharacterItems: equippedCharacterItems,
       isDraft: true,
       customDate: customDate,
       existingId: existingId,
+      createdAt: createdAt,
     );
   }
 
-  // 내부 저장 로직 (통합)
   Future<bool> _saveDiaryInternal({
     required String userId,
     required String content,
     List<String>? moods,
+    String? weather,
+    String? photoUrl,
     required bool isDraft,
     DateTime? customDate,
     String? existingId,
+    int? characterLevel,
+    Map<String, dynamic>? equippedCharacterItems,
+    DateTime? createdAt,
   }) async {
     if (_writingTimer != null) {
       if (!isDraft) {
@@ -300,6 +321,10 @@ class MorningController extends ChangeNotifier {
     try {
       final encryptedContent =
           await EncryptionUtil.encryptText(content, userId);
+
+      // No reliable way to get CharacterController here without BuildContext or more refactoring.
+      // For now, focusing on fixing the compilation errors by removing the broken attempt.
+      // Character level and items will be handled if passed from UI.
 
       final now = DateTime.now();
       final diaryDate = customDate ?? DateTime(now.year, now.month, now.day);
@@ -325,11 +350,16 @@ class MorningController extends ChangeNotifier {
         writingDuration: _writingDuration,
         moods: moods ?? [],
         isCompleted: !isDraft,
-        createdAt: (targetId != null && targetId.isNotEmpty)
-            ? (_todayDiary?.createdAt ?? now)
-            : now,
+        createdAt: createdAt ?? 
+            ((targetId != null && targetId.isNotEmpty)
+            ? (_todayDiary?.id == targetId ? (_todayDiary?.createdAt ?? now) : now)
+            : now),
         promptQuestion: _currentQuestion?.text,
         promptQuestionEng: _currentQuestion?.engText,
+        weather: weather,
+        photoUrl: photoUrl,
+        characterLevel: characterLevel,
+        equippedCharacterItems: equippedCharacterItems,
       );
 
       final bool isNewDiary = targetId == null || targetId.isEmpty;
@@ -353,7 +383,6 @@ class MorningController extends ChangeNotifier {
 
       if (!isDraft) {
         _notificationService.cancelNightlyReminder();
-        _notificationService.cancelMorningReminder();
       }
 
       // 새로 완료된 경우에만 보상 (임시저장 아님 AND (새 일기거나 기존에 미완료였던 경우))
