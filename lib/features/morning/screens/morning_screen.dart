@@ -21,6 +21,7 @@ import '../widgets/diary_button.dart';
 import '../widgets/decoration_button.dart';
 import '../widgets/header_image_button.dart';
 import '../widgets/character_decoration_button.dart';
+import '../widgets/today_diary_button.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../common/widgets/tutorial_overlay.dart';
 
@@ -444,7 +445,7 @@ class _MorningScreenState extends State<MorningScreen>
               child: SafeArea(
                 child: Padding(
                   padding: EdgeInsets.only(
-                      bottom: isAwake ? 30 : 105), // 하이라이트 위치를 살짝 내림
+                      bottom: isAwake ? 20 : 95), // 하이라이트 위치를 살짝 내림
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,15 +459,31 @@ class _MorningScreenState extends State<MorningScreen>
               ),
             ),
 
-            // 3.5 캐릭터 꾸미기 버튼 (오른쪽)
             Positioned(
               right: 20,
               bottom: 0,
               child: SafeArea(
                 child: Padding(
                   padding:
-                      EdgeInsets.only(bottom: isAwake ? 30 : 105), // 왼쪽과 밸런스 맞춤
-                  child: const CharacterDecorationButton(),
+                      EdgeInsets.only(bottom: isAwake ? 8 : 83), // 왼쪽(20/95)과 라인 맞춤 (80px vs 56px 차이 보정)
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (morningController.hasDiaryToday &&
+                          morningController.todayDiary != null) ...[
+                        TodayDiaryButton(
+                          onTap: () {
+                            context.push('/diary-detail', extra: {
+                              'diaries': [morningController.todayDiary!],
+                              'initialDate': morningController.todayDiary!.createdAt,
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 4), // 간격 축소하여 더 아래로 내림
+                      ],
+                      const CharacterDecorationButton(),
+                    ],
+                  ),
                 ),
               ),
             ),
