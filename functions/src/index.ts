@@ -611,91 +611,201 @@ export const processAdminPushRequest = onDocumentCreated("push_history/{pushId}"
 
   try {
     const { title, body, target, deepLink } = data;
+    const rawReward = data.rewardGaji;
+    let rewardGaji = 0;
+    if (typeof rawReward === 'number') {
+      rewardGaji = rawReward;
+    } else {
+      rewardGaji = parseInt(String(rawReward || '0'), 10);
+    }
+    if (isNaN(rewardGaji)) rewardGaji = 0;
+
     let tokens: string[] = [];
+    let userIds: string[] = [];
+    logger.info(`[Admin Push] Starting processing: title="${title}", target="${target}", rewardGaji=${rewardGaji}`);
 
-    // 1. 타겟 대상 유저 토큰 가져오기
+    // Parse target: "baseTarget:country:CODE" or just "baseTarget"
+    let baseTarget = target;
+    let countryCodeFilter: string | null = null;
+
+    if (target && target.includes(':country:')) {
+      const parts = target.split(':country:');
+      baseTarget = parts[0];
+      countryCodeFilter = parts[1];
+    }
+
+    // 1. 타겟 대상 유저 토큰 및 ID 가져오기
     const usersRef = admin.firestore().collection("users");
+    
+    // In-memory filter flags
+    let checkCountry = false;
+    let targetCountryCode = '';
+    if (countryCodeFilter && countryCodeFilter !== 'all') {
+      checkCountry = true;
+      targetCountryCode = countryCodeFilter;
+    }
 
-    if (target === 'all') {
-      const users = await usersRef.where("fcmToken", "!=", null).get();
+    if (baseTarget === 'all') {
+      let query: admin.firestore.Query = usersRef.where("fcmToken", ">", "");
+      if (checkCountry) {
+        query = query.where("countryCode", "==", targetCountryCode);
+      }
+      const users = await query.get();
       users.docs.forEach(doc => {
-        const token = doc.data().fcmToken;
-        if (token) tokens.push(token);
+        const d = doc.data();
+        userIds.push(doc.id);
+        if (d.fcmToken) tokens.push(d.fcmToken);
       });
-    } else if (target === 'inactive_3days') {
+    } else if (baseTarget === 'inactive_3days') {
       // 3일 전
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      // fcmToken 필터링(부등호)과 중복될 수 없으므로 lastLoginDate 조건만으로 쿼리 후 인메모리 필터링
       const users = await usersRef.where("lastLoginDate", "<", admin.firestore.Timestamp.fromDate(threeDaysAgo)).get();
       users.docs.forEach(doc => {
-        const token = doc.data().fcmToken;
-        if (token) tokens.push(token);
+        const d = doc.data();
+        if (checkCountry && d.countryCode !== targetCountryCode) return;
+        userIds.push(doc.id);
+        if (d.fcmToken) tokens.push(d.fcmToken);
       });
-    } else if (target === 'consecutive_10days') {
+    } else if (baseTarget === 'consecutive_10days') {
       const users = await usersRef.where("consecutiveDays", ">=", 10).get();
       users.docs.forEach(doc => {
-        const token = doc.data().fcmToken;
-        if (token) tokens.push(token);
+        const d = doc.data();
+        if (checkCountry && d.countryCode !== targetCountryCode) return;
+        userIds.push(doc.id);
+        if (d.fcmToken) tokens.push(d.fcmToken);
       });
-    } else if (target && target.startsWith('uid:')) {
-      const specificUser = target.replace('uid:', '');
+    } else if (baseTarget && baseTarget.startsWith('uid:')) {
+      const specificUser = baseTarget.replace('uid:', '');
       // 이메일 또는 UID로 검색
       if (specificUser.includes('@')) {
         const users = await usersRef.where("email", "==", specificUser).limit(1).get();
-        if (!users.empty && users.docs[0].data().fcmToken) {
-          tokens.push(users.docs[0].data().fcmToken);
+        if (!users.empty) {
+          const ud = users.docs[0].data();
+          userIds.push(users.docs[0].id);
+          if (ud.fcmToken) {
+            tokens.push(ud.fcmToken);
+          }
         }
       } else {
         const userDoc = await usersRef.doc(specificUser).get();
-        const userData = userDoc.data();
-        if (userDoc.exists && userData?.fcmToken) {
-          tokens.push(userData.fcmToken);
+        if (userDoc.exists) {
+          userIds.push(userDoc.id);
+          const userData = userDoc.data();
+          if (userData?.fcmToken) {
+            tokens.push(userData.fcmToken);
+          }
         }
       }
-    } else if (target && target.startsWith('uids:')) {
-      const uidsStr = target.replace('uids:', '');
+    } else if (baseTarget && baseTarget.startsWith('uids:')) {
+      const uidsStr = baseTarget.replace('uids:', '');
       const uids = uidsStr.split(',').map((u: string) => u.trim()).filter((u: string) => u.length > 0);
 
-      // 여러 유저의 토큰을 병렬로 가져오기
-      const tokenPromises = uids.map(async (id: string) => {
+      // 여러 유저의 정보를 병렬로 가져오기
+      const userPromises = uids.map(async (id: string) => {
         if (id.includes('@')) {
           const snap = await usersRef.where("email", "==", id).limit(1).get();
-          return (!snap.empty && snap.docs[0].data().fcmToken) ? snap.docs[0].data().fcmToken : null;
+          return !snap.empty ? { id: snap.docs[0].id, data: snap.docs[0].data() } : null;
         } else {
           const doc = await usersRef.doc(id).get();
-          return (doc.exists && doc.data()?.fcmToken) ? doc.data()?.fcmToken : null;
+          return doc.exists ? { id: doc.id, data: doc.data() } : null;
         }
       });
 
-      const results = await Promise.all(tokenPromises);
-      results.forEach((t: string | null) => { if (t) tokens.push(t); });
+      const results = await Promise.all(userPromises);
+      results.forEach((r) => {
+        if (r) {
+          userIds.push(r.id);
+          if (r.data?.fcmToken) {
+            tokens.push(r.data.fcmToken);
+          }
+        }
+      });
     }
 
-    // 중복 토큰 제거
+    // 중복 토큰 및 ID 제거
     tokens = [...new Set(tokens)];
+    const uniqueUserIds = [...new Set(userIds)];
+
+    // 2. 가지 보상 지급 (userIds 기준)
+    if (rewardGaji > 0 && uniqueUserIds.length > 0) {
+      logger.info(`[Admin Push] Starting reward distribution for ${uniqueUserIds.length} users. Reward: ${rewardGaji} gaji.`);
+      // 유저 1명당 3개의 작업(update, history set, noti set)이 있으므로 batch 한도를 고려하여 150명씩 처리
+      const batchLimit = 150;
+      for (let i = 0; i < uniqueUserIds.length; i += batchLimit) {
+        const batch = admin.firestore().batch();
+        const chunk = uniqueUserIds.slice(i, i + batchLimit);
+        const notificationsRef = admin.firestore().collection('notifications');
+        
+        chunk.forEach(uid => {
+          // 1) 포인트 업데이트
+          batch.update(usersRef.doc(uid), {
+            points: admin.firestore.FieldValue.increment(rewardGaji)
+          });
+
+          // 2) 포인트 내역 저장 (가지 사용 내역 페이지용)
+          const historyRef = admin.firestore().collection('point_history').doc();
+          batch.set(historyRef, {
+            userId: uid,
+            type: 'admin_reward',
+            description: '운영자 보상',
+            amount: rewardGaji,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          // 3) 최상위 알림 생성 (알림함용)
+          const notiRef = notificationsRef.doc();
+          batch.set(notiRef, {
+            id: notiRef.id,
+            userId: uid,
+            senderId: 'admin',
+            senderNickname: '운영자',
+            type: 'system', // system 타입 사용
+            message: `[운영자 보상] 가지 ${rewardGaji}개가 지급되었습니다.`,
+            isRead: false,
+            fcmSent: true,
+            isReplied: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            data: { 
+              type: 'admin_push', 
+              rewardGaji: rewardGaji,
+              deepLink: deepLink || ""
+            }
+          });
+        });
+        await batch.commit();
+      }
+      logger.info(`[Admin Push] Successfully rewarded ${uniqueUserIds.length} users.`);
+    }
 
     if (tokens.length === 0) {
       logger.info(`[Admin Push] No valid tokens found for target: ${target}`);
-      await snapshot.ref.update({ status: 'processed', note: 'No valid tokens' });
+      await snapshot.ref.update({ status: 'processed', note: 'No valid tokens but reward processed' });
       return;
     }
 
-    // 2. FCM 발송
+    const finalBody = rewardGaji > 0 ? `${body}\n\n가지 ${rewardGaji}개가 지급되었습니다.` : body;
+
+    // 2. FCM 발송 데이터 준비
     const payload: any = {
       notification: {
         title: title,
-        body: body,
+        body: finalBody,
       },
       data: {
         type: "admin_push",
+        title: title, // 포그라운드 알림용
+        body: finalBody,   // 포그라운드 알림용
         deepLink: deepLink || "",
+        rewardGaji: String(rewardGaji),
         click_action: "FLUTTER_NOTIFICATION_CLICK",
       },
       android: {
         priority: "high",
         notification: {
           title: title,
-          body: body,
+          body: finalBody,
           channelId: "high_importance_channel",
         },
       },
@@ -706,7 +816,7 @@ export const processAdminPushRequest = onDocumentCreated("push_history/{pushId}"
             sound: "default",
             alert: {
               title: title,
-              body: body,
+              body: finalBody,
             },
           },
         },

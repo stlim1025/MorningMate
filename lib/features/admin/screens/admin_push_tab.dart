@@ -18,10 +18,14 @@ class _AdminPushTabState extends State<AdminPushTab> {
   final _deepLinkController = TextEditingController();
   final _targetUserIdController = TextEditingController();
   String _target = 'all';
+  String _selectedCountry = 'all';
   UserModel? _foundUser;
   bool _isCheckingUser = false;
   final Set<String> _selectedUids = {};
   final _userSearchController = TextEditingController();
+  final _countryController = TextEditingController(text: '');
+  final _rewardController = TextEditingController(text: '0');
+  String _selectedDeepLink = 'home';
 
   @override
   void initState() {
@@ -36,6 +40,8 @@ class _AdminPushTabState extends State<AdminPushTab> {
     _deepLinkController.dispose();
     _targetUserIdController.dispose();
     _userSearchController.dispose();
+    _countryController.dispose();
+    _rewardController.dispose();
     super.dispose();
   }
 
@@ -75,20 +81,24 @@ class _AdminPushTabState extends State<AdminPushTab> {
   Widget _buildTargetInfoPanel(BuildContext context) {
     String description = '';
     IconData icon = Icons.info_outline;
-    Color color = const Color(0xFF6366F1);
+    Color color = const Color(0xFF64748B);
+
+    final countryInfo = _getCountryInfo(_selectedCountry);
+    final countrySuffix = _selectedCountry == 'all' ? '' : ' ($countryInfo 유저 한정)';
+
     switch (_target) {
       case 'all':
-        description = '가입한 모든 사용자에게 알림을 보냅니다.';
+        description = '가입한 모든 사용자에게 알림을 보냅니다.$countrySuffix';
         icon = Icons.groups_rounded;
         color = const Color(0xFF3B82F6);
         break;
       case 'inactive_3days':
-        description = '최근 3일 동안 접속하지 않은 사용자에게 알림을 보냅니다.';
+        description = '최근 3일 동안 접속하지 않은 사용자에게 알림을 보냅니다.$countrySuffix';
         icon = Icons.person_off_rounded;
         color = const Color(0xFFF59E0B);
         break;
       case 'consecutive_10days':
-        description = '10일 연속으로 일기를 작성 중인 열혈 사용자에게 알림을 보냅니다.';
+        description = '10일 연속으로 일기를 작성 중인 열혈 사용자에게 알림을 보냅니다.$countrySuffix';
         icon = Icons.local_fire_department_rounded;
         color = const Color(0xFFEF4444);
         break;
@@ -119,9 +129,7 @@ class _AdminPushTabState extends State<AdminPushTab> {
           Text(description,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF64748B),
-                  height: 1.5)),
+                  fontSize: 14, color: Color(0xFF64748B), height: 1.5)),
           const SizedBox(height: 12),
           const Text('선택한 타겟 대상으로 일괄 발송됩니다.',
               style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
@@ -129,6 +137,39 @@ class _AdminPushTabState extends State<AdminPushTab> {
         ],
       ),
     );
+  }
+
+  String _getCountryInfo(String code) {
+    if (code == 'all') return '🌍 전체 국가';
+    if (code.isEmpty) return '미설정';
+    final upperCode = code.toUpperCase();
+    final Map<String, String> names = {
+      'KR': '대한민국',
+      'JP': '일본',
+      'US': '미국',
+      'CN': '중국',
+      'VN': '베트남',
+      'TW': '대만',
+      'TH': '태국',
+      'PH': '필리핀',
+      'ID': '인도네시아',
+      'MY': '말레이시아',
+      'SG': '싱가포르',
+    };
+
+    String flag = '';
+    try {
+      if (upperCode.length == 2) {
+        int first = upperCode.codeUnitAt(0) - 0x41 + 0x1F1E6;
+        int second = upperCode.codeUnitAt(1) - 0x41 + 0x1F1E6;
+        flag = String.fromCharCode(first) + String.fromCharCode(second);
+      }
+    } catch (e) {
+      flag = '🌐';
+    }
+
+    final name = names[upperCode] ?? upperCode;
+    return '$flag $name';
   }
 
   // ── Push Form ──
@@ -186,6 +227,65 @@ class _AdminPushTabState extends State<AdminPushTab> {
               _foundUser = null;
             }),
           ),
+
+          // Country Filter Section (Shown for all targets except specific_user)
+          if (_target != 'specific_user') ...[
+            const SizedBox(height: 16),
+            _buildLabel('국가 필터 선택'),
+            const SizedBox(height: 6),
+            Consumer<AdminController>(
+              builder: (context, controller, child) {
+                final countries = ['all'] +
+                    controller.countryStats.keys
+                        .where((c) => c != '알수없음')
+                        .toList();
+
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: countries.map((c) {
+                    final isCurrent = _selectedCountry == c;
+                    return ChoiceChip(
+                      label: Text(_getCountryInfo(c),
+                          style: const TextStyle(fontSize: 11)),
+                      selected: isCurrent,
+                      selectedColor: const Color(0xFFEEF2FF),
+                      labelStyle: TextStyle(
+                        color: isCurrent
+                            ? const Color(0xFF6366F1)
+                            : const Color(0xFF64748B),
+                        fontWeight:
+                            isCurrent ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: BorderSide(
+                          color: isCurrent
+                              ? const Color(0xFF6366F1)
+                              : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      onSelected: (selected) {
+                        if (selected) {
+                          _countryController.text = c == 'all' ? '' : c;
+                          setState(() => _selectedCountry = c);
+                        }
+                      },
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildTextField(
+              controller: _countryController,
+              hint: '또는 국가 코드 직접 입력 (예: KR)',
+              onChanged: (val) {
+                final code = val.trim().toUpperCase();
+                setState(() => _selectedCountry = code.isEmpty ? 'all' : code);
+              },
+            ),
+          ],
 
           // Specific User Input
           if (_target == 'specific_user') ...[
@@ -327,12 +427,36 @@ class _AdminPushTabState extends State<AdminPushTab> {
               maxLines: 3),
           const SizedBox(height: 16),
 
-          // Deep Link
-          _buildLabel('Deep Link'),
+          // Deep Link Radio Buttons
+          _buildLabel('Deep Link (이동할 화면)'),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAFAFA),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Wrap(
+              spacing: 16,
+              children: [
+                _buildDeepLinkRadio('home', '홈'),
+                _buildDeepLinkRadio('friends', '친구'),
+                _buildDeepLinkRadio('nest', '둥지'),
+                _buildDeepLinkRadio('shop', '상점'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Reward Gaji
+          _buildLabel('가지 보상 (푸시 받는 사람에게 자동 지급)'),
           const SizedBox(height: 6),
           _buildTextField(
-              controller: _deepLinkController,
-              hint: '이동할 페이지 (예: shop, nest)'),
+            controller: _rewardController,
+            hint: '지급할 가지 수 (0이면 지급 안 함)',
+            keyboardType: TextInputType.number,
+          ),
           const SizedBox(height: 28),
 
           // Send Button
@@ -407,7 +531,7 @@ class _AdminPushTabState extends State<AdminPushTab> {
               Expanded(
                 child: _buildTextField(
                   controller: _userSearchController,
-                  hint: '닉네임 검색...',
+                  hint: '닉네임 또는 유저 ID로 검색...',
                   prefixIcon: Icons.search_rounded,
                   onSubmitted: (val) {
                     context
@@ -791,12 +915,14 @@ class _AdminPushTabState extends State<AdminPushTab> {
     required String hint,
     int maxLines = 1,
     IconData? prefixIcon,
+    TextInputType keyboardType = TextInputType.text,
     ValueChanged<String>? onChanged,
     ValueChanged<String>? onSubmitted,
   }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      keyboardType: keyboardType,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
       decoration: InputDecoration(
@@ -871,12 +997,30 @@ class _AdminPushTabState extends State<AdminPushTab> {
       builder: (ctx) => AdminWebDialog(
         title: '푸시 발송 확인',
         titleIcon: Icons.send,
-        height: 250,
+        width: 450,
+        height: 350,
         content: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Text(_target == 'specific_user'
-              ? '${_selectedUids.length}명의 유저에게 푸시를 발송하시겠습니까?'
-              : '정말로 이 메시지를 모든 대상에게 발송하시겠습니까?'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '대상: ${_target == 'all' ? '전체 사용자' : _target == 'inactive_3days' ? '미접속자(3일)' : _target == 'consecutive_10days' ? '연속 작성자' : '특정 유저'}\n'
+                '필터: ${_getCountryInfo(_selectedCountry)}\n'
+                '이동: ${_selectedDeepLink.toUpperCase()}\n'
+                '보상: ${_rewardController.text}가지',
+                style: const TextStyle(height: 1.6, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+              const Text(
+                '정말로 이 메시지를 발송하시겠습니까?',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -890,20 +1034,21 @@ class _AdminPushTabState extends State<AdminPushTab> {
               if (_target == 'specific_user') {
                 finalTarget = 'uids:${_selectedUids.join(',')}';
               } else {
-                finalTarget = _target;
+                finalTarget = _selectedCountry == 'all'
+                    ? _target
+                    : '$_target:country:$_selectedCountry';
               }
 
               controller.sendPushMessage(
                 title: _titleController.text,
                 body: _bodyController.text,
                 target: finalTarget,
-                deepLink: _deepLinkController.text.isNotEmpty
-                    ? _deepLinkController.text
-                    : null,
+                deepLink: _selectedDeepLink,
+                rewardGaji: int.tryParse(_rewardController.text) ?? 0,
               );
               _titleController.clear();
               _bodyController.clear();
-              _deepLinkController.clear();
+              _rewardController.text = '0';
               _targetUserIdController.clear();
               setState(() {
                 _foundUser = null;
@@ -920,6 +1065,40 @@ class _AdminPushTabState extends State<AdminPushTab> {
             child: const Text('발송'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDeepLinkRadio(String value, String label) {
+    final isSelected = _selectedDeepLink == value;
+    return InkWell(
+      onTap: () => setState(() => _selectedDeepLink = value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: Radio<String>(
+                value: value,
+                groupValue: _selectedDeepLink,
+                activeColor: const Color(0xFF6366F1),
+                onChanged: (val) => setState(() => _selectedDeepLink = val!),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isSelected
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF64748B),
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                )),
+          ],
+        ),
       ),
     );
   }

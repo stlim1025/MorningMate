@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -110,7 +111,7 @@ class AuthController extends ChangeNotifier {
         
         // 플랫폼 및 국가 정보가 없으면 업데이트
         if (_userModel != null && (_userModel!.platform == null || _userModel!.countryCode == null)) {
-          final platform = Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other');
+          final platform = kIsWeb ? 'web' : (Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'));
           final countryCode = WidgetsBinding.instance.platformDispatcher.locale.countryCode;
           
           final Map<String, dynamic> updates = {};
@@ -190,7 +191,7 @@ class AuthController extends ChangeNotifier {
           lastLoginDate: DateTime.now(), // ✨ 신규 가입 시 접속 기록 즉시 설정
           provider: 'email',
           isSetupComplete: false,
-          platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+          platform: kIsWeb ? 'web' : (Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other')),
           countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
         );
 
@@ -256,7 +257,7 @@ class AuthController extends ChangeNotifier {
             lastLoginDate: DateTime.now(), // ✨ 신규 가입 시 접속 기록 즉시 설정
             provider: 'google',
             isSetupComplete: false,
-            platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+            platform: kIsWeb ? 'web' : (Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other')),
             countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
           );
           await _userService.createUser(userModel);
@@ -322,7 +323,7 @@ class AuthController extends ChangeNotifier {
             lastLoginDate: DateTime.now(), // ✨ 신규 가입 시 접속 기록 즉시 설정
             provider: 'kakao',
             isSetupComplete: false,
-            platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+            platform: kIsWeb ? 'web' : (Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other')),
             countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
           );
           await _userService.createUser(userModel);
@@ -370,7 +371,7 @@ class AuthController extends ChangeNotifier {
             lastLoginDate: DateTime.now(), // ✨ 신규 가입 시 접속 기록 즉시 설정
             provider: 'apple',
             isSetupComplete: false,
-            platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+            platform: kIsWeb ? 'web' : (Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other')),
             countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
           );
           await _userService.createUser(userModel);
@@ -449,7 +450,7 @@ class AuthController extends ChangeNotifier {
             provider: 'guest',
             isSetupComplete: true, // 임시 로그인은 설정 화면 스킵
             isAnonymous: true,
-            platform: Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other'),
+            platform: kIsWeb ? 'web' : (Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other')),
             countryCode: WidgetsBinding.instance.platformDispatcher.locale.countryCode,
           );
 

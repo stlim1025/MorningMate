@@ -403,6 +403,25 @@ class AdminController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (isRefresh) {
+        _allUsers = [];
+        _lastUserDoc = null;
+        _hasMoreUsers = true;
+
+        // UID 직접 조회 시도 (isRefresh 일 때만 수행)
+        if (_searchQuery != null && _searchQuery!.isNotEmpty) {
+          try {
+            final directDoc =
+                await _firestore.collection('users').doc(_searchQuery).get();
+            if (directDoc.exists) {
+              _allUsers.add(UserModel.fromFirestore(directDoc));
+            }
+          } catch (e) {
+            debugPrint('UID 직접 조회 실패: $e');
+          }
+        }
+      }
+
       Query query = _firestore.collection('users');
 
       if (_searchQuery != null && _searchQuery!.isNotEmpty) {
@@ -423,15 +442,11 @@ class AdminController extends ChangeNotifier {
 
       final snapshot = await query.get();
 
-      if (isRefresh) {
-        _allUsers = [];
-        _lastUserDoc = null;
-        _hasMoreUsers = true;
-      }
-
       if (snapshot.docs.isNotEmpty) {
-        final newUsers =
-            snapshot.docs.map((doc) => UserModel.fromFirestore(doc)).toList();
+        final newUsers = snapshot.docs
+            .map((doc) => UserModel.fromFirestore(doc))
+            .where((u) => !_allUsers.any((existing) => existing.uid == u.uid))
+            .toList();
         _allUsers.addAll(newUsers);
         _lastUserDoc = snapshot.docs.last;
         _hasMoreUsers = snapshot.docs.length == 20;
@@ -1029,17 +1044,17 @@ class AdminController extends ChangeNotifier {
     required String body,
     required String target,
     String? deepLink,
+    int? rewardGaji,
   }) async {
     _isLoading = true;
     notifyListeners();
     try {
-      // FCM 전송 로직 (추후 Cloud Function과 연동)
-      // 현재는 기록용 저장
       await _firestore.collection('push_history').add({
         'title': title,
         'body': body,
         'target': target,
         'deepLink': deepLink,
+        'rewardGaji': rewardGaji,
         'sentAt': FieldValue.serverTimestamp(),
         'status': 'sent',
       });

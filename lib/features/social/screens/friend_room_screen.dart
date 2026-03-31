@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
@@ -389,7 +390,7 @@ class _FriendRoomScreenState extends State<FriendRoomScreen>
                   child: SafeArea(
                     child: Padding(
                       padding:
-                          EdgeInsets.only(bottom: Platform.isIOS ? 20 : 10),
+                          EdgeInsets.only(bottom: (kIsWeb ? false : Platform.isIOS) ? 20 : 10),
                       child: Consumer<SocialController>(
                         builder: (context, socialController, child) {
                           final remaining = socialController

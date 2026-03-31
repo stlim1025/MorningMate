@@ -318,6 +318,19 @@ class NotificationService {
         case 'nest_donation':
           AppRouter.navigatorKey.currentContext?.go('/notification');
           break;
+        case 'admin_push':
+          final deepLink = message.data['deepLink'];
+          final context = AppRouter.navigatorKey.currentContext;
+          if (deepLink == 'home') {
+            context?.go('/morning');
+          } else if (deepLink == 'friends') {
+            context?.go('/social');
+          } else if (deepLink == 'nest') {
+            context?.go('/nest_list');
+          } else if (deepLink == 'shop') {
+            context?.push('/shop');
+          }
+          break;
       }
     }
   }
@@ -367,6 +380,9 @@ class NotificationService {
     final String? typeStr = data['type'];
     NotificationType type;
     switch (typeStr) {
+      case 'admin_push':
+        type = NotificationType.system;
+        break;
       case 'wake_up':
         type = NotificationType.wakeUp;
         break;
@@ -404,79 +420,85 @@ class NotificationService {
       id: '',
       userId: '',
       senderId:
-          data['senderId']?.toString() ?? data['sender_id']?.toString() ?? '',
+          data['senderId']?.toString() ?? data['sender_id']?.toString() ?? 'admin',
       senderNickname: data['senderNickname']?.toString() ??
           data['friendName']?.toString() ??
-          '알 수 없음',
+          (typeStr == 'admin_push' ? '운영자' : '알 수 없음'),
       type: type,
-      message: data['message']?.toString() ?? '',
+      message: data['message']?.toString() ?? data['body']?.toString() ?? '',
       createdAt: DateTime.now(),
       data: data,
     );
 
     String? title;
-    switch (dummyNoti.type) {
-      case NotificationType.wakeUp:
-      case NotificationType.nestPoke:
-        title = AppLocalizations.of(context)?.get('wakeUpAlert') ?? '깨우기 알림';
-        break;
-      case NotificationType.friendRequest:
-        title = AppLocalizations.of(context)?.get('friendRequest') ?? '친구 요청';
-        break;
-      case NotificationType.friendAccept:
-        title = AppLocalizations.of(context)?.get('friendAcceptNotiTitle') ??
-            '친구 요청 수락';
-        break;
-      case NotificationType.friendReject:
-        title = AppLocalizations.of(context)?.get('friendRejectShort') ??
-            '친구 요청 거절';
-        break;
-      case NotificationType.cheerMessage:
-        final dynamic isReplyVal = data['isReply'];
-        final bool isReply = isReplyVal == true || isReplyVal == 'true';
-        if (isReply) {
-          title = AppLocalizations.of(context)?.getFormat(
-                  'notiMsgReplyTitle', {'name': dummyNoti.senderNickname}) ??
-              '${dummyNoti.senderNickname}님이 답장을 보냈습니다!';
-        } else {
-          title = AppLocalizations.of(context)?.getFormat(
-                  'notiMsgCheerTitle', {'name': dummyNoti.senderNickname}) ??
-              '${dummyNoti.senderNickname}님이 응원 메시지를 보냈습니다!';
-        }
-        break;
-      case NotificationType.nestInvite:
-        title = AppLocalizations.of(context)?.get('nestInvite') ?? '둥지 초대';
-        break;
-      case NotificationType.nestDonation:
-        title = AppLocalizations.of(context)?.get('nestDonation') ?? '둥지 기부 알림';
-        break;
-      case NotificationType.nestUpgrade:
-        title =
-            AppLocalizations.of(context)?.get('nestUpgradeTitle') ?? '둥지 업그레이드';
-        break;
-      case NotificationType.memoLike:
-      case NotificationType.reportResult:
-      case NotificationType.system:
-        if (typeStr == 'character_evolved') {
+    String? bodyText;
+
+    if (typeStr == 'admin_push') {
+      title = data['title']?.toString() ?? '알림';
+      bodyText = data['body']?.toString() ?? '';
+    } else {
+      switch (dummyNoti.type) {
+        case NotificationType.wakeUp:
+        case NotificationType.nestPoke:
+          title = AppLocalizations.of(context)?.get('wakeUpAlert') ?? '깨우기 알림';
+          break;
+        case NotificationType.friendRequest:
+          title = AppLocalizations.of(context)?.get('friendRequest') ?? '친구 요청';
+          break;
+        case NotificationType.friendAccept:
+          title = AppLocalizations.of(context)?.get('friendAcceptNotiTitle') ??
+              '친구 요청 수락';
+          break;
+        case NotificationType.friendReject:
+          title = AppLocalizations.of(context)?.get('friendRejectShort') ??
+              '친구 요청 거절';
+          break;
+        case NotificationType.cheerMessage:
+          final dynamic isReplyVal = data['isReply'];
+          final bool isReply = isReplyVal == true || isReplyVal == 'true';
+          if (isReply) {
+            title = AppLocalizations.of(context)?.getFormat(
+                    'notiMsgReplyTitle', {'name': dummyNoti.senderNickname}) ??
+                '${dummyNoti.senderNickname}님이 답장을 보냈습니다!';
+          } else {
+            title = AppLocalizations.of(context)?.getFormat(
+                    'notiMsgCheerTitle', {'name': dummyNoti.senderNickname}) ??
+                '${dummyNoti.senderNickname}님이 응원 메시지를 보냈습니다!';
+          }
+          break;
+        case NotificationType.nestInvite:
+          title = AppLocalizations.of(context)?.get('nestInvite') ?? '둥지 초대';
+          break;
+        case NotificationType.nestDonation:
+          title = AppLocalizations.of(context)?.get('nestDonation') ?? '둥지 기부 알림';
+          break;
+        case NotificationType.nestUpgrade:
           title =
-              AppLocalizations.of(context)?.get('characterEvolutionTitle') ??
-                  '캐릭터 진화';
-        } else {
-          title = AppLocalizations.of(context)?.get('notifications') ?? '알림';
-        }
-        break;
-      case NotificationType.challenge:
-        title =
-            AppLocalizations.of(context)?.get('challengeComplete') ?? '도전 완료';
-        break;
-      case NotificationType.referralReward:
-        title = AppLocalizations.of(context)?.get('referralReward') ?? '보상';
-        break;
+              AppLocalizations.of(context)?.get('nestUpgradeTitle') ?? '둥지 업그레이드';
+          break;
+        case NotificationType.memoLike:
+        case NotificationType.reportResult:
+        case NotificationType.system:
+          if (typeStr == 'character_evolved') {
+            title =
+                AppLocalizations.of(context)?.get('characterEvolutionTitle') ??
+                    '캐릭터 진화';
+          } else {
+            title = AppLocalizations.of(context)?.get('notifications') ?? '알림';
+          }
+          break;
+        case NotificationType.challenge:
+          title =
+              AppLocalizations.of(context)?.get('challengeComplete') ?? '도전 완료';
+          break;
+        case NotificationType.referralReward:
+          title = AppLocalizations.of(context)?.get('referralReward') ?? '보상';
+          break;
+      }
+      bodyText = dummyNoti.getLocalizedMessage(context);
     }
 
-    final body = dummyNoti.getLocalizedMessage(context);
-
-    _showInAppNotification(title: title, body: body, type: typeStr, data: data);
+    _showInAppNotification(title: title, body: bodyText, type: typeStr, data: data);
   }
 
   void _showInAppNotification(
@@ -559,6 +581,18 @@ class NotificationService {
         type == 'nestInvite' ||
         type == 'nestDonation') {
       AppRouter.navigatorKey.currentContext?.push('/notification');
+    } else if (type == 'admin_push') {
+      final deepLink = data['deepLink'];
+      final context = AppRouter.navigatorKey.currentContext;
+      if (deepLink == 'home') {
+        context?.go('/morning');
+      } else if (deepLink == 'friends') {
+        context?.go('/social');
+      } else if (deepLink == 'nest') {
+        context?.go('/nest_list');
+      } else if (deepLink == 'shop') {
+        context?.push('/shop');
+      }
     }
   }
 

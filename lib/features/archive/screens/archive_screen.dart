@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -167,7 +168,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                         ),
                       ),
                     SizedBox(
-                        height: (Platform.isIOS ? 50.0 : 60.0) +
+                        height: ((kIsWeb ? false : Platform.isIOS) ? 50.0 : 60.0) +
                             MediaQuery.of(context).viewPadding.bottom),
                   ],
                 ),

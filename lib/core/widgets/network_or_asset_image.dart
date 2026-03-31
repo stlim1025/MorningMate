@@ -93,15 +93,21 @@ class NetworkOrAssetImage extends StatelessWidget {
                   ),
         );
       }
-      return Image(
-        image: CachedNetworkImageProvider(path),
+      return CachedNetworkImage(
+        imageUrl: path,
         fit: fit,
         width: width,
         height: height,
         color: color,
         colorBlendMode: colorBlendMode,
-        errorBuilder:
-            errorBuilder ?? (context, error, stackTrace) => const SizedBox(),
+        placeholder: (context, url) => const Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => errorBuilder?.call(context, error, null) ?? const SizedBox(),
       );
     } else if (path.endsWith('.svg')) {
       return SvgPicture.asset(
@@ -258,14 +264,13 @@ class _FirebaseStorageImageState extends State<_FirebaseStorageImage> {
     }
 
     // 로딩 중
-    return SizedBox(
-      width: widget.width ?? 24,
-      height: widget.height ?? 24,
-      child: const Center(
-        child: SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2),
+    return Center(
+      child: SizedBox(
+        width: 30, // 상세 보기 영역에 맞춰 약간 더 크게 조정
+        height: 30,
+        child: CircularProgressIndicator(
+          strokeWidth: 2.5,
+          color: Theme.of(context).primaryColor.withOpacity(0.5),
         ),
       ),
     );

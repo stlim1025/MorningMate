@@ -472,6 +472,53 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
     );
   }
 
+  void _showEnlargedPhoto(BuildContext context, String imageUrl) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withOpacity(0.8),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              // 중앙 확대 이미지
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: NetworkOrAssetImage(
+                      imagePath: imageUrl,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+              // 우측 상단 X 버튼
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 20,
+                right: 20,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Image.asset(
+                    'assets/icons/X_Button.png',
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildPhotoArea(AppColorScheme colorScheme) {
     return AspectRatio(
       aspectRatio: 1.0,
@@ -484,22 +531,40 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
           ),
         ),
         child: _currentDiary?.photoUrl != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: NetworkOrAssetImage(
-                  imagePath: _currentDiary!.photoUrl!,
-                  fit: BoxFit.contain,
+            ? GestureDetector(
+                onTap: () => _showEnlargedPhoto(context, _currentDiary!.photoUrl!),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: NetworkOrAssetImage(
+                    imagePath: _currentDiary!.photoUrl!,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               )
             : Center(
-                child: CharacterDisplay(
-                  key: ValueKey('detail_fallback_${_currentDiary?.id ?? _currentDate.millisecondsSinceEpoch}'),
-                  characterLevel: _currentDiary?.characterLevel ?? 1,
-                  equippedItems: _currentDiary?.equippedCharacterItems ?? {},
-                  size: 150,
-                  isAwake: true,
-                  enableAnimation: false,
-                ),
+                child: _currentDiary?.moods.isNotEmpty == true
+                    ? NetworkOrAssetImage(
+                        imagePath: RoomAssets.emoticons
+                                .firstWhere(
+                                  (e) => e.id == _currentDiary!.moods.first,
+                                  orElse: () => RoomAssets.emoticons[0],
+                                )
+                                .imagePath ??
+                            '',
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.contain,
+                      )
+                    : CharacterDisplay(
+                        key: ValueKey(
+                            'detail_fallback_${_currentDiary?.id ?? _currentDate.millisecondsSinceEpoch}'),
+                        characterLevel: _currentDiary?.characterLevel ?? 1,
+                        equippedItems:
+                            _currentDiary?.equippedCharacterItems ?? {},
+                        size: 150,
+                        isAwake: true,
+                        enableAnimation: false,
+                      ),
               ),
       ),
     );
@@ -510,15 +575,7 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
   Widget _buildWritingArea(BuildContext context, AppColorScheme colorScheme) {
     final langCode = Localizations.localeOf(context).languageCode;
 
-    // 날씨 텍스트 다국어 처리 (날씨 없는 이전 일기는 ❓)
-    String weatherEmoji = '❓';
-    if (_currentDiary?.weather != null) {
-      final Map<String, String> weatherEmojis = {
-        'sunny': '☀️', 'partlyCloudy': '🌤', 'cloudy': '☁️', 'rainy': '🌧', 'snowy': '❄️',
-      };
-      final key = _currentDiary!.weather!;
-      weatherEmoji = weatherEmojis[key] ?? '';
-    }
+    // 날씨 텍스트 다국어 처리 (에셋 이미지로 대체됨)
 
     // 기분 이모티콘
     final moodId = _currentDiary?.moods.isNotEmpty == true
@@ -533,16 +590,25 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
 
     // 날씨 레이블 (다국어)
     final weatherTitle = {
-      'ko': '오늘의 날씨',
+      'ko': '날씨',
       'en': 'Weather',
-      'ja': '今日の天気',
-    }[langCode] ?? '오늘의 날씨';
+      'ja': '天気',
+    }[langCode] ?? '날씨';
+
+    final Map<String, String> weatherIcons = {
+      'sunny': 'assets/icons/Diary_Sun.png',
+      'partlyCloudy': 'assets/icons/DIary_SunCloud.png',
+      'cloudy': 'assets/icons/Diary_Cloud.png',
+      'rainy': 'assets/icons/Diray_Rain.png',
+      'snowy': 'assets/icons/Diary_Snow.png',
+    };
+    final weatherIconPath = weatherIcons[_currentDiary?.weather] ?? 'assets/icons/Diary_Sun.png';
 
     final moodTitle = {
-      'ko': '오늘의 기분',
+      'ko': '기분',
       'en': 'Mood',
-      'ja': '今日の気分',
-    }[langCode] ?? '오늘의 기분';
+      'ja': '気分',
+    }[langCode] ?? '기분';
 
     return Container(
       width: double.infinity,
@@ -578,12 +644,18 @@ class _DiaryDetailScreenState extends State<DiaryDetailScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              '$weatherTitle: $weatherEmoji',
+                              '$weatherTitle: ',
                               style: TextStyle(
                                 fontFamily: 'BMJUA',
                                 fontSize: 22,
                                 color: colorScheme.textPrimary,
                               ),
+                            ),
+                            Image.asset(
+                              weatherIconPath,
+                              width: 32,
+                              height: 32,
+                              fit: BoxFit.contain,
                             ),
                           ],
                         ),

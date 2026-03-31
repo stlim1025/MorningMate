@@ -725,7 +725,7 @@ class _ShopScreenState extends State<ShopScreen> {
       final adLabel = l10n?.get('ad') ?? '광고';
       label = '$adLabel ${refreshCount - 1}/3';
     } else {
-      label = l10n?.get('completed') ?? '완료';
+      label = l10n?.get('challengeStatusCompleted') ?? '완료';
     }
 
     return Padding(
@@ -916,11 +916,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     fit: BoxFit.fill,
                   ),
                   Text(
-                    isLimitReached
-                        ? (AppLocalizations.of(context)?.get('completed') ??
-                            'Completed')
-                        : (AppLocalizations.of(context)?.get('watch') ??
-                            'Watch'),
+                    AppLocalizations.of(context)?.get('ad') ?? 'Ad',
                     style: TextStyle(
                       color: Color(0xFF5D4037),
                       fontWeight: FontWeight.bold,

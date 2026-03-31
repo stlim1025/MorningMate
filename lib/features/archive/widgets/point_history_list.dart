@@ -185,6 +185,8 @@ class PointHistoryList extends StatelessWidget {
         return localizations.get('historyNestReward');
       } else if (desc.contains('상점 튜토리얼') || desc == '상점 튜토리얼 완료 보상') {
         return localizations.get('historyShopTutorialReward');
+      } else if (desc.contains('운영자 보상')) {
+        return desc;
       }
       // 기타 reward (레벨업 등)는 원본 표시
       return localizations.get('historyAdReward'); // fallback
@@ -274,6 +276,10 @@ class PointHistoryList extends StatelessWidget {
       case 'reward':
         iconData = Icons.card_giftcard;
         iconColor = Colors.teal;
+        break;
+      case 'admin_reward':
+        iconData = Icons.card_giftcard;
+        iconColor = Colors.blue;
         break;
       case 'sticky_note':
         iconData = Icons.sticky_note_2;

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -17,7 +18,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double navBarHeight = Platform.isIOS ? 75 : 90;
+    final double navBarHeight = (kIsWeb ? false : Platform.isIOS) ? 75 : 90;
     // viewPadding은 SafeArea에 의해 소비되지 않으므로
     // Edge-to-Edge 환경에서도 항상 올바른 시스템 UI inset을 반환합니다.
     final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
@@ -25,7 +26,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
     // 안드로이드에서 제스처 탐색 모드의 시스템 여백은 보통 30보다 작음(ex. 홈 인디케이터 높이)
     // 반면 하단에 버튼이 있는 경우 40~50 이상의 높이를 가짐.
     final bool isGestureNav =
-        Platform.isIOS || (bottomInset > 0 && bottomInset < 30);
+        (kIsWeb ? false : Platform.isIOS) || (bottomInset > 0 && bottomInset < 30);
 
     return SizedBox(
       height: navBarHeight + bottomInset,
@@ -38,7 +39,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
             padding: EdgeInsets.only(bottom: isGestureNav ? 0 : bottomInset),
             child: Container(
               width: double.infinity,
-              height: Platform.isIOS
+              height: (kIsWeb ? false : Platform.isIOS)
                   ? (50 + bottomInset)
                   : (isGestureNav ? 60 + bottomInset : 60),
               decoration: const BoxDecoration(

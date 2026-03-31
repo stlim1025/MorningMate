@@ -663,7 +663,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             (notification.data != null && notification.data!['nestId'] != null);
 
     if (isNestNotification) {
-      iconPath = 'assets/icons/Nest_Notification_Icon.png';
+      iconPath = 'assets/icons/Bell_Icon.png';
     } else {
       switch (notification.type) {
         case NotificationType.wakeUp:
@@ -676,7 +676,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           iconPath = 'assets/icons/Friend_NotiIcon.png';
           break;
         case NotificationType.referralReward:
-          iconPath = 'assets/icons/Gift_Icon.png';
+          iconPath = 'assets/icons/Bell_Icon.png';
           break;
         default:
           iconPath = 'assets/icons/Bell_Icon.png';

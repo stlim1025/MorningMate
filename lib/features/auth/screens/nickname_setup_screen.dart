@@ -34,10 +34,10 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
     if (kIsWeb) return 'web_${userId.substring(0, 5)}';
     final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     try {
-      if (io.Platform.isAndroid) {
+      if (!kIsWeb && io.Platform.isAndroid) {
         final androidInfo = await deviceInfo.androidInfo;
         return androidInfo.id;
-      } else if (io.Platform.isIOS) {
+      } else if (!kIsWeb && io.Platform.isIOS) {
         final iosInfo = await deviceInfo.iosInfo;
         return iosInfo.identifierForVendor;
       }

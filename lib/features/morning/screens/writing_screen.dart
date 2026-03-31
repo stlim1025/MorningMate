@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../character/widgets/character_display.dart';
 import '../controllers/morning_controller.dart';
+import '../../../core/widgets/bouncing_character_loader.dart';
 import '../../character/controllers/character_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/theme/app_color_scheme.dart';
@@ -48,6 +49,7 @@ class _WritingScreenState extends State<WritingScreen> {
 
   File? _selectedImage;
   String? _existingPhotoUrl;
+  String? _originalPhotoUrl; // 수정을 위해 들어왔을 때의 원본 사진 URL
   String _selectedWeather = 'sunny';
   final GlobalKey _blurKey = GlobalKey();
   final GlobalKey _draftKey = GlobalKey();
@@ -83,6 +85,7 @@ class _WritingScreenState extends State<WritingScreen> {
       _selectedMoods.addAll(widget.existingDiary!.moods);
       _selectedWeather = widget.existingDiary!.weather ?? 'sunny';
       _existingPhotoUrl = widget.existingDiary!.photoUrl;
+      _originalPhotoUrl = _existingPhotoUrl; // 원본 URL 저장
 
       morningController.updateCharCount(_textController.text);
     } else {
@@ -147,6 +150,7 @@ class _WritingScreenState extends State<WritingScreen> {
             }
             _selectedWeather = morningController.todayDiary!.weather ?? 'sunny';
             _existingPhotoUrl = morningController.todayDiary!.photoUrl;
+            _originalPhotoUrl = _existingPhotoUrl; // 드래프트의 원본 URL 저장
           });
           morningController.updateCharCount(content);
         }
@@ -370,6 +374,40 @@ class _WritingScreenState extends State<WritingScreen> {
               },
             ),
           ),
+        if (_isSaving)
+          Positioned.fill(
+            child: Material(
+              color: Colors.black.withOpacity(0.2), // 어두운 오버레이
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3), // 블러 효과
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const BouncingCharacterLoader(),
+                      const SizedBox(height: 20),
+                      Text(
+                        AppLocalizations.of(context)?.get('saving') ?? '저장 중...',
+                        style: TextStyle(
+                          fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                          fontSize: 20,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              blurRadius: 10,
+                              color: Colors.black.withOpacity(0.5),
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -451,7 +489,7 @@ class _WritingScreenState extends State<WritingScreen> {
                   ),
                   SizedBox(width: 8),
                   GestureDetector(
-                    onTap: () => _saveDraft(context, controller),
+                    onTap: _isSaving ? null : () => _saveDraft(context, controller),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -464,16 +502,16 @@ class _WritingScreenState extends State<WritingScreen> {
                           filterQuality: FilterQuality.medium,
                           cacheHeight: 120,
                         ),
-                        Text(
-                          AppLocalizations.of(context)?.get('tempSave') ??
-                              'Draft',
-                          style: TextStyle(
-                            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
-                            color: Color(0xFF5D4037),
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                          Text(
+                            AppLocalizations.of(context)?.get('tempSave') ??
+                                'Draft',
+                            style: TextStyle(
+                              fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                              color: const Color(0xFF5D4037),
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -484,18 +522,20 @@ class _WritingScreenState extends State<WritingScreen> {
                           (auth.userModel?.mainTutorialStep == 'diary' ||
                               auth.userModel?.mainTutorialStep == null);
                       final isGoalReached = controller.isGoalReached();
-                      final isEnabled = isTutorial || isGoalReached;
+                      final isEnabled = (isTutorial || isGoalReached) && !_isSaving;
 
                       return GestureDetector(
                         onTap: isEnabled
                             ? () => _completeDiary(context, controller, colorScheme)
-                            : () {
-                                MemoNotification.show(
-                                    context,
-                                    AppLocalizations.of(context)
-                                            ?.get('moreWriting') ??
-                                        'Please write a bit more! ✍️');
-                              },
+                            : (_isSaving
+                                ? null
+                                : () {
+                                    MemoNotification.show(
+                                        context,
+                                        AppLocalizations.of(context)
+                                                ?.get('moreWriting') ??
+                                            'Please write a bit more! ✍️');
+                                  }),
                         child: Opacity(
                           opacity: isEnabled ? 1.0 : 0.5,
                           child: Stack(
@@ -510,15 +550,15 @@ class _WritingScreenState extends State<WritingScreen> {
                                 filterQuality: FilterQuality.medium,
                                 cacheHeight: 150,
                               ),
-                              Text(
-                                AppLocalizations.of(context)?.get('save') ?? 'Save',
-                                style: TextStyle(
-                                  fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
-                                  color: Color(0xFF5D4037),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                Text(
+                                  AppLocalizations.of(context)?.get('save') ?? 'Save',
+                                  style: TextStyle(
+                                    fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                                    color: const Color(0xFF5D4037),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -634,7 +674,13 @@ class _WritingScreenState extends State<WritingScreen> {
       child: GestureDetector(
         onTap: () async {
           final picker = ImagePicker();
-          final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+          // 용량 절감을 위해 압축 옵션 적용 (엄청 줄이기 위해 낮은 quality와 크기 제한 설정)
+          final pickedFile = await picker.pickImage(
+            source: ImageSource.gallery,
+            maxWidth: 1024,
+            maxHeight: 1024,
+            imageQuality: 30, // 30% 수준으로 대폭 압축
+          );
           if (pickedFile != null) {
             setState(() {
               _selectedImage = File(pickedFile.path);
@@ -642,44 +688,83 @@ class _WritingScreenState extends State<WritingScreen> {
             });
           }
         },
-        child: Container(
-          key: _photoKey,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/Popup_Background.png'),
-              fit: BoxFit.fill,
-            ),
-          ),
-          child: _selectedImage != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.file(_selectedImage!, fit: BoxFit.contain),
-                )
-              : _existingPhotoUrl != null
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              key: _photoKey,
+              width: double.infinity,
+              height: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/Popup_Background.png'),
+                  fit: BoxFit.fill,
+                ),
+              ),
+              child: _selectedImage != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: NetworkOrAssetImage(
-                        imagePath: _existingPhotoUrl!,
-                        fit: BoxFit.contain,
-                      ),
+                      child: Image.file(_selectedImage!, fit: BoxFit.contain),
                     )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_photo_alternate,
-                            size: 40, color: colorScheme.textHint),
-                        const SizedBox(height: 8),
-                        Text(
-                          AppLocalizations.of(context)?.get('addPhoto') ?? '사진 추가',
-                          style: TextStyle(
-                            fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
-                            color: colorScheme.textHint,
-                            fontSize: 14,
+                  : _existingPhotoUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: NetworkOrAssetImage(
+                            imagePath: _existingPhotoUrl!,
+                            fit: BoxFit.contain,
                           ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_photo_alternate,
+                                size: 40, color: colorScheme.textHint),
+                            const SizedBox(height: 8),
+                            Text(
+                              AppLocalizations.of(context)?.get('addPhoto') ?? '사진 추가',
+                              style: TextStyle(
+                                fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
+                                color: colorScheme.textHint,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+            ),
+            if (_selectedImage != null || _existingPhotoUrl != null)
+              Positioned(
+                top: -8,
+                right: -8,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedImage = null;
+                      _existingPhotoUrl = null;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
+                    child: const Icon(
+                      Icons.close,
+                      size: 20,
+                      color: Color(0xFF5D4037),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -746,12 +831,12 @@ class _WritingScreenState extends State<WritingScreen> {
 
     _weatherOverlay = OverlayEntry(
       builder: (ctx) {
-        final Map<String, String> weatherNames = {
-          'sunny': '☀️',
-          'partlyCloudy': '🌤',
-          'cloudy': '☁️',
-          'rainy': '🌧',
-          'snowy': '❄️',
+        final Map<String, String> weatherIcons = {
+          'sunny': 'assets/icons/Diary_Sun.png',
+          'partlyCloudy': 'assets/icons/DIary_SunCloud.png',
+          'cloudy': 'assets/icons/Diary_Cloud.png',
+          'rainy': 'assets/icons/Diray_Rain.png',
+          'snowy': 'assets/icons/Diary_Snow.png',
         };
         return Stack(
           children: [
@@ -815,15 +900,15 @@ class _WritingScreenState extends State<WritingScreen> {
                                 builder: (context, index) {
                                   final isSelected = weathers[index] == _selectedWeather;
                                   return Center(
-                                    child: Text(
-                                      weatherNames[weathers[index]]!,
-                                      style: TextStyle(
-                                        fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
-                                        fontSize: isSelected ? 30 : 20,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                        color: isSelected
-                                            ? colorScheme.textPrimary
-                                            : colorScheme.textHint.withOpacity(0.4),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      width: isSelected ? 80 : 50,
+                                      height: isSelected ? 80 : 50,
+                                      child: Image.asset(
+                                        weatherIcons[weathers[index]]!,
+                                        fit: BoxFit.contain,
+                                        color: isSelected ? null : Colors.white.withOpacity(0.4),
+                                        colorBlendMode: isSelected ? null : BlendMode.modulate,
                                       ),
                                     ),
                                   );
@@ -958,13 +1043,6 @@ class _WritingScreenState extends State<WritingScreen> {
                                   return Center(
                                     child: AnimatedContainer(
                                       duration: const Duration(milliseconds: 150),
-                                      padding: EdgeInsets.all(isSelected ? 6 : 4),
-                                      decoration: isSelected
-                                          ? BoxDecoration(
-                                              color: colorScheme.primaryButton.withOpacity(0.15),
-                                              shape: BoxShape.circle,
-                                            )
-                                          : null,
                                       child: NetworkOrAssetImage(
                                         imagePath: emoticon.imagePath ?? '',
                                         width: isSelected ? 64 : 50,
@@ -994,10 +1072,14 @@ class _WritingScreenState extends State<WritingScreen> {
   Widget _buildWritingArea(BuildContext context, AppColorScheme colorScheme) {
     final langCode = Localizations.localeOf(context).languageCode;
 
-    final Map<String, String> weatherEmojis = {
-      'sunny': '☀️', 'partlyCloudy': '🌤', 'cloudy': '☁️', 'rainy': '🌧', 'snowy': '❄️',
+    final Map<String, String> weatherIcons = {
+      'sunny': 'assets/icons/Diary_Sun.png',
+      'partlyCloudy': 'assets/icons/DIary_SunCloud.png',
+      'cloudy': 'assets/icons/Diary_Cloud.png',
+      'rainy': 'assets/icons/Diray_Rain.png',
+      'snowy': 'assets/icons/Diary_Snow.png',
     };
-    final weatherEmoji = weatherEmojis[_selectedWeather] ?? '☀️';
+    final weatherIconPath = weatherIcons[_selectedWeather] ?? 'assets/icons/Diary_Sun.png';
 
 
 
@@ -1054,12 +1136,19 @@ class _WritingScreenState extends State<WritingScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '$weatherTitle: $weatherEmoji',
+                        '$weatherTitle:',
                         style: TextStyle(
                           fontFamily: AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
                           fontSize: 20,
                           color: colorScheme.textPrimary,
                         ),
+                      ),
+                      const SizedBox(width: 4),
+                      Image.asset(
+                        weatherIconPath,
+                        width: 28,
+                        height: 28,
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(width: 2),
                       Icon(
@@ -1162,6 +1251,20 @@ class _WritingScreenState extends State<WritingScreen> {
 
 
 
+  /// Firebase Storage에서 이전 파일을 삭제합니다.
+  Future<void> _deleteOldPhotoFromServer(String? oldUrl) async {
+    if (oldUrl == null || oldUrl.isEmpty) return;
+    try {
+      // Firebase Storage 참조를 가져와서 삭제 시도
+      final ref = FirebaseStorage.instance.refFromURL(oldUrl);
+      await ref.delete();
+      debugPrint('Old photo deleted successfully: $oldUrl');
+    } catch (e) {
+      debugPrint('Failed to delete old photo: $e');
+      // 이미 삭제되었거나 경로가 잘못된 경우 무시
+    }
+  }
+
   Future<void> _completeDiary(BuildContext context,
       MorningController controller, AppColorScheme colorScheme) async {
     if (_isSaving) return;
@@ -1233,6 +1336,12 @@ class _WritingScreenState extends State<WritingScreen> {
       existingId: widget.isEditing ? widget.existingDiary?.id : null,
       createdAt: widget.isEditing ? widget.existingDiary?.createdAt : (widget.existingDiary != null ? widget.existingDiary?.createdAt : null),
     );
+
+    // 4. 저장 성공 시 이전 사진 삭제 (URL이 변경되었거나 사진이 제거된 경우)
+    if (success && _originalPhotoUrl != null && _originalPhotoUrl != photoUrl) {
+      unawaited(_deleteOldPhotoFromServer(_originalPhotoUrl));
+    }
+
 
       if (success && context.mounted) {
       // 1. 수정 모드이거나 이미 완료된 일기를 수정하는 경우 팝업 건너뜀
@@ -1365,6 +1474,12 @@ class _WritingScreenState extends State<WritingScreen> {
       weather: _selectedWeather,
       photoUrl: photoUrl,
     );
+
+    // 드래프트 저장 성공 시에도 이전 사진 삭제 (단, URL이 바뀐 경우만)
+    if (success && _originalPhotoUrl != null && _originalPhotoUrl != photoUrl) {
+      unawaited(_deleteOldPhotoFromServer(_originalPhotoUrl));
+    }
+
 
       if (success && context.mounted) {
         MemoNotification.show(context, AppLocalizations.of(context)?.get('saveDraftSuccess') ?? 'Draft saved. 📝');

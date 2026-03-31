@@ -139,6 +139,7 @@ class AppLocalizations {
           'Some placed items are not owned yet!\nUnowned items can be obtained from the shop.\nSave without them?',
       'saveFailed': 'Save failed: ',
       'save': 'Save',
+      'saving': 'Saving...',
       'noProps': 'You don\'t have any props. Buy some in the shop!',
       'stickyNoteLimit': 'You can only write a note once a day. ✍️',
       'noStickyNote':
@@ -927,6 +928,7 @@ class AppLocalizations {
           '배치된 항목 중 아직 보유하지 않은 아이템이 있어요!\n미보유 아이템은 상점에서 획득할 수 있습니다.\n뺀 상태로 저장할까요?',
       'saveFailed': '저장 실패: ',
       'save': '저장',
+      'saving': '저장 중...',
       'memo': '메모',
       'noProps': '구매한 소품이 없습니다. 상점에서 구매해 보세요!',
       'stickyNoteLimit': '메모는 하루에 한 번만 작성할 수 있습니다. ✍️',

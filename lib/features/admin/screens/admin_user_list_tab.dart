@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../controllers/admin_controller.dart';
 import '../widgets/admin_dialog.dart';
 import '../../../data/models/user_model.dart';
+import '../../social/screens/friend_room_screen.dart';
 
 class AdminUserListTab extends StatefulWidget {
   const AdminUserListTab({super.key});
@@ -54,7 +55,7 @@ class _AdminUserListTabState extends State<AdminUserListTab> {
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: '닉네임으로 검색...',
+                        hintText: '닉네임 또는 유저 ID로 검색...',
                         hintStyle: const TextStyle(
                             color: Color(0xFFCBD5E1), fontSize: 13),
                         prefixIcon: const Icon(Icons.search_rounded,
@@ -175,6 +176,7 @@ class _AdminUserListTabState extends State<AdminUserListTab> {
                             DataColumn(label: Text('연속출석')),
                             DataColumn(label: Text('보유 가지')),
                             DataColumn(label: Text('마지막 접속/일기')),
+                            DataColumn(label: Text('로그')),
                             DataColumn(label: Text('관리')),
                           ],
                           source: _UserDataSource(
@@ -525,7 +527,14 @@ class _UserDataSource extends DataTableSource {
         // Nickname
         DataCell(
           InkWell(
-            onTap: () => onShowLog(user),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FriendRoomScreen(friendId: user.uid),
+                ),
+              );
+            },
             child: Text(user.nickname,
                 style: const TextStyle(
                     color: Color(0xFF6366F1),
@@ -611,6 +620,15 @@ class _UserDataSource extends DataTableSource {
                     fontSize: 11, color: Color(0xFF94A3B8))),
           ],
         )),
+        // Logs
+        DataCell(
+          IconButton(
+            icon: const Icon(Icons.history_rounded,
+                size: 18, color: Color(0xFF6366F1)),
+            onPressed: () => onShowLog(user),
+            tooltip: '활동 로그 보기',
+          ),
+        ),
         // Actions
         DataCell(
           isSuspended

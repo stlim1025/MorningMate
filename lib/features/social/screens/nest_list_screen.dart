@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'dart:io' show Platform;
@@ -169,16 +170,16 @@ class _NestListScreenState extends State<NestListScreen> {
             children: [
               Padding(
                 padding: EdgeInsets.only(
-                    bottom: (Platform.isIOS ? 50.0 : 60.0) +
+                    bottom: ((kIsWeb ? false : Platform.isIOS) ? 50.0 : 60.0) +
                         MediaQuery.of(context).viewPadding.bottom),
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
-                    SizedBox(height: Platform.isIOS ? 8 : 16),
+                    SizedBox(height: (kIsWeb ? false : Platform.isIOS) ? 8 : 16),
                     // Title
                     Container(
-                      width: Platform.isIOS ? 220 : 260,
-                      height: Platform.isIOS ? 54 : 64,
+                      width: (kIsWeb ? false : Platform.isIOS) ? 220 : 260,
+                      height: (kIsWeb ? false : Platform.isIOS) ? 54 : 64,
                       decoration: BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage('assets/images/NestTitle_Area.png'),
@@ -190,8 +191,8 @@ class _NestListScreenState extends State<NestListScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Image.asset('assets/icons/Nest_Icon.png',
-                              width: Platform.isIOS ? 28 : 32,
-                              height: Platform.isIOS ? 28 : 32),
+                              width: (kIsWeb ? false : Platform.isIOS) ? 28 : 32,
+                              height: (kIsWeb ? false : Platform.isIOS) ? 28 : 32),
                           SizedBox(width: 8),
                           Text(
                             AppLocalizations.of(context)?.get('nestList') ??
@@ -201,13 +202,13 @@ class _NestListScreenState extends State<NestListScreen> {
                               fontWeight: FontWeight.bold,
                               fontFamily:
                                   AppLocalizations.of(context)?.mainFontFamily ?? 'BMJUA',
-                              fontSize: Platform.isIOS ? 18 : 20,
+                              fontSize: (kIsWeb ? false : Platform.isIOS) ? 18 : 20,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    SizedBox(height: Platform.isIOS ? 12 : 20),
+                    SizedBox(height: (kIsWeb ? false : Platform.isIOS) ? 12 : 20),
 
                     // Nest Invites Section
                     Consumer<NestController>(
@@ -725,7 +726,7 @@ class _NestListScreenState extends State<NestListScreen> {
                         ),
                       );
                     }),
-                    SizedBox(height: (Platform.isIOS ? 40 : 60)),
+                    SizedBox(height: ((kIsWeb ? false : Platform.isIOS) ? 40 : 60)),
                   ],
                 ),
               ),

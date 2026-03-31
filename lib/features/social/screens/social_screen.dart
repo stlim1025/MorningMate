@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -292,7 +293,7 @@ class _SocialScreenState extends State<SocialScreen> {
                                               16,
                                               16,
                                               16,
-                                              (Platform.isIOS ? 180 : 200) +
+                                              ((kIsWeb ? false : Platform.isIOS) ? 180 : 200) +
                                                   bottomInset),
                                           gridDelegate:
                                               const SliverGridDelegateWithFixedCrossAxisCount(
@@ -311,12 +312,12 @@ class _SocialScreenState extends State<SocialScreen> {
                                       ),
                                     if (!hasFriends)
                                       SizedBox(
-                                          height: (Platform.isIOS ? 180 : 200) +
+                                          height: ((kIsWeb ? false : Platform.isIOS) ? 180 : 200) +
                                               bottomInset),
                                     if (hasFriends)
                                       SizedBox(
                                           height:
-                                              (Platform.isIOS ? 50.0 : 60.0) +
+                                              ((kIsWeb ? false : Platform.isIOS) ? 50.0 : 60.0) +
                                                   bottomInset),
                                   ],
                                 ),
@@ -332,7 +333,7 @@ class _SocialScreenState extends State<SocialScreen> {
             ),
             Positioned(
               right: 16,
-              bottom: (Platform.isIOS ? 115 : 130) +
+              bottom: ((kIsWeb ? false : Platform.isIOS) ? 115 : 130) +
                   bottomInset, // Increased to avoid bottom nav bar + edge-to-edge inset
               child: _AnimatedAddFriendButton(
                 key: _addFriendKey,

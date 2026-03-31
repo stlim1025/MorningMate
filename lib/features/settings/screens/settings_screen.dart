@@ -18,6 +18,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -1283,14 +1284,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     String os = '';
     String model = '';
     
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       final androidInfo = await deviceInfo.androidInfo;
       os = 'Android ${androidInfo.version.release}';
       model = androidInfo.model;
-    } else if (Platform.isIOS) {
+    } else if (!kIsWeb && Platform.isIOS) {
       final iosInfo = await deviceInfo.iosInfo;
       os = 'iOS ${iosInfo.systemVersion}';
       model = iosInfo.utsname.machine;
+    } else if (kIsWeb) {
+      os = 'Web';
+      model = 'Browser';
     }
 
     final email = 'stlim1026@gmail.com';
